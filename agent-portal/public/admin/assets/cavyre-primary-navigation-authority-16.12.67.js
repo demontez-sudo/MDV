@@ -6,6 +6,7 @@ window.__CAVYRE_PRIMARY_NAV_161267__=1;
 
 var PRIMARY=[
  ['overview','⌂','Home'],
+ ['tasksconsolidated','✓','Tasks'],
  ['roster','♙','Models'],
  ['seasonmanagement','◫','Season'],
  ['calendar','◇','Castings'],
@@ -20,7 +21,6 @@ var OPS=[
  ['agentcommissions','◈','Finance','Commissions, payments and financial operations'],
  ['filesforms','▱','Documents','Files, forms and operational documents'],
  ['inbox','✉','Communication','Agency communications and follow-up'],
- ['tasksconsolidated','✓','Tasks','Operational tasks and assignments'],
  ['systemsettings','⚙','Settings','Portal and agency settings']
 ];
 var busy=false,scheduled=false,observer=null;
@@ -35,7 +35,7 @@ function nav(page){
 }
 function current(){
  var p=String(window._currentPage||location.hash.replace(/^#/,'')||'overview').toLowerCase();
- if(['globalmobility','visa','agentcommissions','financelegal','filesforms','inbox','tasksconsolidated','systemsettings','team'].indexOf(p)>-1)return'__operations__';
+ if(['globalmobility','visa','agentcommissions','financelegal','filesforms','inbox','systemsettings','team'].indexOf(p)>-1)return'__operations__';
  if(['industrydirectory','companies','contacts','allcontacts'].indexOf(p)>-1)return'industrydirectory';
  if(['season','seasonmanagement'].indexOf(p)>-1)return'seasonmanagement';
  return p;
