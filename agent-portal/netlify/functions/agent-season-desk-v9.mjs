@@ -77,7 +77,7 @@ export const handler=async(event)=>{
     let showQ=admin.from('season_shows').select('*').eq('organization_id',organization.id).order('starts_at',{ascending:true});if(seasonId)showQ=showQ.eq('season_id',seasonId);
     const warnings=[];
     const [seasons,seasonModels,shows]=await Promise.all([rows(seasonsQ.limit(100)),rows(modelQ.limit(700)),rows(showQ.limit(500))]);
-    const [readiness,showModels,travel,models,companies,markets,availabilityBlocks,bookings,bookingModels,visaCases,castings,castingModels,calendarEvents,developmentActivities,tasks,bookingOptions,workAuthorizations,passports]=await Promise.all([
+    const [readiness,showModels,travel,models,companies,markets,availabilityBlocks,bookings,bookingModels,visaCases,castings,castingModels,calendarEvents,developmentActivities,tasks,bookingOptions,workAuthorizations,passports,contacts,seasonAssignments]=await Promise.all([
       optionalRows('season_readiness_items',admin.from('season_readiness_items').select('*').eq('organization_id',organization.id).limit(5000),warnings),
       optionalRows('season_show_models',admin.from('season_show_models').select('*').eq('organization_id',organization.id).limit(3000),warnings),
       optionalRows('travel_records',admin.from('travel_records').select('*').eq('organization_id',organization.id).order('starts_at',{ascending:true}).limit(1000),warnings),
