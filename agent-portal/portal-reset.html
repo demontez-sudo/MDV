@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Model Portal · Activate Access</title>
+<style>
+:root{--bg:#100908;--panel:#160d0c;--line:#6c332d;--soft:#8e6f63;--ink:#f0e7df;--muted:#a99086;--accent:#ef6f65;--gold:#c8a06f}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(circle at 75% 12%,#371715 0,#160b0a 34%,#090706 82%);color:var(--ink);font-family:Arial,Helvetica,sans-serif}
+body{display:grid;place-items:center;padding:24px}.shell{width:min(980px,96vw);min-height:620px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(30,14,13,.96),rgba(12,9,8,.97));box-shadow:0 30px 100px #0008;display:grid;grid-template-columns:1fr 1fr}
+.brand{padding:48px;border-right:1px solid #3b2420;display:flex;flex-direction:column;justify-content:space-between}.brand small,.eyebrow{font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent)}.brand h1{font:46px Georgia,serif;font-weight:400;line-height:1.04;margin:14px 0}.brand p{max-width:420px;color:var(--muted);line-height:1.7;font-size:13px}.brand footer{font:9px monospace;letter-spacing:.16em;color:#766158}.form{padding:48px;display:flex;flex-direction:column;justify-content:center}.form h2{font:34px Georgia,serif;font-weight:400;margin:8px 0}.form>p{color:var(--muted);line-height:1.6;font-size:13px;margin:0 0 24px}.field{margin:0 0 14px}.field label{display:block;font:9px monospace;letter-spacing:.16em;color:var(--gold);margin-bottom:7px;text-transform:uppercase}.field input{width:100%;height:50px;background:#0d0b09;border:1px solid #594139;color:var(--ink);padding:0 14px;font-size:15px;outline:none}.field input:focus{border-color:var(--accent)}
+button{height:50px;border:1px solid #a44a42;background:linear-gradient(180deg,#d75c54,#a83e38);color:#fff;font:bold 10px monospace;letter-spacing:.14em;text-transform:uppercase;padding:0 18px;cursor:pointer}button[disabled]{opacity:.5;cursor:default}
+.note,.error,.ok{margin-top:15px;padding:12px 14px;border:1px solid #49342e;background:#120d0b;font-size:12px;line-height:1.55}.note{color:var(--muted)}.error{display:none;color:#ff9a90;border-color:#7b3933;background:#1b0d0c}.ok{display:none;color:#a5e3b6;border-color:#396244;background:#0c160f}
+.steps{display:flex;gap:8px;margin-bottom:22px}.steps span{height:4px;flex:1;background:#35231f}.steps span.on{background:var(--accent)}
+@media(max-width:760px){body{padding:0}.shell{width:100%;min-height:100vh;border:0;grid-template-columns:1fr}.brand{padding:28px;border-right:0;border-bottom:1px solid #3b2420}.brand h1{font-size:34px}.brand p{display:none}.brand footer{display:none}.form{padding:28px}}
+</style>
+</head>
+<body data-portal-reset-release="16.12.60">
+<div class="shell">
+  <section class="brand">
+    <div>
+      <small>MAISON DE VEUX · MODEL PORTAL</small>
+      <h1>Activate your portal access.</h1>
+      <p>This secure step creates your new password, verifies it directly against the Maison de Veux authentication system, and signs you into the Model Portal.</p>
+    </div>
+    <footer>CAVYRE MODEL ACCESS · 16.12.60</footer>
+  </section>
+  <section class="form">
+    <div class="steps"><span class="on"></span><span></span><span></span></div>
+    <div class="eyebrow">SECURE ACCOUNT ACTIVATION</div>
+    <h2>Create your new password</h2>
+    <p>Use at least 10 characters. After verification, you will enter the Model Portal automatically.</p>
+    <div class="field"><label>New Password</label><input id="pw1" type="password" autocomplete="new-password"></div>
+    <div class="field"><label>Confirm Password</label><input id="pw2" type="password" autocomplete="new-password"></div>
+    <button id="activate">Activate My Account →</button>
+    <div id="error" class="error"></div>
+    <div id="ok" class="ok"></div>
+    <div class="note">This link is tied to one model account and expires automatically. If it has expired, request a new reset email from your agency.</div>
+  </section>
+</div>
+<script>
+(function(){
+'use strict';
+var PROJECT='mogyngdhmzbjmcdqeoxu';
+var STORAGE_KEY='sb-'+PROJECT+'-auth-token';
+var qs=new URLSearchParams(location.search);
+var token=qs.get('recovery_token')||qs.get('token')||'';
+var btn=document.getElementById('activate'),err=document.getElementById('error'),ok=document.getElementById('ok');
+
+function showErr(m){err.textContent=m||'';err.style.display=m?'block':'none';ok.style.display='none'}
+function showOk(m){ok.textContent=m||'';ok.style.display=m?'block':'none';err.style.display='none'}
+function storeSession(session){
+  if(!session||!session.access_token||!session.refresh_token)return false;
+  try{
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(session));
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+if(!token){
+  showErr('This activation link is missing or invalid. Request a new reset email from your agency.');
+  btn.disabled=true;
+}
+async function activate(){
+  showErr('');
+  var a=document.getElementById('pw1').value||'',b=document.getElementById('pw2').value||'';
+  if(a.length<10)return showErr('Use at least 10 characters.');
+  if(a!==b)return showErr('Passwords do not match.');
+  btn.disabled=true;btn.textContent='VERIFYING ACCESS…';
+  try{
+    var r=await fetch('/api/model/password/finalize',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({recovery_token:token,password:a})
+    });
+    var d=await r.json().catch(function(){return{}});
+    if(!r.ok||!d.ok||!d.credential_verified)throw new Error(d.error||'Your new login could not be verified.');
+    var persisted=storeSession(d.session);
+    showOk(persisted?'Password verified. Signing you into the Model Portal…':'Password verified. Opening the Model Portal…');
+    try{history.replaceState({},document.title,'/portal/reset')}catch(_e){}
+    setTimeout(function(){location.replace(d.redirect_to||'/portal')},700);
+  }catch(e){
+    showErr(e.message||'Your password could not be activated.');
+    btn.disabled=false;btn.textContent='Activate My Account →';
+  }
+}
+btn.addEventListener('click',activate);
+document.getElementById('pw2').addEventListener('keydown',function(e){if(e.key==='Enter')activate()});
+})();
+</script>
+</body>
+</html>

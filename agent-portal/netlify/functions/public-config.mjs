@@ -11,7 +11,7 @@ export const handler = async (event) => {
       supabase_publishable_key: publishableKey,
       environment: 'mogy-production-locked',
       email_delivery_configured: emailDeliveryStatus().configured
-    }, { 'Cache-Control': 'no-store, no-cache, must-revalidate' });
+    }, { 'Cache-Control': 'public, max-age=300' });
   } catch (error) {
     return errorResponse(error);
   }

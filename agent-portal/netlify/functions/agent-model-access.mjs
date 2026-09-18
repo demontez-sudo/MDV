@@ -2,11 +2,8 @@ import crypto from 'node:crypto';
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 import { sendResendEmail } from './_lib/email.mjs';
-import { issueModelRecoveryToken } from './_lib/model-recovery-token.mjs';
-import { verifyModelPassword } from './_lib/model-auth-verifier.mjs';
 
-export const CAVYRE_MODEL_ACCESS_AUTHORITY='16.12.93';
-const MODEL_PORTAL_URL='https://www.maisondeveux.com/portal/access.html';
+const MODEL_PORTAL_URL='https://www.maisondeveux.com/admin/model-reset.html';
 const EMAIL_RX=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESET_FLAG='cavyre_password_reset_required';
 const TEMP_EXP='cavyre_temp_password_expires_at';
@@ -100,8 +97,11 @@ async function changeLoginEmail(admin,organization,ctx,email,issuedBy){
 async function sendReset(admin,organization,ctx){
   const email=String(ctx.user?.email||'').trim().toLowerCase();
   if(!EMAIL_RX.test(email)){const e=new Error('The linked authentication account does not have a valid email.');e.statusCode=409;throw e;}
-  const recoveryToken=issueModelRecoveryToken({userId:ctx.user.id,modelId:ctx.model.id,organizationId:organization.id,email});
-  const resetUrl=`${MODEL_PORTAL_URL}&recovery_token=${encodeURIComponent(recoveryToken)}`;
+  const {data:link,error}=await admin.auth.admin.generateLink({type:'recovery',email});
+  if(error)throw error;
+  const hash=link?.properties?.hashed_token;
+  if(!hash){const e=new Error('Supabase did not return a recovery token.');e.statusCode=502;throw e;}
+  const resetUrl=`${MODEL_PORTAL_URL}?token_hash=${encodeURIComponent(hash)}&type=recovery`;
   const {data:settings}=await admin.from('organization_settings').select('sender_name,sender_email,reply_to_email').eq('organization_id',organization.id).maybeSingle();
   const fromEmail=String(settings?.sender_email||process.env.VEUX_DEFAULT_SENDER_EMAIL||'').trim().toLowerCase();
   if(!EMAIL_RX.test(fromEmail)){const e=new Error('Agency sender email is not configured.');e.statusCode=503;throw e;}
@@ -138,28 +138,9 @@ export const handler=async(event)=>{
     const meta=safeMeta(ctx.user);
     if(action==='generate_temporary_password'){
       const password=tempPassword(),expires=new Date(Date.now()+24*60*60*1000).toISOString();
-      const {data,error}=await admin.auth.admin.updateUserById(ctx.user.id,{password,email_confirm:true,ban_duration:'none',app_metadata:{...meta,[RESET_FLAG]:true,[TEMP_EXP]:expires,[DISABLED]:false,cavyre_password_reset_issued_at:new Date().toISOString(),cavyre_password_reset_issued_by:user.id,cavyre_temporary_login_ready:true}});
+      const {data,error}=await admin.auth.admin.updateUserById(ctx.user.id,{password,ban_duration:'none',app_metadata:{...meta,[RESET_FLAG]:true,[TEMP_EXP]:expires,[DISABLED]:false,cavyre_password_reset_issued_at:new Date().toISOString(),cavyre_password_reset_issued_by:user.id}});
       if(error)throw error;ctx={...ctx,user:data.user};
-
-      // VERIFY the exact credential against the same Supabase Auth project before showing it.
-      const loginCheck=await verifyModelPassword({email:data.user.email,password});
-      if(loginCheck.user_id!==data.user.id){
-        const e=new Error('Credential verification resolved to the wrong authentication user.');
-        e.statusCode=409;throw e;
-      }
-
-      return json(200,{
-        ok:true,
-        verified:true,
-        credential_verified:true,
-        auth_project:loginCheck.project,
-        temporary_password:password,
-        display_once:true,
-        expires_at:expires,
-        password_change_required:true,
-        activation_url:'https://www.maisondeveux.com/portal/access.html?mode=temp&v=161297&email='+encodeURIComponent(data.user.email||''),
-        access:view(ctx)
-      });
+      return json(200,{ok:true,verified:true,temporary_password:password,display_once:true,expires_at:expires,password_change_required:true,activation_url:'https://maisondeveux.com/portal/activate',access:view(ctx)});
     }
     if(action==='send_reset_email'){
       const out=await sendReset(admin,organization,ctx);return json(200,{ok:true,verified:true,...out,access:view(ctx)});

@@ -5,8 +5,7 @@ import { sendResendEmail } from './_lib/email.mjs';
 import { issueModelRecoveryToken } from './_lib/model-recovery-token.mjs';
 import { verifyModelPassword } from './_lib/model-auth-verifier.mjs';
 
-export const CAVYRE_MODEL_ACCESS_AUTHORITY='16.12.86';
-const MODEL_PORTAL_URL='https://www.maisondeveux.com/portal/access.html';
+const MODEL_PORTAL_URL='https://maisondeveux.com/portal/reset';
 const EMAIL_RX=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESET_FLAG='cavyre_password_reset_required';
 const TEMP_EXP='cavyre_temp_password_expires_at';
@@ -101,7 +100,7 @@ async function sendReset(admin,organization,ctx){
   const email=String(ctx.user?.email||'').trim().toLowerCase();
   if(!EMAIL_RX.test(email)){const e=new Error('The linked authentication account does not have a valid email.');e.statusCode=409;throw e;}
   const recoveryToken=issueModelRecoveryToken({userId:ctx.user.id,modelId:ctx.model.id,organizationId:organization.id,email});
-  const resetUrl=`${MODEL_PORTAL_URL}?recovery_token=${encodeURIComponent(recoveryToken)}&flow=model_recovery_161288`;
+  const resetUrl=`${MODEL_PORTAL_URL}?recovery_token=${encodeURIComponent(recoveryToken)}`;
   const {data:settings}=await admin.from('organization_settings').select('sender_name,sender_email,reply_to_email').eq('organization_id',organization.id).maybeSingle();
   const fromEmail=String(settings?.sender_email||process.env.VEUX_DEFAULT_SENDER_EMAIL||'').trim().toLowerCase();
   if(!EMAIL_RX.test(fromEmail)){const e=new Error('Agency sender email is not configured.');e.statusCode=503;throw e;}
@@ -156,8 +155,6 @@ export const handler=async(event)=>{
         temporary_password:password,
         display_once:true,
         expires_at:expires,
-        password_change_required:true,
-        activation_url:'https://www.maisondeveux.com/portal/access.html?mode=temp&v=161297',
         access:view(ctx)
       });
     }

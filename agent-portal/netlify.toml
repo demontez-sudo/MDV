@@ -1,706 +1,101 @@
-# CAVYRE 16.12.84 — Deep Routing + Build Authority
-[build]
-  publish = "public"
-
 [functions]
-  directory = "netlify/functions"
-  node_bundler = "esbuild"
-  included_files = ["shared/**"]
 
+  [functions.emails]
+  included_files = [
+    "./emails/**",
+    "./emails/**"
+  ]
 
+[build]
+publish = "."
+functions = "netlify/functions"
 
-# CAVYRE 16.12.96 — clean-room Model Access authority
+[[headers]]
+for = "/"
 
-# CAVYRE 16.12.97 SINGLE MODEL AUTH ENTRY — highest authority
-[[redirects]]
-from = "/portal"
-to = "/portal/access.html"
-status = 200
-force = true
+  [headers.values]
+  Cache-Control = "no-cache, no-store, must-revalidate"
 
-[[redirects]]
-from = "/portal/"
-to = "/portal/access.html"
-status = 200
-force = true
+[[headers]]
+for = "/admin"
 
-[[redirects]]
-from = "/portal/password*"
-to = "/portal/access.html"
-status = 200
-force = true
+  [headers.values]
+  Cache-Control = "no-cache, no-store, must-revalidate"
 
-[[redirects]]
-from = "/portal/reset*"
-to = "/portal/access.html"
-status = 200
-force = true
+[[headers]]
+for = "/admin/"
 
-[[redirects]]
-from = "/portal/recover*"
-to = "/portal/access.html"
-status = 200
-force = true
+  [headers.values]
+  Cache-Control = "no-cache, no-store, must-revalidate"
 
-[[redirects]]
-from = "/model-reset*"
-to = "/portal/access.html"
-status = 200
-force = true
+[[headers]]
+for = "/assets/*"
 
-[[redirects]]
-from = "/portal/access"
-to = "/portal/access.html"
-status = 200
-force = true
+  [headers.values]
+  Cache-Control = "no-cache, must-revalidate"
 
-[[redirects]]
-from = "/portal/access/"
-to = "/portal/access.html"
-status = 200
-force = true
+[[headers]]
+for = "/admin/assets/*"
 
-[[redirects]]
-from = "/portal/password"
-to = "/portal/access.html"
-status = 200
-force = true
+  [headers.values]
+  Cache-Control = "no-cache, must-revalidate"
 
-[[redirects]]
-from = "/portal/reset"
-to = "/portal/access.html"
-status = 200
-force = true
+[[headers]]
+for = "/*"
 
-[[redirects]]
-from = "/portal/recover"
-to = "/portal/access.html"
-status = 200
-force = true
+  [headers.values]
+  Cache-Control = "no-cache, no-store, must-revalidate"
+  X-Content-Type-Options = "nosniff"
+  Referrer-Policy = "strict-origin-when-cross-origin"
+  Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+  X-Frame-Options = "SAMEORIGIN"
+  Content-Security-Policy = "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss:; frame-ancestors 'self'; base-uri 'self'; form-action 'self' https:;"
 
-[[redirects]]
-from = "/portal/activate"
-to = "/portal/access.html"
-status = 200
-force = true
+[[headers]]
+for = "/index.html"
 
-[[redirects]]
-from = "/api/model/password"
-to = "/.netlify/functions/model-password-authority"
-status = 200
-force = true
+  [headers.values]
+  Cache-Control = "no-cache, no-store, must-revalidate"
 
-[[redirects]]
-from = "/admin/api/model/password"
-to = "/.netlify/functions/model-password-authority"
-status = 200
-force = true
-[[redirects]]
-from = "/admin/api/agent/model-auth-diagnostic"
-to = "/.netlify/functions/model-auth-diagnostic"
-status = 200
-force = true
+[[headers]]
+for = "/sw.js"
 
-[[redirects]]
-from = "/admin/api/model/auth/login"
-to = "/.netlify/functions/model-auth-login"
-status = 200
-force = true
+  [headers.values]
+  Cache-Control = "no-cache, no-store, must-revalidate"
 
-[[redirects]]
-from = "/admin/api/agent/vera/intelligence"
-to = "/.netlify/functions/agent-vera-intelligence"
-status = 200
-force = true
+[[headers]]
+for = "/manifest.webmanifest"
 
-[[redirects]]
-from = "/admin/api/agent/documents/v13.12"
-to = "/.netlify/functions/agent-documents-v13-12"
-status = 200
-force = true
+  [headers.values]
+  Content-Type = "application/manifest+json; charset=utf-8"
+  Cache-Control = "public, max-age=0, must-revalidate"
 
-[[redirects]]
-from = "/admin/api/agent/certification/v13.24"
-to = "/.netlify/functions/agent-certification-v13-24"
-status = 200
-force = true
+[[headers]]
+for = "/assets/*"
 
-[[redirects]]
-from = "/admin/api/agent/task-recovery/v13.25"
-to = "/.netlify/functions/agent-task-recovery-v13-25"
-status = 200
-force = true
+  [headers.values]
+  Cache-Control = "public, max-age=0, must-revalidate"
 
-[[redirects]]
-from = "/admin/api/public/forms/get-scouted"
-to = "/.netlify/functions/public-form-intake"
-status = 200
-force = true
+[[headers]]
+for = "/api/*"
 
-[[redirects]]
-from = "/admin/api/agent/files-forms"
-to = "/.netlify/functions/agent-files-forms"
-status = 200
-force = true
+  [headers.values]
+  Cache-Control = "no-cache, no-store, must-revalidate"
 
-[[redirects]]
-from = "/admin/api/config"
-to = "/.netlify/functions/public-config"
-status = 200
-force = true
 
-[[redirects]]
-from = "/admin/api/public/package"
-to = "/.netlify/functions/public-package-data"
-status = 200
-force = true
 
-[[redirects]]
-from = "/admin/api/public/package/activity"
-to = "/.netlify/functions/public-package-activity"
-status = 200
-force = true
 
-[[redirects]]
-from = "/admin/api/public/package/feedback"
-to = "/.netlify/functions/public-package-feedback"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/model/password/direct-change"
-to = "/.netlify/functions/model-password-direct-change"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/model/password/change"
-to = "/.netlify/functions/model-password-change"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/model/password/recovery"
-to = "/.netlify/functions/model-password-recovery-request"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/model/password/finalize"
-to = "/.netlify/functions/model-password-finalize"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/model/password/finalize-compat"
-to = "/.netlify/functions/model-password-finalize-compat"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/auth/password/recovery"
-to = "/.netlify/functions/password-recovery-request"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/auth/password/finalize"
-to = "/.netlify/functions/password-finalize"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/bootstrap"
-to = "/.netlify/functions/agent-bootstrap"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/crm/sync"
-to = "/.netlify/functions/agent-crm-sync"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/tasks/sync"
-to = "/.netlify/functions/agent-task-sync"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/models/cache-sync"
-to = "/.netlify/functions/agent-model-cache-sync"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/events/sync"
-to = "/.netlify/functions/agent-event-sync"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/industry-research"
-to = "/.netlify/functions/agent-industry-research"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/industry-enrich"
-to = "/.netlify/functions/agent-industry-enrich"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/assistant"
-to = "/.netlify/functions/agent-assistant"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/packages"
-to = "/.netlify/functions/agent-package-desk-16-12-41"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/packages/convert"
-to = "/.netlify/functions/package-convert-action"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/finance"
-to = "/.netlify/functions/agent-finance-desk"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/model-account"
-to = "/.netlify/functions/agent-model-account-desk"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/legal"
-to = "/.netlify/functions/agent-contract-desk"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/mobility"
-to = "/.netlify/functions/agent-mobility-desk"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/model-360"
-to = "/.netlify/functions/model-360"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/model-access"
-to = "/.netlify/functions/agent-model-access"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/model-website-build"
-to = "/.netlify/functions/agent-model-website-build"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/bookings/risk"
-to = "/.netlify/functions/agent-booking-risk"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/packages/analytics"
-to = "/.netlify/functions/agent-package-analytics"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/reconciliation"
-to = "/.netlify/functions/agent-reconciliation"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/signature/send"
-to = "/.netlify/functions/signature-send"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/public/signature"
-to = "/.netlify/functions/public-signature-data"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/public/signature/action"
-to = "/.netlify/functions/public-signature-action"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/bookings/v9"
-to = "/.netlify/functions/agent-booking-desk-v9"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/calendar/v9"
-to = "/.netlify/functions/agent-calendar-desk-v9"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/calendar/smart"
-to = "/.netlify/functions/agent-smart-calendar-v1"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/crm/v9"
-to = "/.netlify/functions/agent-crm-desk-v9"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/crm/intelligence/v2"
-to = "/.netlify/functions/agent-crm-intelligence-v2"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/scouting/v9"
-to = "/.netlify/functions/agent-scouting-desk-v9"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/development/v9"
-to = "/.netlify/functions/agent-development-desk-v9"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/season/v9"
-to = "/.netlify/functions/agent-season-desk-v9"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/roster/v10"
-to = "/.netlify/functions/agent-roster-desk-v10"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/model-portfolio/v10"
-to = "/.netlify/functions/agent-model-portfolio-v10"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/availability/v10"
-to = "/.netlify/functions/agent-availability-desk-v10"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/tasks/v11"
-to = "/.netlify/functions/agent-task-approval-desk-v11"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/tasks/v10"
-to = "/.netlify/functions/agent-task-approval-desk-v10"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/team/v10"
-to = "/.netlify/functions/agent-team-desk-v10"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/settings/v10"
-to = "/.netlify/functions/agent-settings-desk-v10"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/executive/v10"
-to = "/.netlify/functions/agent-executive-desk-v10"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/billing/catalog/v11"
-to = "/.netlify/functions/billing-catalog-v11"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/billing/checkout/v11"
-to = "/.netlify/functions/billing-checkout-v11"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/billing/portal/v11"
-to = "/.netlify/functions/billing-portal-v11"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/import/preview/v11"
-to = "/.netlify/functions/data-import-preview-v11"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/import/commit/v11"
-to = "/.netlify/functions/data-import-commit-v11"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/export/create/v11"
-to = "/.netlify/functions/data-export-create-v11"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/compliance/v11"
-to = "/.netlify/functions/compliance-desk-v11"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/launch-readiness/v11"
-to = "/.netlify/functions/launch-readiness-v11"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/recovery/v12"
-to = "/.netlify/functions/data-recovery-v12"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/communications/v13.6"
-to = "/.netlify/functions/agent-communications-v13-6"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/final/v13.7"
-to = "/.netlify/functions/agent-final-ops-v13-7"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/certification/v13.11"
-to = "/.netlify/functions/agent-certification-v13-11"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/integrity/v13.17"
-to = "/.netlify/functions/agent-integrity-v13-17"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/certification/v13.15"
-to = "/.netlify/functions/agent-certification-v13-15"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/workflow-certification/v13.22"
-to = "/.netlify/functions/agent-workflow-cert-v13-22"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/model-submissions/v16"
-to = "/.netlify/functions/agent-model-submissions-v16"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/development-submissions/v1"
-to = "/.netlify/functions/agent-development-submissions-v1"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/change-control/v16"
-to = "/.netlify/functions/agent-change-control-v16"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/storage/upload-url"
-to = "/.netlify/functions/storage-upload-url"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/storage/finalize"
-to = "/.netlify/functions/storage-finalize"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/storage/download-url"
-to = "/.netlify/functions/storage-download-url"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/escalations/v16"
-to = "/.netlify/functions/agent-escalations-v16"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/release-audit/v16"
-to = "/.netlify/functions/agent-release-audit-v16"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/model-media/upload-url"
-to = "/.netlify/functions/agent-model-media-upload-url"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/calendar/intelligence"
-to = "/.netlify/functions/agent-calendar-intelligence-v16"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/model/schedule"
-to = "/.netlify/functions/model-portal-schedule"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/model/calendar"
-to = "/.netlify/functions/model-portal-schedule"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/model/bookings"
-to = "/.netlify/functions/model-portal-schedule"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/portal/model/schedule"
-to = "/.netlify/functions/model-portal-schedule"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/vera/plan"
-to = "/.netlify/functions/agent-vera-plan"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/vera/desk"
-to = "/.netlify/functions/agent-vera-desk"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/vera/preflight"
-to = "/.netlify/functions/agent-vera-preflight"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/health"
-to = "/.netlify/functions/health"
-status = 200
-force = true
-
-[[redirects]]
-from = "/portal"
-to = "/portal/index.html"
-status = 200
-force = true
-
-[[redirects]]
-from = "/portal/"
-to = "/portal/index.html"
-status = 200
-force = true
-
-[[redirects]]
-from = "/portal/auth"
-to = "/portal/index.html"
-status = 200
-force = true
-
-[[redirects]]
-from = "/portal/recover"
-to = "/portal/access.html"
-status = 200
-force = true
-
-[[redirects]]
-from = "/portal/setup"
-to = "/portal/index.html?view=setup"
-status = 200
-force = true
-
-[[redirects]]
-from = "/portal/home"
-to = "/portal/home.html"
-status = 200
-force = true
-
-[[redirects]]
-from = "/portal/account"
-to = "/portal/account.html"
-status = 200
-force = true
-
-[[redirects]]
-from = "/api/agent/model-auth-diagnostic"
-to = "/.netlify/functions/model-auth-diagnostic"
-status = 200
-force = true
-
-[[redirects]]
-from = "/api/model/auth/login"
-to = "/.netlify/functions/model-auth-login"
-status = 200
-force = true
+[[headers]]
+for = "/admin/manifest.webmanifest"
+  [headers.values]
+  Content-Type = "application/manifest+json; charset=utf-8"
+  Cache-Control = "public, max-age=0, must-revalidate"
 
 [[redirects]]
 from = "/api/agent/vera/intelligence"
 to = "/.netlify/functions/agent-vera-intelligence"
 status = 200
 force = true
-
 [[redirects]]
 from = "/p/*"
 to = "/package/index.html?token=:splat"
@@ -749,6 +144,7 @@ to = "/package/index.html?token=:token"
 status = 200
 force = true
 
+
 [[redirects]]
 from = "/view/:token"
 to = "/package/index.html?token=:token"
@@ -773,17 +169,20 @@ to = "/.netlify/functions/public-package-feedback"
 status = 200
 force = true
 
+
+
 [[redirects]]
 from = "/portal/activate"
-to = "/portal/access.html"
+to = "/portal-password.html"
 status = 200
 force = true
 
 [[redirects]]
 from = "/portal/password"
-to = "/portal/access.html"
+to = "/portal-password.html"
 status = 200
 force = true
+
 
 [[redirects]]
 from = "/api/model/password/direct-change"
@@ -799,31 +198,31 @@ force = true
 
 [[redirects]]
 from = "/portal/reset"
-to = "/portal/access.html"
+to = "/portal-reset.html"
 status = 200
 force = true
 
 [[redirects]]
 from = "/portal/reset/"
-to = "/portal/access.html"
+to = "/portal-reset.html"
 status = 200
 force = true
 
 [[redirects]]
 from = "/model-reset"
-to = "/portal/access.html"
+to = "/portal-reset.html"
 status = 200
 force = true
 
 [[redirects]]
 from = "/model-reset.html"
-to = "/portal/access.html"
+to = "/portal-reset.html"
 status = 200
 force = true
 
 [[redirects]]
 from = "/reset-model-password"
-to = "/portal/access.html"
+to = "/portal-reset.html"
 status = 200
 force = true
 
@@ -840,14 +239,8 @@ status = 200
 force = true
 
 [[redirects]]
-from = "/api/model/password/finalize-compat"
-to = "/.netlify/functions/model-password-finalize-compat"
-status = 200
-force = true
-
-[[redirects]]
 from = "/admin/model-reset"
-to = "/portal/access.html"
+to = "/admin/model-reset.html"
 status = 200
 force = true
 
@@ -955,7 +348,7 @@ force = true
 
 [[redirects]]
 from = "/api/agent/model-access"
-to = "/.netlify/functions/agent-model-access"
+to = "/.netlify/functions/agent-model-access-16-12-43"
 status = 200
 force = true
 
@@ -1046,18 +439,6 @@ force = true
 [[redirects]]
 from = "/api/agent/development/v9"
 to = "/.netlify/functions/agent-development-desk-v9"
-status = 200
-force = true
-
-[[redirects]]
-from = "/api/agent/model-graph/v1"
-to = "/.netlify/functions/agent-model-operating-graph-v1"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/model-graph/v1"
-to = "/.netlify/functions/agent-model-operating-graph-v1"
 status = 200
 force = true
 
@@ -1265,6 +646,19 @@ to = "/.netlify/functions/agent-calendar-intelligence-v16"
 status = 200
 force = true
 
+# CAVYRE 16.12.07 — explicit Admin static asset authority
+[[redirects]]
+from = "/admin/assets/*"
+to = "/admin/assets/:splat"
+status = 200
+force = true
+
+[[redirects]]
+from = "/admin/manifest.webmanifest"
+to = "/admin/manifest.webmanifest"
+status = 200
+force = true
+
 [[redirects]]
 from = "/admin"
 to = "/admin/index.html"
@@ -1302,6 +696,33 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/admin/*"
+to = "/admin/index.html"
+status = 200
+force = false
+
+[context]
+
+  [context.production]
+
+    [context.production.functions]
+
+      [context.production.functions.emails]
+      included_files = [
+        "./emails/**",
+        "./emails/**"
+      ]
+
+  [context.main]
+
+    [context.main.functions]
+
+      [context.main.functions.emails]
+      included_files = [
+        "./emails/**",
+        "./emails/**"
+      ]
+[[redirects]]
 from = "/api/agent/vera/plan"
 to = "/.netlify/functions/agent-vera-plan"
 status = 200
@@ -1316,86 +737,5 @@ force = true
 [[redirects]]
 from = "/api/agent/vera/preflight"
 to = "/.netlify/functions/agent-vera-preflight"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/*"
-to = "/admin/index.html"
-status = 200
-force = false
-
-[[headers]]
-for = "/portal/reset"
-  [headers.values]
-  Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
-  Pragma = "no-cache"
-  X-CAVYRE-Recovery = "16.12.88"
-
-[[headers]]
-for = "/portal-reset.html"
-  [headers.values]
-  Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
-  Pragma = "no-cache"
-  X-CAVYRE-Recovery = "16.12.88"
-
-# CAVYRE 16.12.88 model recovery hard authority
-[[redirects]]
-from = "/api/model/password/finalize-16-12-88"
-to = "/.netlify/functions/model-password-finalize-16-12-88"
-status = 200
-force = true
-
-[[redirects]]
-from = "/portal/reset-16-12-88"
-to = "/portal/access.html"
-status = 200
-force = true
-
-[[headers]]
-for = "/portal/reset*"
-  [headers.values]
-  Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
-  Pragma = "no-cache"
-  Expires = "0"
-
-[[headers]]
-for = "/portal-password.html"
-  [headers.values]
-  Cache-Control = "no-store, no-cache, must-revalidate, max-age=0"
-  Pragma = "no-cache"
-  Expires = "0"
-
-[[redirects]]
-  from = "/api/agent/decision-engine/v1"
-  to = "/.netlify/functions/agent-decision-engine-v1"
-  status = 200
-
-[[redirects]]
-  from = "/admin/api/agent/decision-engine/v1"
-  to = "/.netlify/functions/agent-decision-engine-v1"
-  status = 200
-
-[[redirects]]
-from = "/api/agent/client-fit/v1"
-to = "/.netlify/functions/agent-client-fit-intelligence-v1"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/client-fit/v1"
-to = "/.netlify/functions/agent-client-fit-intelligence-v1"
-status = 200
-force = true
-
-[[redirects]]
-from = "/api/agent/opportunities/v1"
-to = "/.netlify/functions/agent-opportunity-intelligence-v1"
-status = 200
-force = true
-
-[[redirects]]
-from = "/admin/api/agent/opportunities/v1"
-to = "/.netlify/functions/agent-opportunity-intelligence-v1"
 status = 200
 force = true

@@ -19,19 +19,12 @@ export const handler = async event => {
     const link=consumed.link,recipientState=consumed.recipient||null;
 
     const [{data:pkg,error:pkgErr},{data:org,error:orgErr},{data:recipient,error:recipientErr}]=await Promise.all([
-      admin.from('packages').select('id,organization_id,title,status,intro_message,layout_key,market_id,expires_at,metadata,created_at,updated_at').eq('id',link.package_id).eq('organization_id',link.organization_id).maybeSingle(),
+      admin.from('packages').select('id,organization_id,title,status,intro_message,layout_key,expires_at,metadata,created_at,updated_at').eq('id',link.package_id).eq('organization_id',link.organization_id).maybeSingle(),
       admin.from('organizations').select('id,name,slug,status').eq('id',link.organization_id).maybeSingle(),
       link.recipient_id?admin.from('package_recipients').select('id,display_name').eq('id',link.recipient_id).eq('organization_id',link.organization_id).maybeSingle():Promise.resolve({data:recipientState,error:null})
     ]);
     if(pkgErr)throw pkgErr;if(orgErr)throw orgErr;if(recipientErr)throw recipientErr;
     if(!pkg || !org || org.status!=='active' || ['revoked','archived','expired'].includes(String(pkg.status||''))) return json(404,{error:'Package link is unavailable'},cacheHeaders);
-
-    let packageMarket=null;
-    if(pkg.market_id){
-      const {data:marketRow,error:marketErr}=await admin.from('markets').select('id,name,code,city').eq('organization_id',link.organization_id).eq('id',pkg.market_id).maybeSingle();
-      if(marketErr)throw marketErr;
-      packageMarket=marketRow||null;
-    }
 
     const packageModels=await rows(admin.from('package_models').select('id,model_id,sort_order,headline,note,visible').eq('organization_id',link.organization_id).eq('package_id',pkg.id).eq('visible',true).order('sort_order'));
     const modelIds=packageModels.map(x=>x.model_id);
@@ -66,6 +59,6 @@ export const handler = async event => {
     }
 
     const approvedSections=Array.isArray(pkg.metadata?.approved_sections)?pkg.metadata.approved_sections:['book','digitals','motion'];
-    return json(200,{ok:true,verified:true,organization:{name:org.name,slug:org.slug},package:{id:pkg.id,title:pkg.title,intro_message:pkg.intro_message,layout_key:pkg.layout_key,market:packageMarket,expires_at:link.expires_at||pkg.expires_at||null,allow_downloads:link.allow_downloads,profile_fields:profileFields,asset_types:Array.isArray(pkg.metadata?.asset_types)?pkg.metadata.asset_types:[],approved_sections:approvedSections},recipient:{display_name:recipient?.display_name||null},models:modelsOut,feedback_state:{shortlisted_model_ids:[...shortlistState]}},cacheHeaders);
+    return json(200,{ok:true,verified:true,organization:{name:org.name,slug:org.slug},package:{id:pkg.id,title:pkg.title,intro_message:pkg.intro_message,layout_key:pkg.layout_key,expires_at:link.expires_at||pkg.expires_at||null,allow_downloads:link.allow_downloads,profile_fields:profileFields,asset_types:Array.isArray(pkg.metadata?.asset_types)?pkg.metadata.asset_types:[],approved_sections:approvedSections},recipient:{display_name:recipient?.display_name||null},models:modelsOut,feedback_state:{shortlisted_model_ids:[...shortlistState]}},cacheHeaders);
   }catch(error){const r=errorResponse(error);r.headers={...r.headers,...cacheHeaders};return r;}
 };

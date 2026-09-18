@@ -59,7 +59,7 @@ export const handler=async(event)=>{
         if(!allowed)return json(403,{error:'Editorial publishing permission required'});
         const city=cleanText(body.city).toLowerCase();
         const status=cleanText(body.status||'draft').toLowerCase();
-        if(!['newyork','paris','both'].includes(city))return json(400,{error:'Market must be New York, Paris, or Both'});
+        if(!['newyork','paris'].includes(city))return json(400,{error:'Market must be New York or Paris'});
         if(!['draft','published','archived'].includes(status))return json(400,{error:'Invalid story status'});
         const modelName=cleanText(body.modelName);
         const brand=cleanText(body.brand);

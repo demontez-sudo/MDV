@@ -34,14 +34,14 @@ async function packageEmailPreview(admin,organizationId,packageId){
   return packageModels.map(pm=>{const m=modelMap.get(pm.model_id)||{},pp=profileMap.get(pm.model_id)||{},mm=measurementMap.get(pm.model_id)||{},wm=pp.metadata&&pp.metadata.website_profile||{},route=String(wm.route_key||m.legacy_key||m.public_slug||'').trim(),media=selectedMap.get(pm.id)||fallbackMap.get(pm.model_id)||{};return {...m,height_display:mm.height_display||null,bust_display:mm.bust_display||mm.chest_display||null,waist_display:mm.waist_display||null,hips_display:mm.hips_display||null,image_url:media.url||null,profile_url:pp.published&&route?'https://www.maisondeveux.com/'+encodeURIComponent(route):null}}).slice(0,20);
 }
 
-function buildPackageEmailHtml({organization,settings,user,recipient,pkg,intro,publicUrl,preview,packageMarket}){
+function buildPackageEmailHtml({organization,settings,user,recipient,pkg,intro,publicUrl,preview}){
   const items=Array.isArray(preview)?preview:[];
-  const shown=items.slice(0,20);
+  const shown=items.slice(0,4);
   const count=items.length||shown.length||1;
   const agencyName=escHtml(organization?.name||'Maison de Veux');
   const recipientName=escHtml(recipient?.display_name||'');
   const greeting=recipientName?`Dear ${recipientName},`:'Hello,';
-  const marketRaw=String(packageMarket||shown.find(x=>x?.primary_market_label)?.primary_market_label||'New York').trim();
+  const marketRaw=String(shown.find(x=>x?.primary_market_label)?.primary_market_label||'New York').trim();
   const market=escHtml(marketRaw||'New York');
   const safeIntro=escHtml(intro||`Maison de Veux has prepared a private selection of models currently available in ${marketRaw||'New York'} for castings, fittings, shoots and runway. Each model has been selected specifically for your consideration.`);
 
@@ -129,18 +129,18 @@ function buildPackageEmailHtml({organization,settings,user,recipient,pkg,intro,p
 
   const portrait=(m,h=188)=>{
     if(!m?.image_url)return `<div style="height:${h}px;background:#e6ddd0;display:table;width:100%;text-align:center"><div style="display:table-cell;vertical-align:middle;font-family:Georgia,serif;font-size:24px;color:#8c7e6e">${escHtml((m?.display_name||'M').slice(0,1))}</div></div>`;
-    return `<img src="${escHtml(m.image_url)}" alt="${escHtml(m.display_name||'Maison de Veux model')}" width="310" style="display:block;width:100%;max-width:100%;height:auto;border:0;outline:none;text-decoration:none">`;
+    return `<img src="${escHtml(m.image_url)}" alt="${escHtml(m.display_name||'Maison de Veux model')}" width="310" style="display:block;width:100%;height:${h}px;object-fit:cover;object-position:center top;border:0">`;
   };
 
   const singleModel=shown.length===1;
   const heroCells=singleModel
     ? `<td align="center" style="padding:0"><div style="width:280px;max-width:72%;margin:0 auto">${portrait(shown[0],340)}</div></td>`
-    : shown.slice(0,3).map(m=>`<td width="33.333%" valign="top" style="padding:0 1px">${portrait(m,165)}</td>`).join('');
+    : shown.map(m=>`<td width="${Math.floor(100/Math.max(shown.length,1))}%" valign="top" style="padding:0 1px">${portrait(m,165)}</td>`).join('');
   const cardCells=[];
   for(let i=0;i<shown.length;i++){
     const m=shown[i],href=`${publicUrl}#model-${encodeURIComponent(m.id||'')}`;
     const sub=[m.primary_market_label||marketRaw,'Available',m.stage].filter(Boolean).map(escHtml).join(' · ');
-    cardCells.push(`<td class="model-card" width="33.333%" valign="top" style="width:33.333%;padding:0 6px 20px">
+    cardCells.push(`<td class="model-card" width="50%" valign="top" style="width:50%;padding:0 5px 12px">
       <a href="${escHtml(href)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#171512;display:block">
         ${portrait(m,180)}
         <div style="padding:13px 12px 15px;border:1px solid #d8cdbd;border-top:0;background:#f8f3eb">
@@ -153,8 +153,8 @@ function buildPackageEmailHtml({organization,settings,user,recipient,pkg,intro,p
     </td>`);
   }
   const previewRows=[];
-  for(let i=0;i<cardCells.length;i+=3){
-    previewRows.push(`<tr>${cardCells[i]||'<td width="33.333%"></td>'}${cardCells[i+1]||'<td width="33.333%"></td>'}${cardCells[i+2]||'<td width="33.333%"></td>'}</tr>`);
+  for(let i=0;i<cardCells.length;i+=2){
+    previewRows.push(`<tr>${cardCells[i]||'<td width="50%"></td>'}${cardCells[i+1]||'<td width="50%"></td>'}</tr>`);
   }
 
   return `<!doctype html>
@@ -167,7 +167,7 @@ function buildPackageEmailHtml({organization,settings,user,recipient,pkg,intro,p
   .shell{width:100%!important}
   .pad{padding-left:22px!important;padding-right:22px!important}
   .hero-title{font-size:38px!important}
-  .model-card{width:33.333%!important;display:table-cell!important}
+  .model-card{width:50%!important;display:table-cell!important}
 }
 </style>
 </head>
@@ -338,14 +338,8 @@ async function sendExistingPackage({admin,organization,user,event,pkg,body,recip
   const directFallbackUrl=normalizePublicBase(process.env.VEUX_PACKAGE_FALLBACK_BASE||'https://maison-agent.netlify.app')+sharePath;
   const subject=String(body.subject||`Maison de Veux — ${pkg.title}`);
   const intro=String(body.email_message||body.intro_message||pkg.intro_message||'Please review the models selected for you by Maison de Veux.');
-  let packageMarket=null;
-  if(pkg.market_id){
-    const {data:marketRow,error:marketErr}=await admin.from('markets').select('name,city,code').eq('organization_id',organization.id).eq('id',pkg.market_id).maybeSingle();
-    if(marketErr)throw marketErr;
-    packageMarket=marketRow?.name||marketRow?.city||marketRow?.code||null;
-  }
   const preview=await packageEmailPreview(admin,organization.id,pkg.id);
-  const html=buildPackageEmailHtml({organization,settings,user,recipient,pkg,intro,publicUrl:canonicalClientUrl,preview,packageMarket});
+  const html=buildPackageEmailHtml({organization,settings,user,recipient,pkg,intro,publicUrl:canonicalClientUrl,preview});
   const {data:msg,error:msgErr}=await admin.from('email_messages').insert({organization_id:organization.id,from_name:settings?.sender_name||organization.name||'Maison de Veux',from_email:fromEmail,reply_to:cleanEmail(settings?.reply_to_email)||cleanEmail(user.email)||null,to_emails:[recipientEmail],cc_emails:[],bcc_emails:[],subject,html_body:html,text_body:`${intro}\n\nView package: ${canonicalClientUrl}`,source_type:'package',source_id:pkg.id,idempotency_key:`package:${pkg.id}:${recipient.id}:${link.id}`,created_by:user.id,metadata:{package_id:pkg.id,recipient_id:recipient.id,share_link_id:link.id}}).select('*').single();
   if(msgErr)throw msgErr;
 
