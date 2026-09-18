@@ -1,9 +1,0 @@
-/* VEUX Agent 16.9.97 — Calendar Control Hardening */
-.vx97-filtered-out{display:none!important}
-.vx82-picker-menu.vx97-no-results:after{content:'No models match this search';display:block;padding:14px 16px;border-top:1px solid var(--line);font:11px var(--fM);letter-spacing:.08em;color:var(--mute)}
-.vx85-models.vx97-no-results:after{content:'No models match this search';display:block;margin:10px 0 0;padding:12px;border:1px solid var(--line);font:11px var(--fM);color:var(--mute)}
-.vx84-model-picker .vx82-picker-menu{max-height:360px;overflow:auto;overscroll-behavior:contain}
-.vx84-model-picker .vx82-picker-menu.open{display:block!important}
-.vx84-model-picker [data-model]:focus-visible,.vx85-models [data-model]:focus-visible{outline:1px solid var(--gold)!important;outline-offset:-2px!important}
-.vx75-tabs button,.vx75-date button,.vx75-add,.vx84-agency,.vx84-model-picker>button{min-height:42px}
-@media(max-width:900px){.vx84-model-picker .vx82-picker-menu{max-height:50vh}.vx75-tabs button,.vx75-date button,.vx75-add,.vx84-agency,.vx84-model-picker>button{min-height:44px}}

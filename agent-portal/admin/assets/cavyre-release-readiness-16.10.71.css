@@ -1,6 +1,0 @@
-/* 16.10.71 release guard: no visual redesign. */
-html,body{min-height:100%}
-@media(max-width:900px){
-  html,body{width:100%;max-width:100vw}
-  body{padding-bottom:env(safe-area-inset-bottom)}
-}
