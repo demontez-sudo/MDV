@@ -1,0 +1,5 @@
+/* VEUX Agent 16.10.22 — Login Performance Guard */
+#login{contain:layout style paint;isolation:isolate}
+#login input{will-change:auto!important;transform:none!important;filter:none!important;backdrop-filter:none!important;transition:border-color .1s ease,background-color .1s ease!important}
+#login .lg-card,#login .lg-field,#login .lg-inp{filter:none!important;backdrop-filter:none!important}
+body:not([data-veux-session-ready="1"]) #app{visibility:hidden!important;pointer-events:none!important}

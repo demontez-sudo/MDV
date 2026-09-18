@@ -1,0 +1,19 @@
+
+/* CAVYRE 16.12.62 — Package CRM quick create */
+.cvy-pkg-crm-tools{margin:14px 0 16px;border:1px solid var(--line2,#5a4036);background:#11100d;padding:12px}
+.cvy-pkg-crm-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.cvy-pkg-crm-head small{display:block;font:8px var(--fM);letter-spacing:.14em;color:var(--gold)}
+.cvy-pkg-crm-head b{display:block;margin-top:4px;font-size:10px;font-weight:400;color:var(--ink)}
+.cvy-pkg-crm-head>div:last-child{display:flex;gap:7px}
+.cvy-pkg-crm-tools button{border:1px solid var(--line2,#5a4036);background:#18130f;color:var(--ink);padding:8px 10px;font:8px var(--fM);letter-spacing:.08em;text-transform:uppercase}
+.cvy-pkg-crm-tools button.primary{background:var(--gold);color:#15100c;border-color:var(--gold)}
+.cvy-pkg-crm-select{display:grid;grid-template-columns:1fr auto;gap:8px}
+.cvy-pkg-crm-select select,.cvy-pkg-mini-grid input,.cvy-pkg-mini-grid select{width:100%;min-height:38px;background:#0c0b09;border:1px solid var(--line2,#5a4036);color:var(--ink);padding:8px 10px;font-size:10px}
+.cvy-pkg-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}
+.cvy-pkg-mini-grid label{font:8px var(--fM);letter-spacing:.08em;color:var(--mute);text-transform:uppercase}
+.cvy-pkg-mini-grid label.wide{grid-column:1/-1}
+.cvy-pkg-mini-grid input,.cvy-pkg-mini-grid select{display:block;margin-top:5px}
+.cvy-pkg-mini-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+#cvy-pkg-crm-status{min-height:14px;margin-top:8px;font:8px var(--fM);color:#8ec59b}
+#cvy-pkg-crm-status.bad{color:#e9776f}
+@media(max-width:700px){.cvy-pkg-crm-head{align-items:flex-start;flex-direction:column}.cvy-pkg-mini-grid{grid-template-columns:1fr}}

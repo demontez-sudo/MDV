@@ -1,0 +1,126 @@
+
+/* CAVYRE 16.11.05 — Agency Overview chart height / Priority Stream decoupling */
+
+/* The two columns must size independently. */
+.vx17-main-grid{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.7fr) minmax(330px,.9fr)!important;
+  gap:16px!important;
+  align-items:start!important;
+}
+
+/* Agency Overview owns its intrinsic height; do not stretch to Priority Stream. */
+.vx17-main-grid>.vx17-panel:first-child{
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+}
+
+/* Priority Stream gets its own controlled viewport. */
+.vx17-main-grid>.vx17-panel:last-child{
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:620px!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+
+.vx17-main-grid>.vx17-panel:last-child .vx17-priority{
+  min-height:0!important;
+  max-height:560px!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  padding-right:10px!important;
+}
+
+/* Compact chart body. */
+.vx17-bars{
+  min-height:0!important;
+  height:270px!important;
+  max-height:270px!important;
+  padding:24px 18px 34px!important;
+  display:flex!important;
+  align-items:flex-end!important;
+  gap:14px!important;
+  overflow:visible!important;
+}
+
+/* Bars fill the compact chart instead of sitting in a huge empty canvas. */
+.vx17-bar{
+  align-self:flex-end!important;
+  max-height:210px!important;
+  min-height:28px!important;
+}
+
+/* KPI section stays attached directly to the graph. */
+.vx17-kpis{
+  margin:0!important;
+}
+
+.vx17-main-grid>.vx17-panel:first-child .vx17-kpis + .vx17-bars{
+  margin-top:0!important;
+}
+
+/* Remove inherited fixed heights that create the empty black floor. */
+.vx17-main-grid>.vx17-panel:first-child,
+.vx17-main-grid>.vx17-panel:first-child > div,
+.vx17-main-grid>.vx17-panel:first-child > section{
+  height:auto!important;
+}
+
+/* Keep scrollbars visually quiet. */
+.vx17-priority{
+  scrollbar-width:thin!important;
+  scrollbar-color:rgba(255,255,255,.16) transparent!important;
+}
+.vx17-priority::-webkit-scrollbar{width:6px!important}
+.vx17-priority::-webkit-scrollbar-track{background:transparent!important}
+.vx17-priority::-webkit-scrollbar-thumb{
+  background:rgba(255,255,255,.14)!important;
+  border-radius:6px!important;
+}
+
+/* Wide screens still remain compact. */
+@media(min-width:1500px){
+  .vx17-bars{
+    height:285px!important;
+    max-height:285px!important;
+  }
+  .vx17-bar{
+    max-height:225px!important;
+  }
+  .vx17-main-grid>.vx17-panel:last-child{
+    max-height:640px!important;
+  }
+  .vx17-main-grid>.vx17-panel:last-child .vx17-priority{
+    max-height:580px!important;
+  }
+}
+
+/* Tablet: stack panels, no artificial scroll height. */
+@media(max-width:1150px){
+  .vx17-main-grid{
+    grid-template-columns:1fr!important;
+  }
+  .vx17-main-grid>.vx17-panel:last-child{
+    max-height:none!important;
+  }
+  .vx17-main-grid>.vx17-panel:last-child .vx17-priority{
+    max-height:none!important;
+    overflow-y:visible!important;
+  }
+}
+
+/* Mobile chart stays concise. */
+@media(max-width:760px){
+  .vx17-bars{
+    height:220px!important;
+    max-height:220px!important;
+    padding:18px 12px 30px!important;
+    gap:8px!important;
+  }
+  .vx17-bar{
+    max-height:165px!important;
+  }
+}

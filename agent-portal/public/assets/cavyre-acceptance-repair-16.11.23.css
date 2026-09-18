@@ -1,0 +1,68 @@
+
+/* 16.11.23: exact live acceptance repair */
+
+/* Market Movement cannot inherit generic section > div 3-column layout */
+#p-calendar .vx161123-market{
+  display:block!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  padding:14px 0 0!important;
+  border-top:1px solid rgba(255,255,255,.10)!important;
+}
+#p-calendar .vx161123-market>h3{
+  display:block!important;margin:0 0 10px!important;font-size:10px!important;line-height:1.25!important;
+}
+#p-calendar .vx161123-market-grid{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:8px!important;
+  width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+}
+#p-calendar .vx89-flow-overview .vx161123-market-grid>.vx161123-market-card{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:center!important;
+  gap:5px!important;
+  min-width:0!important;
+  min-height:76px!important;
+  margin:0!important;
+  padding:10px 11px!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  border-radius:7px!important;
+  background:rgba(255,255,255,.018)!important;
+}
+#p-calendar .vx89-flow-overview .vx161123-market-card>span,
+#p-calendar .vx89-flow-overview .vx161123-market-card>b,
+#p-calendar .vx89-flow-overview .vx161123-market-card>small{
+  display:block!important;
+  position:static!important;
+  width:auto!important;
+  max-width:100%!important;
+  margin:0!important;
+  padding:0!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  transform:none!important;
+}
+#p-calendar .vx89-flow-overview .vx161123-market-card>span{font-size:10px!important;line-height:1.2!important}
+#p-calendar .vx89-flow-overview .vx161123-market-card>b{font-size:20px!important;line-height:1!important;font-weight:400!important}
+#p-calendar .vx89-flow-overview .vx161123-market-card>small{font-size:8.5px!important;line-height:1.25!important;color:#8f8a82!important}
+
+/* Month shared top menu — identical visibility to Day/3 Day/Week */
+#p-calendar .vx75-calendar:has(.vx161123-month-layout)>.vx75-control{
+  display:grid!important;visibility:visible!important;opacity:1!important;
+}
+#p-calendar .vx75-calendar:has(.vx161123-month-layout)>.vx75-control .vx75-date,
+#p-calendar .vx75-calendar:has(.vx161123-month-layout)>.vx75-control .vx75-tabs{
+  display:flex!important;visibility:visible!important;opacity:1!important;
+}
+#p-calendar .vx75-calendar:has(.vx161123-month-layout)>.vx1047-scopebar{
+  display:grid!important;visibility:visible!important;opacity:1!important;
+}
+
+/* Never allow a right rail in Month */
+#p-calendar .vx161123-month-layout{grid-template-columns:minmax(0,1fr)!important}

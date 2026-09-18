@@ -1,0 +1,135 @@
+
+/* VEUX Agent 16.10.35 — Event Detail Scroll Repair */
+
+/* Overlay itself can absorb wheel/touch movement without moving the portal. */
+html[data-veux-wave] .vx82-modal-back{
+  align-items:center!important;
+  overflow:hidden!important;
+  overscroll-behavior:contain!important;
+  touch-action:pan-y!important;
+}
+
+/* Event detail becomes a fixed-height application panel. */
+html[data-veux-wave] .vx161016-event-modal{
+  width:min(1120px,94vw)!important;
+  height:min(860px,92dvh)!important;
+  max-height:92dvh!important;
+  display:grid!important;
+  grid-template-rows:auto auto minmax(0,1fr) auto!important;
+  overflow:hidden!important;
+  min-height:0!important;
+}
+
+/* Header remains visible while content scrolls. */
+html[data-veux-wave] .vx161016-event-modal>header{
+  position:relative!important;
+  z-index:4!important;
+  flex:0 0 auto!important;
+  background:color-mix(in srgb,var(--skin-card) 96%,var(--skin-accent) 4%)!important;
+}
+html[data-veux-wave] .vx161016-detail-kpis{
+  position:relative!important;
+  z-index:3!important;
+  flex:0 0 auto!important;
+  background:color-mix(in srgb,var(--skin-card2) 94%,var(--skin-accent) 6%)!important;
+}
+
+/* Critical fix: min-height:0 lets the grid children actually scroll. */
+html[data-veux-wave] .vx161016-event-body{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 280px!important;
+  min-height:0!important;
+  height:auto!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+
+/* Both content columns independently scroll. */
+html[data-veux-wave] .vx161016-event-body>main,
+html[data-veux-wave] .vx161016-event-body>aside{
+  min-height:0!important;
+  height:100%!important;
+  max-height:none!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain!important;
+  -webkit-overflow-scrolling:touch!important;
+  scrollbar-width:thin!important;
+  scrollbar-color:var(--skin-accent) color-mix(in srgb,var(--skin-card2) 84%,transparent)!important;
+}
+html[data-veux-wave] .vx161016-event-body>main{
+  padding:20px 24px 34px!important;
+}
+html[data-veux-wave] .vx161016-event-body>aside{
+  padding:20px 18px 34px!important;
+}
+
+/* Visible but refined scrollbar. */
+html[data-veux-wave] .vx161016-event-body>main::-webkit-scrollbar,
+html[data-veux-wave] .vx161016-event-body>aside::-webkit-scrollbar{
+  width:7px!important;
+}
+html[data-veux-wave] .vx161016-event-body>main::-webkit-scrollbar-track,
+html[data-veux-wave] .vx161016-event-body>aside::-webkit-scrollbar-track{
+  background:color-mix(in srgb,var(--skin-card2) 88%,transparent)!important;
+}
+html[data-veux-wave] .vx161016-event-body>main::-webkit-scrollbar-thumb,
+html[data-veux-wave] .vx161016-event-body>aside::-webkit-scrollbar-thumb{
+  background:color-mix(in srgb,var(--skin-accent) 65%,var(--skin-line2))!important;
+  border-radius:8px!important;
+}
+
+/* Footer never disappears beneath a long model roster. */
+html[data-veux-wave] .vx161016-event-modal>footer{
+  position:relative!important;
+  z-index:5!important;
+  margin:0!important;
+  background:color-mix(in srgb,var(--skin-card) 97%,var(--skin-accent) 3%)!important;
+  border-top:1px solid var(--skin-line)!important;
+}
+
+/* Large assigned rosters remain readable in two compact columns. */
+html[data-veux-wave] .vx161016-event-body .vx82-people{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:9px 18px!important;
+}
+html[data-veux-wave] .vx161016-event-body .vx82-people>div{
+  min-width:0!important;
+}
+html[data-veux-wave] .vx161016-event-body .vx82-people span{
+  min-width:0!important;
+}
+html[data-veux-wave] .vx161016-event-body .vx82-people span b{
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+
+/* Smaller screens use one scroll region for easier touch control. */
+@media(max-width:820px){
+  html[data-veux-wave] .vx82-modal-back{
+    padding:10px!important;
+  }
+  html[data-veux-wave] .vx161016-event-modal{
+    width:100%!important;
+    height:calc(100dvh - 20px)!important;
+    max-height:calc(100dvh - 20px)!important;
+  }
+  html[data-veux-wave] .vx161016-event-body{
+    grid-template-columns:1fr!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain!important;
+  }
+  html[data-veux-wave] .vx161016-event-body>main,
+  html[data-veux-wave] .vx161016-event-body>aside{
+    height:auto!important;
+    overflow:visible!important;
+  }
+  html[data-veux-wave] .vx161016-event-body>aside{
+    border-left:0!important;
+    border-top:1px solid var(--skin-line)!important;
+  }
+  html[data-veux-wave] .vx161016-event-body .vx82-people{
+    grid-template-columns:1fr!important;
+  }
+}

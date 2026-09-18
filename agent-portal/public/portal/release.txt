@@ -1,0 +1,3 @@
+CAVYRE MODEL ACCESS 16.12.97
+route=/portal/access.html
+legacy_reset=disabled

@@ -1,0 +1,85 @@
+/* VEUX Agent 16.9.92 — Production Typography + Interface Polish
+   Final non-destructive visual layer. Keeps working module logic intact. */
+:root{
+  --vx-text-display:46px;
+  --vx-text-page:38px;
+  --vx-text-card:18px;
+  --vx-text-body:14px;
+  --vx-text-ui:13px;
+  --vx-text-label:11px;
+  --vx-text-micro:10px;
+  --vx-control-h:38px;
+  --vx-control-h-mobile:44px;
+}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{font-size:var(--vx-text-body)!important;line-height:1.5}
+
+/* Editorial hierarchy */
+.ph-h1{font-size:clamp(36px,3.1vw,46px)!important;line-height:1.02!important}
+.ph-sub{font-size:14px!important;line-height:1.55!important;max-width:780px}
+.ph-eye,.sl-t,.v14a-label,.v14a-section-title b{font-size:11px!important;line-height:1.3!important}
+.row-title,.tk-title,.v14a-row-title,.v14a-model-name{font-size:18px!important;line-height:1.2!important}
+.row-meta,.tk-meta,.v14a-meta,.v14a-row-sub,.v14a-model-sub{font-size:12px!important;line-height:1.45!important}
+
+/* Navigation / chrome */
+.tb-tag,.tb-role{font-size:10px!important}
+.sn-b{font-size:13px!important;min-height:46px}
+.sidenav:after{font-size:10px!important;line-height:1.7!important}
+
+/* Controls must read as controls */
+button,.btn,[role="button"]{font-size:11px!important;line-height:1.2}
+.btn{min-height:var(--vx-control-h);padding:10px 15px!important}
+input,select,textarea,.f-inp,.lg-inp{font-size:13px!important;line-height:1.4}
+.f-lbl,.m-lbl,.m-eye{font-size:11px!important;line-height:1.3!important}
+.tag,.badge,.v14a-badge{font-size:10px!important;line-height:1.2!important}
+
+/* Core density correction */
+.stat{padding:20px!important}
+.stat-l{font-size:11px!important;line-height:1.35!important}
+.cnt{padding-bottom:84px!important}
+.letter,.row,.ticket,.mc,.alert,.mp-card,.gallery-card{line-height:1.45}
+
+/* Calendar suite — readability floor and information hierarchy */
+[class^="vx75-"] small,[class*=" vx75-"] small,
+[class^="vx83-"] small,[class*=" vx83-"] small,
+[class^="vx84-"] small,[class*=" vx84-"] small,
+[class^="vx85-"] small,[class*=" vx85-"] small,
+[class^="vx89-"] small,[class*=" vx89-"] small,
+[class^="vx91-"] small,[class*=" vx91-"] small{font-size:10px!important;line-height:1.35!important}
+.vx75-event b,.vx75-event strong,.vx85-intel-card b{font-size:12px!important;line-height:1.3!important}
+.vx75-event span,.vx75-event small,.vx89-flow-day .vx75-event span,.vx89-flow-day .vx75-event small{font-size:11px!important;line-height:1.35!important}
+.vx75-time span,.vx91-runway .vx75-time span{font-size:11px!important}
+.vx75-market-head b,.vx75-runway-grid>article>header small,.vx75-runway-grid>article>header span,
+.vx91-runway .vx75-runway-grid>article>header small,.vx91-runway .vx75-runway-grid>article>header span,.vx91-runway .vx75-market-head b{font-size:11px!important}
+.vx75-attention,.vx75-attention b,.vx75-attention span,.vx91-runway .vx75-attention,.vx91-runway .vx75-attention b,.vx91-runway .vx75-attention span{font-size:11px!important;line-height:1.4!important}
+.vx83-view-more,.vx87-view-more{font-size:10px!important}
+
+/* Season Matrix */
+.vx85-models>header>small,.vx85-all,.vx85-more,.vx85-model-all button,
+.vx85-filters>header b,.vx85-filters>header button,.vx85-filters label,
+.vx85-season-tabs button,.vx85-matrix>header>div>button:last-child,.vx85-matrix nav button,
+.vx85-day-intel h3,.vx85-day-intel section>header small,.vx85-day-intel section>p,
+.vx85-ai-watch li,.vx85-ai-watch>button,.vx85-matrix>footer span,.vx85-dow b{font-size:11px!important;line-height:1.35!important}
+.vx85-models>header input{font-size:12px!important}
+.vx85-day-dots span,.vx85-day-dots b,.vx85-model-list span b,.vx85-model-list span small,
+.vx85-day-intel>header>div>small,.vx85-intel-card time,.vx85-intel-card span b,.vx85-intel-card span small,.vx85-intel-card em{font-size:10px!important}
+
+/* Better visual differentiation between status and actions */
+.tag,.v14a-badge{padding:4px 7px!important;min-height:20px;display:inline-flex;align-items:center}
+button:not(:disabled),.btn:not(:disabled),[role="button"]{cursor:pointer}
+
+/* Mobile is a working interface, not compressed desktop */
+@media(max-width:760px){
+  body{font-size:15px!important}
+  .ph{padding:22px 18px 16px!important}
+  .ph-h1{font-size:34px!important;line-height:1.02!important}
+  .ph-sub{font-size:14px!important;line-height:1.5!important}
+  .cnt{padding-left:16px!important;padding-right:16px!important;padding-bottom:72px!important}
+  .sn-b{font-size:13px!important}
+  button,.btn,[role="button"]{font-size:12px!important;min-height:var(--vx-control-h-mobile)}
+  input,select,textarea,.f-inp,.lg-inp{font-size:14px!important;min-height:44px}
+  .tag,.badge,.v14a-badge{font-size:10px!important}
+  .row-meta,.tk-meta,.v14a-meta,.v14a-row-sub,.v14a-model-sub{font-size:12px!important}
+  .stat{padding:16px!important}
+  .stat-l{font-size:11px!important}
+}

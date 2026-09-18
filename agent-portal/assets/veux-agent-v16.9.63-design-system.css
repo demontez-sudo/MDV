@@ -1,0 +1,22 @@
+/* VEUX DESK 16.9.63 — unified design and interaction system */
+:root{--vx-control-h:40px;--vx-radius:10px;--vx-focus:rgba(211,165,79,.86);--vx-success:#9fbd98;--vx-warning:#d3a54f;--vx-danger:#d58b7d;--vx-info:#8faecb;--vx-ease:160ms ease}
+button,.btn,[role="button"],input,select,textarea{border-radius:var(--vx-radius)}
+button,.btn,[role="button"]{transition:transform var(--vx-ease),border-color var(--vx-ease),background-color var(--vx-ease),box-shadow var(--vx-ease),opacity var(--vx-ease)}
+button:not(:disabled):active,.btn:not(:disabled):active,[role="button"]:active{transform:scale(.98)}
+button:focus-visible,.btn:focus-visible,[role="button"]:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--vx-focus)!important;outline-offset:2px!important}
+input,select,textarea{border-color:rgba(211,165,79,.24)!important;transition:border-color var(--vx-ease),box-shadow var(--vx-ease),background-color var(--vx-ease)}
+input:focus,select:focus,textarea:focus{border-color:rgba(211,165,79,.78)!important;box-shadow:0 0 0 3px rgba(211,165,79,.09)}
+button:disabled,.btn:disabled,[aria-disabled="true"]{opacity:.46!important;cursor:not-allowed!important;transform:none!important}
+.toast,[role="status"],[role="alert"]{border-radius:var(--vx-radius);box-shadow:0 18px 48px rgba(0,0,0,.42)}
+.pill,.badge,.status,.v15m-pill{border-radius:999px}
+.is-success,[data-status="complete"],[data-status="approved"]{--vx-state:var(--vx-success)}
+.is-warning,[data-status="hold"],[data-status="pending"]{--vx-state:var(--vx-warning)}
+.is-danger,[data-status="failed"],[data-status="declined"]{--vx-state:var(--vx-danger)}
+.is-info,[data-status="running"],[data-status="scheduled"]{--vx-state:var(--vx-info)}
+.is-loading,[aria-busy="true"]{cursor:progress!important;pointer-events:none}
+.is-loading::after,[aria-busy="true"]::after{content:"";display:inline-block;width:12px;height:12px;margin-left:8px;border:1.5px solid currentColor;border-right-color:transparent;border-radius:50%;vertical-align:-2px;animation:vx-spin .7s linear infinite}
+@keyframes vx-spin{to{transform:rotate(360deg)}}
+.modal,.v16m-modal,.v16860-media-dialog{border-radius:14px;box-shadow:0 34px 100px rgba(0,0,0,.6)}
+.empty,.empty-state,.v15m-empty{min-height:120px;display:grid;place-items:center;text-align:center;line-height:1.6}
+@media(max-width:760px){:root{--vx-control-h:44px}.toast{width:calc(100vw - 24px);bottom:calc(78px + env(safe-area-inset-bottom));text-align:center}.modal,.v16m-modal,.v16860-media-dialog{border-radius:16px 16px 0 0}}
+@media(prefers-reduced-motion:reduce){.is-loading::after,[aria-busy="true"]::after{animation-duration:1.4s}}

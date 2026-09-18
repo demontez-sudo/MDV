@@ -1,0 +1,14 @@
+/* CAVYRE 16.15.05 — operating layout, no renderer replacement */
+#p-overview .vx17-command[data-cavyre-home-order="16.15.05"] .vx17-main-grid{margin-top:18px}
+#p-overview .vx17-command[data-cavyre-home-order="16.15.05"] .vx17-smart-grid{margin-top:12px;margin-bottom:22px}
+#p-calendar [data-cavyre-calendar-operation="16.15.05"] .cvy161505-vera-intel{border-left:1px solid rgba(194,153,84,.38)!important;background:linear-gradient(180deg,rgba(19,15,13,.98),rgba(8,8,8,.98))!important;min-width:290px}
+#p-calendar .cvy161505-vera-label{display:block;font:8px var(--fM);letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:7px}
+#p-calendar .vx89-flow-dashboard{grid-template-columns:minmax(220px,280px) minmax(0,1fr) minmax(290px,340px)!important;gap:14px!important;align-items:start!important}
+#p-calendar .vx89-flow-columns{display:grid!important;grid-template-columns:repeat(7,minmax(135px,1fr))!important;gap:8px!important;min-width:980px!important}
+#p-calendar .vx89-flow-board{min-width:0!important;overflow-x:auto!important}
+#p-calendar .vx89-flow-day{min-width:0!important;overflow:hidden!important}
+#p-calendar .vx89-flow-day main{display:flex!important;flex-direction:column!important;gap:7px!important}
+#p-calendar .vx89-flow-day [data-event-select]{position:relative!important;inset:auto!important;transform:none!important;max-width:100%!important}
+#p-calendar .vx75-control.vx161115-calendar-command{box-shadow:none!important;border:1px solid var(--line)!important;background:rgba(10,10,10,.76)!important}
+#p-calendar .vx75-control .vx75-identity,#p-calendar .vx75-control .vx75-plan{border:0!important;background:transparent!important;box-shadow:none!important}
+@media(max-width:1180px){#p-calendar .vx89-flow-dashboard{grid-template-columns:220px minmax(760px,1fr) 300px!important;overflow-x:auto}}

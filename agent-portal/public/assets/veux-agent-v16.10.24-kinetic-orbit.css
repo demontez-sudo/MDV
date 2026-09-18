@@ -1,0 +1,706 @@
+
+/* VEUX Agent 16.10.24 — KINETIC ORBIT
+   Bold 3D orbital instrument. Motion is decorative; event controls stay clickable.
+*/
+html[data-veux-wave] .vx75-orbit>main{
+  isolation:isolate!important;
+  background:
+    radial-gradient(ellipse at 50% 52%,color-mix(in srgb,var(--skin-glow) 82%,transparent),transparent 34%),
+    radial-gradient(ellipse at 50% 70%,color-mix(in srgb,var(--skin-soft) 58%,transparent),transparent 48%),
+    linear-gradient(180deg,var(--skin-0),color-mix(in srgb,var(--skin-1) 92%,var(--skin-accent) 8%))!important;
+}
+html[data-veux-wave] .vx75-dial{
+  width:760px!important;height:760px!important;
+  border-width:2px!important;
+  animation:vx102-orbit-breathe 7s ease-in-out infinite!important;
+}
+html[data-veux-wave] .vx75-dial:before,
+html[data-veux-wave] .vx75-dial:after{z-index:0!important}
+html[data-veux-wave] .vx75-dial .vx102-orbit-ring{
+  position:absolute!important;
+  left:50%!important;top:50%!important;
+  border-radius:50%!important;
+  pointer-events:none!important;
+  transform-style:preserve-3d!important;
+  z-index:1!important;
+}
+html[data-veux-wave] .vx102-ring-a{
+  width:650px;height:650px;margin:-325px 0 0 -325px;
+  border:2px solid color-mix(in srgb,var(--skin-accent) 48%,transparent)!important;
+  box-shadow:0 0 34px var(--skin-soft),inset 0 0 26px var(--skin-soft)!important;
+  animation:vx102-spin-a 18s linear infinite!important;
+}
+html[data-veux-wave] .vx102-ring-b{
+  width:530px;height:530px;margin:-265px 0 0 -265px;
+  border:1px dashed color-mix(in srgb,var(--skin-accent2) 44%,transparent)!important;
+  animation:vx102-spin-b 12s linear infinite!important;
+}
+html[data-veux-wave] .vx102-ring-c{
+  width:390px;height:390px;margin:-195px 0 0 -195px;
+  border:2px dotted color-mix(in srgb,var(--skin-accent) 38%,transparent)!important;
+  animation:vx102-spin-a 9s linear infinite reverse!important;
+}
+html[data-veux-wave] .vx102-orbit-sat{
+  position:absolute!important;
+  left:50%!important;top:50%!important;
+  width:14px!important;height:14px!important;
+  margin:-7px!important;
+  border-radius:50%!important;
+  pointer-events:none!important;
+  z-index:3!important;
+  background:var(--skin-accent2)!important;
+  box-shadow:0 0 8px var(--skin-accent2),0 0 24px var(--skin-accent),0 0 44px var(--skin-glow)!important;
+}
+html[data-veux-wave] .vx102-sat-a{animation:vx102-sat-a 10s linear infinite!important}
+html[data-veux-wave] .vx102-sat-b{width:9px!important;height:9px!important;margin:-4.5px!important;animation:vx102-sat-b 15s linear infinite reverse!important}
+html[data-veux-wave] .vx102-sat-c{width:6px!important;height:6px!important;margin:-3px!important;animation:vx102-sat-c 7s linear infinite!important}
+
+html[data-veux-wave] .vx75-orbit-node{
+  z-index:5!important;
+  border-width:2px!important;
+  backdrop-filter:blur(14px)!important;
+  box-shadow:
+    0 24px 38px rgba(0,0,0,.55),
+    0 0 0 1px color-mix(in srgb,var(--skin-accent) 24%,transparent),
+    inset 0 0 24px color-mix(in srgb,var(--skin-soft) 35%,transparent)!important;
+  transition:transform .32s cubic-bezier(.2,.8,.2,1),box-shadow .32s,border-color .32s!important;
+}
+html[data-veux-wave] .vx75-orbit-node>b{
+  width:38px!important;height:38px!important;
+  display:grid!important;place-items:center!important;
+  margin:0 auto 7px!important;
+  border:1px solid var(--skin-accent)!important;
+  border-radius:50%!important;
+  background:radial-gradient(circle,var(--skin-soft),var(--skin-card2) 70%)!important;
+  box-shadow:0 0 18px var(--skin-soft)!important;
+}
+html[data-veux-wave] .vx75-orbit-node.selected{
+  animation:vx102-node-selected 2.4s ease-in-out infinite!important;
+}
+html[data-veux-wave] .vx75-orbit-core{
+  z-index:6!important;
+  width:188px!important;height:188px!important;
+  border-width:2px!important;
+  box-shadow:0 30px 55px rgba(0,0,0,.55),0 0 50px var(--skin-glow),inset 0 0 36px var(--skin-soft)!important;
+}
+html[data-veux-wave] .vx75-orbit-core:after{
+  content:"VERA ORBIT";
+  position:absolute;left:50%;bottom:26px;transform:translateX(-50%);
+  font:700 8px/1 monospace;letter-spacing:.22em;color:var(--skin-accent2);white-space:nowrap;
+}
+html[data-veux-wave] .vx75-orbit-card{
+  z-index:30!important;
+  width:330px!important;
+  max-height:390px!important;
+  overflow:auto!important;
+  backdrop-filter:blur(20px)!important;
+  border-width:2px!important;
+}
+
+/* Compact model summary: never dump a 40-model roster into intelligence */
+html[data-veux-wave] .vx102-multi-models,
+html[data-veux-wave] .vx102-select-models{
+  width:100%!important;
+  min-height:66px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:flex-start!important;
+  gap:5px!important;
+  padding:13px 15px!important;
+  border:1px solid var(--skin-line2)!important;
+  border-radius:8px!important;
+  background:linear-gradient(135deg,var(--skin-card2),color-mix(in srgb,var(--skin-card) 84%,var(--skin-accent) 16%))!important;
+  color:var(--skin-text)!important;
+  text-align:left!important;
+}
+html[data-veux-wave] .vx102-multi-models b,
+html[data-veux-wave] .vx102-select-models b{font-size:13px!important;letter-spacing:.04em!important}
+html[data-veux-wave] .vx102-multi-models small,
+html[data-veux-wave] .vx102-select-models small{color:var(--skin-muted)!important}
+
+@keyframes vx102-spin-a{to{transform:rotateZ(360deg)}}
+@keyframes vx102-spin-b{to{transform:rotateZ(-360deg) rotateX(18deg)}}
+@keyframes vx102-sat-a{
+  from{transform:rotate(0deg) translateX(326px) rotate(0deg)}
+  to{transform:rotate(360deg) translateX(326px) rotate(-360deg)}
+}
+@keyframes vx102-sat-b{
+  from{transform:rotate(0deg) translateX(264px) rotate(0deg)}
+  to{transform:rotate(360deg) translateX(264px) rotate(-360deg)}
+}
+@keyframes vx102-sat-c{
+  from{transform:rotate(0deg) translateX(194px) rotate(0deg)}
+  to{transform:rotate(360deg) translateX(194px) rotate(-360deg)}
+}
+@keyframes vx102-orbit-breathe{
+  0%,100%{filter:brightness(.96) saturate(.95)}
+  50%{filter:brightness(1.12) saturate(1.08)}
+}
+@keyframes vx102-node-selected{
+  0%,100%{box-shadow:0 24px 38px rgba(0,0,0,.55),0 0 18px var(--skin-soft)}
+  50%{box-shadow:0 30px 48px rgba(0,0,0,.6),0 0 38px var(--skin-glow)}
+}
+@media(prefers-reduced-motion:reduce){
+  html[data-veux-wave] .vx75-dial,
+  html[data-veux-wave] .vx102-orbit-ring,
+  html[data-veux-wave] .vx102-orbit-sat,
+  html[data-veux-wave] .vx75-orbit-node.selected{animation:none!important}
+}
+
+
+/* 16.10.25 — Orbit hover lift
+   Hover/focus makes an Orbit date/event node rise toward the user. */
+html[data-veux-wave] .vx75-orbit-node:hover,
+html[data-veux-wave] .vx75-orbit-node:focus-visible{
+  transform:translateY(-16px) scale(1.075)!important;
+  z-index:18!important;
+  border-color:var(--skin-accent2)!important;
+  box-shadow:
+    0 38px 58px rgba(0,0,0,.68),
+    0 0 0 1px color-mix(in srgb,var(--skin-accent2) 48%,transparent),
+    0 0 34px var(--skin-glow),
+    inset 0 0 30px color-mix(in srgb,var(--skin-soft) 48%,transparent)!important;
+}
+html[data-veux-wave] .vx75-orbit-node:hover>b,
+html[data-veux-wave] .vx75-orbit-node:focus-visible>b{
+  transform:translateY(-3px) scale(1.08)!important;
+  box-shadow:0 0 26px var(--skin-glow)!important;
+}
+html[data-veux-wave] .vx75-orbit-node b{
+  transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s!important;
+}
+@media(prefers-reduced-motion:reduce){
+  html[data-veux-wave] .vx75-orbit-node:hover,
+  html[data-veux-wave] .vx75-orbit-node:focus-visible{
+    transform:translateY(-6px)!important;
+  }
+}
+
+
+/* 16.10.26 — simultaneous Orbit events: side-by-side lanes */
+html[data-veux-wave] .vx75-orbit-node.vx-same-time{
+  margin-left:calc(var(--vx-time-lane,0) * 112px)!important;
+  z-index:calc(12 + var(--vx-time-count,1))!important;
+}
+html[data-veux-wave] .vx75-orbit-node.vx-same-time:hover,
+html[data-veux-wave] .vx75-orbit-node.vx-same-time:focus-visible{
+  margin-left:calc(var(--vx-time-lane,0) * 124px)!important;
+}
+@media(max-width:900px){
+  html[data-veux-wave] .vx75-orbit-node.vx-same-time{
+    margin-left:calc(var(--vx-time-lane,0) * 78px)!important;
+  }
+}
+
+
+/* 16.10.27 — Orbit nodes face forward on hover / selection
+   Resting nodes follow the 3D plane. Active nodes rise toward the user and become upright/readable. */
+
+html[data-veux-wave] .vx75-orbit-node{
+  transform-style:preserve-3d!important;
+  transform-origin:50% 70%!important;
+  backface-visibility:hidden!important;
+}
+
+/* Hover = raise, straighten, enlarge, bring fully forward */
+html[data-veux-wave] .vx75-orbit-node:hover,
+html[data-veux-wave] .vx75-orbit-node:focus-visible{
+  transform:
+    translate(-50%,-50%)
+    rotateZ(0deg)
+    rotateX(-2deg)
+    rotateY(0deg)
+    translateZ(145px)
+    scale(1.12)!important;
+  z-index:80!important;
+  margin-left:calc(var(--vx-time-lane,0) * 138px)!important;
+  border-color:var(--skin-accent2)!important;
+  box-shadow:
+    0 42px 70px rgba(0,0,0,.72),
+    0 0 0 1px color-mix(in srgb,var(--skin-accent2) 62%,transparent),
+    0 0 44px var(--skin-glow),
+    inset 0 0 34px color-mix(in srgb,var(--skin-soft) 55%,transparent)!important;
+}
+
+/* Click / selected = lock upright and even farther forward */
+html[data-veux-wave] .vx75-orbit-node.selected,
+html[data-veux-wave] .vx75-orbit-node[aria-selected="true"],
+html[data-veux-wave] .vx75-orbit-node[data-selected="true"]{
+  transform:
+    translate(-50%,-50%)
+    rotateZ(0deg)
+    rotateX(0deg)
+    rotateY(0deg)
+    translateZ(180px)
+    scale(1.16)!important;
+  z-index:100!important;
+  margin-left:calc(var(--vx-time-lane,0) * 148px)!important;
+  border-color:var(--skin-accent2)!important;
+  box-shadow:
+    0 48px 82px rgba(0,0,0,.76),
+    0 0 0 1px var(--skin-accent2),
+    0 0 56px var(--skin-glow),
+    inset 0 0 38px color-mix(in srgb,var(--skin-soft) 60%,transparent)!important;
+}
+
+/* Keep content readable while card is lifted */
+html[data-veux-wave] .vx75-orbit-node:hover *,
+html[data-veux-wave] .vx75-orbit-node:focus-visible *,
+html[data-veux-wave] .vx75-orbit-node.selected *,
+html[data-veux-wave] .vx75-orbit-node[aria-selected="true"] *{
+  text-shadow:none!important;
+}
+
+/* Make the active card feel more substantial */
+html[data-veux-wave] .vx75-orbit-node:hover,
+html[data-veux-wave] .vx75-orbit-node.selected{
+  min-width:142px!important;
+  min-height:104px!important;
+  backdrop-filter:blur(20px)!important;
+}
+
+/* Multiple simultaneous events remain side by side when raised */
+html[data-veux-wave] .vx75-orbit-node.vx-same-time:hover,
+html[data-veux-wave] .vx75-orbit-node.vx-same-time:focus-visible{
+  margin-left:calc(var(--vx-time-lane,0) * 146px)!important;
+}
+html[data-veux-wave] .vx75-orbit-node.vx-same-time.selected,
+html[data-veux-wave] .vx75-orbit-node.vx-same-time[aria-selected="true"]{
+  margin-left:calc(var(--vx-time-lane,0) * 156px)!important;
+}
+
+/* Small screens: still face forward, but with tighter depth */
+@media(max-width:1100px){
+  html[data-veux-wave] .vx75-orbit-node:hover,
+  html[data-veux-wave] .vx75-orbit-node:focus-visible{
+    transform:
+      translate(-50%,-50%)
+      rotateX(0deg)
+      rotateY(0deg)
+      translateZ(95px)
+      scale(1.06)!important;
+  }
+  html[data-veux-wave] .vx75-orbit-node.selected,
+  html[data-veux-wave] .vx75-orbit-node[aria-selected="true"]{
+    transform:
+      translate(-50%,-50%)
+      rotateX(0deg)
+      rotateY(0deg)
+      translateZ(115px)
+      scale(1.09)!important;
+  }
+}
+
+/* Reduced motion: upright without animated depth travel */
+@media(prefers-reduced-motion:reduce){
+  html[data-veux-wave] .vx75-orbit-node:hover,
+  html[data-veux-wave] .vx75-orbit-node:focus-visible,
+  html[data-veux-wave] .vx75-orbit-node.selected,
+  html[data-veux-wave] .vx75-orbit-node[aria-selected="true"]{
+    transform:translate(-50%,-50%) rotateX(0deg) rotateY(0deg) scale(1.06)!important;
+  }
+}
+
+
+/* 16.10.28 — viewport-level Orbit lift: truly faces the user */
+.vx108-orbit-viewport-lift{
+  position:fixed!important;
+  width:170px!important;
+  min-width:170px!important;
+  min-height:118px!important;
+  z-index:2147483000!important;
+  margin:0!important;
+  padding:16px 14px!important;
+  transform:translate(-50%,-50%) translateY(18px) scale(.82)!important;
+  transform-origin:center!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  border:2px solid var(--skin-accent2)!important;
+  border-radius:12px!important;
+  color:var(--skin-text)!important;
+  background:
+    linear-gradient(155deg,
+      color-mix(in srgb,var(--skin-card2) 94%,var(--skin-accent) 6%),
+      var(--skin-card))!important;
+  box-shadow:
+    0 52px 90px rgba(0,0,0,.78),
+    0 0 0 1px color-mix(in srgb,var(--skin-accent2) 55%,transparent),
+    0 0 52px var(--skin-glow),
+    inset 0 0 36px color-mix(in srgb,var(--skin-soft) 45%,transparent)!important;
+  backdrop-filter:blur(24px)!important;
+  transition:
+    transform .26s cubic-bezier(.16,.84,.24,1),
+    opacity .18s ease!important;
+}
+.vx108-orbit-viewport-lift.vx108-show{
+  opacity:1!important;
+  transform:translate(-50%,-50%) translateY(-54px) scale(1.12)!important;
+}
+.vx108-orbit-viewport-lift.vx108-locked{
+  width:188px!important;
+  min-width:188px!important;
+  min-height:128px!important;
+}
+.vx108-orbit-viewport-lift.vx108-locked.vx108-show{
+  transform:translate(-50%,-50%) translateY(-68px) scale(1.16)!important;
+}
+.vx108-orbit-viewport-lift>b{
+  width:42px!important;height:42px!important;
+  display:grid!important;place-items:center!important;
+  margin:0 auto 8px!important;
+  border:1px solid var(--skin-accent2)!important;
+  border-radius:50%!important;
+  background:radial-gradient(circle,var(--skin-soft),var(--skin-card2) 72%)!important;
+  color:var(--skin-accent2)!important;
+  box-shadow:0 0 24px var(--skin-glow)!important;
+}
+.vx108-orbit-viewport-lift small,
+.vx108-orbit-viewport-lift span{
+  display:block!important;
+  text-align:center!important;
+  white-space:normal!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+  transform:none!important;
+}
+.vx108-orbit-viewport-lift small{
+  margin-top:4px!important;
+  font:700 10px/1.3 var(--fM)!important;
+  color:var(--skin-text)!important;
+}
+.vx108-orbit-viewport-lift span{
+  margin-top:7px!important;
+  font:10px/1.35 var(--fM)!important;
+  color:var(--skin-text2)!important;
+}
+@media(prefers-reduced-motion:reduce){
+  .vx108-orbit-viewport-lift,
+  .vx108-orbit-viewport-lift.vx108-show,
+  .vx108-orbit-viewport-lift.vx108-locked.vx108-show{
+    transition:none!important;
+    transform:translate(-50%,-50%) translateY(-42px) scale(1.05)!important;
+  }
+}
+
+
+/* 16.10.29 — Orbit hover PREVIEW / click FULL EXPANSION */
+.vx109-orbit-forward{
+  position:fixed!important;
+  z-index:2147483200!important;
+  box-sizing:border-box!important;
+  transform-origin:center!important;
+  color:var(--skin-text)!important;
+  border:2px solid var(--skin-accent2)!important;
+  background:
+    radial-gradient(circle at 88% 6%,var(--skin-glow),transparent 34%),
+    linear-gradient(155deg,var(--skin-card2),var(--skin-card))!important;
+  box-shadow:
+    0 55px 110px rgba(0,0,0,.78),
+    0 0 0 1px color-mix(in srgb,var(--skin-accent2) 58%,transparent),
+    0 0 58px var(--skin-glow),
+    inset 0 0 38px color-mix(in srgb,var(--skin-soft) 46%,transparent)!important;
+  backdrop-filter:blur(24px)!important;
+}
+
+/* Hover = complete label only, upright and forward */
+.vx109-orbit-forward.vx109-preview{
+  width:250px!important;
+  min-height:142px!important;
+  padding:20px 20px 18px!important;
+  border-radius:14px!important;
+  opacity:0!important;
+  pointer-events:none!important;
+  transform:translate(-50%,-50%) translateY(12px) scale(.86)!important;
+  transition:
+    transform .26s cubic-bezier(.16,.84,.24,1),
+    opacity .16s ease!important;
+}
+.vx109-orbit-forward.vx109-preview.vx109-show{
+  opacity:1!important;
+  transform:translate(-50%,-50%) translateY(-78px) scale(1.08)!important;
+}
+.vx109-preview-kicker{
+  color:var(--skin-accent)!important;
+  font:700 8px/1 var(--fM)!important;
+  letter-spacing:.18em!important;
+  text-transform:uppercase!important;
+}
+.vx109-preview-time{
+  margin-top:13px!important;
+  color:var(--skin-accent2)!important;
+  font:700 10px/1 var(--fM)!important;
+  letter-spacing:.08em!important;
+}
+.vx109-preview-title{
+  margin-top:8px!important;
+  color:var(--skin-text)!important;
+  font:500 18px/1.18 var(--fD)!important;
+  white-space:normal!important;
+  overflow:visible!important;
+}
+.vx109-preview-status{
+  margin-top:11px!important;
+  display:inline-flex!important;
+  padding:5px 8px!important;
+  border:1px solid var(--skin-line2)!important;
+  border-radius:4px!important;
+  color:var(--skin-text2)!important;
+  font:700 8px/1 var(--fM)!important;
+  letter-spacing:.1em!important;
+  text-transform:uppercase!important;
+}
+.vx109-preview-hint{
+  margin-top:14px!important;
+  padding-top:11px!important;
+  border-top:1px solid var(--skin-line)!important;
+  color:var(--skin-muted)!important;
+  font:8px/1.3 var(--fM)!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+}
+
+/* Click = expand the same raised card into the complete event */
+.vx109-orbit-forward.vx109-expanded{
+  width:min(520px,calc(100vw - 48px))!important;
+  max-height:min(720px,calc(100vh - 60px))!important;
+  overflow:auto!important;
+  padding:25px!important;
+  border-radius:18px!important;
+  opacity:1!important;
+  pointer-events:auto!important;
+  transform:translate(-50%,-50%) translateY(-10px) scale(1)!important;
+  transition:
+    width .28s cubic-bezier(.2,.8,.2,1),
+    min-height .28s cubic-bezier(.2,.8,.2,1),
+    transform .28s cubic-bezier(.2,.8,.2,1),
+    border-radius .28s ease!important;
+}
+.vx109-close{
+  position:sticky!important;
+  top:0!important;
+  float:right!important;
+  z-index:5!important;
+  width:34px!important;height:34px!important;
+  display:grid!important;place-items:center!important;
+  padding:0!important;
+  margin:-9px -9px 8px 12px!important;
+  border:1px solid var(--skin-line2)!important;
+  border-radius:50%!important;
+  background:color-mix(in srgb,var(--skin-card2) 82%,var(--skin-accent) 18%)!important;
+  color:var(--skin-text)!important;
+  font:700 18px/1 sans-serif!important;
+  cursor:pointer!important;
+}
+.vx109-close:hover{
+  background:var(--skin-accent)!important;
+  color:var(--skin-0)!important;
+  border-color:var(--skin-accent)!important;
+}
+.vx109-full-detail{
+  clear:both!important;
+}
+.vx109-full-detail .vx75-orbit-card{
+  position:static!important;
+  inset:auto!important;
+  transform:none!important;
+  width:100%!important;
+  max-height:none!important;
+  overflow:visible!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+.vx109-full-detail dl,
+.vx109-full-detail section,
+.vx109-full-detail .vx91-model-group{
+  border-color:var(--skin-line)!important;
+}
+.vx109-expanding{
+  height:170px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:7px!important;
+}
+.vx109-expanding span{
+  width:7px!important;height:7px!important;border-radius:50%!important;
+  background:var(--skin-accent2)!important;
+  animation:vx109-dot 1s ease-in-out infinite!important;
+}
+.vx109-expanding span:nth-child(2){animation-delay:.12s!important}
+.vx109-expanding span:nth-child(3){animation-delay:.24s!important}
+@keyframes vx109-dot{
+  0%,100%{transform:translateY(0);opacity:.45}
+  50%{transform:translateY(-7px);opacity:1}
+}
+
+/* Keep same-time Orbit cards side-by-side underneath the raised preview */
+html[data-veux-wave] .vx75-orbit-node.vx-same-time{
+  margin-left:calc(var(--vx-time-lane,0) * 112px)!important;
+}
+
+@media(max-width:760px){
+  .vx109-orbit-forward.vx109-preview{
+    width:min(230px,calc(100vw - 32px))!important;
+  }
+  .vx109-orbit-forward.vx109-expanded{
+    left:50%!important;
+    top:50%!important;
+    width:calc(100vw - 26px)!important;
+    max-height:calc(100vh - 26px)!important;
+    transform:translate(-50%,-50%)!important;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  .vx109-orbit-forward,
+  .vx109-expanding span{transition:none!important;animation:none!important}
+}
+
+
+/* 16.10.30 — Orbit Control Deck redesign
+   The old strip looked detached because it retained dark/gold hard-coded surfaces.
+   This version is a true Colorwave intelligence toolbar. */
+html[data-veux-wave] .vx75-scopebar,
+html[data-veux-wave] .vx75-orbit-scopebar,
+html[data-veux-wave] .vx75-calendar-scope,
+html[data-veux-wave] .vx75-scope-row{
+  position:relative!important;
+  display:grid!important;
+  grid-template-columns:minmax(190px,.78fr) minmax(230px,.9fr) minmax(380px,1.75fr) minmax(220px,.8fr)!important;
+  align-items:stretch!important;
+  gap:10px!important;
+  padding:12px 18px!important;
+  background:
+    radial-gradient(circle at 42% -80%,var(--skin-glow),transparent 42%),
+    linear-gradient(135deg,var(--skin-card2),var(--skin-card))!important;
+  border:1px solid var(--skin-line2)!important;
+  border-radius:16px!important;
+  box-shadow:
+    0 18px 46px rgba(0,0,0,.26),
+    inset 0 1px 0 color-mix(in srgb,var(--skin-text) 8%,transparent)!important;
+  overflow:visible!important;
+}
+html[data-veux-wave] .vx75-scopebar:before,
+html[data-veux-wave] .vx75-orbit-scopebar:before,
+html[data-veux-wave] .vx75-calendar-scope:before,
+html[data-veux-wave] .vx75-scope-row:before{
+  content:"ORBIT CONTROL DECK";
+  position:absolute!important;
+  top:-8px!important;left:28px!important;
+  padding:0 9px!important;
+  background:var(--skin-card)!important;
+  color:var(--skin-accent2)!important;
+  font:700 7px/1.4 var(--fM)!important;
+  letter-spacing:.18em!important;
+  border-radius:8px!important;
+}
+
+/* Every direct control becomes part of the same wave instead of black/gold islands. */
+html[data-veux-wave] .vx75-scopebar > *,
+html[data-veux-wave] .vx75-orbit-scopebar > *,
+html[data-veux-wave] .vx75-calendar-scope > *,
+html[data-veux-wave] .vx75-scope-row > *{
+  min-width:0!important;
+  min-height:66px!important;
+  box-sizing:border-box!important;
+  border:1px solid var(--skin-line)!important;
+  border-radius:11px!important;
+  background:color-mix(in srgb,var(--skin-card2) 88%,var(--skin-accent) 12%)!important;
+  color:var(--skin-text)!important;
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--skin-text) 5%,transparent)!important;
+}
+
+/* Search / inputs */
+html[data-veux-wave] .vx75-scopebar input,
+html[data-veux-wave] .vx75-orbit-scopebar input,
+html[data-veux-wave] .vx75-calendar-scope input,
+html[data-veux-wave] .vx75-scope-row input{
+  width:100%!important;
+  height:100%!important;
+  min-height:64px!important;
+  padding:0 48px 0 48px!important;
+  border:0!important;
+  outline:0!important;
+  background:transparent!important;
+  color:var(--skin-text)!important;
+  font:500 13px/1 var(--fM)!important;
+}
+html[data-veux-wave] .vx75-scopebar input::placeholder,
+html[data-veux-wave] .vx75-orbit-scopebar input::placeholder,
+html[data-veux-wave] .vx75-calendar-scope input::placeholder,
+html[data-veux-wave] .vx75-scope-row input::placeholder{
+  color:var(--skin-muted)!important;
+}
+
+/* Buttons are bolder, cleaner, and wave-aware. */
+html[data-veux-wave] .vx75-scopebar button,
+html[data-veux-wave] .vx75-orbit-scopebar button,
+html[data-veux-wave] .vx75-calendar-scope button,
+html[data-veux-wave] .vx75-scope-row button{
+  border-color:var(--skin-line2)!important;
+  background:color-mix(in srgb,var(--skin-card2) 82%,var(--skin-accent) 18%)!important;
+  color:var(--skin-text)!important;
+  font-weight:750!important;
+  letter-spacing:.08em!important;
+  transition:transform .18s ease,background .18s ease,border-color .18s ease!important;
+}
+html[data-veux-wave] .vx75-scopebar button:hover,
+html[data-veux-wave] .vx75-orbit-scopebar button:hover,
+html[data-veux-wave] .vx75-calendar-scope button:hover,
+html[data-veux-wave] .vx75-scope-row button:hover{
+  transform:translateY(-2px)!important;
+  background:color-mix(in srgb,var(--skin-card2) 68%,var(--skin-accent) 32%)!important;
+  border-color:var(--skin-accent2)!important;
+}
+
+/* Scope + Viewing typography */
+html[data-veux-wave] .vx75-scopebar [class*="label"],
+html[data-veux-wave] .vx75-orbit-scopebar [class*="label"],
+html[data-veux-wave] .vx75-calendar-scope [class*="label"],
+html[data-veux-wave] .vx75-scope-row [class*="label"]{
+  color:var(--skin-accent2)!important;
+}
+html[data-veux-wave] .vx75-scopebar small,
+html[data-veux-wave] .vx75-orbit-scopebar small,
+html[data-veux-wave] .vx75-calendar-scope small,
+html[data-veux-wave] .vx75-scope-row small{
+  color:var(--skin-muted)!important;
+}
+
+/* Kill remaining hard-coded gold/black visual treatment inside the deck. */
+html[data-veux-wave] .vx75-scopebar *,
+html[data-veux-wave] .vx75-orbit-scopebar *,
+html[data-veux-wave] .vx75-calendar-scope *,
+html[data-veux-wave] .vx75-scope-row *{
+  border-color:var(--skin-line)!important;
+}
+html[data-veux-wave] .vx75-scopebar svg,
+html[data-veux-wave] .vx75-orbit-scopebar svg,
+html[data-veux-wave] .vx75-calendar-scope svg,
+html[data-veux-wave] .vx75-scope-row svg{
+  color:var(--skin-accent2)!important;
+  stroke:currentColor!important;
+}
+
+/* Tablet/mobile: turn it into a clean stacked command deck. */
+@media(max-width:1050px){
+  html[data-veux-wave] .vx75-scopebar,
+  html[data-veux-wave] .vx75-orbit-scopebar,
+  html[data-veux-wave] .vx75-calendar-scope,
+  html[data-veux-wave] .vx75-scope-row{
+    grid-template-columns:1fr 1fr!important;
+  }
+}
+@media(max-width:650px){
+  html[data-veux-wave] .vx75-scopebar,
+  html[data-veux-wave] .vx75-orbit-scopebar,
+  html[data-veux-wave] .vx75-calendar-scope,
+  html[data-veux-wave] .vx75-scope-row{
+    grid-template-columns:1fr!important;
+    padding:14px 10px 10px!important;
+    border-radius:12px!important;
+  }
+}

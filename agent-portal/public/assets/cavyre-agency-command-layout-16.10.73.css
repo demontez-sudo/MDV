@@ -1,0 +1,107 @@
+
+/* CAVYRE 16.10.73 — Agency Command Layout Authority
+   Loaded last. Repairs the production command modules that were rendering as raw text. */
+
+#p-overview .vx17-command{max-width:none!important;padding-bottom:48px!important}
+#p-overview .vx17-command>.vx161061-mobility,
+#p-overview .vx17-command>.vx161063-finance,
+#p-overview .vx17-command>.vx161062-relationship{
+  display:grid!important;grid-template-columns:minmax(220px,.82fr) minmax(0,2.18fr)!important;
+  width:100%!important;margin:16px 0!important;border:1px solid var(--line)!important;
+  border-radius:14px!important;background:linear-gradient(110deg,rgba(255,255,255,.035),rgba(255,255,255,.012))!important;
+  overflow:hidden!important;box-sizing:border-box!important;
+}
+#p-overview .vx161061-mobility>header,
+#p-overview .vx161063-finance>header,
+#p-overview .vx161062-relationship>header{
+  grid-column:1!important;grid-row:1 / span 3!important;display:flex!important;flex-direction:column!important;
+  align-items:flex-start!important;justify-content:space-between!important;gap:18px!important;
+  min-height:150px!important;padding:20px!important;border:0!important;border-right:1px solid var(--line)!important;
+  background:rgba(255,255,255,.025)!important;
+}
+#p-overview .vx161061-mobility>header div,
+#p-overview .vx161063-finance>header div,
+#p-overview .vx161062-relationship>header div{display:block!important}
+#p-overview .vx161061-mobility>header small,
+#p-overview .vx161063-finance>header small,
+#p-overview .vx161062-relationship>header small{
+  display:block!important;margin:0 0 8px!important;font:700 8px/1.2 var(--fM)!important;
+  letter-spacing:.14em!important;text-transform:uppercase!important;color:var(--gold)!important;
+}
+#p-overview .vx161061-mobility>header h3,
+#p-overview .vx161063-finance>header h3,
+#p-overview .vx161062-relationship>header h3{
+  display:block!important;margin:0!important;font:400 23px/1.05 var(--fD)!important;color:var(--ink)!important;
+}
+#p-overview .vx161061-mobility>header button,
+#p-overview .vx161063-finance>header button,
+#p-overview .vx161062-relationship>header button{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;min-height:34px!important;
+  padding:0 12px!important;border:1px solid var(--line)!important;border-radius:7px!important;background:transparent!important;
+  color:var(--ink)!important;font:700 8px/1 var(--fM)!important;letter-spacing:.08em!important;text-transform:uppercase!important;
+}
+
+/* Mobility */
+#p-overview .vx161061-clear{
+  grid-column:2!important;display:grid!important;grid-template-columns:150px 1fr!important;align-items:center!important;
+  gap:18px!important;min-height:150px!important;padding:20px 24px!important;
+}
+#p-overview .vx161061-clear b{font:600 16px/1.2 var(--fS)!important;color:var(--ink)!important}
+#p-overview .vx161061-clear span{font:400 13px/1.45 var(--fS)!important;color:var(--mute)!important}
+#p-overview .vx161061-mobility>article{
+  grid-column:2!important;display:grid!important;grid-template-columns:1fr auto!important;align-items:center!important;
+  gap:20px!important;padding:16px 22px!important;border:0!important;border-bottom:1px solid var(--line)!important;
+}
+#p-overview .vx161061-mobility>article:last-child{border-bottom:0!important}
+#p-overview .vx161061-mobility article small{display:block!important;margin-bottom:5px!important;font:700 7px var(--fM)!important;letter-spacing:.1em!important;color:var(--mute)!important}
+#p-overview .vx161061-mobility article b{display:block!important;font:600 14px/1.25 var(--fS)!important}
+#p-overview .vx161061-mobility article span{display:block!important;margin-top:4px!important;font:400 12px/1.4 var(--fS)!important;color:var(--mute)!important}
+
+/* Finance / CRM KPI bands */
+#p-overview .vx161063-fin-kpis,#p-overview .vx161062-rel-kpis{
+  grid-column:2!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  border:0!important;border-bottom:1px solid var(--line)!important;
+}
+#p-overview .vx161063-fin-kpis>div,#p-overview .vx161062-rel-kpis>div{
+  display:block!important;padding:18px 20px!important;border:0!important;border-right:1px solid var(--line)!important;
+}
+#p-overview .vx161063-fin-kpis>div:last-child,#p-overview .vx161062-rel-kpis>div:last-child{border-right:0!important}
+#p-overview .vx161063-fin-kpis small,#p-overview .vx161062-rel-kpis small{
+  display:block!important;font:700 7px/1.2 var(--fM)!important;letter-spacing:.1em!important;text-transform:uppercase!important;color:var(--mute)!important
+}
+#p-overview .vx161063-fin-kpis b,#p-overview .vx161062-rel-kpis b{
+  display:block!important;margin-top:7px!important;font:400 22px/1 var(--fD)!important;color:var(--ink)!important
+}
+#p-overview .vx161063-fin-clear,#p-overview .vx161062-rel-clear{
+  grid-column:2!important;display:grid!important;grid-template-columns:200px 1fr!important;align-items:center!important;
+  gap:18px!important;min-height:72px!important;padding:16px 20px!important;
+}
+#p-overview .vx161063-fin-clear b,#p-overview .vx161062-rel-clear b{font:600 13px/1.2 var(--fS)!important}
+#p-overview .vx161063-fin-clear span,#p-overview .vx161062-rel-clear span{font:400 12px/1.4 var(--fS)!important;color:var(--mute)!important}
+#p-overview .vx161063-fin-stream,#p-overview .vx161062-rel-stream{grid-column:2!important;display:block!important}
+#p-overview .vx161063-fin-stream article,#p-overview .vx161062-rel-stream article{
+  display:flex!important;align-items:center!important;justify-content:space-between!important;gap:18px!important;
+  padding:13px 20px!important;border:0!important;border-bottom:1px solid var(--line)!important
+}
+
+/* Prevent value/label collisions */
+#p-overview .vx17-command small,#p-overview .vx17-command b,#p-overview .vx17-command span{white-space:normal}
+#p-overview .vx161063-fin-kpis b,#p-overview .vx161062-rel-kpis b{overflow-wrap:anywhere}
+
+/* Responsive command cards */
+@media(max-width:900px){
+ #p-overview .vx17-command>.vx161061-mobility,
+ #p-overview .vx17-command>.vx161063-finance,
+ #p-overview .vx17-command>.vx161062-relationship{grid-template-columns:1fr!important}
+ #p-overview .vx161061-mobility>header,#p-overview .vx161063-finance>header,#p-overview .vx161062-relationship>header{
+   grid-column:1!important;grid-row:auto!important;min-height:0!important;padding:16px!important;border-right:0!important;border-bottom:1px solid var(--line)!important
+ }
+ #p-overview .vx161061-clear,#p-overview .vx161061-mobility>article,#p-overview .vx161063-fin-kpis,#p-overview .vx161062-rel-kpis,
+ #p-overview .vx161063-fin-clear,#p-overview .vx161062-rel-clear,#p-overview .vx161063-fin-stream,#p-overview .vx161062-rel-stream{grid-column:1!important}
+}
+@media(max-width:620px){
+ #p-overview .vx161063-fin-kpis,#p-overview .vx161062-rel-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ #p-overview .vx161063-fin-kpis>div:nth-child(2),#p-overview .vx161062-rel-kpis>div:nth-child(2){border-right:0!important}
+ #p-overview .vx161061-clear,#p-overview .vx161063-fin-clear,#p-overview .vx161062-rel-clear{grid-template-columns:1fr!important;gap:5px!important}
+ #p-overview .vx161061-mobility>article{grid-template-columns:1fr!important}
+}

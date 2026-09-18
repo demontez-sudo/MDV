@@ -1,0 +1,271 @@
+
+/* CAVYRE 16.10.70 — Web + Mobile Interface Polish
+   Visual rhythm only. No business/data authority changes.
+*/
+:root{
+  --cv-space-1:4px;--cv-space-2:8px;--cv-space-3:12px;--cv-space-4:16px;
+  --cv-space-5:20px;--cv-space-6:24px;--cv-radius:6px;
+  --cv-control-h:34px;--cv-transition:140ms ease;
+}
+
+/* Global finish */
+button,a,[role="button"],input,select,textarea{transition:border-color var(--cv-transition),background var(--cv-transition),opacity var(--cv-transition),transform var(--cv-transition)}
+button:focus-visible,a:focus-visible,[role="button"]:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:1px solid var(--gold)!important;outline-offset:2px!important;
+}
+button:disabled,[aria-disabled="true"]{opacity:.42!important;cursor:not-allowed!important}
+input,select,textarea{
+  border-radius:2px!important;
+}
+::placeholder{opacity:.58!important}
+hr{border:0!important;border-top:1px solid var(--line)!important}
+
+/* Consistent control scale */
+@media(min-width:901px){
+  button,.btn,[role="button"]{min-height:var(--cv-control-h)}
+  .cnt{padding-bottom:32px!important}
+}
+
+/* Page headings / toolbar rhythm */
+.ph,.page-head,[class*="page-head"],[class*="page-header"]{
+  gap:12px!important;
+}
+.ph-h1,[class*="page-title"]{
+  letter-spacing:-.025em!important;
+}
+.ph-sub,[class*="page-sub"]{
+  line-height:1.45!important;
+}
+
+/* Panels and cards */
+.card,.box,.tile,
+[class*="command-card"],[class*="intel-card"]{
+  border-color:var(--line)!important;
+}
+.card:hover,.tile:hover{
+  border-color:var(--line2,var(--line))!important;
+}
+
+/* Tables: cleaner agency-desk density */
+table{border-collapse:collapse!important;width:100%!important}
+th{
+  font-size:7px!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+  color:var(--mute)!important;
+}
+td,th{vertical-align:middle!important}
+tbody tr{transition:background var(--cv-transition)}
+tbody tr:hover{background:rgba(255,255,255,.018)!important}
+
+/* Scrollbars stay subtle */
+*{scrollbar-width:thin;scrollbar-color:rgba(180,170,150,.22) transparent}
+*::-webkit-scrollbar{width:7px;height:7px}
+*::-webkit-scrollbar-thumb{background:rgba(180,170,150,.22);border-radius:8px}
+*::-webkit-scrollbar-track{background:transparent}
+
+/* Agent Command — one visual language */
+.vx161061-mobility,
+.vx161062-relationship,
+.vx161063-finance,
+.vx161066-package-command,
+.vx161065-model-intel{
+  border-radius:var(--cv-radius)!important;
+}
+.vx161061-mobility>header,
+.vx161062-relationship>header,
+.vx161063-finance>header,
+.vx161066-package-command>header,
+.vx161065-model-intel>header{
+  min-height:64px!important;
+}
+.vx161061-mobility button,
+.vx161062-relationship button,
+.vx161063-finance button,
+.vx161066-package-command button,
+.vx161065-model-intel button{
+  white-space:nowrap!important;
+}
+.vx161061-mobility article:hover,
+.vx161062-rel-stream article:hover,
+.vx161063-fin-stream article:hover,
+.vx161066-stream article:hover,
+.vx161065-signals article:hover{
+  background:rgba(255,255,255,.018)!important;
+}
+
+/* KPI typography */
+.vx161062-rel-kpis b,.vx161063-fin-kpis b,.vx161066-kpis b,.vx161065-kpis b{
+  font-variant-numeric:tabular-nums!important;
+}
+
+/* Model Profile */
+#p-modelpage .v144-model-tabs{
+  border-bottom:1px solid var(--line)!important;
+}
+#p-modelpage .v144-model-tabs .v144-tab{
+  position:relative!important;
+  border-radius:0!important;
+}
+#p-modelpage .v144-model-tabs .v144-tab.on::after,
+#p-modelpage .v144-model-tabs .v144-tab.active::after{
+  content:""!important;position:absolute!important;left:8px!important;right:8px!important;bottom:-1px!important;height:1px!important;background:var(--gold)!important;
+}
+.vx161065-model-intel{margin-top:10px!important}
+
+/* Calendar/event creation */
+.vx1680-modal,.vx1680-editor,[class*="calendar-event"]{
+  border-radius:var(--cv-radius)!important;
+}
+#vx1043-smart-note{
+  border-radius:4px!important;
+}
+#vx1064-open-smart-time{
+  border-radius:3px!important;
+}
+
+/* Travel / Visa */
+.v1682-modal,.v1682-sheet,[class*="travel"][class*="modal"]{
+  border-radius:var(--cv-radius)!important;
+}
+.v16853-booking-detail{
+  border-radius:4px!important;
+}
+
+/* Finance */
+.vx1648-sheet{
+  box-shadow:-20px 0 70px rgba(0,0,0,.28)!important;
+}
+.vx1648-empty{
+  display:flex!important;flex-direction:column!important;gap:5px!important;
+}
+
+/* Package workflow */
+.vx161066-flow article{
+  min-width:0!important;
+}
+.vx161066-flow article span{
+  line-height:1.45!important;
+}
+
+/* Empty/error states should feel intentional */
+[class*="empty"],[class*="error-state"],[class*="no-data"]{
+  line-height:1.5!important;
+}
+
+/* WEB polish */
+@media(min-width:901px){
+  /* Keep wide layouts readable rather than stretching infinitely */
+  #p-command .cnt,
+  #p-agencycommand .cnt,
+  #p-modelpage .cnt,
+  #p-financelegal .cnt,
+  #p-travelvisa .cnt{
+    width:min(100%,1600px)!important;
+    margin-left:auto!important;
+    margin-right:auto!important;
+  }
+
+  /* drawers / modal spacing */
+  [role="dialog"],.modal,.drawer,.sheet,[class*="modal"],[class*="drawer"],[class*="sheet"]{
+    scrollbar-gutter:stable!important;
+  }
+
+  /* Hover feedback */
+  button:not(:disabled):hover,.btn:not(:disabled):hover,[role="button"]:not([aria-disabled="true"]):hover{
+    border-color:var(--gold)!important;
+  }
+  button:not(:disabled):active,[role="button"]:active{transform:translateY(1px)}
+}
+
+/* TABLET polish */
+@media(min-width:601px) and (max-width:900px){
+  .cnt{padding-left:14px!important;padding-right:14px!important}
+  .vx161061-mobility,
+  .vx161062-relationship,
+  .vx161063-finance,
+  .vx161066-package-command,
+  .vx161065-model-intel{margin:12px 0!important}
+}
+
+/* MOBILE polish */
+@media(max-width:600px){
+  :root{--cv-control-h:42px}
+
+  body{
+    -webkit-text-size-adjust:100%!important;
+    text-rendering:optimizeLegibility!important;
+  }
+  .cnt{padding-left:10px!important;padding-right:10px!important;padding-bottom:calc(24px + env(safe-area-inset-bottom))!important}
+
+  /* Reduce visual noise while retaining information */
+  .vx161061-mobility,
+  .vx161062-relationship,
+  .vx161063-finance,
+  .vx161066-package-command,
+  .vx161065-model-intel{
+    margin:10px 0!important;border-radius:5px!important;
+  }
+  .vx161061-mobility>header,
+  .vx161062-relationship>header,
+  .vx161063-finance>header,
+  .vx161066-package-command>header,
+  .vx161065-model-intel>header{
+    min-height:0!important;padding:12px!important;gap:8px!important;
+  }
+  .vx161061-mobility header h3,
+  .vx161062-relationship header h3,
+  .vx161063-finance header h3,
+  .vx161066-package-command header h3,
+  .vx161065-model-intel header h3{
+    font-size:19px!important;
+  }
+
+  /* KPIs remain glanceable */
+  .vx161062-rel-kpis>div,
+  .vx161063-fin-kpis>div,
+  .vx161066-kpis>div,
+  .vx161065-kpis>div{
+    padding:10px 11px!important;
+  }
+
+  /* Tab strip edge affordance */
+  #p-modelpage .v144-model-tabs{
+    padding-left:2px!important;padding-right:14px!important;
+    mask-image:linear-gradient(to right,#000 0,#000 92%,transparent 100%)!important;
+    -webkit-mask-image:linear-gradient(to right,#000 0,#000 92%,transparent 100%)!important;
+  }
+
+  /* Mobile drawers are clean full workspaces */
+  .vx1648-sheet{
+    box-shadow:none!important;
+    padding-left:max(14px,env(safe-area-inset-left))!important;
+    padding-right:max(14px,env(safe-area-inset-right))!important;
+  }
+
+  /* Smart Timer */
+  .vx1043-time-modal,.vx1043-time-panel,[class*="smart-time"]{
+    box-shadow:0 -16px 60px rgba(0,0,0,.32)!important;
+    padding-bottom:calc(12px + env(safe-area-inset-bottom))!important;
+  }
+
+  /* Buttons: no tiny text-only targets */
+  button,.btn,[role="button"]{
+    min-height:42px!important;
+  }
+
+  /* Prevent long IDs/emails/URLs from breaking cards */
+  td,th,span,p,b,small,label{
+    overflow-wrap:anywhere;
+  }
+
+  /* Action rows feel native on phone */
+  [class*="modal-footer"],[class*="sheet-footer"],[class*="action-footer"],.v1682-footer{
+    box-shadow:0 -10px 26px rgba(0,0,0,.14)!important;
+  }
+}
+
+/* Respect user motion preference */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
+}

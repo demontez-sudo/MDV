@@ -1,0 +1,127 @@
+
+/* CAVYRE 16.12.42 — Shell / Menu / Design Authority
+   Loaded last. Restores one desktop shell contract without touching page-specific content. */
+
+@media(min-width:901px){
+  html,body{min-width:0!important;overflow-x:hidden!important}
+  #app.on{
+    display:block!important;
+    min-height:100dvh!important;
+    width:100%!important;
+    overflow:visible!important;
+  }
+
+  /* 74px permanent icon rail */
+  #vx73-rail,.vx73-rail{
+    display:flex!important;
+    position:fixed!important;
+    inset:0 auto 0 0!important;
+    width:74px!important;
+    min-width:74px!important;
+    max-width:74px!important;
+    z-index:5000!important;
+  }
+
+  /* Header begins after the rail and never covers content. */
+  #app>.topbar,.topbar{
+    position:fixed!important;
+    top:0!important;
+    left:74px!important;
+    right:0!important;
+    width:auto!important;
+    height:78px!important;
+    min-height:78px!important;
+    margin:0!important;
+    padding:0 20px!important;
+    z-index:4900!important;
+  }
+
+  /* Main shell owns only the rail offset; legacy 220px/232px offsets are cancelled. */
+  #app>.shell,.shell{
+    display:block!important;
+    width:auto!important;
+    max-width:none!important;
+    min-width:0!important;
+    min-height:calc(100dvh - 78px)!important;
+    margin:78px 0 0 74px!important;
+    padding:0!important;
+    overflow:visible!important;
+  }
+
+  #pm,main.pm,.pm{
+    display:block!important;
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+    height:auto!important;
+    min-height:calc(100dvh - 78px)!important;
+    margin:0!important;
+    padding:0!important;
+    overflow:visible!important;
+  }
+
+  .panel{
+    width:100%!important;
+    max-width:none!important;
+    min-width:0!important;
+  }
+
+  /* Flyout menu: hidden beside rail until hover, keyboard focus, or pinned open. */
+  #sidenav,.sidenav{
+    display:flex!important;
+    visibility:visible!important;
+    position:fixed!important;
+    left:74px!important;
+    top:78px!important;
+    bottom:0!important;
+    width:286px!important;
+    max-width:286px!important;
+    height:auto!important;
+    margin:0!important;
+    padding:14px 0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    z-index:4800!important;
+    transform:translateX(-104%)!important;
+    opacity:0!important;
+    pointer-events:none!important;
+    transition:transform .18s ease,opacity .18s ease!important;
+    box-shadow:22px 0 50px rgba(0,0,0,.48)!important;
+  }
+
+  body.cvy-menu-hover #sidenav,
+  body.cvy-menu-pinned #sidenav,
+  #sidenav:hover,#sidenav:focus-within{
+    transform:translateX(0)!important;
+    opacity:1!important;
+    pointer-events:auto!important;
+  }
+
+  /* Never let old desktop sidebar rules reserve 220px/232px again. */
+  body .shell{margin-left:74px!important}
+  body #pm,body .pm{margin-left:0!important}
+
+  /* Preserve intended portal scale. */
+  #app,.topbar,.shell,#pm,.pm,.panel{
+    zoom:1!important;
+    scale:none!important;
+  }
+}
+
+/* Mobile remains the certified mobile navigation system. */
+@media(max-width:900px){
+  #vx73-rail,.vx73-rail{display:none!important}
+  #app>.topbar,.topbar{
+    position:sticky!important;
+    left:auto!important;right:auto!important;
+    width:100%!important;
+    height:58px!important;
+    min-height:58px!important;
+  }
+  #app>.shell,.shell{
+    margin:0!important;
+    width:100%!important;
+    min-height:0!important;
+  }
+  #pm,main.pm,.pm{width:100%!important;margin:0!important}
+}

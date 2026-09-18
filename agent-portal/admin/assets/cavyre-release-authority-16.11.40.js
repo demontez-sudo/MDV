@@ -1,0 +1,1 @@
+(function(){'use strict';if(window.__CAVYRE_RELEASE_161140__)return;window.__CAVYRE_RELEASE_161140__=1;function s(){document.documentElement.setAttribute('data-calendar-duration','16.11.40');}document.readyState==='loading'?document.addEventListener('DOMContentLoaded',s,{once:true}):s();setTimeout(s,100);setTimeout(s,1000);})();

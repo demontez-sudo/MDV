@@ -1,0 +1,31 @@
+/* CAVYRE 16.13.19 — release/runtime repair */
+@media (min-width:901px){
+  #app.vx77-single-nav #vx73-rail,
+  #vx73-rail{
+    top:64px!important;
+    bottom:0!important;
+    height:auto!important;
+    inset:64px auto 0 0!important;
+    padding-top:10px!important;
+  }
+  #app.vx77-single-nav #vx73-rail .vx73-monogram,
+  #vx73-rail .vx73-monogram{
+    display:grid!important;
+    width:48px!important;
+    height:48px!important;
+    min-height:48px!important;
+    margin:0 auto 5px!important;
+    place-items:center!important;
+    border:1px solid rgba(208,163,78,.42)!important;
+    border-radius:50%!important;
+    background:radial-gradient(circle,rgba(208,163,78,.12),rgba(9,12,14,.22) 68%,transparent 70%)!important;
+    color:#d0a34e!important;
+    font-family:var(--fD,serif)!important;
+    font-size:25px!important;
+    line-height:1!important;
+    text-decoration:none!important;
+    position:relative!important;
+    z-index:2!important;
+  }
+  #vx73-rail .vx73-monogram:hover{border-color:#d0a34e!important;color:#efe2ca!important;box-shadow:0 0 24px rgba(208,163,78,.16)!important}
+}

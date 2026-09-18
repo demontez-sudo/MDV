@@ -1,0 +1,55 @@
+/* VEUX DESK 16.9.91 — calendar clarity and intelligence rail */
+
+/* Season Matrix: keep the day action above every marker and make it legible. */
+.vx85-grid>button{isolation:isolate!important}
+.vx87-view-more{
+  position:absolute!important;right:8px!important;bottom:7px!important;left:auto!important;
+  z-index:12!important;min-height:28px!important;padding:0 9px!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  border:1px solid rgba(208,163,78,.38)!important;
+  background:#090b0a!important;box-shadow:-12px 0 18px #090b0a!important;
+  color:#d7ad59!important;font:10px/1 var(--fM)!important;letter-spacing:.08em!important;
+  opacity:0;white-space:nowrap;pointer-events:auto!important
+}
+.vx85-grid>button:hover .vx87-view-more,.vx85-grid>button:focus-visible .vx87-view-more,.vx85-grid>button.selected .vx87-view-more{opacity:1!important}
+.vx85-day-dots{bottom:44px!important;z-index:4!important}
+.vx85-grid>button>b:first-child{font-size:20px!important;line-height:1!important}
+.vx85-day-dots span{font-size:10px!important;line-height:1.2!important}
+.vx85-day-dots i{width:9px!important;height:9px!important;flex:0 0 9px!important}
+.vx85-matrix>footer span,.vx85-dow b{font-size:10px!important}
+
+/* Runway Timeline: three useful day lanes plus a persistent right intelligence rail. */
+.vx91-runway{grid-template-columns:minmax(720px,1fr) 340px!important;height:calc(100dvh - 222px)!important;min-height:690px!important}
+.vx91-runway>main{min-width:0!important;overflow:auto!important;border-right:1px solid var(--m-line)!important}
+.vx91-runway .vx75-runway-grid{
+  grid-template-columns:54px repeat(3,minmax(215px,1fr))!important;
+  min-width:700px!important;width:100%!important
+}
+.vx91-runway .vx75-time span{font-size:10px!important}
+.vx91-runway .vx75-runway-grid>article>header small,.vx91-runway .vx75-runway-grid>article>header span,.vx91-runway .vx75-market-head b{font-size:10px!important}
+.vx91-runway .vx75-runway-grid>article>header b{font-size:32px!important}
+.vx91-runway .vx75-event.runway{padding:10px!important}
+.vx91-runway .vx75-event.runway small,.vx91-runway .vx75-event.runway span{font-size:10px!important;line-height:1.35!important}
+.vx91-runway .vx75-event.runway b{font-size:12px!important;line-height:1.28!important}
+.vx91-runway>.vx89-event-intel{min-width:0!important;height:100%!important;overflow-y:auto!important}
+.vx91-runway .vx75-attention{font-size:10px!important}
+.vx91-runway .vx75-attention b,.vx91-runway .vx75-attention span{font-size:10px!important}
+
+/* Model Intelligence: large bookings show eight people, then scroll without growing the rail. */
+.vx91-model-group{padding-bottom:10px!important}
+.vx91-model-scroll{max-height:400px;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;scrollbar-width:thin;scrollbar-color:rgba(208,163,78,.45) transparent}
+.vx91-model-scroll::-webkit-scrollbar{width:6px}.vx91-model-scroll::-webkit-scrollbar-thumb{background:rgba(208,163,78,.45);border-radius:10px}
+.vx91-model-scroll .vx75-person{min-height:42px;margin:7px 0!important}
+.vx91-model-scroll .vx75-person img,.vx91-model-scroll .vx75-person i{width:34px!important;height:34px!important;flex:0 0 34px}
+.vx91-model-scroll .vx75-person span b{font-size:11px!important}.vx91-model-scroll .vx75-person span small{font-size:10px!important}
+.vx89-event-intel dt{font-size:10px!important}.vx89-event-intel dd{font-size:13px!important}.vx89-event-intel>header small,.vx89-event-intel section>small,.vx89-ai-note small{font-size:10px!important}
+
+@media(min-width:901px) and (max-width:1280px){
+  .vx91-runway{grid-template-columns:minmax(650px,1fr) 300px!important}
+  .vx91-runway .vx75-runway-grid{grid-template-columns:46px repeat(3,minmax(200px,1fr))!important;min-width:650px!important}
+}
+
+@media(max-width:900px){
+  .vx87-view-more{font-size:10px!important;min-height:32px!important}
+  .vx91-runway{display:block!important;height:auto!important;min-height:0!important}
+}

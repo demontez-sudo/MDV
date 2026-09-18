@@ -1,0 +1,71 @@
+
+/* VEUX Agent 16.10.16 — Calendar Functional Repair */
+.vx161012-finance-note{
+  color:var(--wave,var(--gold));
+  font-size:8px;
+  letter-spacing:.04em;
+  text-transform:none;
+}
+.vx161012-finance-toggle{
+  min-height:48px!important;
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  padding:9px 11px!important;
+  border:1px solid var(--line)!important;
+  border-radius:6px!important;
+  background:var(--wave-faint,rgba(201,166,107,.05))!important;
+  cursor:pointer!important;
+}
+.vx161012-finance-toggle input{
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;
+  margin:0!important;padding:0!important;border:1px solid var(--line2)!important;border-radius:4px!important;
+  background:var(--void)!important;
+}
+.vx161012-finance-toggle input:checked{
+  background:var(--wave,var(--gold))!important;
+  border-color:var(--wave,var(--gold))!important;
+  box-shadow:inset 0 0 0 4px var(--void)!important;
+}
+.vx161012-finance-toggle span{display:grid;gap:3px}
+.vx161012-finance-toggle b{font:600 10px var(--fM);color:var(--ink);letter-spacing:.04em}
+.vx161012-finance-toggle small{font:9px/1.25 var(--fM);color:var(--mute);letter-spacing:0}
+
+/* Season Matrix model search becomes a true avatar result list. */
+.vx85-model-all.open{
+  display:grid!important;
+  gap:0!important;
+  max-height:340px!important;
+  overflow:auto!important;
+}
+.vx85-model-all .vx85-extra-model{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  min-height:58px;
+  padding:8px 10px;
+  border:0;
+  border-bottom:1px solid var(--line);
+  background:transparent;
+  color:var(--ink);
+  text-align:left;
+}
+.vx85-model-all .vx85-extra-model img,
+.vx85-model-all .vx85-extra-model>i{
+  width:38px;height:38px;border-radius:50%;object-fit:cover;
+  display:grid;place-items:center;border:1px solid var(--line2);flex:0 0 38px;
+}
+.vx85-model-all .vx85-extra-model span{display:grid;gap:3px;min-width:0}
+.vx85-model-all .vx85-extra-model span b{font:10px var(--fM);letter-spacing:.08em;color:var(--ink)}
+.vx85-model-all .vx85-extra-model span small{font:9px var(--fM);color:var(--mute)}
+.vx85-model-all .vx85-extra-model:hover{background:var(--wave-faint)}
+.vx85-models.vx97-no-results::after{
+  content:"No models match this search.";
+  display:block;
+  padding:16px 10px;
+  color:var(--mute);
+  font:10px/1.4 var(--fM);
+}

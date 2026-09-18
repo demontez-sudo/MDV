@@ -1,0 +1,329 @@
+/* CAVYRE 16.11.61 — Cinematic Color Waves
+   Native CSS only. No raster images, no remote assets. */
+
+html[data-veux-wave="galaxy"]{
+  --wave:#A98BFF;--wave-bright:#D8C8FF;--wave-soft:rgba(169,139,255,.16);--wave-faint:rgba(169,139,255,.065);--wave-line:rgba(169,139,255,.34);--wave-glow:rgba(121,88,255,.25);--wave-rgb:169,139,255;
+  --ivory:#080811;--paper:#10111D;--line:#292B43;--line2:#3A3D5E;--ink:#F8F5FF;--ink2:#CAC5DB;--mute:#85829A;--faint:#514E67;--void:#03040A;
+  --gold:var(--wave);--goldl:var(--wave-bright);--goldp:var(--wave-soft);
+  --cvy-atmo-a:#6945FF;--cvy-atmo-b:#1C6BFF;--cvy-atmo-c:#D35BE8;--cvy-atmo-d:#0B1238;
+}
+html[data-veux-wave="christmas"]{
+  --wave:#D5B56D;--wave-bright:#F5DCA0;--wave-soft:rgba(213,181,109,.15);--wave-faint:rgba(213,181,109,.06);--wave-line:rgba(213,181,109,.31);--wave-glow:rgba(213,181,109,.20);--wave-rgb:213,181,109;
+  --ivory:#0B100D;--paper:#111915;--line:#2B3A31;--line2:#3B4E42;--ink:#F9F4E8;--ink2:#D3CBB9;--mute:#918B7F;--faint:#585B53;--void:#030705;
+  --gold:var(--wave);--goldl:var(--wave-bright);--goldp:var(--wave-soft);--burg:#BC3E48;--burgp:rgba(188,62,72,.14);--sage:#427B5C;--sagep:rgba(66,123,92,.16);
+  --cvy-atmo-a:#A62935;--cvy-atmo-b:#174D35;--cvy-atmo-c:#D5B56D;--cvy-atmo-d:#07140D;
+}
+html[data-veux-wave="earth"]{
+  --wave:#55D7C1;--wave-bright:#91F4E1;--wave-soft:rgba(85,215,193,.15);--wave-faint:rgba(85,215,193,.06);--wave-line:rgba(85,215,193,.31);--wave-glow:rgba(52,197,171,.22);--wave-rgb:85,215,193;
+  --ivory:#06100F;--paper:#0B1718;--line:#203A3C;--line2:#2C5052;--ink:#EEFFFB;--ink2:#B8D9D4;--mute:#759995;--faint:#43625F;--void:#010606;
+  --gold:#D7B06B;--goldl:#F1CF8F;--goldp:rgba(215,176,107,.14);--sage:#55D7C1;--sagep:rgba(85,215,193,.14);
+  --cvy-atmo-a:#0CA889;--cvy-atmo-b:#1C759D;--cvy-atmo-c:#D2A95F;--cvy-atmo-d:#041B20;
+}
+html[data-veux-wave="waterfall"]{
+  --wave:#52D6E0;--wave-bright:#A5F7FA;--wave-soft:rgba(82,214,224,.15);--wave-faint:rgba(82,214,224,.06);--wave-line:rgba(82,214,224,.31);--wave-glow:rgba(73,204,218,.22);--wave-rgb:82,214,224;
+  --ivory:#061013;--paper:#0A171A;--line:#203B40;--line2:#2D535A;--ink:#F0FEFF;--ink2:#B8D8DC;--mute:#71969B;--faint:#426268;--void:#010609;
+  --gold:var(--wave);--goldl:var(--wave-bright);--goldp:var(--wave-soft);--wblue:#71E5E9;--wbluep:rgba(113,229,233,.14);
+  --cvy-atmo-a:#16B8C3;--cvy-atmo-b:#1D6A82;--cvy-atmo-c:#A7F3EC;--cvy-atmo-d:#062431;
+}
+
+/* procedural atmosphere behind the portal */
+#cavyre-cinematic-atmosphere{display:none}
+html[data-veux-wave="galaxy"] #cavyre-cinematic-atmosphere,
+html[data-veux-wave="christmas"] #cavyre-cinematic-atmosphere,
+html[data-veux-wave="earth"] #cavyre-cinematic-atmosphere,
+html[data-veux-wave="waterfall"] #cavyre-cinematic-atmosphere{
+  display:block;position:fixed;inset:0;z-index:-2;overflow:hidden;pointer-events:none;background:var(--void);
+}
+#cavyre-cinematic-atmosphere::before,#cavyre-cinematic-atmosphere::after{content:"";position:absolute;inset:-20%;pointer-events:none;will-change:transform,opacity}
+
+html[data-veux-wave="galaxy"] #cavyre-cinematic-atmosphere{
+  background:
+   radial-gradient(circle at 18% 20%,rgba(118,87,255,.17),transparent 24%),
+   radial-gradient(circle at 74% 15%,rgba(44,108,255,.16),transparent 26%),
+   linear-gradient(145deg,#02030A 0%,#080A1B 52%,#03040C 100%);
+}
+html[data-veux-wave="galaxy"] #cavyre-cinematic-atmosphere::before{
+  background:
+   radial-gradient(ellipse at 58% 40%,rgba(216,108,244,.18) 0 5%,rgba(99,72,255,.17) 15%,transparent 42%),
+   radial-gradient(ellipse at 38% 58%,rgba(41,104,255,.15),transparent 38%),
+   conic-gradient(from 145deg at 56% 43%,transparent,rgba(149,104,255,.12),transparent 32%,rgba(34,103,217,.09),transparent 65%);
+  filter:blur(22px);animation:cvyGalaxyDrift 28s ease-in-out infinite alternate;
+}
+html[data-veux-wave="galaxy"] #cavyre-cinematic-atmosphere::after{
+  inset:0;background-image:
+   radial-gradient(circle at 7% 14%,rgba(255,255,255,.85) 0 1px,transparent 1.4px),radial-gradient(circle at 18% 63%,rgba(191,205,255,.78) 0 1px,transparent 1.3px),radial-gradient(circle at 29% 31%,rgba(255,255,255,.62) 0 1px,transparent 1.5px),radial-gradient(circle at 44% 76%,rgba(190,176,255,.72) 0 1px,transparent 1.4px),radial-gradient(circle at 61% 18%,rgba(255,255,255,.82) 0 1px,transparent 1.4px),radial-gradient(circle at 73% 57%,rgba(181,205,255,.7) 0 1px,transparent 1.3px),radial-gradient(circle at 88% 28%,rgba(255,255,255,.8) 0 1px,transparent 1.4px),radial-gradient(circle at 94% 83%,rgba(202,184,255,.7) 0 1px,transparent 1.4px);
+  background-size:240px 220px,310px 280px,370px 330px,430px 390px,280px 260px,350px 310px,470px 410px,520px 460px;opacity:.6;animation:cvyStars 36s linear infinite;
+}
+
+html[data-veux-wave="christmas"] #cavyre-cinematic-atmosphere{
+  background:radial-gradient(circle at 78% 16%,rgba(165,36,48,.15),transparent 24%),radial-gradient(circle at 18% 82%,rgba(24,91,58,.19),transparent 30%),linear-gradient(145deg,#020604,#09120D 50%,#050705 100%);
+}
+html[data-veux-wave="christmas"] #cavyre-cinematic-atmosphere::before{
+  background:radial-gradient(circle at 70% 28%,rgba(192,48,59,.16),transparent 24%),radial-gradient(circle at 33% 64%,rgba(43,120,78,.18),transparent 28%),radial-gradient(circle at 55% 46%,rgba(222,187,108,.08),transparent 18%);filter:blur(28px);animation:cvyHolidayGlow 20s ease-in-out infinite alternate;
+}
+html[data-veux-wave="christmas"] #cavyre-cinematic-atmosphere::after{
+  inset:-10% 0 0;background-image:radial-gradient(circle,rgba(255,249,232,.55) 0 1px,transparent 1.7px),radial-gradient(circle,rgba(238,205,129,.35) 0 1px,transparent 1.6px);background-size:72px 86px,119px 137px;background-position:0 0,33px 18px;opacity:.32;animation:cvySnow 26s linear infinite;
+}
+
+html[data-veux-wave="earth"] #cavyre-cinematic-atmosphere{
+  background:radial-gradient(ellipse at 50% 108%,rgba(29,180,157,.18) 0 14%,rgba(25,99,133,.12) 29%,transparent 51%),radial-gradient(circle at 80% 13%,rgba(38,123,154,.13),transparent 28%),linear-gradient(180deg,#010509 0%,#021016 63%,#03110F 100%);
+}
+html[data-veux-wave="earth"] #cavyre-cinematic-atmosphere::before{
+  inset:auto -15% -55% -15%;height:85%;border-radius:50% 50% 0 0;background:radial-gradient(ellipse at 50% 0%,rgba(109,239,216,.34) 0 1%,rgba(21,133,159,.20) 4%,rgba(4,33,42,.08) 12%,transparent 35%);box-shadow:0 -1px 34px rgba(68,221,198,.15);animation:cvyEarthPulse 12s ease-in-out infinite alternate;
+}
+html[data-veux-wave="earth"] #cavyre-cinematic-atmosphere::after{
+  inset:0;background-image:radial-gradient(circle at 16% 24%,rgba(255,255,255,.45) 0 1px,transparent 1.3px),radial-gradient(circle at 67% 17%,rgba(255,255,255,.38) 0 1px,transparent 1.2px),radial-gradient(circle at 88% 52%,rgba(245,206,130,.32) 0 1px,transparent 1.5px),radial-gradient(circle at 39% 73%,rgba(246,193,100,.22) 0 1px,transparent 1.4px);background-size:330px 310px,410px 370px,280px 260px,350px 340px;opacity:.55;animation:cvyStars 54s linear infinite reverse;
+}
+
+html[data-veux-wave="waterfall"] #cavyre-cinematic-atmosphere{
+  background:radial-gradient(circle at 50% 10%,rgba(84,222,229,.13),transparent 28%),linear-gradient(160deg,#01070A 0%,#04151B 50%,#031016 100%);
+}
+html[data-veux-wave="waterfall"] #cavyre-cinematic-atmosphere::before{
+  inset:-25% -10%;background:repeating-linear-gradient(97deg,transparent 0 7%,rgba(105,238,242,.045) 8%,transparent 10% 17%),linear-gradient(180deg,rgba(75,221,230,.15),transparent 43%);filter:blur(16px);transform:skewX(-9deg);animation:cvyWaterFlow 13s ease-in-out infinite alternate;
+}
+html[data-veux-wave="waterfall"] #cavyre-cinematic-atmosphere::after{
+  inset:45% -20% -35%;background:radial-gradient(ellipse at 50% 46%,rgba(116,241,232,.17),transparent 35%),repeating-radial-gradient(ellipse at 50% 50%,rgba(88,207,221,.08) 0 1px,transparent 2px 30px);filter:blur(10px);animation:cvyMist 18s ease-in-out infinite alternate;
+}
+
+@keyframes cvyGalaxyDrift{to{transform:translate3d(5%,-3%,0) rotate(7deg) scale(1.08)}}
+@keyframes cvyStars{to{transform:translate3d(-30px,24px,0)}}
+@keyframes cvyHolidayGlow{to{transform:translate3d(-4%,4%,0) scale(1.07);opacity:.78}}
+@keyframes cvySnow{to{transform:translate3d(-16px,92px,0)}}
+@keyframes cvyEarthPulse{to{transform:scaleX(1.05) translateY(-2%);opacity:.75}}
+@keyframes cvyWaterFlow{to{transform:translate3d(4%,8%,0) skewX(-6deg);opacity:.72}}
+@keyframes cvyMist{to{transform:translate3d(5%,-4%,0) scale(1.08);opacity:.72}}
+
+/* Glass treatment only for the four cinematic waves */
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) body{background:transparent!important;color:var(--ink)}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #app,
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #pm,
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) .portal-main{background:transparent!important}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) .topbar,
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) .tb,
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) .sidebar,
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) .sb{
+  background:color-mix(in srgb,var(--void) 84%,transparent)!important;backdrop-filter:blur(22px) saturate(125%);-webkit-backdrop-filter:blur(22px) saturate(125%);border-color:color-mix(in srgb,var(--wave) 18%,rgba(255,255,255,.10))!important
+}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) :is(.card,.v152-card,.vx-card,.v1686-crm-list,.v1686-crm-detail,.vxrel-card,.vx95-intelligence,.modal,.vx-modal,.vx-dialog,[role="dialog"]){
+  background:color-mix(in srgb,var(--paper) 88%,transparent)!important;backdrop-filter:blur(18px) saturate(118%);-webkit-backdrop-filter:blur(18px) saturate(118%);border-color:color-mix(in srgb,var(--wave) 17%,var(--line))!important;box-shadow:0 18px 55px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.02)
+}
+
+/* New Appearance card — all previews are CSS, not images */
+.cvy-cinematic-waves{grid-column:1/-1!important;position:relative;overflow:hidden;padding:0!important;background:rgba(7,8,12,.72)!important;border:1px solid var(--line)!important}
+.cvy-cinematic-waves>header{padding:22px 22px 0}.cvy-cinematic-waves>header span{color:var(--wave);font:700 8px var(--fM);letter-spacing:.16em;text-transform:uppercase}.cvy-cinematic-waves>header b{display:block;margin-top:7px;font:500 24px/1.1 var(--fD);color:var(--ink)}.cvy-cinematic-waves>header p{max-width:790px;color:var(--mute);font-size:11px;line-height:1.6;margin:8px 0 0}
+.cvy-wave-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:18px 22px 22px}.cvy-wave-option{position:relative;min-height:188px;padding:0;border:1px solid rgba(255,255,255,.12);border-radius:10px;background:#05070a;overflow:hidden;cursor:pointer;text-align:left;color:#fff;isolation:isolate}.cvy-wave-option:hover{transform:translateY(-2px);border-color:var(--card-accent)!important;box-shadow:0 16px 45px rgba(0,0,0,.35)}.cvy-wave-option.on{border-color:var(--card-accent)!important;box-shadow:0 0 0 1px color-mix(in srgb,var(--card-accent) 52%,transparent),0 18px 50px rgba(0,0,0,.34)}
+.cvy-wave-scene{position:absolute;inset:0;overflow:hidden;background:var(--card-bg);z-index:-1}.cvy-wave-scene::before,.cvy-wave-scene::after{content:"";position:absolute;inset:-15%}
+.cvy-wave-option[data-wave="galaxy"]{--card-accent:#A98BFF;--card-bg:linear-gradient(145deg,#03040b,#0a1230)}.cvy-wave-option[data-wave="galaxy"] .cvy-wave-scene::before{background:radial-gradient(ellipse at 63% 36%,rgba(213,96,240,.38),rgba(95,69,255,.22) 24%,transparent 49%),radial-gradient(circle at 25% 65%,rgba(47,114,255,.23),transparent 35%);filter:blur(10px);animation:cvyGalaxyDrift 12s ease-in-out infinite alternate}.cvy-wave-option[data-wave="galaxy"] .cvy-wave-scene::after{inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.7) 0 1px,transparent 1.5px);background-size:31px 29px;opacity:.32}
+.cvy-wave-option[data-wave="christmas"]{--card-accent:#D5B56D;--card-bg:linear-gradient(145deg,#030605,#0c1811)}.cvy-wave-option[data-wave="christmas"] .cvy-wave-scene::before{background:radial-gradient(circle at 28% 62%,rgba(24,111,69,.35),transparent 31%),radial-gradient(circle at 76% 28%,rgba(185,39,51,.35),transparent 31%),radial-gradient(circle at 54% 42%,rgba(229,193,112,.13),transparent 20%);filter:blur(10px);animation:cvyHolidayGlow 10s ease-in-out infinite alternate}.cvy-wave-option[data-wave="christmas"] .cvy-wave-scene::after{inset:0;background-image:radial-gradient(circle,rgba(255,249,232,.62) 0 1px,transparent 1.5px);background-size:42px 48px;opacity:.25;animation:cvySnow 18s linear infinite}
+.cvy-wave-option[data-wave="earth"]{--card-accent:#55D7C1;--card-bg:linear-gradient(180deg,#02070c,#06151a)}.cvy-wave-option[data-wave="earth"] .cvy-wave-scene::before{inset:44% -28% -45%;border-radius:50%;background:radial-gradient(ellipse at 50% 0%,rgba(92,234,210,.42) 0 2%,rgba(22,127,157,.28) 7%,rgba(4,30,36,.55) 22%,transparent 55%);box-shadow:0 -2px 20px rgba(76,226,203,.16);animation:cvyEarthPulse 8s ease-in-out infinite alternate}.cvy-wave-option[data-wave="earth"] .cvy-wave-scene::after{inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.5) 0 1px,transparent 1.4px);background-size:61px 57px;opacity:.22}
+.cvy-wave-option[data-wave="waterfall"]{--card-accent:#52D6E0;--card-bg:linear-gradient(155deg,#02080b,#06202a)}.cvy-wave-option[data-wave="waterfall"] .cvy-wave-scene::before{background:repeating-linear-gradient(97deg,transparent 0 13%,rgba(118,240,243,.15) 15%,transparent 18% 29%);filter:blur(7px);animation:cvyWaterFlow 8s ease-in-out infinite alternate}.cvy-wave-option[data-wave="waterfall"] .cvy-wave-scene::after{inset:53% -20% -20%;background:radial-gradient(ellipse,rgba(112,238,232,.25),transparent 53%);filter:blur(7px);animation:cvyMist 8s ease-in-out infinite alternate}
+.cvy-wave-copy{position:absolute;inset:auto 0 0;padding:42px 16px 15px;background:linear-gradient(transparent,rgba(2,4,7,.92) 57%)}.cvy-wave-copy b{display:block;font:600 14px var(--fM);letter-spacing:.12em;text-transform:uppercase}.cvy-wave-copy small{display:block;margin-top:5px;color:rgba(255,255,255,.62);font:600 8px var(--fM);letter-spacing:.1em;text-transform:uppercase}.cvy-wave-palette{display:flex;gap:6px;margin-top:12px}.cvy-wave-palette i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(255,255,255,.24);background:var(--swatch);box-shadow:0 2px 10px rgba(0,0,0,.25)}.cvy-wave-live{position:absolute;top:12px;right:12px;padding:5px 7px;border:1px solid rgba(255,255,255,.2);border-radius:999px;background:rgba(0,0,0,.38);backdrop-filter:blur(8px);font:700 7px var(--fM);letter-spacing:.12em;text-transform:uppercase;color:#fff}.cvy-wave-option.on .cvy-wave-live{border-color:var(--card-accent);color:var(--card-accent)}
+.cvy-cinematic-status{padding:0 22px 18px;color:var(--mute);font:600 9px/1.4 var(--fM);letter-spacing:.04em}.cvy-cinematic-status strong{color:var(--wave)}
+
+@media(max-width:1100px){.cvy-wave-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:620px){.cvy-wave-grid{grid-template-columns:1fr;padding:14px}.cvy-cinematic-waves>header{padding:18px 14px 0}.cvy-wave-option{min-height:160px}}
+@media(prefers-reduced-motion:reduce){#cavyre-cinematic-atmosphere::before,#cavyre-cinematic-atmosphere::after,.cvy-wave-scene::before,.cvy-wave-scene::after{animation:none!important}}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) body{isolation:isolate}
+
+
+/* 16.11.62 — cinematic themes integrated into the EXISTING Portal Color Wave grid */
+#vx-wave-settings .vx-wave-option[data-wave="galaxy"],
+#vx-wave-settings .vx-wave-option[data-wave="christmas"],
+#vx-wave-settings .vx-wave-option[data-wave="earth"],
+#vx-wave-settings .vx-wave-option[data-wave="waterfall"]{position:relative;overflow:hidden;isolation:isolate;min-height:104px}
+#vx-wave-settings .vx-wave-option[data-wave="galaxy"]::after,
+#vx-wave-settings .vx-wave-option[data-wave="christmas"]::after,
+#vx-wave-settings .vx-wave-option[data-wave="earth"]::after,
+#vx-wave-settings .vx-wave-option[data-wave="waterfall"]::after{content:"";position:absolute;inset:-30%;z-index:-1;pointer-events:none;opacity:.72;will-change:transform,opacity}
+#vx-wave-settings .vx-wave-option[data-wave="galaxy"]::after{background:radial-gradient(ellipse at 64% 38%,rgba(220,96,240,.38),rgba(95,69,255,.18) 25%,transparent 49%),radial-gradient(circle at 28% 68%,rgba(47,114,255,.24),transparent 34%);filter:blur(9px);animation:cvyGalaxyDrift 12s ease-in-out infinite alternate}
+#vx-wave-settings .vx-wave-option[data-wave="christmas"]::after{background:radial-gradient(circle at 75% 25%,rgba(185,39,51,.33),transparent 31%),radial-gradient(circle at 25% 70%,rgba(24,111,69,.35),transparent 34%),radial-gradient(circle at 50% 48%,rgba(229,193,112,.12),transparent 18%);filter:blur(8px);animation:cvyHolidayGlow 10s ease-in-out infinite alternate}
+#vx-wave-settings .vx-wave-option[data-wave="earth"]::after{inset:45% -25% -60%;border-radius:50%;background:radial-gradient(ellipse at 50% 0%,rgba(92,234,210,.46) 0 2%,rgba(22,127,157,.28) 8%,rgba(4,30,36,.55) 24%,transparent 55%);box-shadow:0 -2px 18px rgba(76,226,203,.18);animation:cvyEarthPulse 8s ease-in-out infinite alternate}
+#vx-wave-settings .vx-wave-option[data-wave="waterfall"]::after{background:repeating-linear-gradient(97deg,transparent 0 13%,rgba(118,240,243,.15) 15%,transparent 18% 29%);filter:blur(7px);animation:cvyWaterFlow 8s ease-in-out infinite alternate}
+#vx-wave-settings .vx-wave-option[data-wave="galaxy"] small,
+#vx-wave-settings .vx-wave-option[data-wave="christmas"] small,
+#vx-wave-settings .vx-wave-option[data-wave="earth"] small,
+#vx-wave-settings .vx-wave-option[data-wave="waterfall"] small{position:relative;z-index:1}
+@media(prefers-reduced-motion:reduce){#vx-wave-settings .vx-wave-option::after{animation:none!important}}
+
+
+/* =========================================================
+   CAVYRE 16.11.64 — CINEMATIC ENVIRONMENT AUTHORITY
+   Procedural visuals only: no raster/image backgrounds.
+   ========================================================= */
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) body{
+  background:#020407!important;overflow-x:hidden;
+}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #cavyre-cinematic-atmosphere{
+  display:block!important;position:fixed!important;inset:0!important;z-index:0!important;pointer-events:none!important;overflow:hidden!important;
+  opacity:1!important;transform:translateZ(0);isolation:isolate;
+}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #app{
+  position:relative!important;z-index:1!important;background:transparent!important;
+}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) .shell,
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #pm,
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #pm>.panel,
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #pm>.panel.on{
+  background:transparent!important;
+}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #pm :is(.v1686-page,.v144-page,.v152-page,.vxrel,.vx95-page,.vx161061-mobility,.vx161062-relationship,.vx161063-finance){
+  background:linear-gradient(180deg,rgba(2,5,10,.18),rgba(2,5,10,.40))!important;
+}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) :is(.topbar,.tb,.sidenav,.sidebar,.sb){
+  background:rgba(3,6,11,.78)!important;
+  backdrop-filter:blur(24px) saturate(135%)!important;-webkit-backdrop-filter:blur(24px) saturate(135%)!important;
+  border-color:rgba(var(--wave-rgb),.20)!important;
+  box-shadow:0 10px 34px rgba(0,0,0,.20)!important;
+}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #pm :is(
+ .v1686-crm-list,.v1686-crm-detail,.v1686-filterbar,.v1686-tabs,
+ .v152-card,.vxrel-card,.vxrel-vera,.vxrel-table,.vx-card,.card,
+ .v144-card,.v144-filterbar,.v144-crm-list,.v144-crm-detail,
+ [class*="-card"],[class*="-panel"]
+){
+  background:linear-gradient(145deg,rgba(5,9,16,.84),rgba(7,11,19,.68))!important;
+  border-color:rgba(var(--wave-rgb),.16)!important;
+  backdrop-filter:blur(18px) saturate(130%)!important;-webkit-backdrop-filter:blur(18px) saturate(130%)!important;
+  box-shadow:0 18px 46px rgba(0,0,0,.18),inset 0 1px 0 rgba(255,255,255,.025)!important;
+}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #pm :is(input,select,textarea,.v1686-crm-row,.vxrel-row){
+  background:rgba(2,6,11,.64)!important;border-color:rgba(var(--wave-rgb),.14)!important;
+}
+html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #pm :is(button.on,.on>.vx-wave-line,.v1686-crm-row.on){
+  box-shadow:inset 3px 0 0 rgba(var(--wave-rgb),.78),0 0 24px rgba(var(--wave-rgb),.07)!important;
+}
+
+/* GALAXY — luminous spiral-nebula ribbon + star drift */
+html[data-veux-wave="galaxy"] #cavyre-cinematic-atmosphere{
+ background:
+  radial-gradient(circle at 78% 18%,rgba(41,96,255,.22),transparent 27%),
+  radial-gradient(circle at 18% 74%,rgba(28,71,180,.17),transparent 29%),
+  linear-gradient(160deg,#01030a 0%,#061026 46%,#050315 100%)!important;
+}
+html[data-veux-wave="galaxy"] #cavyre-cinematic-atmosphere::before{
+ inset:-28% -18%!important;
+ background:
+  radial-gradient(ellipse at 58% 37%,rgba(255,205,242,.30) 0 2%,rgba(224,106,235,.31) 5%,rgba(126,76,255,.29) 13%,rgba(46,98,255,.18) 24%,transparent 44%),
+  conic-gradient(from 214deg at 58% 38%,transparent 0 20%,rgba(174,93,255,.22) 25%,rgba(69,116,255,.18) 31%,transparent 43% 62%,rgba(233,106,224,.13) 69%,transparent 78%),
+  radial-gradient(ellipse at 42% 54%,rgba(27,106,244,.20),transparent 38%);
+ filter:blur(14px) saturate(145%)!important;opacity:.95!important;
+ animation:cvyGalaxyCinematic 24s ease-in-out infinite alternate!important;
+}
+html[data-veux-wave="galaxy"] #cavyre-cinematic-atmosphere::after{
+ inset:0!important;opacity:.86!important;
+ background-image:
+  radial-gradient(circle at 8% 11%,#fff 0 1px,transparent 1.5px),radial-gradient(circle at 19% 42%,#cbd8ff 0 1px,transparent 1.4px),radial-gradient(circle at 31% 18%,#fff 0 1.2px,transparent 1.7px),radial-gradient(circle at 44% 69%,#bfcaff 0 1px,transparent 1.5px),radial-gradient(circle at 57% 26%,#fff 0 1px,transparent 1.4px),radial-gradient(circle at 69% 51%,#e7d7ff 0 1px,transparent 1.4px),radial-gradient(circle at 82% 15%,#fff 0 1.2px,transparent 1.6px),radial-gradient(circle at 91% 72%,#bfd9ff 0 1px,transparent 1.5px),radial-gradient(circle at 72% 82%,rgba(255,255,255,.7) 0 1px,transparent 1.4px);
+ background-size:180px 170px,260px 230px,320px 290px,370px 340px,230px 210px,410px 370px,290px 270px,480px 430px,540px 470px!important;
+ animation:cvyStarParallax 38s linear infinite!important;
+}
+@keyframes cvyGalaxyCinematic{0%{transform:translate3d(-2%,1%,0) rotate(-3deg) scale(1.00)}100%{transform:translate3d(4%,-3%,0) rotate(5deg) scale(1.10)}}
+@keyframes cvyStarParallax{to{transform:translate3d(-46px,32px,0)}}
+
+/* CHRISTMAS — editorial forest/ruby/gold, floating warm lights + snow */
+html[data-veux-wave="christmas"] #cavyre-cinematic-atmosphere{
+ background:
+  radial-gradient(circle at 77% 20%,rgba(150,24,39,.30),transparent 26%),
+  radial-gradient(circle at 18% 72%,rgba(18,88,57,.29),transparent 32%),
+  linear-gradient(155deg,#020504 0%,#07130d 48%,#16070a 100%)!important;
+}
+html[data-veux-wave="christmas"] #cavyre-cinematic-atmosphere::before{
+ inset:-18%!important;background:
+  radial-gradient(circle at 74% 34%,rgba(198,39,52,.26),transparent 22%),
+  radial-gradient(circle at 30% 64%,rgba(38,126,77,.30),transparent 28%),
+  radial-gradient(circle at 55% 40%,rgba(244,207,119,.16) 0 2%,transparent 18%),
+  radial-gradient(circle at 61% 52%,rgba(255,220,135,.12) 0 1.5%,transparent 13%);
+ filter:blur(18px) saturate(140%)!important;animation:cvyChristmasGlow 18s ease-in-out infinite alternate!important;
+}
+html[data-veux-wave="christmas"] #cavyre-cinematic-atmosphere::after{
+ inset:-12% 0 0!important;opacity:.60!important;
+ background-image:
+  radial-gradient(circle,rgba(255,252,239,.82) 0 1px,transparent 1.7px),
+  radial-gradient(circle,rgba(255,215,123,.65) 0 1.4px,transparent 2px),
+  radial-gradient(circle,rgba(255,255,255,.38) 0 .8px,transparent 1.4px);
+ background-size:74px 96px,151px 173px,113px 137px!important;background-position:0 0,40px 19px,17px 48px!important;
+ animation:cvyChristmasSnow 20s linear infinite!important;
+}
+@keyframes cvyChristmasGlow{to{transform:translate3d(-3%,3%,0) scale(1.08);filter:blur(22px) saturate(160%)}}
+@keyframes cvyChristmasSnow{to{transform:translate3d(-20px,125px,0)}}
+
+/* EARTH — curved orbital horizon with aurora and city-light sparks */
+html[data-veux-wave="earth"] #cavyre-cinematic-atmosphere{
+ background:
+  radial-gradient(circle at 20% 15%,rgba(12,79,125,.19),transparent 30%),
+  radial-gradient(circle at 79% 22%,rgba(30,142,118,.16),transparent 27%),
+  linear-gradient(180deg,#010307 0%,#03131c 58%,#03110f 100%)!important;
+}
+html[data-veux-wave="earth"] #cavyre-cinematic-atmosphere::before{
+ inset:auto -12% -55% -12%!important;height:97%!important;border-radius:50% 50% 0 0!important;
+ background:
+  radial-gradient(ellipse at 50% 3%,rgba(115,255,222,.62) 0 .8%,rgba(41,202,187,.34) 2.2%,rgba(20,111,154,.23) 5.5%,rgba(3,28,39,.92) 19%,rgba(1,6,10,.98) 54%),
+  repeating-radial-gradient(ellipse at 52% 3%,rgba(219,175,88,.12) 0 1px,transparent 2px 48px)!important;
+ box-shadow:0 -4px 42px rgba(76,235,211,.28),0 -1px 10px rgba(96,225,255,.28)!important;
+ animation:cvyEarthOrbit 15s ease-in-out infinite alternate!important;
+}
+html[data-veux-wave="earth"] #cavyre-cinematic-atmosphere::after{
+ inset:0!important;opacity:.73!important;
+ background-image:
+  radial-gradient(circle at 8% 12%,rgba(255,255,255,.8) 0 1px,transparent 1.4px),radial-gradient(circle at 23% 33%,rgba(185,222,255,.55) 0 1px,transparent 1.4px),radial-gradient(circle at 61% 14%,rgba(255,255,255,.65) 0 1px,transparent 1.4px),radial-gradient(circle at 88% 37%,rgba(255,255,255,.7) 0 1px,transparent 1.4px),radial-gradient(circle at 44% 82%,rgba(240,189,88,.72) 0 1.4px,transparent 2px),radial-gradient(circle at 71% 76%,rgba(255,213,122,.62) 0 1px,transparent 1.6px);
+ background-size:310px 290px,370px 330px,430px 390px,520px 460px,180px 165px,240px 215px!important;
+ animation:cvyEarthStars 52s linear infinite!important;
+}
+@keyframes cvyEarthOrbit{to{transform:translateY(-2.2%) scaleX(1.035);filter:saturate(125%)}}
+@keyframes cvyEarthStars{to{transform:translate3d(30px,-18px,0)}}
+
+/* WATERFALL — vertical luminous falls + rolling mist */
+html[data-veux-wave="waterfall"] #cavyre-cinematic-atmosphere{
+ background:
+  radial-gradient(ellipse at 52% 20%,rgba(67,224,230,.24),transparent 32%),
+  radial-gradient(ellipse at 18% 76%,rgba(11,99,124,.20),transparent 32%),
+  linear-gradient(160deg,#010609 0%,#04202a 48%,#03141b 100%)!important;
+}
+html[data-veux-wave="waterfall"] #cavyre-cinematic-atmosphere::before{
+ inset:-25% -12%!important;
+ background:
+  repeating-linear-gradient(94deg,transparent 0 5%,rgba(186,255,255,.02) 6%,rgba(108,240,244,.16) 7%,rgba(255,255,255,.05) 8%,transparent 10% 16%),
+  linear-gradient(180deg,rgba(111,252,246,.22),rgba(32,170,198,.08) 52%,transparent 78%)!important;
+ filter:blur(9px) saturate(135%)!important;transform:skewX(-6deg);animation:cvyFalls 8s ease-in-out infinite alternate!important;
+}
+html[data-veux-wave="waterfall"] #cavyre-cinematic-atmosphere::after{
+ inset:47% -18% -30%!important;
+ background:
+  radial-gradient(ellipse at 52% 45%,rgba(178,255,250,.30),transparent 34%),
+  radial-gradient(ellipse at 18% 62%,rgba(77,207,216,.18),transparent 28%),
+  repeating-radial-gradient(ellipse at 50% 50%,rgba(112,235,239,.09) 0 1px,transparent 2px 36px)!important;
+ filter:blur(11px)!important;animation:cvyWaterMist 11s ease-in-out infinite alternate!important;
+}
+@keyframes cvyFalls{to{transform:translate3d(3%,9%,0) skewX(-4deg);opacity:.74}}
+@keyframes cvyWaterMist{to{transform:translate3d(5%,-4%,0) scale(1.10);opacity:.74}}
+
+/* Reference-style cinematic cards inside the native settings grid */
+#vx-wave-settings .vx-wave-option.cinematic{min-height:176px!important;padding:0!important;align-items:flex-end!important;justify-content:flex-start!important;overflow:hidden!important;border-color:rgba(255,255,255,.16)!important;box-shadow:0 16px 32px rgba(0,0,0,.22)!important}
+#vx-wave-settings .vx-wave-option.cinematic>b,#vx-wave-settings .vx-wave-option.cinematic>small,#vx-wave-settings .vx-wave-option.cinematic>.vx-wave-line,#vx-wave-settings .vx-wave-option.cinematic>.vx-wave-check{position:relative;z-index:4;margin-left:15px}
+#vx-wave-settings .vx-wave-option.cinematic>b{margin-bottom:34px;color:#fff!important;text-shadow:0 2px 13px rgba(0,0,0,.7)}
+#vx-wave-settings .vx-wave-option.cinematic>small{position:absolute!important;left:15px;bottom:49px;color:rgba(255,255,255,.66)!important}
+#vx-wave-settings .vx-wave-option.cinematic>.vx-wave-line{position:absolute!important;left:15px;bottom:15px!important;width:32px!important}
+#vx-wave-settings .vx-wave-option.cinematic::before{content:"LIVE PREVIEW";position:absolute;right:12px;top:12px;z-index:5;padding:5px 7px;border:1px solid rgba(255,255,255,.25);border-radius:999px;background:rgba(0,0,0,.34);backdrop-filter:blur(8px);color:#fff;font:700 7px var(--fM);letter-spacing:.12em}
+#vx-wave-settings .vx-wave-option.cinematic::after{z-index:1!important;opacity:1!important}
+#vx-wave-settings .vx-wave-option.cinematic .cvy-native-palette{position:absolute;left:61px;bottom:12px;z-index:5;display:flex;gap:6px}
+#vx-wave-settings .vx-wave-option.cinematic .cvy-native-palette i{display:block;width:17px;height:17px;border-radius:50%;background:var(--c);border:1px solid rgba(255,255,255,.28);box-shadow:0 3px 10px rgba(0,0,0,.35)}
+#vx-wave-settings .vx-wave-option.cinematic.galaxy{background:linear-gradient(160deg,#050717,#101443)!important}
+#vx-wave-settings .vx-wave-option.cinematic.christmas{background:linear-gradient(145deg,#07100b,#321012)!important}
+#vx-wave-settings .vx-wave-option.cinematic.earth{background:linear-gradient(180deg,#02070c,#06262a)!important}
+#vx-wave-settings .vx-wave-option.cinematic.waterfall{background:linear-gradient(150deg,#021014,#073644)!important}
+#vx-wave-settings .vx-wave-option.cinematic.galaxy::after{background:radial-gradient(ellipse at 63% 35%,rgba(247,190,245,.46) 0 3%,rgba(195,88,238,.42) 8%,rgba(92,75,255,.28) 22%,transparent 45%),conic-gradient(from 225deg at 60% 36%,transparent,rgba(104,83,255,.25),transparent 38%,rgba(39,112,255,.18),transparent 70%)!important;filter:blur(4px)!important;animation:cvyGalaxyCinematic 10s ease-in-out infinite alternate!important}
+#vx-wave-settings .vx-wave-option.cinematic.christmas::after{background:radial-gradient(circle at 76% 24%,rgba(214,42,55,.45),transparent 27%),radial-gradient(circle at 28% 69%,rgba(27,130,79,.48),transparent 35%),radial-gradient(circle at 54% 46%,rgba(243,204,108,.22),transparent 18%)!important;filter:blur(5px)!important;animation:cvyChristmasGlow 9s ease-in-out infinite alternate!important}
+#vx-wave-settings .vx-wave-option.cinematic.earth::after{inset:44% -20% -55%!important;border-radius:50%!important;background:radial-gradient(ellipse at 50% 0%,rgba(127,255,231,.72) 0 2%,rgba(33,178,170,.38) 6%,rgba(3,34,43,.92) 24%,transparent 54%)!important;box-shadow:0 -2px 21px rgba(83,239,213,.34)!important;animation:cvyEarthOrbit 8s ease-in-out infinite alternate!important}
+#vx-wave-settings .vx-wave-option.cinematic.waterfall::after{background:repeating-linear-gradient(96deg,transparent 0 8%,rgba(141,255,255,.22) 10%,rgba(255,255,255,.05) 11%,transparent 13% 22%),radial-gradient(ellipse at 50% 72%,rgba(127,255,248,.26),transparent 37%)!important;filter:blur(5px)!important;animation:cvyFalls 7s ease-in-out infinite alternate!important}
+
+@media(max-width:900px){#vx-wave-settings .vx-wave-option.cinematic{min-height:150px!important}}
+@media(prefers-reduced-motion:reduce){#cavyre-cinematic-atmosphere::before,#cavyre-cinematic-atmosphere::after,#vx-wave-settings .vx-wave-option.cinematic::after{animation:none!important}}
+
+/* 16.11.65 — four requested waves are first-class Portal Color Waves */
+.vx-wave-option[data-wave="galaxy"],.vx-wave-option[data-wave="christmas"],.vx-wave-option[data-wave="earth"],.vx-wave-option[data-wave="waterfall"]{position:relative;overflow:hidden}
+.vx-wave-option[data-wave="galaxy"]::after,.vx-wave-option[data-wave="christmas"]::after,.vx-wave-option[data-wave="earth"]::after,.vx-wave-option[data-wave="waterfall"]::after{content:"";position:absolute;inset:-35%;pointer-events:none;opacity:.34;filter:blur(18px);animation:cvyWaveCardDrift 8s ease-in-out infinite alternate}
+.vx-wave-option[data-wave="galaxy"]::after{background:radial-gradient(circle,rgba(169,139,255,.55),transparent 46%)}
+.vx-wave-option[data-wave="christmas"]::after{background:radial-gradient(circle,rgba(213,181,109,.38),transparent 46%)}
+.vx-wave-option[data-wave="earth"]::after{background:radial-gradient(circle,rgba(85,215,193,.45),transparent 46%)}
+.vx-wave-option[data-wave="waterfall"]::after{background:linear-gradient(105deg,transparent 35%,rgba(82,214,224,.28) 48%,transparent 62%)}
+@keyframes cvyWaveCardDrift{from{transform:translate3d(-8%,-4%,0) scale(.96)}to{transform:translate3d(10%,7%,0) scale(1.08)}}
+@media (prefers-reduced-motion:reduce){.vx-wave-option[data-wave="galaxy"]::after,.vx-wave-option[data-wave="christmas"]::after,.vx-wave-option[data-wave="earth"]::after,.vx-wave-option[data-wave="waterfall"]::after{animation:none}}

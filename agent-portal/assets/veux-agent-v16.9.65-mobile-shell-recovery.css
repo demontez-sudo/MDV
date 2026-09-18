@@ -1,0 +1,13 @@
+/* VEUX DESK 16.9.65 — Mobile shell recovery */
+@media(max-width:900px){
+  html,body,#app{width:100%!important;max-width:100%!important;overflow-x:hidden!important}
+  #app.on{min-width:0!important}
+  .shell{margin-left:0!important;width:100%!important;max-width:100vw!important;min-width:0!important;flex:1 1 auto!important}
+  main.pm,#pm{margin-left:0!important;width:100%!important;max-width:100vw!important;min-width:0!important;flex:1 1 100%!important}
+  .panel.on{width:100%!important;max-width:100%!important;min-width:0!important}
+}
+@media(max-width:760px){
+  .topbar{grid-template-columns:minmax(0,1fr) auto!important;width:100%!important;max-width:100vw!important}
+  .tb-brand{grid-column:1!important;width:auto!important;min-width:0!important;flex:1 1 auto!important;margin-left:0!important;padding-left:8px!important;border-right:0!important}
+  .tb-right{grid-column:2!important;margin-left:0!important}
+}
