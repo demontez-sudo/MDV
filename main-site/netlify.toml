@@ -2,20 +2,6 @@
   publish = "public"
   functions = "netlify/functions"
 
-# SEPARATED ARCHITECTURE LOGIN FIX — narrow overrides only.
-# Keep Agent, Model, and MA as independent apps.
-[[redirects]]
-  from = "/portal/assets/veux-model-staging-16.9.69.js"
-  to = "/.mdv-patches/veux-model-staging-16.9.69.js"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/portal/api/model/password/finalize"
-  to = "/.netlify/functions/model-password-finalize-separated"
-  status = 200
-  force = true
-
 # Maison de Veux — main public site
 # Portal entry paths connect to independent VEUX DESK apps.
 # Agent /admin is reverse-proxied so the Maison domain remains in the browser;

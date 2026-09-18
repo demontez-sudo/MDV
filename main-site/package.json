@@ -3,7 +3,7 @@
   "private": true,
   "version": "16.9.30",
   "scripts": {
-    "check": "node scripts/check-site.mjs && node scripts/check-mobile-certification-16929.mjs && node scripts/check-interaction-system-16930.mjs"
+    "check": "node scripts/check-site.mjs && node scripts/check-mobile-certification-16929.mjs && node scripts/check-interaction-system-16930.mjs && node scripts/check-cross-portal-branded-routing-16927.mjs"
   },
   "description": "Maison de Veux public site 16.9.30: editorial interaction polish with mobile-certified canonical roster rendering."
 }
