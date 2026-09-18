@@ -1,0 +1,1 @@
+(function(){'use strict';document.documentElement.setAttribute('data-calendar-duration','16.11.39');function s(){}document.readyState==='loading'?document.addEventListener('DOMContentLoaded',s,{once:true}):s();})();

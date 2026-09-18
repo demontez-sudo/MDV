@@ -1,0 +1,61 @@
+
+/* VEUX Agent 16.10.15 — Season Matrix All Models Interaction */
+.vx85-all{
+  position:relative!important;
+  cursor:pointer!important;
+}
+.vx85-all > b{
+  margin-left:auto!important;
+}
+.vx161014-all-chevron{
+  width:20px;
+  height:20px;
+  display:grid!important;
+  place-items:center;
+  margin-left:8px;
+  border:1px solid var(--wave-line,var(--line2));
+  border-radius:50%;
+  color:var(--wave,var(--gold));
+  font:600 12px/1 var(--fM);
+  font-style:normal;
+}
+.vx85-all:hover .vx161014-all-chevron{
+  background:var(--wave-faint,rgba(201,166,107,.06));
+  border-color:var(--wave,var(--gold));
+}
+
+.vx85-more{
+  cursor:pointer!important;
+}
+.vx85-more.on{
+  color:var(--wave,var(--gold))!important;
+}
+
+.vx85-model-all{
+  min-height:0;
+}
+.vx85-model-all.open{
+  display:grid!important;
+  max-height:380px!important;
+  overflow-x:hidden!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  touch-action:pan-y!important;
+  -webkit-overflow-scrolling:touch!important;
+  scrollbar-width:thin;
+  scrollbar-color:var(--wave-line,var(--line2)) transparent;
+}
+.vx85-model-all.open::-webkit-scrollbar{width:7px}
+.vx85-model-all.open::-webkit-scrollbar-track{background:transparent}
+.vx85-model-all.open::-webkit-scrollbar-thumb{
+  background:var(--wave-line,var(--line2));
+  border-radius:8px;
+}
+.vx85-model-all.open [data-model]{
+  flex:none!important;
+  cursor:pointer!important;
+}
+
+@media(max-height:820px){
+  .vx85-model-all.open{max-height:280px!important}
+}

@@ -1,0 +1,62 @@
+
+/* VEUX Agent 16.10.02 — Portal Select System */
+.vx-select-native{
+  position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;
+  pointer-events:none!important;margin:0!important;padding:0!important;
+}
+.vx-select{
+  position:relative;display:block;min-width:0;width:100%;
+  font-family:var(--fM, "Space Mono", monospace);
+}
+.vx-select-btn{
+  width:100%;min-height:42px;display:flex;align-items:center;justify-content:space-between;
+  gap:12px;padding:0 13px;border:1px solid var(--line2,#4a3d28);
+  background:linear-gradient(180deg,rgba(24,23,19,.98),rgba(14,14,12,.98));
+  color:var(--ink,#e9e2d6);border-radius:7px;cursor:pointer;text-align:left;
+  font:500 11px/1.25 var(--fM,"Space Mono",monospace);letter-spacing:.055em;
+  transition:border-color .16s ease,background .16s ease,box-shadow .16s ease;
+}
+.vx-select-btn:hover{border-color:rgba(202,160,82,.62);background:#171611}
+.vx-select.open .vx-select-btn,.vx-select-btn:focus-visible{
+  outline:none;border-color:var(--gold,#caa052);
+  box-shadow:0 0 0 2px rgba(202,160,82,.11);
+}
+.vx-select-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vx-select-chevron{
+  width:16px;height:16px;display:grid;place-items:center;flex:0 0 16px;color:var(--gold,#caa052);
+  transition:transform .16s ease;
+}
+.vx-select.open .vx-select-chevron{transform:rotate(180deg)}
+.vx-select-menu{
+  position:absolute;z-index:100050;left:0;right:0;top:calc(100% + 6px);
+  max-height:min(330px,52vh);overflow:auto;padding:6px;
+  border:1px solid rgba(202,160,82,.42);border-radius:8px;
+  background:rgba(12,12,10,.985);box-shadow:0 18px 50px rgba(0,0,0,.48);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+}
+.vx-select-menu[hidden]{display:none!important}
+.vx-select-option{
+  width:100%;min-height:38px;border:0;border-radius:5px;background:transparent;color:var(--ink2,#cfc6b8);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;
+  cursor:pointer;text-align:left;font:500 11px/1.25 var(--fM,"Space Mono",monospace);
+  letter-spacing:.035em;
+}
+.vx-select-option:hover,.vx-select-option.focused{background:rgba(202,160,82,.09);color:var(--ink,#f0e9dd)}
+.vx-select-option.selected{
+  background:linear-gradient(90deg,rgba(202,160,82,.18),rgba(202,160,82,.06));
+  color:var(--gold,#d3ad68);
+}
+.vx-select-option.selected::after{content:"✓";font-size:11px;color:var(--gold,#d3ad68)}
+.vx-select-option:disabled{opacity:.4;cursor:not-allowed}
+.vx-select-group{
+  padding:9px 10px 5px;color:var(--mute,#81786c);font:600 9px/1 var(--fM,"Space Mono",monospace);
+  letter-spacing:.16em;text-transform:uppercase;
+}
+.vx-select-separator{height:1px;background:var(--line,#2d271e);margin:5px 4px}
+.vx-select-menu::-webkit-scrollbar{width:7px}.vx-select-menu::-webkit-scrollbar-track{background:transparent}
+.vx-select-menu::-webkit-scrollbar-thumb{background:#3b3327;border-radius:8px}
+@media(max-width:700px){
+  .vx-select-btn{min-height:44px;font-size:12px}
+  .vx-select-option{min-height:44px;font-size:12px}
+  .vx-select-menu{max-height:300px}
+}
