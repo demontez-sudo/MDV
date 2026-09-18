@@ -129,20 +129,20 @@ function buildPackageEmailHtml({organization,settings,user,recipient,pkg,intro,p
 
   const portrait=(m,h=188)=>{
     if(!m?.image_url)return `<div style="height:${h}px;background:#e6ddd0;display:table;width:100%;text-align:center"><div style="display:table-cell;vertical-align:middle;font-family:Georgia,serif;font-size:24px;color:#8c7e6e">${escHtml((m?.display_name||'M').slice(0,1))}</div></div>`;
-    return `<img src="${escHtml(m.image_url)}" alt="${escHtml(m.display_name||'Maison de Veux model')}" width="310" style="display:block;width:100%;height:${h}px;object-fit:cover;object-position:center top;border:0">`;
+    return `<img src="${escHtml(m.image_url)}" alt="${escHtml(m.display_name||'Maison de Veux model')}" width="310" style="display:block;width:100%;height:${h}px;object-fit:cover;object-position:center 12%;border:0">`;
   };
 
   const singleModel=shown.length===1;
   const heroCells=singleModel
     ? `<td align="center" style="padding:0"><div style="width:280px;max-width:72%;margin:0 auto">${portrait(shown[0],340)}</div></td>`
-    : shown.map(m=>`<td width="${Math.floor(100/Math.max(shown.length,1))}%" valign="top" style="padding:0 1px">${portrait(m,165)}</td>`).join('');
+    : shown.map(m=>`<td width="${Math.floor(100/Math.max(shown.length,1))}%" valign="top" style="padding:0 1px">${portrait(m,210)}</td>`).join('');
   const cardCells=[];
   for(let i=0;i<shown.length;i++){
     const m=shown[i],href=`${publicUrl}#model-${encodeURIComponent(m.id||'')}`;
     const sub=[m.primary_market_label||marketRaw,'Available',m.stage].filter(Boolean).map(escHtml).join(' · ');
     cardCells.push(`<td class="model-card" width="50%" valign="top" style="width:50%;padding:0 5px 12px">
       <a href="${escHtml(href)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;color:#171512;display:block">
-        ${portrait(m,180)}
+        ${portrait(m,380)}
         <div style="padding:13px 12px 15px;border:1px solid #d8cdbd;border-top:0;background:#f8f3eb">
           <div style="font-family:Arial,sans-serif;font-size:9px;letter-spacing:1.8px;color:#a57a42">${String(i+1).padStart(2,'0')}</div>
           <div style="padding-top:6px;font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.06;text-transform:uppercase">${escHtml(m.display_name||'Model')}</div>
