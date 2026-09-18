@@ -543,7 +543,7 @@
     var grid = document.getElementById('home-news-grid');
     var allPosts = await sbGet('mdvc_editorial_2026');
     var posts = (Array.isArray(allPosts) ? allPosts : [])
-      .filter(function(p){ return p.city===CITY && p.status==='published'; })
+      .filter(function(p){ return (p.city===CITY || p.city==='both') && p.status==='published'; })
       .sort(function(a,b){ return (b.publishedAt||'').localeCompare(a.publishedAt||''); })
       .slice(0, 2);
     if(!posts.length){
