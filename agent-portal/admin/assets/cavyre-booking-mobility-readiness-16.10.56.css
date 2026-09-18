@@ -1,6 +1,6 @@
 /* CAVYRE 16.10.56 — Booking Mobility Readiness */
 .vx16856-ready{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:42px;padding:9px 11px;border:1px solid rgba(255,255,255,.09);background:rgba(255,255,255,.025)}
-.vx16856-ready b{font:700 8px "Space Mono",monospace;text-transform:uppercase;letter-spacing:.08em}
+.vx16856-ready b{font:700 8px 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.08em}
 .vx16856-ready span{font-size:8px;color:var(--mute);text-align:right}
 .vx16856-ready.clear{border-color:rgba(94,190,137,.28)}
 .vx16856-ready.watch{border-color:rgba(214,167,83,.32)}
