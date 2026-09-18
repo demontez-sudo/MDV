@@ -253,7 +253,7 @@ function renderRoster(el){
 function packagesData(){try{return window.loadMultiPackages?loadMultiPackages():[];}catch(e){return[];}}
 function pkgModels(p){return arr(p&&p.models);}
 function renderPackages(el){var pkgs=packagesData();if(!S.pkg&&pkgs[0])S.pkg=pkgs[0].id;var p=pkgs.find(function(x){return x.id===S.pkg;})||pkgs[0]||{};var active=pkgs.length,drafts=pkgs.filter(function(x){return !x.pkgUrl&&!x.sentAt;}).length,reviews=pkgs.filter(function(x){return arr(x.responses).length;}).length,sent=pkgs.filter(function(x){return x.pkgUrl||x.sentAt;}).length;var cover='';var first=pkgModels(p)[0];if(first)cover=headshot(first.key)||first.headshot||'';
- var h='<div class="v148-page v148-packages"><div class="v148-head"><div><div class="v148-crumb">Model Tools · Client Submissions</div><h1 class="v148-title">Model Packages ☆</h1><div class="v148-sub">Build, personalize and send curated model packages to clients.</div></div><div class="v148-head-actions"><button class="v148-btn gold" onclick="newPackage()">+ Create Package</button><button class="v148-btn icon">⋯</button></div></div><div class="v148-kpis">'+metric('Active Packages',active,'▣','Current package library')+metric('Drafts',drafts,'✎','In progress')+metric('Client Reviews',reviews,'♙','With feedback')+metric('Sent',sent,'➤','Delivered packages')+'</div><div class="v148-tabs"><button class="on">All Packages</button><button>Drafts</button><button>Sent</button><button>Reviewed</button><button>Approved</button><button>Archived</button></div><div class="v148-filterbar"><input class="v148-search" placeholder="Search packages…"><select class="v148-select"><option>All Statuses</option></select><select class="v148-select"><option>All Clients</option></select><select class="v148-select"><option>All Markets</option></select><button class="v148-btn">More Filters</button></div><div class="v148-split"><section class="v148-main"><div class="v148-table-head"><span>□</span><span>Package</span><span>Models Included</span><span>Last Updated</span><span>Status</span><span></span></div>';
+ var h='<div class="v148-page v148-packages"><div class="v148-head"><div><div class="v148-crumb">Model Tools · Client Submissions</div><h1 class="v148-title">Model Packages ☆</h1><div class="v148-sub">Build, personalize and send curated model packages to clients.</div></div><div class="v148-head-actions"><button class="v148-btn gold" onclick="VEUX_V7.openCreatePackage()">+ Create Package</button><button class="v148-btn icon">⋯</button></div></div><div class="v148-kpis">'+metric('Active Packages',active,'▣','Current package library')+metric('Drafts',drafts,'✎','In progress')+metric('Client Reviews',reviews,'♙','With feedback')+metric('Sent',sent,'➤','Delivered packages')+'</div><div class="v148-tabs"><button class="on">All Packages</button><button>Drafts</button><button>Sent</button><button>Reviewed</button><button>Approved</button><button>Archived</button></div><div class="v148-filterbar"><input class="v148-search" placeholder="Search packages…"><select class="v148-select"><option>All Statuses</option></select><select class="v148-select"><option>All Clients</option></select><select class="v148-select"><option>All Markets</option></select><button class="v148-btn">More Filters</button></div><div class="v148-split"><section class="v148-main"><div class="v148-table-head"><span>□</span><span>Package</span><span>Models Included</span><span>Last Updated</span><span>Status</span><span></span></div>';
  pkgs.forEach(function(x){var pm=pkgModels(x),hs=headshot(pm[0]&&pm[0].key)||pm[0]&&pm[0].headshot||'';h+='<div class="v148-row '+(x.id===p.id?'on':'')+'" onclick="VEUX_V148.pkgSelect(\''+esc(x.id)+'\')"><span>□</span><span class="v148-person">'+img(hs,x.name)+'<span><b>'+esc(x.name||'Untitled Package')+'</b><small>'+esc(x.client||'No client')+' · '+esc(x.market||'Global')+'</small></span></span><span class="v148-cell">'+pm.slice(0,3).map(function(mm){return esc(MODELS[mm.key]&&MODELS[mm.key].name||mm.key);}).join(', ')+(pm.length>3?' +'+(pm.length-3):'')+'</span><span class="v148-cell">'+esc(x.updatedAt||x.createdAt||'—')+'</span><span>'+chip(x.pkgUrl?'sent':arr(x.responses).length?'reviewed':'draft')+'</span><span>⋯</span></div>';});if(!pkgs.length)h+='<div class="v148-empty">No packages yet. Create the first client package.</div>';h+='</section><aside class="v148-side"><div class="v148-package-cover" style="'+(cover?'background-image:url(\''+esc(cover).replace(/'/g,"\\'")+'\')':'')+'"><div class="txt"><small>'+esc(p.client||'Package Overview')+'</small><h3>'+esc(p.name||'Select Package')+'</h3></div></div><div class="v148-package-body"><div class="v148-cardhead"><b>Package Overview</b>'+chip(p.pkgUrl?'sent':'draft')+'</div><p>Client: <strong>'+esc(p.client||'—')+'</strong></p><p>Models: '+pkgModels(p).length+' · Created '+esc(p.createdAt||'—')+'</p><div class="v148-card"><div class="v148-cardhead"><b>Signal Overview</b></div><div class="v148-signal"><div><div class="v148-ring open">'+(p.pkgUrl?'100':'0')+'%</div><p style="text-align:center">Opened</p></div><div><div class="v148-ring view">'+(arr(p.responses).length?'80':'0')+'%</div><p style="text-align:center">Viewed</p></div><div><div class="v148-ring interest">'+(arr(p.responses).filter(function(r){return r.type==='approve'||r.type==='info';}).length?'60':'0')+'%</div><p style="text-align:center">Interested</p></div></div></div><div class="v148-card"><div class="v148-cardhead"><b>Included Models</b><span>'+pkgModels(p).length+'</span></div><div class="v148-thumbrow">'+pkgModels(p).slice(0,5).map(function(mm){return img(headshot(mm.key)||mm.headshot,MODELS[mm.key]&&MODELS[mm.key].name||mm.key,'');}).join('')+'</div></div><div class="v148-actions-rail" style="margin-top:12px"><button class="v148-btn" onclick="openPackageEditor(\''+esc(p.id||'')+'\')">Edit Package</button><button class="v148-btn gold" onclick="quickSendPackage(\''+esc(p.id||'')+'\')">Send Package</button><button class="v148-btn" onclick="duplicatePackage(\''+esc(p.id||'')+'\')">Duplicate</button><button class="v148-btn" onclick="downloadPackageById(\''+esc(p.id||'')+'\')">Export / Download</button></div></div></aside></div></div>';el.innerHTML=h;}
 function evalEntries(){var all={};try{all=window.loadModelEvaluations?loadModelEvaluations():{};}catch(e){}return Object.entries(window.MODELS||{}).filter(function(e){return e[1]&&e[1].name;}).map(function(e){var v=all[e[0]]||{current:{},potential:{}};var score=null;try{score=window.evalWeightedScore?evalWeightedScore(v.current):null;}catch(_){}return{key:e[0],model:e[1],ev:v,score:score};}).sort(function(a,b){return (b.score||-1)-(a.score||-1);});}
 function evalValues(ev){var o=ev&&ev.current||{},ks=Object.keys(o).filter(function(k){return typeof o[k]==='number';});var vals=ks.slice(0,6).map(function(k){var n=Number(o[k]||0);return n<=10?n*10:n;});while(vals.length<6)vals.push(60+vals.length*4);return vals;}
@@ -453,41 +453,6 @@ function wireRoster(){
     });
   }
 }
-
-/* The 14.8 package redesign replaced renderMultiPackages, while legacy newPackage()
-   still sets the editor state used by renderPackageEditor(). Honor that state before
-   drawing the redesigned package list so Create/Edit actually opens the builder. */
-var currentPackageRenderer=window.renderMultiPackages;
-function repairedPackageRenderer(el){
-  try{
-    if(typeof window.getEditingPkg==='function'&&window.getEditingPkg()){
-      if(typeof window.renderPackageEditor==='function'){window.renderPackageEditor(el);return;}
-    }
-  }catch(e){console.warn('[VEUX 14.11] package editor state check failed',e);}
-  return currentPackageRenderer&&currentPackageRenderer(el);
-}
-if(typeof currentPackageRenderer==='function')window.renderMultiPackages=repairedPackageRenderer;
-
-var originalNewPackage=window.newPackage;
-function createPackage(){
-  if(typeof originalNewPackage!=='function'){say('Package builder is unavailable.');return;}
-  originalNewPackage();
-  setTimeout(function(){
-    try{
-      var p=document.getElementById('p-multipackage')||activePanel();
-      if(p&&typeof window.getEditingPkg==='function'&&window.getEditingPkg()&&typeof window.renderPackageEditor==='function')window.renderPackageEditor(p);
-    }catch(e){console.warn('[VEUX 14.11] package create handoff failed',e);}
-  },0);
-}
-if(typeof originalNewPackage==='function')window.newPackage=createPackage;
-
-var originalOpenPackageEditor=window.openPackageEditor;
-if(typeof originalOpenPackageEditor==='function')window.openPackageEditor=function(id){
-  originalOpenPackageEditor(id);
-  setTimeout(function(){
-    try{var p=document.getElementById('p-multipackage')||activePanel();if(p&&typeof window.renderPackageEditor==='function')window.renderPackageEditor(p);}catch(e){}
-  },0);
-};
 
 function wirePackages(){
   var root=document.querySelector('.v148-packages');if(!root||root.dataset.v1411Pkg==='1')return;root.dataset.v1411Pkg='1';
