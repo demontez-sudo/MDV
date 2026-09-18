@@ -1,0 +1,114 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+
+[[redirects]]
+  from = "/api/partner/access-login"
+  to = "/.netlify/functions/partner-access-login"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/config"
+  to = "/.netlify/functions/public-config"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/partner/bootstrap"
+  to = "/.netlify/functions/partner-bootstrap"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/partner/approval-response"
+  to = "/.netlify/functions/partner-approval-response"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/portal/task-status"
+  to = "/.netlify/functions/portal-task-status"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/portal/message"
+  to = "/.netlify/functions/portal-message"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/storage/download-url"
+  to = "/.netlify/functions/storage-download-url"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ask-claude"
+  to = "/.netlify/functions/partner-assistant"
+  status = 200
+  force = true
+
+# 2026-08-19 compatibility alias: keep wrapper/API route aligned with /ask-claude
+[[redirects]]
+  from = "/api/partner-assistant"
+  to = "/.netlify/functions/partner-assistant"
+  status = 200
+  force = true
+
+
+# Lightweight signed-in notification feed for message pop-up alerts
+[[redirects]]
+  from = "/api/portal/notifications"
+  to = "/.netlify/functions/portal-notifications"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/portal/notification-read"
+  to = "/.netlify/functions/portal-notification-read"
+  status = 200
+  force = true
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/health"
+  status = 200
+  force = true
+
+
+# v16.1: partner-scoped placement status updates
+[[redirects]]
+  from = "/api/partner/placement-update"
+  to = "/.netlify/functions/partner-placement-update"
+  status = 200
+  force = true
+
+# 16.7.14 Smart Calendar: Mother Agency travel decisions and partner document submission
+[[redirects]]
+  from = "/api/partner/travel-response"
+  to = "/.netlify/functions/partner-travel-response"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/partner/document-upload-url"
+  to = "/.netlify/functions/partner-document-upload-url"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/partner/document-finalize"
+  to = "/.netlify/functions/partner-document-finalize"
+  status = 200
+  force = true

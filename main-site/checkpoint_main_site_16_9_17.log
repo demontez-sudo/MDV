@@ -1,0 +1,5 @@
+
+> maisondeveux-public-site@16.9.17 check
+> node scripts/check-site.mjs
+
+Maison de Veux 16.9.17 public-site coordinated gate PASS

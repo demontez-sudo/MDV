@@ -1,0 +1,19 @@
+# Images: cache aggressively — filenames don't change when content does,
+# but browsers will still check back periodically. A year-long cache with
+# revalidation means repeat visitors load pages almost instantly.
+/*/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.mp4
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.jpg
+  Cache-Control: public, max-age=31536000, immutable
+
+# HTML pages: don't cache — content here (especially the news pages,
+# now pulling live editorial posts) should always be current.
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/
+  Cache-Control: no-cache, no-store, must-revalidate

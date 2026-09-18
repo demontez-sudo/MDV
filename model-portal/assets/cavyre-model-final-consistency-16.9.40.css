@@ -1,0 +1,97 @@
+/* CAVYRE Model Portal 16.9.40 — Cross-Portal Consistency Pass, CSS only */
+:root{
+ --cv40-line:rgba(196,156,255,.17);
+ --cv40-soft:rgba(159,92,255,.05);
+ --cv40-panel:#0e0e15;
+ --cv40-radius:12px;
+}
+/* Normalize cards and panels without changing structure */
+.pm [class*="card"],.pm [class*="panel"],.pm [class*="block"]{
+ box-shadow:none!important;
+}
+.pm [class*="card"]:not([class*="calendar"]):not([class*="image"]):not([class*="photo"]),
+.pm [class*="panel"]{
+ border-color:var(--cv-line)!important;
+}
+/* Consistent headings */
+.pm [class*="eyebrow"],.pm [class*="kicker"],.pm [class*="section-label"]{
+ font:700 8px/1 "Space Mono",monospace!important;
+ text-transform:uppercase!important;
+ letter-spacing:.13em!important;
+ color:var(--cv-muted)!important;
+}
+.pm [class*="section-title"] h2,.pm [class*="panel-title"] h2{
+ font-family:"Bodoni Moda",serif!important;
+ font-weight:400!important;
+ letter-spacing:-.025em!important;
+}
+/* Button system */
+.pm button,.pm [role="button"],.pm a[class*="button"],.pm a[class*="btn"]{
+ box-shadow:none!important;
+}
+.pm button:not([class*="icon"]):not([class*="menu"]),
+.pm a[class*="button"],.pm a[class*="btn"]{
+ min-height:34px!important;
+ border-radius:8px!important;
+}
+.pm button[class*="primary"],.pm [class*="btn-primary"]{
+ background:linear-gradient(135deg,#8f52ef,#b67bff)!important;
+ border-color:transparent!important;
+ color:#fff!important;
+}
+.pm button[class*="ghost"],.pm button[class*="secondary"],.pm [class*="btn-secondary"]{
+ background:rgba(255,255,255,.025)!important;
+ border-color:var(--cv-line)!important;
+}
+/* Inputs */
+.pm input,.pm select,.pm textarea{
+ border:1px solid var(--cv-line)!important;
+ background:#0c0c13!important;
+ border-radius:8px!important;
+ box-shadow:none!important;
+}
+.pm input::placeholder,.pm textarea::placeholder{color:rgba(255,255,255,.28)!important}
+/* Dividers and lists */
+.pm hr{border:0!important;border-top:1px solid rgba(255,255,255,.06)!important}
+.pm [class*="list-row"],.pm [class*="data-row"]{
+ border-bottom-color:rgba(255,255,255,.055)!important;
+}
+/* Status language */
+.pm [class*="badge"],.pm [class*="pill"],.pm [class*="status-chip"]{
+ box-shadow:none!important;
+ border:1px solid var(--cv-line)!important;
+}
+/* Tooltips / popovers */
+.pm [class*="tooltip"],.pm [class*="popover"],.pm [class*="dropdown-menu"]{
+ border:1px solid var(--cv-line)!important;
+ border-radius:10px!important;
+ background:#11111a!important;
+ box-shadow:0 18px 50px rgba(0,0,0,.42)!important;
+}
+/* Skeleton/loading visuals only */
+.pm [class*="skeleton"]{
+ border-radius:7px!important;
+ background:linear-gradient(90deg,rgba(255,255,255,.035),rgba(255,255,255,.075),rgba(255,255,255,.035))!important;
+}
+/* Error and empty presentation */
+.pm [class*="error-state"]{
+ border:1px solid rgba(232,116,128,.20)!important;
+ background:rgba(232,116,128,.055)!important;
+ border-radius:12px!important;
+}
+.pm [class*="empty-state"]{
+ padding:22px!important;
+ text-align:center!important;
+}
+/* Consistent compact scrollbars */
+.pm *{scrollbar-width:thin;scrollbar-color:rgba(196,156,255,.22) transparent}
+/* Prevent visual overflow */
+.pm *{box-sizing:border-box}
+.pm pre,.pm code{max-width:100%;overflow:auto}
+.pm [class*="modal-content"],.pm [class*="drawer-content"]{max-width:100%!important}
+/* Responsive cleanup */
+@media(max-width:700px){
+ .pm button:not([class*="icon"]):not([class*="menu"]){min-height:36px!important}
+ .pm [class*="empty-state"]{padding:18px 12px!important}
+ .pm [class*="popover"],.pm [class*="dropdown-menu"]{max-width:calc(100vw - 24px)!important}
+}

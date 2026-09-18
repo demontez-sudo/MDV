@@ -1,0 +1,62 @@
+/* CAVYRE Model Portal 16.9.48 — Release Polish / visual QA, CSS only */
+:root{
+  --cv48-line:rgba(196,156,255,.17);
+  --cv48-soft:rgba(159,92,255,.05);
+}
+
+/* Normalize vertical rhythm */
+.pm section + section,
+.pm [class*="section"] + [class*="section"]{margin-top:12px!important}
+.pm [class*="card"] + [class*="card"]{margin-top:0!important}
+
+/* Remove accidental giant gaps */
+.pm [style*="min-height: 100vh"],
+.pm [style*="min-height:100vh"]{min-height:auto!important}
+.pm [class*="spacer"],
+.pm [class*="empty-space"]{max-height:32px!important}
+
+/* Better alignment for mixed card grids */
+.pm [class*="grid"]{align-items:stretch}
+.pm [class*="grid"] > [class*="card"]{height:100%}
+
+/* Headings / labels */
+.pm h1,.pm h2,.pm h3{margin-top:0!important}
+.pm [class*="eyebrow"],.pm [class*="kicker"],.pm [class*="section-label"]{margin-bottom:7px!important}
+
+/* Action bars */
+.pm [class*="actions"],.pm [class*="action-bar"]{
+  gap:7px!important;
+  align-items:center!important;
+}
+.pm [class*="actions"] button,
+.pm [class*="action-bar"] button{box-shadow:none!important}
+
+/* Cards */
+.pm [class*="card"],.pm [class*="panel"]{
+  overflow:hidden;
+}
+.pm [class*="card-head"],.pm [class*="panel-head"]{
+  min-height:44px!important;
+}
+
+/* Status alignment */
+.pm [class*="badge"],.pm [class*="pill"],.pm [class*="status"]{
+  vertical-align:middle!important;
+}
+
+/* Scroll containment */
+.pm [class*="scroll-area"],.pm [class*="list-scroll"]{
+  overscroll-behavior:contain!important;
+}
+
+/* Mobile final pass */
+@media(max-width:700px){
+  .pm [class*="card"],.pm [class*="panel"]{border-radius:10px!important}
+  .pm [class*="card-head"],.pm [class*="panel-head"]{min-height:40px!important}
+  .pm [class*="actions"],.pm [class*="action-bar"]{flex-wrap:wrap!important}
+}
+
+/* Desktop final pass */
+@media(min-width:1200px){
+  .pm [class*="content-grid"]{column-gap:12px!important;row-gap:12px!important}
+}

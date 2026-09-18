@@ -1,0 +1,18 @@
+/* CAVYRE Model Portal 16.9.35 — Readiness + Development UI, CSS only */
+:root{--cv35-line:rgba(196,156,255,.17);--cv35-soft:rgba(159,92,255,.055);--cv35-good:rgba(112,211,165,.12);--cv35-warn:rgba(238,184,91,.11)}
+/* Readiness command */
+.pm [class*="readiness-summary"],.pm [class*="development-summary"],.pm [class*="model-readiness"]{border:1px solid var(--cv-line)!important;border-radius:14px!important;background:radial-gradient(circle at 90% 8%,rgba(159,92,255,.08),transparent 28%),linear-gradient(180deg,#11111a,#0d0d14)!important;box-shadow:none!important}
+.pm [class*="readiness-score"],.pm [class*="development-score"]{font-family:"Bodoni Moda",serif!important;font-size:clamp(28px,3vw,44px)!important;font-weight:400!important;letter-spacing:-.04em!important}
+/* Requirements */
+.pm [class*="requirement-card"],.pm [class*="routine-card"],.pm [class*="training-card"],.pm [class*="evaluation-card"]{border:1px solid var(--cv-line)!important;border-radius:12px!important;background:#0e0e15!important;box-shadow:none!important}.pm [class*="requirement-row"],.pm [class*="routine-row"],.pm [class*="training-row"]{padding:12px 14px!important;border-bottom:1px solid rgba(255,255,255,.055)!important}.pm [class*="requirement-row"]:last-child,.pm [class*="routine-row"]:last-child,.pm [class*="training-row"]:last-child{border-bottom:0!important}
+/* Development categories */
+.pm [class*="walk"],.pm [class*="fitness"],.pm [class*="conditioning"],.pm [class*="digitals"],.pm [class*="skin"],.pm [class*="measurement"]{scroll-margin-top:82px}.pm [class*="routine-type"],.pm [class*="requirement-type"]{font:700 8px/1 "Space Mono",monospace!important;text-transform:uppercase!important;letter-spacing:.08em!important;color:var(--cv-muted)!important}
+/* Due / complete treatment */
+.pm [class*="due-soon"],.pm [class*="needs-attention"]{background:var(--cv35-warn)!important;border-color:rgba(238,184,91,.22)!important}.pm [class*="completed"],.pm [class*="ready"]{border-color:rgba(112,211,165,.20)!important}
+/* Evaluation / feedback */
+.pm [class*="feedback-card"],.pm [class*="evaluation-detail"],.pm [class*="coach-note"]{padding:13px 14px!important;border:1px solid var(--cv-line)!important;border-radius:11px!important;background:rgba(255,255,255,.018)!important;box-shadow:none!important}.pm [class*="feedback-card"] blockquote,.pm [class*="coach-note"] blockquote{margin:0!important;padding-left:12px!important;border-left:1px solid rgba(196,156,255,.28)!important;color:var(--cv-text)!important}
+/* Submission status */
+.pm [class*="submission-status"]{display:inline-flex!important;align-items:center!important;min-height:27px!important;padding:0 9px!important;border:1px solid var(--cv-line)!important;border-radius:999px!important;background:rgba(255,255,255,.025)!important;font:700 8px/1 "Space Mono",monospace!important;text-transform:uppercase!important;letter-spacing:.07em!important}
+/* Progress */
+.pm [class*="readiness-progress"],.pm [class*="development-progress"]{height:5px!important;border-radius:999px!important;background:rgba(255,255,255,.065)!important;overflow:hidden!important}.pm [class*="readiness-progress"] > *,.pm [class*="development-progress"] > *{height:100%!important;border-radius:999px!important;background:linear-gradient(90deg,#8d52ed,#bd83ff)!important}
+@media(max-width:700px){.pm [class*="requirement-row"],.pm [class*="routine-row"],.pm [class*="training-row"]{padding:11px 12px!important}.pm [class*="readiness-score"],.pm [class*="development-score"]{font-size:32px!important}}

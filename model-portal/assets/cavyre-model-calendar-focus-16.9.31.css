@@ -1,0 +1,23 @@
+/* CAVYRE Model Portal 16.9.31 — model-only calendar visual focus, CSS only */
+:root{--cv31-line:rgba(196,156,255,.17);--cv31-soft:rgba(159,92,255,.055);--cv31-strong:rgba(159,92,255,.16)}
+/* Calendar frame */
+.pm [class*="calendar-shell"],.pm [class*="calendar-panel"],.pm [class*="schedule-shell"]{border:1px solid var(--cv-line)!important;border-radius:15px!important;background:linear-gradient(180deg,#101018,#0b0b11)!important;box-shadow:none!important;overflow:hidden!important}
+.pm [class*="calendar-toolbar"],.pm [class*="calendar-header"]{min-height:54px!important;padding:9px 14px!important;border-bottom:1px solid var(--cv-line)!important;background:rgba(255,255,255,.012)!important}
+.pm [class*="calendar-title"],.pm [class*="month-title"]{font-family:"Bodoni Moda",serif!important;font-weight:400!important;letter-spacing:-.025em!important}
+/* Month/week grid */
+.pm [class*="weekday"],.pm [class*="week-day-head"]{font:700 8px/1 "Space Mono",monospace!important;text-transform:uppercase!important;letter-spacing:.1em!important;color:var(--cv-muted)!important;background:rgba(255,255,255,.015)!important}
+.pm [class*="day-cell"],.pm [class*="calendar-day"]{min-height:96px!important;padding:8px!important;border-color:rgba(255,255,255,.06)!important;transition:background .15s ease,border-color .15s ease!important}
+.pm [class*="day-cell"]:hover,.pm [class*="calendar-day"]:hover{background:var(--cv31-soft)!important}
+.pm [class*="day-cell"].today,.pm [class*="calendar-day"].today{background:rgba(159,92,255,.07)!important;box-shadow:inset 0 0 0 1px rgba(196,156,255,.24)!important}
+.pm [class*="day-number"],.pm [class*="date-number"]{font-family:"Space Mono",monospace!important;font-size:9px!important;color:var(--cv-muted)!important}
+/* Events remain compact and model-readable */
+.pm [class*="calendar-event"],.pm [class*="event-chip"],.pm [class*="schedule-event"]{padding:5px 7px!important;border:1px solid rgba(196,156,255,.15)!important;border-radius:7px!important;background:rgba(159,92,255,.075)!important;font-size:9px!important;line-height:1.25!important;box-shadow:none!important}
+.pm [class*="calendar-event"] [class*="time"],.pm [class*="event-chip"] [class*="time"]{font-size:8px!important;opacity:.72!important}
+/* Agenda / upcoming */
+.pm [class*="agenda-row"],.pm [class*="schedule-row"],.pm [class*="upcoming-row"]{padding:12px 14px!important;border-bottom:1px solid rgba(255,255,255,.055)!important;background:transparent!important}.pm [class*="agenda-row"]:hover,.pm [class*="schedule-row"]:hover,.pm [class*="upcoming-row"]:hover{background:var(--cv31-soft)!important}
+/* Time/date controls */
+.pm input[type="date"],.pm input[type="time"],.pm [class*="date-picker"],.pm [class*="time-picker"]{min-height:38px!important;border-radius:9px!important;border-color:var(--cv-line)!important;background:#0b0b12!important;box-shadow:none!important}
+/* Selected date / details */
+.pm [class*="day-detail"],.pm [class*="event-detail"],.pm [class*="selected-date"]{border:1px solid var(--cv-line)!important;border-radius:12px!important;background:#0e0e15!important;box-shadow:none!important}
+/* Mobile calendar: preserve usable width instead of crushing columns */
+@media(max-width:760px){.pm [class*="calendar-shell"],.pm [class*="calendar-panel"]{overflow-x:auto!important}.pm [class*="calendar-grid"],.pm [class*="month-grid"]{min-width:690px!important}.pm [class*="day-cell"],.pm [class*="calendar-day"]{min-height:82px!important;padding:6px!important}.pm [class*="calendar-toolbar"],.pm [class*="calendar-header"]{position:sticky!important;left:0!important;z-index:2!important}.pm [class*="agenda-row"],.pm [class*="schedule-row"],.pm [class*="upcoming-row"]{padding:11px 12px!important}}

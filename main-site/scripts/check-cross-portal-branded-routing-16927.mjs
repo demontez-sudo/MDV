@@ -1,0 +1,13 @@
+import fs from 'node:fs';
+const toml=fs.readFileSync(new URL('../netlify.toml',import.meta.url),'utf8');
+const red=fs.readFileSync(new URL('../_redirects',import.meta.url),'utf8');
+const ok=(v,m)=>{if(!v)throw new Error(m);console.log('PASS ',m)};
+ok(/from = "\/portal\/\*"[\s\S]{0,180}to = "https:\/\/maison-models\.netlify\.app\/:splat"[\s\S]{0,80}status = 200/.test(toml),'main site reverse-proxies /portal/* to Model origin');
+ok(/from = "\/portal"[\s\S]{0,160}to = "https:\/\/maison-models\.netlify\.app\/"[\s\S]{0,80}status = 200/.test(toml),'main site keeps /portal branded');
+ok(/from = "\/ma\/\*"[\s\S]{0,180}to = "https:\/\/maison-ma\.netlify\.app\/:splat"[\s\S]{0,80}status = 200/.test(toml),'main site reverse-proxies /ma/* to MA origin');
+ok(/from = "\/ma"[\s\S]{0,160}to = "https:\/\/maison-ma\.netlify\.app\/"[\s\S]{0,80}status = 200/.test(toml),'main site keeps /ma branded');
+ok(red.includes('/portal/* https://maison-models.netlify.app/:splat 200!'),'root _redirects protects Model proxy');
+ok(red.includes('/ma/* https://maison-ma.netlify.app/:splat 200!'),'root _redirects protects MA proxy');
+ok(!/from = "\/portal"[\s\S]{0,160}status = 302/.test(toml),'old Model 302 handoff removed');
+ok(!/from = "\/ma"[\s\S]{0,160}status = 302/.test(toml),'old MA 302 handoff removed');
+console.log('16.9.27 Cross-Portal Branded Routing PASS');

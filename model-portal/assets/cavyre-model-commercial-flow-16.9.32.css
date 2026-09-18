@@ -1,0 +1,23 @@
+/* CAVYRE Model Portal 16.9.32 — Commercial Flow visual system, CSS only */
+:root{--cv32-line:rgba(196,156,255,.17);--cv32-soft:rgba(159,92,255,.055);--cv32-violet:rgba(170,103,255,.92)}
+/* Casting → Go See → Callback → Option/Hold → Confirmed → Job → Complete */
+.pm [class*="pipeline"],.pm [class*="booking-flow"],.pm [class*="casting-flow"]{display:flex!important;gap:6px!important;align-items:center!important;overflow-x:auto!important;padding:8px 2px!important;scrollbar-width:thin!important}
+.pm [class*="pipeline-step"],.pm [class*="flow-step"]{flex:0 0 auto!important;min-height:32px!important;padding:0 10px!important;display:inline-flex!important;align-items:center!important;gap:6px!important;border:1px solid var(--cv-line)!important;border-radius:999px!important;background:#0d0d14!important;font:700 8px/1 "Space Mono",monospace!important;letter-spacing:.075em!important;text-transform:uppercase!important;color:var(--cv-muted)!important}
+.pm [class*="pipeline-step"].active,.pm [class*="flow-step"].active,.pm [class*="pipeline-step"].current,.pm [class*="flow-step"].current{background:rgba(159,92,255,.12)!important;border-color:rgba(196,156,255,.32)!important;color:var(--cv-text)!important}
+.pm [class*="pipeline-step"].complete,.pm [class*="flow-step"].complete{color:rgba(255,255,255,.72)!important;background:rgba(255,255,255,.035)!important}
+/* Commercial cards */
+.pm [class*="casting-card"],.pm [class*="booking-card"],.pm [class*="job-card"],.pm [class*="option-card"]{border:1px solid var(--cv-line)!important;border-radius:13px!important;background:linear-gradient(180deg,#11111a,#0d0d14)!important;box-shadow:none!important;overflow:hidden!important}
+.pm [class*="casting-card"] [class*="card-head"],.pm [class*="booking-card"] [class*="card-head"],.pm [class*="job-card"] [class*="card-head"]{padding:13px 14px!important;border-bottom:1px solid rgba(255,255,255,.055)!important}
+.pm [class*="client"],.pm [class*="project-name"]{font-family:"Bodoni Moda",serif!important;font-weight:400!important;letter-spacing:-.015em!important}
+/* Location/time/meta */
+.pm [class*="booking-meta"],.pm [class*="casting-meta"],.pm [class*="job-meta"]{display:flex!important;flex-wrap:wrap!important;gap:6px 12px!important;color:var(--cv-muted)!important;font-size:9px!important}
+/* Confirmation / model action areas */
+.pm [class*="confirm-panel"],.pm [class*="response-panel"],.pm [class*="action-panel"]{border-top:1px solid var(--cv-line)!important;background:rgba(159,92,255,.025)!important;padding:11px 14px!important}
+/* Payment movement connected visually to completed work */
+.pm [class*="payment-status"],.pm [class*="payout-status"]{display:inline-flex!important;align-items:center!important;min-height:27px!important;padding:0 9px!important;border:1px solid var(--cv-line)!important;border-radius:999px!important;background:rgba(255,255,255,.025)!important;font:700 8px/1 "Space Mono",monospace!important;text-transform:uppercase!important;letter-spacing:.07em!important}
+.pm [class*="payment-timeline"],.pm [class*="payout-timeline"]{border-left:1px solid rgba(196,156,255,.2)!important;padding-left:14px!important;margin-left:5px!important}
+/* Detail drawer/modal visual hierarchy */
+.pm [class*="booking-detail"],.pm [class*="casting-detail"],.pm [class*="job-detail"]{background:#0d0d14!important}.pm [class*="detail-section"]{padding:14px 0!important;border-bottom:1px solid rgba(255,255,255,.055)!important}.pm [class*="detail-section"]:last-child{border-bottom:0!important}
+/* Model-only commercial labels */
+.pm [class*="call-time"],.pm [class*="arrival-time"]{font-family:"Space Mono",monospace!important;font-weight:700!important}.pm [class*="address"],.pm [class*="contact-name"]{color:var(--cv-muted)!important}
+@media(max-width:700px){.pm [class*="casting-card"],.pm [class*="booking-card"],.pm [class*="job-card"],.pm [class*="option-card"]{border-radius:11px!important}.pm [class*="pipeline"],.pm [class*="booking-flow"],.pm [class*="casting-flow"]{padding-bottom:10px!important}.pm [class*="booking-meta"],.pm [class*="casting-meta"],.pm [class*="job-meta"]{gap:5px 9px!important}}

@@ -1,0 +1,5 @@
+
+> maisondeveux-public-site@16.9.24 check
+> node scripts/check-site.mjs
+
+Maison de Veux 16.9.24 branded admin + package-route + coordinated public-site gate PASS

@@ -1,0 +1,186 @@
+/* CAVYRE Model Portal 16.9.42 — Daily Brief / My Command polish, CSS only */
+:root{
+  --cv42-line:rgba(196,156,255,.17);
+  --cv42-soft:rgba(159,92,255,.055);
+  --cv42-card:#0e0e15;
+}
+
+/* Daily brief frame */
+.pm [class*="daily-brief"],
+.pm [class*="today-command"],
+.pm [class*="model-command"]{
+  position:relative!important;
+}
+
+/* Top briefing band */
+.pm [class*="briefing-band"],
+.pm [class*="today-summary"],
+.pm [class*="command-summary"]{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.7fr) repeat(3,minmax(130px,.65fr))!important;
+  gap:10px!important;
+  padding:12px!important;
+  border:1px solid var(--cv42-line)!important;
+  border-radius:14px!important;
+  background:
+    radial-gradient(circle at 88% 10%,rgba(159,92,255,.10),transparent 32%),
+    linear-gradient(145deg,#14131e,#0d0d14)!important;
+  box-shadow:none!important;
+}
+
+/* Today / next movement emphasis */
+.pm [class*="today-primary"],
+.pm [class*="next-movement-primary"]{
+  min-height:116px!important;
+  padding:14px!important;
+  border:1px solid var(--cv42-line)!important;
+  border-radius:12px!important;
+  background:rgba(255,255,255,.015)!important;
+}
+.pm [class*="today-primary"] h2,
+.pm [class*="next-movement-primary"] h2{
+  font-family:"Bodoni Moda",serif!important;
+  font-weight:400!important;
+  letter-spacing:-.03em!important;
+}
+.pm [class*="today-primary"] [class*="time"],
+.pm [class*="next-movement-primary"] [class*="time"]{
+  font-family:"Space Mono",monospace!important;
+  font-size:10px!important;
+  color:var(--cv-muted)!important;
+}
+
+/* Small operational cards */
+.pm [class*="brief-card"],
+.pm [class*="mini-command-card"]{
+  min-height:92px!important;
+  padding:12px!important;
+  border:1px solid var(--cv42-line)!important;
+  border-radius:11px!important;
+  background:#0d0d14!important;
+  box-shadow:none!important;
+}
+.pm [class*="brief-card"] [class*="label"],
+.pm [class*="mini-command-card"] [class*="label"]{
+  font:700 7px/1 "Space Mono",monospace!important;
+  text-transform:uppercase!important;
+  letter-spacing:.11em!important;
+  color:var(--cv-muted)!important;
+}
+.pm [class*="brief-card"] [class*="value"],
+.pm [class*="mini-command-card"] [class*="value"]{
+  margin-top:7px!important;
+  font-family:"Bodoni Moda",serif!important;
+  font-size:20px!important;
+  font-weight:400!important;
+  letter-spacing:-.025em!important;
+}
+
+/* Today schedule / agency updates */
+.pm [class*="today-list"],
+.pm [class*="movement-list"],
+.pm [class*="agency-update-list"]{
+  border:1px solid var(--cv42-line)!important;
+  border-radius:13px!important;
+  background:#0d0d14!important;
+  overflow:hidden!important;
+}
+.pm [class*="today-row"],
+.pm [class*="movement-row"],
+.pm [class*="agency-update-row"]{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:11px!important;
+  padding:12px 14px!important;
+  border-bottom:1px solid rgba(255,255,255,.055)!important;
+}
+.pm [class*="today-row"]:hover,
+.pm [class*="movement-row"]:hover,
+.pm [class*="agency-update-row"]:hover{
+  background:var(--cv42-soft)!important;
+}
+
+/* Cross-module status strip */
+.pm [class*="status-strip"],
+.pm [class*="command-strip"]{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:6px!important;
+  margin:10px 0!important;
+}
+.pm [class*="status-strip"] > *,
+.pm [class*="command-strip"] > *{
+  min-height:27px!important;
+  padding:0 9px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  border:1px solid var(--cv42-line)!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.02)!important;
+  font:700 7px/1 "Space Mono",monospace!important;
+  text-transform:uppercase!important;
+  letter-spacing:.07em!important;
+}
+
+/* Intelligence recommendation */
+.pm [class*="recommendation"],
+.pm [class*="next-best-action"]{
+  padding:13px 14px!important;
+  border:1px solid rgba(196,156,255,.22)!important;
+  border-radius:12px!important;
+  background:linear-gradient(135deg,rgba(159,92,255,.075),rgba(255,255,255,.012))!important;
+}
+.pm [class*="recommendation"] strong,
+.pm [class*="next-best-action"] strong{
+  font-family:"Bodoni Moda",serif!important;
+  font-weight:400!important;
+  font-size:17px!important;
+}
+
+/* Dense two-column command body when screen allows */
+@media(min-width:1050px){
+  .pm [class*="command-body"],
+  .pm [class*="daily-grid"]{
+    display:grid!important;
+    grid-template-columns:minmax(0,1.45fr) minmax(300px,.75fr)!important;
+    gap:12px!important;
+    align-items:start!important;
+  }
+}
+
+/* Tablet */
+@media(max-width:1049px){
+  .pm [class*="briefing-band"],
+  .pm [class*="today-summary"],
+  .pm [class*="command-summary"]{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+}
+
+/* Mobile */
+@media(max-width:640px){
+  .pm [class*="briefing-band"],
+  .pm [class*="today-summary"],
+  .pm [class*="command-summary"]{
+    grid-template-columns:1fr!important;
+    padding:9px!important;
+  }
+  .pm [class*="today-primary"],
+  .pm [class*="next-movement-primary"]{
+    min-height:auto!important;
+    padding:12px!important;
+  }
+  .pm [class*="today-row"],
+  .pm [class*="movement-row"],
+  .pm [class*="agency-update-row"]{
+    grid-template-columns:auto minmax(0,1fr)!important;
+    padding:11px 12px!important;
+  }
+  .pm [class*="today-row"] > :last-child,
+  .pm [class*="movement-row"] > :last-child,
+  .pm [class*="agency-update-row"] > :last-child{
+    grid-column:2!important;
+    justify-self:start!important;
+  }
+}

@@ -1,0 +1,10 @@
+import fs from'node:fs';import path from'node:path';const root=path.resolve(path.dirname(new URL(import.meta.url).pathname),'..'),read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const pkg=JSON.parse(read('package.json')),css=read('assets/mdv-interaction-system-16.9.30.css');
+let pass=0;const need=(v,m)=>{if(!v)throw new Error('FAIL: '+m);pass++;console.log('PASS:',m)};
+need(pkg.version==='16.9.30','Site version');
+for(const p of ['index.html','women-nyc/index.html','development-nyc/index.html','men-newyork/index.html','creators/index.html','women-paris/index.html','development-paris/index.html','men-paris/index.html','newyork/index.html','paris/index.html','contact/index.html','get-scouted/index.html'])need(read(p).includes('mdv-interaction-system-16.9.30.css'),`interaction CSS: ${p}`);
+need(css.includes(':focus-visible'),'keyboard focus');
+need(css.includes('prefers-reduced-motion'),'reduced motion');
+need(css.includes('@media(hover:hover)'),'hover only on capable devices');
+need(css.includes('aria-busy'),'loading feedback');
+console.log(`MAISON SITE 16.9.30 INTERACTION SYSTEM: PASS (${pass}/17)`);

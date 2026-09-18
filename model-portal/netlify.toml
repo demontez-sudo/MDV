@@ -1,0 +1,138 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/api/model/password/finalize"
+  to = "/.netlify/functions/model-password-finalize"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/config"
+  to = "/.netlify/functions/public-config"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/storage/download-url"
+  to = "/.netlify/functions/storage-download-url"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/bootstrap"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/bootstrap"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/directory"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/directory"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/access-login"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/access-login"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/respond"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/respond"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/availability-request"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/availability-request"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/calendar-action"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/calendar-action"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/media"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/media"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/development-submissions"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/development-submissions"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/wellness-checkin"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/wellness-checkin"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/self-profile"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/self-profile"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/approval-response"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/approval-response"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/account-action"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model/account-action"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/portal/task-status"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/portal/task-status"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/portal/message"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/portal/message"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/portal/notifications"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/portal/notifications"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/portal/notification-read"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/portal/notification-read"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ask-claude"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model-assistant"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model-assistant"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/model-assistant"
+  status = 200
+  force = true
+
+# SPA fallback MUST remain last.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

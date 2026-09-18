@@ -1,0 +1,188 @@
+/* CAVYRE Model Portal 16.9.50 — Model Calendar Intelligence UI, CSS only */
+:root{
+  --cv50-line:rgba(196,156,255,.17);
+  --cv50-soft:rgba(159,92,255,.05);
+  --cv50-travel:rgba(117,179,255,.09);
+  --cv50-action:rgba(238,184,91,.10);
+}
+
+/* Calendar intelligence header */
+.pm [class*="calendar-intelligence"],
+.pm [class*="schedule-intelligence"]{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.6fr) repeat(3,minmax(120px,.6fr))!important;
+  gap:9px!important;
+  padding:11px!important;
+  border:1px solid rgba(196,156,255,.22)!important;
+  border-radius:13px!important;
+  background:
+    radial-gradient(circle at 88% 8%,rgba(159,92,255,.08),transparent 30%),
+    linear-gradient(145deg,#13131d,#0d0d14)!important;
+  box-shadow:none!important;
+}
+.pm [class*="calendar-intelligence"] [class*="primary"],
+.pm [class*="schedule-intelligence"] [class*="primary"]{
+  padding:12px!important;
+  border:1px solid var(--cv50-line)!important;
+  border-radius:10px!important;
+  background:rgba(255,255,255,.015)!important;
+}
+
+/* Day command */
+.pm [class*="day-command"],
+.pm [class*="selected-day-command"]{
+  border:1px solid var(--cv50-line)!important;
+  border-radius:13px!important;
+  background:#0d0d14!important;
+  overflow:hidden!important;
+}
+.pm [class*="day-command-head"],
+.pm [class*="selected-day-head"]{
+  display:flex!important;
+  justify-content:space-between!important;
+  align-items:flex-end!important;
+  gap:12px!important;
+  padding:13px 14px!important;
+  border-bottom:1px solid rgba(255,255,255,.06)!important;
+}
+.pm [class*="day-command-head"] h2,
+.pm [class*="selected-day-head"] h2{
+  font-family:"Bodoni Moda",serif!important;
+  font-weight:400!important;
+  letter-spacing:-.03em!important;
+}
+
+/* Timeline for one model only */
+.pm [class*="day-timeline"],
+.pm [class*="schedule-timeline"]{
+  position:relative!important;
+  padding:6px 0!important;
+}
+.pm [class*="timeline-event"],
+.pm [class*="schedule-item"]{
+  display:grid!important;
+  grid-template-columns:72px 10px minmax(0,1fr) auto!important;
+  gap:9px!important;
+  align-items:start!important;
+  padding:11px 14px!important;
+  border-bottom:1px solid rgba(255,255,255,.055)!important;
+}
+.pm [class*="timeline-event"]:hover,
+.pm [class*="schedule-item"]:hover{
+  background:var(--cv50-soft)!important;
+}
+.pm [class*="timeline-event"] [class*="time"],
+.pm [class*="schedule-item"] [class*="time"]{
+  font:700 9px/1.3 "Space Mono",monospace!important;
+  color:var(--cv-text)!important;
+}
+.pm [class*="timeline-dot"],
+.pm [class*="schedule-dot"]{
+  width:8px!important;
+  height:8px!important;
+  margin-top:2px!important;
+  border-radius:999px!important;
+  background:#a86bff!important;
+  box-shadow:0 0 0 3px rgba(159,92,255,.08)!important;
+}
+
+/* Event type/state presentation */
+.pm [class*="event-type"],
+.pm [class*="booking-stage"]{
+  display:inline-flex!important;
+  align-items:center!important;
+  min-height:24px!important;
+  padding:0 8px!important;
+  border:1px solid var(--cv50-line)!important;
+  border-radius:999px!important;
+  font:700 7px/1 "Space Mono",monospace!important;
+  text-transform:uppercase!important;
+  letter-spacing:.07em!important;
+  color:var(--cv-muted)!important;
+}
+.pm [class*="travel-event"],
+.pm [data-event-type*="travel"]{
+  background:var(--cv50-travel)!important;
+}
+.pm [class*="action-required"],
+.pm [data-requires-action="true"]{
+  background:var(--cv50-action)!important;
+  border-color:rgba(238,184,91,.22)!important;
+}
+
+/* Conflict / timing note presentation only */
+.pm [class*="timing-note"],
+.pm [class*="schedule-note"],
+.pm [class*="calendar-warning"]{
+  padding:9px 11px!important;
+  border-left:2px solid rgba(196,156,255,.34)!important;
+  background:rgba(159,92,255,.025)!important;
+  font-size:9px!important;
+  line-height:1.5!important;
+  color:var(--cv-muted)!important;
+}
+
+/* Event details */
+.pm [class*="event-facts"],
+.pm [class*="schedule-facts"]{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(135px,1fr))!important;
+  gap:7px!important;
+}
+.pm [class*="event-fact"],
+.pm [class*="schedule-fact"]{
+  padding:10px!important;
+  border:1px solid var(--cv50-line)!important;
+  border-radius:9px!important;
+  background:#0e0e15!important;
+}
+.pm [class*="event-fact"] small,
+.pm [class*="schedule-fact"] small{
+  display:block!important;
+  margin-bottom:5px!important;
+  font:700 7px/1 "Space Mono",monospace!important;
+  text-transform:uppercase!important;
+  letter-spacing:.09em!important;
+  color:var(--cv-muted)!important;
+}
+
+/* Calendar actions already present */
+.pm [class*="calendar-actions"],
+.pm [class*="event-actions"]{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:7px!important;
+}
+.pm [class*="calendar-actions"] button,
+.pm [class*="event-actions"] button{
+  min-height:33px!important;
+  padding:0 11px!important;
+  border-radius:8px!important;
+  font:700 8px/1 "Space Mono",monospace!important;
+  text-transform:uppercase!important;
+  letter-spacing:.07em!important;
+}
+
+/* Mobile */
+@media(max-width:760px){
+  .pm [class*="calendar-intelligence"],
+  .pm [class*="schedule-intelligence"]{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  }
+  .pm [class*="timeline-event"],
+  .pm [class*="schedule-item"]{
+    grid-template-columns:58px 8px minmax(0,1fr)!important;
+    padding:10px 11px!important;
+  }
+  .pm [class*="timeline-event"] > :last-child,
+  .pm [class*="schedule-item"] > :last-child{
+    grid-column:3!important;
+    justify-self:start!important;
+  }
+}
+@media(max-width:480px){
+  .pm [class*="calendar-intelligence"],
+  .pm [class*="schedule-intelligence"]{
+    grid-template-columns:1fr!important;
+  }
+}

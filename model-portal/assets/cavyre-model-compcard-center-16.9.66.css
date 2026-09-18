@@ -1,0 +1,47 @@
+
+/* CAVYRE Model Portal 16.9.66 — Comp Card Center */
+.pm .v16966-comp-hero{
+  display:grid;grid-template-columns:minmax(220px,34%) minmax(0,1fr);gap:18px;
+  padding:18px;border:1px solid rgba(255,255,255,.09);border-radius:16px;
+  background:radial-gradient(circle at 78% 0%,rgba(159,92,255,.11),transparent 30%),linear-gradient(180deg,#11111a,#0d0d14);
+}
+.pm .v16966-comp-sheet{
+  min-height:300px;display:flex;flex-direction:column;justify-content:flex-end;position:relative;
+  padding:18px;border:1px solid rgba(255,255,255,.14);background:linear-gradient(160deg,#f0ece4,#d9d2c7);
+  color:#111;box-shadow:0 20px 44px rgba(0,0,0,.24);
+}
+.pm .v16966-comp-mark{position:absolute;top:15px;left:15px;font:700 8px/1.2 "Space Mono",monospace;letter-spacing:.18em}
+.pm .v16966-comp-model{font:500 28px/1.05 Georgia,serif;letter-spacing:-.02em}
+.pm .v16966-comp-market{margin-top:8px;font:700 7px/1.4 "Space Mono",monospace;letter-spacing:.12em}
+.pm .v16966-comp-file{position:absolute;right:15px;bottom:15px;font:700 9px/1 "Space Mono",monospace}
+.pm .v16966-comp-copy{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;min-width:0;padding:8px 6px}
+.pm .v16966-comp-copy>small{color:var(--cv-accent,#b38cff);font:700 8px/1.3 "Space Mono",monospace;letter-spacing:.13em}
+.pm .v16966-comp-copy h2{margin:8px 0 8px;font-size:27px;line-height:1.08}
+.pm .v16966-comp-copy p{max-width:570px;margin:0;color:rgba(239,232,221,.67);font-size:12px;line-height:1.55}
+.pm .v16966-comp-copy em{margin-top:13px;color:rgba(239,232,221,.46);font:400 9px/1.45 "Space Mono",monospace;font-style:normal}
+.pm .v16966-comp-primary-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.pm .v16966-comp-primary-actions .v15m-btn,.pm .v16966-comp-primary-actions .v15m-mini-btn{min-height:38px}
+.pm .v16966-comp-empty-main{
+  padding:48px 22px;border:1px dashed rgba(255,255,255,.12);border-radius:16px;text-align:center;background:rgba(255,255,255,.02)
+}
+.pm .v16966-comp-empty-main>span{font:700 8px/1.2 "Space Mono",monospace;letter-spacing:.16em;color:var(--cv-accent,#b38cff)}
+.pm .v16966-comp-empty-main h2{margin:9px 0 7px;font-size:25px}
+.pm .v16966-comp-empty-main p{max-width:540px;margin:0 auto;color:rgba(239,232,221,.58);font-size:11px;line-height:1.5}
+.pm .v16966-comp-list{display:grid;gap:8px}
+.pm .v16966-comp-list article{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 13px;
+  border:1px solid rgba(255,255,255,.08);border-radius:10px;background:rgba(255,255,255,.018)
+}
+.pm .v16966-comp-list article>div:first-child{display:flex;flex-direction:column;gap:3px;min-width:0}
+.pm .v16966-comp-list small{font:700 7px/1.2 "Space Mono",monospace;letter-spacing:.12em;color:var(--cv-accent,#b38cff)}
+.pm .v16966-comp-list b{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pm .v16966-comp-list span{font-size:9px;color:rgba(239,232,221,.48)}
+.pm .v16966-comp-list article>div:last-child{display:flex;gap:7px;flex:0 0 auto}
+@media(max-width:760px){
+  .pm .v16966-comp-hero{grid-template-columns:1fr;padding:12px}
+  .pm .v16966-comp-sheet{min-height:230px}
+  .pm .v16966-comp-copy h2{font-size:22px}
+  .pm .v16966-comp-list article{align-items:flex-start;flex-direction:column}
+  .pm .v16966-comp-list article>div:last-child{width:100%}
+  .pm .v16966-comp-list article>div:last-child button{flex:1}
+}

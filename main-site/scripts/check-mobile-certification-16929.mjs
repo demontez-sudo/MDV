@@ -1,0 +1,16 @@
+import fs from 'node:fs';
+import path from 'node:path';
+const root=path.resolve(path.dirname(new URL(import.meta.url).pathname),'..');
+const read=p=>fs.readFileSync(path.join(root,p),'utf8');
+const pkg=JSON.parse(read('package.json')),css=read('assets/mdv-mobile-certification-16.9.29.css');
+let pass=0;const need=(v,m)=>{if(!v)throw new Error('FAIL: '+m);pass++;console.log('PASS:',m)};
+need(['16.9.29','16.9.30'].includes(pkg.version),'Site carries 16.9.29 mobile certification');
+const pages=['index.html','women-nyc/index.html','development-nyc/index.html','men-newyork/index.html','creators/index.html','women-paris/index.html','development-paris/index.html','men-paris/index.html','newyork/index.html','paris/index.html','contact/index.html','get-scouted/index.html','newyork/news/index.html','paris/news/index.html'];
+for(const page of pages)need(read(page).includes('/assets/mdv-mobile-certification-16.9.29.css'),`mobile CSS linked: ${page}`);
+need(css.includes('min-height:44px'),'public navigation touch targets');
+need(css.includes('font-size:16px!important'),'mobile form zoom prevention');
+need(css.includes('repeat(2,minmax(0,1fr))'),'phone roster uses editorial two-column layout');
+need(css.includes('@media(max-width:390px)'),'narrow-phone breakpoint');
+need(css.includes('safe-area-inset-bottom'),'overlay safe area');
+need(css.includes('prefers-reduced-motion'),'reduced-motion support');
+console.log(`MAISON SITE 16.9.29 MOBILE CERTIFICATION: PASS (${pass}/21)`);

@@ -1,0 +1,23 @@
+/* CAVYRE Model Portal 16.9.30 — Command hierarchy polish, CSS only */
+:root{--cv30-violet:rgba(176,111,255,.95);--cv30-soft:rgba(159,92,255,.055);--cv30-line:rgba(196,156,255,.17)}
+/* Model Command hero / top priority */
+.pm [class*="command-hero"],.pm [class*="dashboard-hero"],.pm [class*="overview-hero"]{position:relative!important;overflow:hidden!important;border:1px solid var(--cv30-line)!important;border-radius:16px!important;background:radial-gradient(circle at 88% 10%,rgba(159,92,255,.11),transparent 32%),linear-gradient(145deg,#15141f,#0c0c12 72%)!important;box-shadow:none!important}
+.pm [class*="command-hero"]:after,.pm [class*="dashboard-hero"]:after,.pm [class*="overview-hero"]:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(255,255,255,.025),transparent 38%)}
+.pm [class*="command-hero"] h1,.pm [class*="dashboard-hero"] h1,.pm [class*="overview-hero"] h1{font-family:"Bodoni Moda",serif!important;font-weight:400!important;letter-spacing:-.035em!important}
+/* Priority / attention queue */
+.pm [class*="priority-card"],.pm [class*="attention-card"],.pm [class*="action-card"]{border:1px solid var(--cv-line)!important;border-radius:12px!important;background:#0e0e15!important;box-shadow:none!important;transition:transform .15s ease,border-color .15s ease,background .15s ease!important}
+.pm [class*="priority-card"]:hover,.pm [class*="attention-card"]:hover,.pm [class*="action-card"]:hover{transform:translateY(-1px)!important;border-color:rgba(196,156,255,.28)!important;background:#11111a!important}
+/* Next movement / today / schedule */
+.pm [class*="next-movement"],.pm [class*="today-card"],.pm [class*="schedule-card"]{border:1px solid var(--cv-line)!important;border-radius:12px!important;background:linear-gradient(180deg,#11111a,#0d0d14)!important;box-shadow:none!important}
+.pm [class*="time"]{font-family:"Space Mono",monospace!important;letter-spacing:.02em!important}
+/* Intelligence becomes editorial, not giant */
+.pm [class*="intelligence"] h2,.pm [class*="intelligence"] h3{font-family:"Bodoni Moda",serif!important;font-weight:400!important;letter-spacing:-.02em!important}.pm [class*="intelligence"] p{max-width:78ch!important}
+/* Section rhythm */
+.pm [class*="dashboard"] > section,.pm [class*="command"] > section{margin-bottom:14px!important}.pm [class*="section-title"]{font:700 8px/1 "Space Mono",monospace!important;text-transform:uppercase!important;letter-spacing:.14em!important;color:var(--cv-muted)!important}
+/* Model-facing CTA hierarchy */
+.pm button[class*="primary"],.pm a[class*="primary"]{background:linear-gradient(135deg,#8f52ef,#b47aff)!important;border-color:transparent!important;color:white!important;box-shadow:none!important}.pm button[class*="secondary"],.pm a[class*="secondary"]{background:rgba(255,255,255,.025)!important;border-color:var(--cv-line)!important;color:var(--cv-text)!important;box-shadow:none!important}
+/* Notification dots / urgency without alarm-heavy UI */
+.pm [class*="notification"],.pm [class*="unread"]{box-shadow:none!important}.pm [class*="notification-dot"],.pm [class*="unread-dot"]{width:7px!important;height:7px!important;border-radius:999px!important}
+/* Footer / lower-page restraint */
+.pm footer,.pm [class*="footer"]{border-top:1px solid rgba(255,255,255,.055)!important;background:transparent!important;color:var(--cv-muted)!important;font-size:9px!important}
+@media(max-width:760px){.pm [class*="command-hero"],.pm [class*="dashboard-hero"],.pm [class*="overview-hero"]{border-radius:13px!important}.pm [class*="command-hero"] h1,.pm [class*="dashboard-hero"] h1,.pm [class*="overview-hero"] h1{font-size:28px!important}.pm [class*="intelligence"] p{max-width:none!important}}

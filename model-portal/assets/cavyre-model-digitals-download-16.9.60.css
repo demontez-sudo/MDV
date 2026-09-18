@@ -1,0 +1,14 @@
+/* CAVYRE Model Portal 16.9.60 — Model Digital Downloads */
+.pm .v16960-downloadable{position:relative!important}
+.pm .v16960-downloadable:after{
+  content:"DOWNLOAD READY";position:absolute;top:9px;right:9px;padding:5px 7px;
+  border:1px solid rgba(196,156,255,.28);border-radius:999px;background:rgba(10,10,15,.78);
+  backdrop-filter:blur(8px);font:700 7px/1 "Space Mono",monospace;letter-spacing:.08em;color:#eee7f8
+}
+.pm .v16960-digital-actions{display:flex!important;align-items:center!important;gap:8px!important;margin-top:9px!important}
+.pm .v16960-digital-actions .v15m-mini-btn{min-height:31px!important;padding:0 11px!important}
+.pm .v16960-digital-actions .v15m-text-btn{margin:0!important}
+@media(max-width:640px){
+ .pm .v16960-digital-actions{width:100%!important}
+ .pm .v16960-digital-actions .v15m-mini-btn{flex:1!important}
+}

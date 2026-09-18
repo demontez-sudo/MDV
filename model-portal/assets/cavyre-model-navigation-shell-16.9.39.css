@@ -1,0 +1,21 @@
+/* CAVYRE Model Portal 16.9.39 — Navigation + Portal Shell polish, CSS only */
+:root{--cv39-line:rgba(196,156,255,.17);--cv39-soft:rgba(159,92,255,.055);--cv39-panel:#0b0b11}
+/* App shell */
+.pm [class*="app-shell"],.pm [class*="portal-shell"],.pm [class*="workspace-shell"]{min-height:100dvh!important;background:radial-gradient(circle at 75% -15%,rgba(159,92,255,.055),transparent 34%),#09090e!important}
+/* Header */
+.pm header,.pm [class*="topbar"],.pm [class*="app-header"]{min-height:58px!important;border-bottom:1px solid rgba(255,255,255,.06)!important;background:rgba(9,9,14,.92)!important;backdrop-filter:blur(18px)!important;box-shadow:none!important}.pm [class*="brand"],.pm [class*="wordmark"]{letter-spacing:.08em!important}.pm [class*="header-actions"]{gap:7px!important}
+/* Sidebar / primary nav */
+.pm aside,.pm [class*="sidebar"],.pm [class*="primary-nav"]{background:linear-gradient(180deg,#0d0d14,#09090e)!important;border-right:1px solid rgba(255,255,255,.06)!important;box-shadow:none!important}.pm [class*="nav-item"],.pm nav a{min-height:38px!important;border-radius:8px!important;font-size:10px!important;transition:background .14s ease,color .14s ease,border-color .14s ease!important}.pm [class*="nav-item"]:hover,.pm nav a:hover{background:var(--cv39-soft)!important}.pm [class*="nav-item"].active,.pm nav a.active,.pm nav a[aria-current="page"]{background:rgba(159,92,255,.10)!important;color:var(--cv-text)!important;box-shadow:inset 2px 0 0 rgba(183,123,255,.9)!important}
+/* Nav groups */
+.pm [class*="nav-label"],.pm [class*="nav-group-title"]{margin:14px 10px 6px!important;font:700 7px/1 "Space Mono",monospace!important;text-transform:uppercase!important;letter-spacing:.14em!important;color:rgba(255,255,255,.34)!important}
+/* Model mini identity in shell */
+.pm [class*="sidebar-profile"],.pm [class*="model-mini"]{margin:10px!important;padding:10px!important;border:1px solid var(--cv39-line)!important;border-radius:10px!important;background:rgba(255,255,255,.018)!important}.pm [class*="sidebar-profile"] img,.pm [class*="model-mini"] img{width:34px!important;height:34px!important;border-radius:8px!important;object-fit:cover!important}
+/* Breadcrumb / page location */
+.pm [class*="breadcrumb"]{font:400 8px/1 "Space Mono",monospace!important;color:var(--cv-muted)!important;letter-spacing:.04em!important}.pm [class*="breadcrumb"] a{color:inherit!important;text-decoration:none!important}
+/* Mobile menu */
+.pm [class*="menu-button"],.pm [class*="mobile-menu-button"]{width:38px!important;height:38px!important;border:1px solid var(--cv39-line)!important;border-radius:9px!important;background:#0d0d14!important;box-shadow:none!important}.pm [class*="mobile-nav"],.pm [class*="nav-drawer"]{background:#0b0b11!important;border-color:var(--cv39-line)!important;box-shadow:0 24px 70px rgba(0,0,0,.55)!important}
+/* Focus states for keyboard accessibility */
+.pm a:focus-visible,.pm button:focus-visible,.pm input:focus-visible,.pm select:focus-visible,.pm textarea:focus-visible{outline:2px solid rgba(183,123,255,.8)!important;outline-offset:2px!important}
+/* Reduce accidental giant spacing */
+.pm [class*="page-shell"],.pm [class*="content-shell"]{padding-bottom:28px!important}.pm [class*="spacer"]{max-height:32px!important}
+@media(max-width:900px){.pm header,.pm [class*="topbar"],.pm [class*="app-header"]{min-height:54px!important}.pm [class*="mobile-nav"],.pm [class*="nav-drawer"]{width:min(86vw,320px)!important}.pm [class*="page-shell"],.pm [class*="content-shell"]{padding-bottom:20px!important}}

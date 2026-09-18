@@ -1,0 +1,33 @@
+/* Maison de Veux 16.9.29 — mobile certification */
+html,body{max-width:100%;overscroll-behavior-x:none}
+button,a,input,select,textarea{touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+@media(max-width:760px){
+  body{min-width:0;overflow-x:hidden}
+  .topnav{padding:18px 14px;grid-template-columns:minmax(54px,1fr) auto minmax(54px,1fr)}
+  .nav-mark{font-size:20px}
+  .search-trigger,.menu-trigger{min-width:44px;min-height:44px}
+  .search-trigger{font-size:0;gap:0}
+  .search-trigger svg{width:19px;height:19px}
+  .menu-trigger{font-size:0;justify-content:flex-end}
+  .menu-trigger .bars{width:24px}
+  .search-overlay,.menu-overlay{padding:16px 14px calc(24px + env(safe-area-inset-bottom))}
+  .search-top{gap:12px}
+  .search-input,input,select,textarea{font-size:16px!important}
+  .search-close,.menu-close{min-height:44px}
+  .menu-city-switch{margin-top:26px}
+  .menu-city-switch button{min-height:44px;padding:9px 18px}
+  .menu-body{gap:30px;padding:24px 0}
+  .menu-primary a{font-size:clamp(34px,12vw,52px)}
+  .menu-secondary{gap:16px 22px;padding-top:22px}
+  .roster-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+  .roster-name{font-size:clamp(20px,7vw,30px)}
+  .news-grid{grid-template-columns:1fr!important}
+  .feature-gallery{grid-template-columns:1fr 1fr!important;gap:8px!important}
+  .offices,.f-row,.credits{grid-template-columns:1fr!important}
+  img,video{max-width:100%;height:auto}
+}
+@media(max-width:390px){
+  .roster-grid{grid-template-columns:1fr!important}
+  .feature-gallery{grid-template-columns:1fr!important}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

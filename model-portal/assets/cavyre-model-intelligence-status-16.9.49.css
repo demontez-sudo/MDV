@@ -1,0 +1,147 @@
+/* CAVYRE Model Portal 16.9.49 — Intelligence + Status Hierarchy, CSS only */
+:root{
+  --cv49-line:rgba(196,156,255,.17);
+  --cv49-soft:rgba(159,92,255,.05);
+  --cv49-info:rgba(117,179,255,.09);
+  --cv49-good:rgba(112,211,165,.10);
+  --cv49-warn:rgba(238,184,91,.10);
+  --cv49-danger:rgba(232,116,128,.10);
+}
+
+/* Intelligence surfaces */
+.pm [class*="intelligence-card"],
+.pm [class*="insight-card"],
+.pm [class*="recommendation-card"]{
+  border:1px solid rgba(196,156,255,.22)!important;
+  border-radius:12px!important;
+  background:
+    linear-gradient(135deg,rgba(159,92,255,.065),rgba(255,255,255,.012))!important;
+  box-shadow:none!important;
+  padding:13px 14px!important;
+}
+.pm [class*="intelligence-card"] h3,
+.pm [class*="insight-card"] h3,
+.pm [class*="recommendation-card"] h3{
+  font-family:"Bodoni Moda",serif!important;
+  font-weight:400!important;
+  letter-spacing:-.02em!important;
+}
+
+/* Why it matters / next action */
+.pm [class*="why-now"],
+.pm [class*="why-it-matters"],
+.pm [class*="next-action"]{
+  padding:10px 12px!important;
+  border-left:2px solid rgba(183,123,255,.55)!important;
+  background:rgba(159,92,255,.025)!important;
+  line-height:1.5!important;
+}
+.pm [class*="next-action"] strong,
+.pm [class*="why-now"] strong{
+  font:700 8px/1 "Space Mono",monospace!important;
+  text-transform:uppercase!important;
+  letter-spacing:.09em!important;
+}
+
+/* Unified operational statuses */
+.pm [data-status],
+.pm [class*="status-chip"],
+.pm [class*="state-chip"]{
+  min-height:27px!important;
+  padding:0 9px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  border:1px solid var(--cv49-line)!important;
+  border-radius:999px!important;
+  font:700 8px/1 "Space Mono",monospace!important;
+  text-transform:uppercase!important;
+  letter-spacing:.065em!important;
+  box-shadow:none!important;
+}
+.pm [data-status*="confirm"],
+.pm [class*="confirmed"]{
+  background:var(--cv49-good)!important;
+  border-color:rgba(112,211,165,.20)!important;
+}
+.pm [data-status*="pending"],
+.pm [class*="pending"]{
+  background:var(--cv49-warn)!important;
+  border-color:rgba(238,184,91,.20)!important;
+}
+.pm [data-status*="urgent"],
+.pm [data-status*="overdue"],
+.pm [class*="urgent"],
+.pm [class*="overdue"]{
+  background:var(--cv49-danger)!important;
+  border-color:rgba(232,116,128,.20)!important;
+}
+.pm [data-status*="info"],
+.pm [class*="informational"]{
+  background:var(--cv49-info)!important;
+  border-color:rgba(117,179,255,.18)!important;
+}
+
+/* Status summaries */
+.pm [class*="status-summary"],
+.pm [class*="readiness-summary-row"]{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  align-items:center!important;
+  gap:6px!important;
+  padding:9px 0!important;
+}
+
+/* Cross-module cards */
+.pm [class*="command-signal"],
+.pm [class*="model-signal"]{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+  gap:10px!important;
+  align-items:center!important;
+  padding:11px 13px!important;
+  border:1px solid var(--cv49-line)!important;
+  border-radius:10px!important;
+  background:#0e0e15!important;
+}
+.pm [class*="command-signal"]:hover,
+.pm [class*="model-signal"]:hover{
+  background:var(--cv49-soft)!important;
+}
+
+/* Evidence/meta */
+.pm [class*="signal-meta"],
+.pm [class*="evidence"],
+.pm [class*="source-label"]{
+  font:400 8px/1.4 "Space Mono",monospace!important;
+  color:var(--cv-muted)!important;
+  letter-spacing:.03em!important;
+}
+
+/* Keep model UI calm */
+.pm [class*="critical"],
+.pm [class*="danger"]{
+  box-shadow:none!important;
+}
+.pm [class*="critical"]::before,
+.pm [class*="danger"]::before{
+  box-shadow:none!important;
+}
+
+/* Mobile */
+@media(max-width:700px){
+  .pm [class*="command-signal"],
+  .pm [class*="model-signal"]{
+    grid-template-columns:auto minmax(0,1fr)!important;
+    padding:10px 11px!important;
+  }
+  .pm [class*="command-signal"] > :last-child,
+  .pm [class*="model-signal"] > :last-child{
+    grid-column:2!important;
+    justify-self:start!important;
+  }
+  .pm [class*="intelligence-card"],
+  .pm [class*="insight-card"],
+  .pm [class*="recommendation-card"]{
+    padding:11px 12px!important;
+  }
+}

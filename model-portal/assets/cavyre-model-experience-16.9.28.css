@@ -1,0 +1,156 @@
+
+/* CAVYRE Model Portal 16.9.28 — Safe Model Experience UI
+   PRESENTATION ONLY. No auth/API/bootstrap/routing/behavior changes. */
+
+:root{
+  --cv-exp-soft:rgba(159,92,255,.05);
+  --cv-exp-soft-2:rgba(159,92,255,.085);
+  --cv-exp-line:rgba(196,156,255,.16);
+  --cv-exp-line-strong:rgba(196,156,255,.28);
+}
+
+/* Messages / communications */
+.pm [class*="message-list"],
+.pm [class*="thread-list"],
+.pm [class*="inbox-list"]{
+  border:1px solid var(--cv-line)!important;
+  border-radius:14px!important;
+  overflow:hidden!important;
+  background:#0d0d14!important;
+}
+.pm [class*="message-row"],
+.pm [class*="thread-row"],
+.pm [class*="conversation-row"]{
+  padding:13px 15px!important;
+  border-bottom:1px solid rgba(255,255,255,.055)!important;
+  background:transparent!important;
+  transition:background .16s ease,border-color .16s ease!important;
+}
+.pm [class*="message-row"]:hover,
+.pm [class*="thread-row"]:hover,
+.pm [class*="conversation-row"]:hover{
+  background:var(--cv-exp-soft)!important;
+}
+.pm [class*="message-bubble"],
+.pm [class*="chat-bubble"]{
+  max-width:min(78%,720px)!important;
+  border:1px solid var(--cv-line)!important;
+  border-radius:14px!important;
+  background:#11111a!important;
+  box-shadow:none!important;
+}
+.pm [class*="message-bubble"].mine,
+.pm [class*="chat-bubble"].mine{
+  background:var(--cv-exp-soft-2)!important;
+  border-color:var(--cv-exp-line-strong)!important;
+}
+
+/* Submissions / development / readiness */
+.pm [class*="submission-card"],
+.pm [class*="readiness-card"],
+.pm [class*="development-card"],
+.pm [class*="evaluation-card"]{
+  border:1px solid var(--cv-line)!important;
+  border-radius:12px!important;
+  background:linear-gradient(180deg,#11111a,#0d0d14)!important;
+  box-shadow:none!important;
+}
+.pm [class*="submission-row"],
+.pm [class*="readiness-row"],
+.pm [class*="requirement-row"]{
+  padding:12px 14px!important;
+  border-bottom:1px solid rgba(255,255,255,.055)!important;
+}
+.pm [class*="progress"]{
+  border-radius:999px!important;
+  overflow:hidden!important;
+  background:rgba(255,255,255,.07)!important;
+}
+.pm [class*="progress"] > *{
+  border-radius:999px!important;
+}
+
+/* Profile / identity */
+.pm [class*="profile-card"],
+.pm [class*="identity-card"],
+.pm [class*="measurements-card"],
+.pm [class*="contact-card"]{
+  border:1px solid var(--cv-line)!important;
+  border-radius:14px!important;
+  background:linear-gradient(180deg,#11111a,#0d0d14)!important;
+  box-shadow:none!important;
+}
+.pm [class*="profile-photo"],
+.pm [class*="avatar"]{
+  border-radius:12px!important;
+  overflow:hidden!important;
+  border:1px solid var(--cv-line)!important;
+}
+.pm [class*="measurement"],
+.pm [class*="stat-value"]{
+  font-family:"Bodoni Moda",serif!important;
+  font-weight:400!important;
+}
+
+/* Documents */
+.pm [class*="document-row"],
+.pm [class*="file-row"]{
+  padding:12px 14px!important;
+  border-bottom:1px solid rgba(255,255,255,.055)!important;
+  background:transparent!important;
+}
+.pm [class*="document-row"]:hover,
+.pm [class*="file-row"]:hover{
+  background:var(--cv-exp-soft)!important;
+}
+
+/* Calendar polish — presentation only */
+.pm [class*="calendar"]{
+  --cal-line:rgba(255,255,255,.07);
+}
+.pm [class*="calendar-head"],
+.pm [class*="calendar-toolbar"]{
+  border-color:var(--cv-line)!important;
+}
+.pm [class*="calendar-day"],
+.pm [class*="day-cell"]{
+  border-color:var(--cal-line)!important;
+  background:rgba(255,255,255,.012)!important;
+}
+.pm [class*="calendar-day"]:hover,
+.pm [class*="day-cell"]:hover{
+  background:rgba(159,92,255,.035)!important;
+}
+.pm [class*="calendar-event"],
+.pm [class*="event-chip"]{
+  border-radius:8px!important;
+  box-shadow:none!important;
+}
+
+/* Buttons / links within model-facing operational surfaces */
+.pm [class*="message"] button,
+.pm [class*="submission"] button,
+.pm [class*="readiness"] button,
+.pm [class*="profile"] button,
+.pm [class*="document"] button{
+  min-height:34px!important;
+  padding:0 12px!important;
+  border-radius:8px!important;
+  font:700 8px/1 "Space Mono",monospace!important;
+  letter-spacing:.09em!important;
+  text-transform:uppercase!important;
+}
+
+/* Compact mobile */
+@media(max-width:760px){
+  .pm [class*="message-row"],
+  .pm [class*="thread-row"],
+  .pm [class*="conversation-row"],
+  .pm [class*="submission-row"],
+  .pm [class*="readiness-row"],
+  .pm [class*="requirement-row"],
+  .pm [class*="document-row"],
+  .pm [class*="file-row"]{padding:11px 12px!important}
+  .pm [class*="message-bubble"],
+  .pm [class*="chat-bubble"]{max-width:90%!important}
+}

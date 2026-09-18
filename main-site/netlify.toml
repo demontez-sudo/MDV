@@ -1,0 +1,371 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+# SEPARATED ARCHITECTURE LOGIN FIX — narrow overrides only.
+# Keep Agent, Model, and MA as independent apps.
+[[redirects]]
+  from = "/portal/assets/veux-model-staging-16.9.69.js"
+  to = "/.mdv-patches/veux-model-staging-16.9.69.js"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/portal/api/model/password/finalize"
+  to = "/.netlify/functions/model-password-finalize-separated"
+  status = 200
+  force = true
+
+# Maison de Veux — main public site
+# Portal entry paths connect to independent VEUX DESK apps.
+# Agent /admin is reverse-proxied so the Maison domain remains in the browser;
+# Model and MA portals retain their independent browser handoffs.
+
+# VEUX DESK 16.9.24 — branded Agent Portal mount.
+# /admin is a reverse proxy, not a redirect, so the Maison URL remains in the browser.
+
+[[redirects]]
+  from = "/admin/*"
+  to = "https://maison-agent.netlify.app/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/admin"
+  to = "https://maison-agent.netlify.app/"
+  status = 200
+  force = true
+
+# Keep /team as a transition-safe handoff. Once Agent 16.9.24 is live,
+# the Agent origin immediately moves the browser to branded /admin.
+[[redirects]]
+  from = "/team"
+  to = "https://maison-agent.netlify.app/"
+  status = 302
+  force = true
+
+# Agent Portal API calls are root-absolute in the browser. Keep them on the branded
+# host and proxy them to the Agent deployment. More specific public package routes
+# below remain explicit documentation of the client package contract.
+
+# 16.9.27 — public Get Scouted intake is owned by the Agent Functions runtime
+# while remaining same-origin on maisondeveux.com.
+[[redirects]]
+  from = "/api/public/forms/get-scouted"
+  to = "https://maison-agent.netlify.app/api/public/forms/get-scouted"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://maison-agent.netlify.app/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/health"
+  to = "https://maison-agent.netlify.app/health"
+  status = 200
+  force = true
+
+# Model Portal stays branded on /portal while proxying the independent Model app.
+[[redirects]]
+  from = "/portal/*"
+  to = "https://maison-models.netlify.app/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/portal"
+  to = "https://maison-models.netlify.app/"
+  status = 200
+  force = true
+
+# Mother Agency Portal stays branded on /ma while proxying the independent MA app.
+[[redirects]]
+  from = "/ma/*"
+  to = "https://maison-ma.netlify.app/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ma"
+  to = "https://maison-ma.netlify.app/"
+  status = 200
+  force = true
+
+# Private client model packages remain on the branded domain while the
+# authenticated Agent application owns the secure package functions/viewer.
+[[redirects]]
+  from = "/p/*"
+  to = "https://maison-agent.netlify.app/p/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/public/package"
+  to = "https://maison-agent.netlify.app/api/public/package"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/public/package/feedback"
+  to = "https://maison-agent.netlify.app/api/public/package/feedback"
+  status = 200
+  force = true
+
+# Individual model public profiles — each one is its own separate
+# Netlify site (maison-{name}.netlify.app), matching the pattern
+# already proven working for the Creators page.
+
+[[redirects]]
+  from = "/adenike"
+  to = "https://maison-adenike.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/aidan"
+  to = "https://maison-aidan.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/akvile"
+  to = "https://maison-akvile.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/alex"
+  to = "https://maison-alex.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/ayan"
+  to = "https://maison-ayan.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/catherine"
+  to = "https://maison-catherine.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/chol"
+  to = "https://maison-chol.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/clara"
+  to = "https://maison-clara.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/david"
+  to = "https://maison-david.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/deborah"
+  to = "https://maison-deborah.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/dorcas"
+  to = "https://maison-dorcas.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/enica"
+  to = "https://maison-enica.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/fernanda"
+  to = "https://maison-fernanda.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/feuza"
+  to = "https://maison-feuza.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/histria"
+  to = "https://maison-histria.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/katalina"
+  to = "https://maison-katalina.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/krishita"
+  to = "https://maison-krishita.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/lance"
+  to = "https://maison-lance.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/lauryn"
+  to = "https://maison-lauryn.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/li"
+  to = "https://maison-li.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/lovelyn"
+  to = "https://maison-lovelyn.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/mercy"
+  to = "https://maison-mercy.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/mikhail"
+  to = "https://maison-mikhail.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/natalia"
+  to = "https://maison-natalia.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/olubiyi"
+  to = "https://maison-olubiyi.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/oshioyeme"
+  to = "https://maison-oshioyeme.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/paula"
+  to = "https://maison-paula.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/precious"
+  to = "https://maison-precious.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/rachel"
+  to = "https://maison-rachel.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/richard"
+  to = "https://maison-richard.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/sae"
+  to = "https://maison-sae.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/samuel"
+  to = "https://maison-samuel.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/samueljob"
+  to = "https://maison-samueljob.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/soni"
+  to = "https://maison-soni.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/sullivan"
+  to = "https://maison-sullivan.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/vayla"
+  to = "https://maison-vayla.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/violeta"
+  to = "https://maison-violeta.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/yorgelis"
+  to = "https://maison-yorgelis.netlify.app"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/yudai"
+  to = "https://maison-yudai.netlify.app"
+  status = 200
+  force = true
+
+
+[[redirects]]
+  from = "/tosin"
+  to = "https://maison-tosin.netlify.app"
+  status = 200
+  force = true
+
+# VEUX DESK 16.9.17 — new model profiles created in the Agency Portal.
+# Existing model routes above remain explicit. This non-forced one-segment
+# fallback validates the published MOGY profile before proxying its
+# individual maison-{route}.netlify.app site, so new routes do not require
+# another main-site deploy after their individual model site goes live.
+[[redirects]]
+  from = "/:profile"
+  to = "/.netlify/functions/model-profile-router?profile=:profile"
+  status = 200
+  force = false

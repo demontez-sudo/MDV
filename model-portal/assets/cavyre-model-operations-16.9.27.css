@@ -1,0 +1,17 @@
+/* CAVYRE Model Portal 16.9.27 — presentation only */
+:root{--cv-op-soft:rgba(159,92,255,.055);--cv-op-line:rgba(196,156,255,.16)}
+.pm [class*="booking"],.pm [class*="casting"],.pm [class*="travel"],.pm [class*="payment"],.pm [class*="portfolio"],.pm [class*="document"]{scroll-margin-top:84px}
+.pm .v15m-section,.pm .v15m-block,.pm .v15m-list,.pm .v15m-table-wrap{border-color:var(--cv-line)!important;background:linear-gradient(180deg,rgba(17,17,26,.94),rgba(10,10,16,.97))!important;border-radius:14px!important;box-shadow:none!important}
+.pm .v15m-section-head,.pm .v15m-block-head{min-height:48px!important;padding:0 16px!important;border-bottom:1px solid var(--cv-line)!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important}
+.pm .v15m-section-head h2,.pm .v15m-section-head h3,.pm .v15m-block-head h2,.pm .v15m-block-head h3{font:700 9px/1 "Space Mono",monospace!important;text-transform:uppercase!important;letter-spacing:.14em!important;margin:0!important}
+.pm .timeline-item,.pm [class*="timeline-item"]{border-color:var(--cv-line)!important;background:rgba(255,255,255,.015)!important;border-radius:10px!important}
+.pm [class*="status"],.pm [class*="stage"],.pm [class*="pill"],.pm [class*="badge"]{font-family:"Space Mono",monospace!important;text-transform:uppercase!important;letter-spacing:.07em!important;font-size:8px!important}
+.pm [class*="booking-row"],.pm [class*="casting-row"],.pm [class*="job-row"],.pm [class*="event-row"]{padding:14px 16px!important;border-bottom:1px solid rgba(255,255,255,.055)!important;background:transparent!important}
+.pm [class*="booking-row"]:hover,.pm [class*="casting-row"]:hover,.pm [class*="job-row"]:hover,.pm [class*="event-row"]:hover{background:var(--cv-op-soft)!important}
+.pm [class*="travel-card"],.pm [class*="trip-card"],.pm [class*="housing-card"],.pm [class*="visa-card"],.pm [class*="payment-card"],.pm [class*="account-card"],.pm [class*="finance-card"]{border:1px solid var(--cv-line)!important;border-radius:12px!important;background:linear-gradient(180deg,#11111a,#0d0d14)!important;box-shadow:none!important}
+.pm [class*="amount"],.pm [class*="money"]{font-family:"Bodoni Moda",serif!important;font-weight:400!important;color:var(--cv-text)!important}
+.pm [class*="portfolio-grid"],.pm [class*="media-grid"]{gap:12px!important}.pm [class*="portfolio-card"],.pm [class*="media-card"],.pm [class*="image-card"]{border:1px solid var(--cv-line)!important;border-radius:12px!important;background:#0c0c13!important;overflow:hidden!important;box-shadow:none!important}
+.pm .modal,.pm [role="dialog"]{background:linear-gradient(180deg,#14131e,#0b0b11)!important;border-color:var(--cv-line-strong)!important;border-radius:16px!important;box-shadow:0 30px 90px rgba(0,0,0,.55)!important}
+.pm label{font-size:9px!important;letter-spacing:.08em!important;color:var(--cv-muted)!important}.pm input,.pm select,.pm textarea{min-height:40px!important;font-size:12px!important}.pm textarea{min-height:96px!important;padding:11px 12px!important}
+.pm .empty,.pm [class*="empty-state"],.pm [class*="loading-state"]{border:1px dashed var(--cv-op-line)!important;background:rgba(159,92,255,.025)!important;border-radius:12px!important;color:var(--cv-muted)!important}
+@media(max-width:760px){.pm .v15m-section-head,.pm .v15m-block-head{padding:0 12px!important}.pm [class*="booking-row"],.pm [class*="casting-row"],.pm [class*="job-row"],.pm [class*="event-row"]{padding:12px!important}}

@@ -1,0 +1,18 @@
+/api/public/forms/get-scouted https://maison-agent.netlify.app/api/public/forms/get-scouted 200!
+# VEUX DESK 16.9.24 — branded Agent Portal reverse proxy.
+/admin/* https://maison-agent.netlify.app/:splat 200!
+/admin https://maison-agent.netlify.app/ 200!
+/team https://maison-agent.netlify.app/ 302!
+/api/* https://maison-agent.netlify.app/api/:splat 200!
+/health https://maison-agent.netlify.app/health 200!
+
+/p/* https://maison-agent.netlify.app/p/:splat 200!
+/api/public/package https://maison-agent.netlify.app/api/public/package 200!
+/api/public/package/feedback https://maison-agent.netlify.app/api/public/package/feedback 200!
+# Model Portal login fix — intercept only the reset runtime and finalize endpoint.
+/portal/assets/veux-model-staging-16.9.69.js /.mdv-patches/veux-model-staging-16.9.69.js 200!
+/portal/api/model/password/finalize /.netlify/functions/model-password-finalize-separated 200!
+/portal/* https://maison-models.netlify.app/:splat 200!
+/portal https://maison-models.netlify.app/ 200!
+/ma/* https://maison-ma.netlify.app/:splat 200!
+/ma https://maison-ma.netlify.app/ 200!

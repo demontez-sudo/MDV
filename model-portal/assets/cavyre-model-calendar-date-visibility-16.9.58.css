@@ -1,0 +1,69 @@
+/* CAVYRE Model Portal 16.9.58 — Calendar Date Visibility */
+.pm .v17m-cal-date-number,
+.pm .v17m-cal-cell > header > b,
+.pm .v17m-cal-day > header > b{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  min-width:25px!important;
+  min-height:25px!important;
+  padding:0!important;
+  opacity:1!important;
+  visibility:visible!important;
+  color:#f5f1f8!important;
+  background:transparent!important;
+  font-family:"Space Mono",monospace!important;
+  font-size:12px!important;
+  font-weight:700!important;
+  line-height:1!important;
+  text-indent:0!important;
+  -webkit-text-fill-color:#f5f1f8!important;
+}
+.pm .v17m-cal-cell.outside > header > b{
+  color:rgba(245,241,248,.46)!important;
+  -webkit-text-fill-color:rgba(245,241,248,.46)!important;
+}
+.pm .v17m-cal-cell.today > header > b,
+.pm .v17m-cal-day.today > header > b{
+  background:rgba(159,92,255,.18)!important;
+  border:1px solid rgba(196,156,255,.42)!important;
+  border-radius:999px!important;
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+}
+.pm .v17m-cal-month-head > b{
+  display:block!important;
+  opacity:1!important;
+  visibility:visible!important;
+  color:rgba(245,241,248,.62)!important;
+  -webkit-text-fill-color:rgba(245,241,248,.62)!important;
+}
+.pm .v17m-cal-agenda section > header{
+  display:grid!important;
+  gap:4px!important;
+}
+.pm .v17m-cal-agenda section > header b{
+  color:#f5f1f8!important;
+  -webkit-text-fill-color:#f5f1f8!important;
+}
+.pm .v17m-cal-agenda section > header em{
+  font:400 7px/1 "Space Mono",monospace!important;
+  font-style:normal!important;
+  color:rgba(245,241,248,.38)!important;
+}
+.pm .v17m-cal-agenda section.today{
+  background:rgba(159,92,255,.04)!important;
+  box-shadow:inset 2px 0 0 rgba(183,123,255,.72)!important;
+}
+/* Keep the real calendar grid visible even with no model events. */
+.pm .v17m-cal-cell{min-height:118px!important}
+.pm .v17m-cal-cell > header{min-height:32px!important}
+@media(max-width:760px){
+  .pm .v17m-cal-date-number,
+  .pm .v17m-cal-cell > header > b,
+  .pm .v17m-cal-day > header > b{
+    min-width:24px!important;
+    min-height:24px!important;
+    font-size:11px!important;
+  }
+}

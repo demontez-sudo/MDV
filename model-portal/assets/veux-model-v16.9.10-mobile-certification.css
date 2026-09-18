@@ -1,0 +1,27 @@
+/* VEUX DESK Model 16.9.10 — mobile certification */
+html,body{max-width:100%;overscroll-behavior-x:none}
+button,a,input,select,textarea{touch-action:manipulation}
+@media(max-width:760px){
+  body{min-width:0;overflow-x:hidden!important}
+  .pm,.panel,.v15m-page,.v15m-card{min-width:0;max-width:100%}
+  input:not([type="checkbox"]):not([type="radio"]),select,textarea{font-size:16px!important;max-width:100%}
+  button,.v15m-btn,.v15m-mini-btn,[role="button"]{min-height:42px}
+  .v16m-modal-bg{align-items:flex-end;padding:0}
+  .v16m-modal{width:100%;max-width:100%;max-height:calc(100dvh - 12px);overflow:auto;padding-bottom:calc(18px + env(safe-area-inset-bottom))}
+  .v16m-modal-actions,.v15m-actions-row{position:sticky;bottom:0;z-index:4;flex-wrap:wrap;padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+  .v15m-table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .v15m-actions,.v15m-event-actions{flex-wrap:wrap}
+  .v15m-compose{position:sticky;bottom:0;background:#0f0c09;padding-bottom:calc(12px + env(safe-area-inset-bottom))}
+  .mobnav{height:calc(66px + env(safe-area-inset-bottom))}
+  .pm{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+  .v17m-cal-scroll{scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  .v17m-cal-day{scroll-snap-align:start}
+}
+@media(max-width:430px){
+  .v15m-page{padding-left:12px;padding-right:12px}
+  .v15m-head h1{font-size:clamp(30px,10vw,40px)}
+  .v15m-hero{grid-template-columns:86px minmax(0,1fr);gap:14px}
+  .v15m-photo{height:126px}
+  .v1699-sub-files{grid-template-columns:1fr}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}

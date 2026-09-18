@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>VEUX DESK · Mother Agency Portal</title>
+<link rel="canonical" href="https://www.maisondeveux.com/ma">
+<meta name="theme-color" content="#0e0b09">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script>
+(function(){
+  /* release lineage: 16.7.8-ma-bootstrap-integrity · 16.7.9-bootstrap-query-integrity · 16.7.10-shell-handoff-integrity · 16.7.11-calendar-views · 16.7.12-write-connection-integrity-20260818 · 16.7.13-mother-agency-access-20260819 · 16.7.14-smart-calendar-travel-documents-20260820 · 16.7.15-mobile-certification-20260820 */
+  window.__VEUX_RELEASE__='16.7.16-unified-design-interaction-20260820';
+  if(/^maison-ma\.netlify\.app$/i.test(location.hostname)){var tail=location.pathname.replace(/^\/ma(?=\/|$)/,'');if(tail==='/'||!tail)tail='';location.replace('https://www.maisondeveux.com/ma'+tail+location.search+location.hash);return;}
+  var branded=/^(www\.)?maisondeveux\.com$/i.test(location.hostname)&&/^\/ma(?:\/|$)/.test(location.pathname);
+  window.__VEUX_MA_MOUNT__=branded?'/ma':'';
+  var css=document.createElement('link');css.rel='stylesheet';css.href=(window.__VEUX_MA_MOUNT__||'')+'/assets/veux-partner-v15-core.css?v='+encodeURIComponent(window.__VEUX_RELEASE__);document.head.appendChild(css);
+  var mobileCss=document.createElement('link');mobileCss.rel='stylesheet';mobileCss.href=(window.__VEUX_MA_MOUNT__||'')+'/assets/veux-ma-v16.7.15-mobile-certification.css?v='+encodeURIComponent(window.__VEUX_RELEASE__);document.head.appendChild(mobileCss);
+  var designCss=document.createElement('link');designCss.rel='stylesheet';designCss.href=(window.__VEUX_MA_MOUNT__||'')+'/assets/veux-ma-v16.7.16-design-system.css?v='+encodeURIComponent(window.__VEUX_RELEASE__);document.head.appendChild(designCss);
+})();
+</script>
+</head>
+<body>
+<div id="login">
+  <div class="lg-card">
+    <div class="lg-top">
+      <div class="lg-eyebrow">VEUX DESK · Maison de Veux</div>
+      <div class="lg-h1">Mother Agency <em>Portal</em></div>
+      <div class="lg-sub">Secure Partner Access</div>
+    </div>
+    <form class="lg-body" onsubmit="return false;"><div class="lg-search-state" id="veuxBootState">Connecting secure partner access…</div></form>
+    <div class="lg-foot">Maison de Veux · Mother Agency Access</div>
+  </div>
+</div>
+<div id="app" aria-live="polite">
+  <header class="topbar">
+    <div class="tb-brand">
+      <button class="tb-burger" type="button" onclick="toggleSB()" aria-label="Open navigation">☰</button>
+      <button class="tb-back" type="button" onclick="portalBack()" aria-label="Back to previous portal page" title="Back">←</button>
+      <a class="tb-mark" href="https://www.maisondeveux.com" target="_blank" rel="noopener">VEUX DESK</a>
+      <div class="tb-tag">MOTHER AGENCY</div>
+    </div>
+    <div class="tb-right">
+      <button class="tb-notify" type="button" onclick="navTo('notifications')" aria-label="Open updates"><span>◇</span><b class="tb-notify-count" id="tbNotifyCount"></b></button>
+      <div class="tb-user">
+        <div class="tb-av" id="tbAv">MA</div>
+        <div class="tb-user-copy"><div class="tb-name" id="tbName">Mother Agency</div><div class="tb-role" id="tbRole">Partner</div></div>
+      </div>
+      <button class="tb-signout" type="button" onclick="signOut()">Sign Out</button>
+    </div>
+  </header>
+  <div id="sb-ov" class="sb-ov" onclick="closeSB()"></div>
+  <div class="shell">
+    <nav class="sidenav" id="sidenav" aria-label="Mother Agency Portal"></nav>
+    <main class="pm" id="pm"></main>
+  </div>
+  <nav class="mobnav" id="mobnav" aria-label="Mobile navigation"></nav>
+  <div id="mobMoreOv" class="mob-more-ov" onclick="closeMobMore()"></div>
+  <section id="mobMoreSheet" class="mob-more-sheet" aria-label="More navigation">
+    <div class="mob-more-handle"></div>
+    <div class="mob-more-title">More</div>
+    <div id="mobMoreList" class="mob-more-list"></div>
+  </section>
+</div>
+<script>
+(function(){
+  window.__VEUX_MA_BOOTSTRAP_LOADER__=true;
+  var base=window.__VEUX_MA_MOUNT__||'';
+  var releaseVersion=encodeURIComponent(window.__VEUX_RELEASE__||'16.7.16');
+  function asset(name){return base+'/assets/'+name+'?v='+releaseVersion;}
+  function loadScript(src){
+    return new Promise(function(resolve,reject){
+      var script=document.createElement('script');script.src=src;script.async=false;
+      script.onload=function(){resolve(src);};script.onerror=function(){script.remove();reject(new Error('Asset failed: '+src));};
+      document.head.appendChild(script);
+    });
+  }
+  async function loadSupabase(){
+    var cdns=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2','https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'];
+    var last=null;
+    for(var i=0;i<cdns.length;i++){
+      try{await loadScript(cdns[i]);if(window.supabase&&window.supabase.createClient)return;}
+      catch(e){last=e;console.warn('[VEUX MA 16.7.10] Supabase CDN failed',cdns[i]);}
+    }
+    throw last||new Error('Secure login library could not load.');
+  }
+  async function boot(){
+    var body=document.querySelector('#login .lg-body');
+    try{
+      await loadSupabase();
+      await loadScript(asset('veux-partner-v15-core.js'));
+      await loadScript(asset('veux-partner-staging.js'));
+    }catch(e){
+      console.error('[VEUX MA 16.7.10] bootstrap failed',e);
+      if(body)body.innerHTML='<div class="lg-err" style="display:block">Secure Mother Agency Portal could not finish loading. Refresh this page to retry.</div>';
+    }
+  }
+  boot();
+})();
+</script>
+</body>
+</html>

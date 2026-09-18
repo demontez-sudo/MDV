@@ -1,0 +1,11 @@
+/* Maison de Veux 16.9.30 — editorial interaction polish */
+:root{--mdv-focus:rgba(169,137,95,.92);--mdv-ease:180ms ease}
+button,a,input,select,textarea{transition:color var(--mdv-ease),border-color var(--mdv-ease),background-color var(--mdv-ease),opacity var(--mdv-ease),transform var(--mdv-ease)}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--mdv-focus)!important;outline-offset:4px!important}
+button:not(:disabled):active,a:active{transform:scale(.985)}
+button:disabled,[aria-disabled="true"]{opacity:.45;cursor:not-allowed}
+input,select,textarea{border-radius:0}
+.mdv-roster-loading,[aria-busy="true"]{animation:mdv-pulse 1.4s ease-in-out infinite}
+@keyframes mdv-pulse{50%{opacity:.48}}
+@media(hover:hover){.roster-card:hover img{transform:scale(1.015)}.roster-card img{transition:transform .6s cubic-bezier(.2,.7,.2,1)}}
+@media(prefers-reduced-motion:reduce){.mdv-roster-loading,[aria-busy="true"]{animation:none}.roster-card img{transition:none}}

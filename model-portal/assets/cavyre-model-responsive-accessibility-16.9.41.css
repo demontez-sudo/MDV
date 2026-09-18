@@ -1,0 +1,98 @@
+/* CAVYRE Model Portal 16.9.41 — Responsive + Accessibility Hardening, CSS only */
+:root{--cv41-line:rgba(196,156,255,.17);--cv41-focus:rgba(188,132,255,.92)}
+
+/* Touch targets without oversized desktop UI */
+@media (pointer:coarse){
+ .pm button,.pm [role="button"],.pm a[class*="btn"],.pm a[class*="button"]{min-height:42px!important}
+ .pm input,.pm select{min-height:42px!important}
+}
+
+/* Keyboard focus: visible, refined, consistent */
+.pm :where(a,button,input,select,textarea,[tabindex]):focus-visible{
+ outline:2px solid var(--cv41-focus)!important;
+ outline-offset:2px!important;
+ box-shadow:0 0 0 3px rgba(159,92,255,.10)!important;
+}
+
+/* Text resilience */
+.pm :where(p,span,div,td,th,label,strong,small){overflow-wrap:anywhere}
+.pm :where(h1,h2,h3,h4){text-wrap:balance}
+.pm p{text-wrap:pretty}
+
+/* Media resilience */
+.pm img,.pm video,.pm canvas,.pm svg{max-width:100%}
+.pm iframe{max-width:100%;border:0}
+
+/* Tables remain readable on narrow screens */
+.pm [class*="table-wrap"],.pm [class*="table-container"]{
+ overflow-x:auto!important;
+ overscroll-behavior-inline:contain;
+ -webkit-overflow-scrolling:touch;
+}
+.pm table{min-width:max-content}
+.pm td,.pm th{vertical-align:middle!important}
+
+/* Drawer/modal viewport safety */
+.pm [class*="modal"],.pm [role="dialog"]{
+ max-height:calc(100dvh - 24px)!important;
+}
+.pm [class*="modal-body"],.pm [class*="drawer-body"],.pm [class*="dialog-body"]{
+ overflow:auto!important;
+ overscroll-behavior:contain;
+}
+.pm [class*="drawer"],.pm [class*="sheet"]{max-width:min(94vw,560px)!important}
+
+/* Sticky surfaces do not visually collide */
+.pm [class*="sticky"],.pm [class*="toolbar"][style*="sticky"]{
+ backdrop-filter:blur(14px);
+}
+
+/* Long labels / buttons */
+.pm button,.pm [role="button"]{
+ max-width:100%;
+ white-space:normal;
+ line-height:1.2!important;
+}
+.pm [class*="chip"],.pm [class*="pill"],.pm [class*="badge"]{max-width:100%}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion:reduce){
+ .pm *,.pm *::before,.pm *::after{
+  scroll-behavior:auto!important;
+  animation-duration:.01ms!important;
+  animation-iteration-count:1!important;
+  transition-duration:.01ms!important;
+ }
+}
+
+/* High-contrast preference */
+@media (prefers-contrast:more){
+ .pm [class*="card"],.pm [class*="panel"],.pm input,.pm select,.pm textarea{
+  border-color:rgba(255,255,255,.30)!important;
+ }
+ .pm [class*="muted"],.pm small{color:rgba(255,255,255,.72)!important}
+}
+
+/* Compact phones */
+@media(max-width:420px){
+ .pm main,.pm [class*="main-content"],.pm [class*="page-content"]{padding-inline:10px!important}
+ .pm [class*="page-header"],.pm [class*="page-head"]{gap:9px!important}
+ .pm [class*="header-actions"]{gap:5px!important}
+ .pm [class*="card"],.pm [class*="panel"]{border-radius:10px!important}
+}
+
+/* Wide desktop: keep information readable rather than stretched */
+@media(min-width:1700px){
+ .pm main,.pm [class*="main-content"],.pm [class*="page-content"]{
+  max-width:1640px!important;
+  margin-inline:auto!important;
+ }
+}
+
+/* Print-safe documents / schedules */
+@media print{
+ .pm aside,.pm nav,.pm header,.pm [class*="sidebar"],.pm [class*="topbar"],
+ .pm [class*="menu-button"],.pm [class*="notification"]{display:none!important}
+ .pm,.pm main,.pm [class*="page-content"]{background:#fff!important;color:#111!important}
+ .pm [class*="card"],.pm [class*="panel"]{break-inside:avoid;border:1px solid #ccc!important;background:#fff!important;color:#111!important}
+}

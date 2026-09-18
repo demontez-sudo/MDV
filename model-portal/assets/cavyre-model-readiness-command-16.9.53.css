@@ -1,0 +1,152 @@
+/* CAVYRE Model Portal 16.9.53 — Readiness Command / Market Prep, CSS only */
+:root{--cv53-line:rgba(196,156,255,.17);--cv53-soft:rgba(159,92,255,.05);--cv53-good:rgba(112,211,165,.10);--cv53-warn:rgba(238,184,91,.10)}
+
+/* Readiness command header */
+.pm [class*="readiness-command"],
+.pm [class*="market-readiness"]{
+  padding:14px!important;
+  border:1px solid rgba(196,156,255,.22)!important;
+  border-radius:14px!important;
+  background:radial-gradient(circle at 88% 8%,rgba(159,92,255,.09),transparent 30%),linear-gradient(145deg,#14131e,#0d0d14)!important;
+  box-shadow:none!important;
+}
+
+/* Readiness score / headline */
+.pm [class*="readiness-score"],
+.pm [class*="market-score"]{
+  font-family:"Bodoni Moda",serif!important;
+  font-size:clamp(28px,4vw,46px)!important;
+  font-weight:400!important;
+  letter-spacing:-.045em!important;
+}
+.pm [class*="readiness-label"]{
+  font:700 8px/1 "Space Mono",monospace!important;
+  text-transform:uppercase!important;
+  letter-spacing:.1em!important;
+  color:var(--cv-muted)!important;
+}
+
+/* Readiness dimensions */
+.pm [class*="readiness-grid"],
+.pm [class*="prep-grid"]{
+  display:grid!important;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr))!important;
+  gap:8px!important;
+}
+.pm [class*="readiness-card"],
+.pm [class*="prep-card"]{
+  padding:12px!important;
+  border:1px solid var(--cv53-line)!important;
+  border-radius:11px!important;
+  background:#0e0e15!important;
+  box-shadow:none!important;
+}
+.pm [class*="readiness-card"] h3,
+.pm [class*="prep-card"] h3{
+  font-size:10px!important;
+  margin-bottom:7px!important;
+}
+
+/* Progress bars already present */
+.pm [class*="readiness-progress"],
+.pm [class*="prep-progress"],
+.pm [class*="progress-track"]{
+  height:5px!important;
+  border-radius:999px!important;
+  background:rgba(255,255,255,.06)!important;
+  overflow:hidden!important;
+}
+.pm [class*="readiness-progress"] > *,
+.pm [class*="prep-progress"] > *,
+.pm [class*="progress-track"] > *{
+  height:100%!important;
+  border-radius:inherit!important;
+}
+
+/* Requirement rows */
+.pm [class*="readiness-item"],
+.pm [class*="prep-item"],
+.pm [class*="requirement-row"]{
+  display:grid!important;
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+  align-items:center!important;
+  gap:10px!important;
+  padding:10px 12px!important;
+  border-bottom:1px solid rgba(255,255,255,.055)!important;
+}
+.pm [class*="readiness-item"]:hover,
+.pm [class*="prep-item"]:hover{
+  background:var(--cv53-soft)!important;
+}
+
+/* Complete / action required presentation */
+.pm [class*="ready-state"],
+.pm [class*="complete-state"]{
+  border-color:rgba(112,211,165,.20)!important;
+  background:var(--cv53-good)!important;
+}
+.pm [class*="needs-update"],
+.pm [class*="needs-action"]{
+  border-color:rgba(238,184,91,.20)!important;
+  background:var(--cv53-warn)!important;
+}
+
+/* Market / season readiness */
+.pm [class*="market-card"],
+.pm [class*="season-card"]{
+  padding:12px 13px!important;
+  border:1px solid var(--cv53-line)!important;
+  border-radius:11px!important;
+  background:linear-gradient(180deg,#11111a,#0d0d14)!important;
+}
+.pm [class*="market-card"] [class*="market-name"],
+.pm [class*="season-card"] [class*="season-name"]{
+  font-family:"Bodoni Moda",serif!important;
+  font-size:18px!important;
+  font-weight:400!important;
+}
+
+/* Agency guidance */
+.pm [class*="readiness-guidance"],
+.pm [class*="prep-guidance"]{
+  padding:12px 14px!important;
+  border-left:2px solid rgba(183,123,255,.55)!important;
+  background:rgba(159,92,255,.025)!important;
+  line-height:1.55!important;
+}
+
+/* Existing readiness actions */
+.pm [class*="readiness-actions"],
+.pm [class*="prep-actions"]{
+  display:flex!important;
+  flex-wrap:wrap!important;
+  gap:7px!important;
+  padding-top:10px!important;
+}
+.pm [class*="readiness-actions"] button,
+.pm [class*="prep-actions"] button{
+  min-height:34px!important;
+  padding:0 12px!important;
+  border-radius:8px!important;
+  font:700 8px/1 "Space Mono",monospace!important;
+  text-transform:uppercase!important;
+  letter-spacing:.07em!important;
+}
+
+@media(max-width:640px){
+  .pm [class*="readiness-command"],
+  .pm [class*="market-readiness"]{padding:12px!important}
+  .pm [class*="readiness-grid"],
+  .pm [class*="prep-grid"]{grid-template-columns:1fr!important}
+  .pm [class*="readiness-item"],
+  .pm [class*="prep-item"],
+  .pm [class*="requirement-row"]{
+    grid-template-columns:auto minmax(0,1fr)!important;
+  }
+  .pm [class*="readiness-item"] > :last-child,
+  .pm [class*="prep-item"] > :last-child,
+  .pm [class*="requirement-row"] > :last-child{
+    grid-column:2!important;
+    justify-self:start!important;
+  }
+}

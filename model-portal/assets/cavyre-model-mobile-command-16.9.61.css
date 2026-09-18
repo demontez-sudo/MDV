@@ -1,0 +1,23 @@
+
+@media(max-width:760px){
+html,body,.pm{max-width:100%!important;overflow-x:hidden!important}.pm *{box-sizing:border-box}.pm img,.pm video{max-width:100%!important;height:auto}
+.pm .v15m-page{width:100%!important;max-width:100%!important;padding-left:12px!important;padding-right:12px!important}
+.pm .v15m-page-head{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:12px!important}.pm .v15m-page-head>*{min-width:0!important}
+.pm .v15m-page-head .actions{display:flex!important;flex-wrap:wrap!important;gap:7px!important;width:100%!important}.pm .v15m-page-head .actions button{min-height:38px!important;max-width:100%!important}
+.pm .v15m-grid,.pm .v15m-grid.kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}.pm .v15m-card{min-width:0!important;max-width:100%!important;overflow:hidden!important}
+.pm .v15m-table-wrap,.pm .v161m-table-wrap{width:100%!important;max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}.pm table{min-width:620px}
+.pm input,.pm select,.pm textarea{font-size:16px!important;max-width:100%!important}.pm button,.pm [role="button"]{touch-action:manipulation}
+.pm .v15m-media,.pm .v161m-media{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}.pm .v161m-media-card{min-width:0!important}
+.pm .v16960-digital-actions{display:grid!important;grid-template-columns:1fr 1fr!important;width:100%!important}.pm .v16960-digital-actions button{width:100%!important;min-height:38px!important}
+.pm .v17m-cal-toolbar{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}.pm .v17m-cal-toolbar>div{display:flex!important;flex-wrap:wrap!important;gap:6px!important}
+.pm .v17m-cal-month{min-width:700px!important}.pm .v17m-cal-month-wrap,.pm .v17m-cal-shell{max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+.pm .v17m-cal-agenda section{grid-template-columns:78px minmax(0,1fr)!important}
+.pm .v15m-modal,.pm .v161m-modal,.pm [class*="modal-card"]{width:calc(100vw - 20px)!important;max-width:calc(100vw - 20px)!important;max-height:88vh!important;overflow:auto!important}
+.pm .v15m-form-grid,.pm .v161m-form-grid{grid-template-columns:1fr!important}
+}
+@media(max-width:430px){
+.pm .v15m-page{padding-left:9px!important;padding-right:9px!important}.pm .v15m-grid,.pm .v15m-grid.kpis{grid-template-columns:1fr 1fr!important}
+.pm .v15m-kpi{min-width:0!important;padding:10px!important}.pm .v15m-media,.pm .v161m-media{grid-template-columns:1fr!important}
+.pm .v17m-cal-agenda section{grid-template-columns:68px minmax(0,1fr)!important}
+}
+@media(max-width:360px){.pm .v15m-grid,.pm .v15m-grid.kpis{grid-template-columns:1fr!important}}

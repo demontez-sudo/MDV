@@ -1,0 +1,17 @@
+
+/* CAVYRE Model Portal 16.9.62 — Official Comp Card */
+.pm .v16962-comp-grid{display:grid;gap:12px}
+.pm .v16962-comp-card{display:grid;grid-template-columns:180px minmax(0,1fr);gap:16px;padding:12px;border:1px solid rgba(255,255,255,.08);border-radius:16px;background:rgba(255,255,255,.025)}
+.pm .v16962-comp-preview{position:relative;aspect-ratio:4/5;min-height:210px;padding:14px;display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;border-radius:11px;background:linear-gradient(145deg,rgba(108,49,163,.72),rgba(19,15,25,.98));border:1px solid rgba(207,170,255,.18)}
+.pm .v16962-comp-preview:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 70% 18%,rgba(220,183,255,.2),transparent 38%)}
+.pm .v16962-comp-preview>*{position:relative}.pm .v16962-comp-mark{position:absolute;top:13px;left:13px;font:700 7px/1 "Space Mono",monospace;letter-spacing:.18em;color:rgba(255,255,255,.72)}
+.pm .v16962-comp-preview strong{font-size:20px;line-height:1.05;color:#fff}.pm .v16962-comp-preview span{margin-top:6px;font:600 7px/1.2 "Space Mono",monospace;letter-spacing:.1em;color:rgba(255,255,255,.58)}
+.pm .v16962-comp-preview em{position:absolute;right:10px;bottom:10px;font:700 7px/1 "Space Mono",monospace;font-style:normal;color:rgba(255,255,255,.42)}
+.pm .v16962-comp-info{display:flex;flex-direction:column;justify-content:space-between;gap:16px;padding:5px 3px}.pm .v16962-comp-info small{font:700 8px/1 "Space Mono",monospace;letter-spacing:.11em;color:#b98cf0}
+.pm .v16962-comp-info h3{margin:8px 0 5px;font-size:18px}.pm .v16962-comp-info p{margin:0;color:rgba(255,255,255,.48);font-size:11px}
+.pm .v16962-comp-actions{display:flex;flex-wrap:wrap;gap:8px}.pm .v16962-comp-actions button{min-height:36px!important}
+.pm .v16962-comp-empty{display:grid;gap:7px;padding:12px 2px}.pm .v16962-comp-empty span{color:rgba(255,255,255,.48);font-size:11px;line-height:1.6}
+@media(max-width:620px){
+.pm .v16962-comp-card{grid-template-columns:110px minmax(0,1fr);gap:11px}.pm .v16962-comp-preview{min-height:145px;padding:9px}.pm .v16962-comp-preview strong{font-size:14px}
+.pm .v16962-comp-mark{top:9px;left:9px;font-size:6px}.pm .v16962-comp-actions{display:grid;grid-template-columns:1fr;width:100%}.pm .v16962-comp-actions button{width:100%!important}
+}
