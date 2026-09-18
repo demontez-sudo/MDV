@@ -11,7 +11,13 @@ function product(){return window.VEUX_V1686||null}
 function call(o,n,a){try{if(o&&typeof o[n]==='function'){o[n].apply(o,a||[]);return true}}catch(e){console.warn('[CAVYRE 16.11.97]',e)}return false}
 
 document.addEventListener('click',function(e){
- var b=c(e.target,'button,a,[role="button"]');if(!b)return;var t=text(b),m=mobility(),p=product();
+ var b=c(e.target,'button,a,[role="button"]');if(!b)return;
+ // 16.15.09: local in-page tab/segment controls (e.g. the Model 360 profile's
+ // Overview/Development/Travel/Visa tabs) own their own click handling and must
+ // not be hijacked into a full workspace navigation just because their label
+ // text also matches a global routing phrase.
+ if(c(b,'.v144-model-tabs,[data-cavyre-local-tabs],[role="tablist"]'))return;
+ var t=text(b),m=mobility(),p=product();
 
  // Mobility creation/detail actions.
  if(/^\+?\s*(new|add|create)\s+visa( case)?$/.test(t)){if(call(m,'newVisa'))e.preventDefault();return}
