@@ -9,6 +9,71 @@ function E(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return(
 function bridge(){if(!window.VEUX_AGENT_V4||!VEUX_AGENT_V4.api)throw new Error('CAVYRE secure bridge is not ready');return VEUX_AGENT_V4}
 function org(){var s=bridge().state||{};return s.org&&s.org.slug||'maison-de-veux'}
 function get(){return bridge().api('/api/agent/season/v9?organization='+encodeURIComponent(org()),{method:'GET',headers:{}})}
+function post(body){return bridge().api('/api/agent/season/v9',{method:'POST',body:JSON.stringify(Object.assign({organization_slug:org()},body||{}))})}
+function arr(v){return Array.isArray(v)?v:[]}
+function seasonModal(html,title){var old=document.getElementById('_modal');if(old)old.remove();var bg=document.createElement('div');bg.className='modal-bg';bg.id='_modal';bg.onclick=function(e){if(e.target===bg)bg.remove()};bg.innerHTML='<div class="modal" style="max-width:640px;max-height:90vh;overflow:auto"><button class="modal-x" onclick="document.getElementById(\'_modal\').remove()">×</button><div class="m-hd"><div class="m-eye">SEASON COMMAND · VERA</div><div class="m-title">'+E(title)+'</div></div><div class="m-bd">'+html+'</div></div>';document.body.appendChild(bg);return bg}
+function showDetailModal(showId){
+ var sh=shows().find(function(x){return x.id===showId});if(!sh)return;
+ var query='';
+ function cnLookup(id){return (S.data.contacts||[]).find(function(c){return c.id===id})||null}
+ function coLookup(id){return (S.data.companies||[]).find(function(c){return c.id===id})||null}
+ function creativeTeamHtml(){
+  var team=arr(sh.season_show_contacts);
+  if(!team.length)return'<div class="ss48-empty">No creative team attached yet.</div>';
+  return team.map(function(a){var who=a.contact?a.contact.display_name:(a.company?a.company.name:'Unknown');return'<div class="ss48-team-row"><div><b>'+E(who)+'</b><small>'+E(a.role)+'</small></div><button data-remove-assignment="'+E(a.id)+'" aria-label="Remove">×</button></div>'}).join('');
+ }
+ function searchResults(){
+  var q=query.trim().toLowerCase();if(!q)return'';
+  var ch=arr(S.data.contacts).filter(function(c){return(c.display_name||'').toLowerCase().indexOf(q)>=0||(c.title||'').toLowerCase().indexOf(q)>=0}).slice(0,6);
+  var kh=arr(S.data.companies).filter(function(c){return(c.name||'').toLowerCase().indexOf(q)>=0}).slice(0,4);
+  if(!ch.length&&!kh.length)return'<div class="ss48-empty">No matches for "'+E(query)+'".</div>';
+  return ch.map(function(c){return'<button class="ss48-search-hit" data-attach-contact="'+E(c.id)+'"><b>'+E(c.display_name)+'</b><small>'+E(c.title||'Contact')+'</small></button>'}).join('')
+   +kh.map(function(c){return'<button class="ss48-search-hit" data-attach-company="'+E(c.id)+'"><b>'+E(c.name)+'</b><small>Company</small></button>'}).join('');
+ }
+ var html='<div class="ss48-show-detail">'
+  +'<section><small>'+E(sh.status||'planned')+'</small><h3>'+E(sh.title||'Show')+'</h3><p>'+E(short(sh.starts_at))+(sh.location?' · '+E(sh.location):'')+'</p>'
+  +(sh.companies?'<p><b>Designer / Brand:</b> '+E(sh.companies.name)+'</p>':'<p class="ss48-empty">No designer/brand connected to this show.</p>')
+  +'</section>'
+  +'<section><header>Creative Team<small>Casting Directors, Photographers, Creatives</small></header><div class="ss48-team-list" data-team-list>'+creativeTeamHtml()+'</div></section>'
+  +'<section><header>Vera Search · Attach Contact or Company</header>'
+  +'<input id="ss48-attach-search" placeholder="Search contacts and companies…">'
+  +'<select id="ss48-attach-role"><option>Casting Director</option><option>Photographer</option><option>Creative Director</option><option>Stylist</option><option>Hair &amp; Makeup</option><option>Producer</option><option>Other</option></select>'
+  +'<div class="ss48-search-results" data-search-results></div>'
+  +'</section></div>';
+ var wrap=seasonModal(html,'Show · '+(sh.title||''));
+ function wireTeamRemove(){
+  wrap.querySelectorAll('[data-remove-assignment]').forEach(function(b){
+   b.onclick=async function(){
+    b.disabled=true;
+    try{await post({action:'remove_show_contact',assignment_id:b.dataset.removeAssignment});
+     sh.season_show_contacts=arr(sh.season_show_contacts).filter(function(a){return a.id!==b.dataset.removeAssignment});
+     var el=wrap.querySelector('[data-team-list]');if(el)el.innerHTML=creativeTeamHtml();wireTeamRemove();
+    }catch(e){alert(e.message||'Could not remove');b.disabled=false}
+   };
+  });
+ }
+ var searchInput=wrap.querySelector('#ss48-attach-search'),results=wrap.querySelector('[data-search-results]');
+ function wireSearchHits(){
+  results.querySelectorAll('[data-attach-contact],[data-attach-company]').forEach(function(b){
+   b.onclick=async function(){
+    b.disabled=true;
+    var role=(wrap.querySelector('#ss48-attach-role')||{}).value||'Other';
+    var payload={action:'attach_show_contact',show_id:showId,role:role};
+    if(b.dataset.attachContact)payload.contact_id=b.dataset.attachContact;
+    if(b.dataset.attachCompany)payload.company_id=b.dataset.attachCompany;
+    try{
+     var out=await post(payload),a=out.assignment;
+     sh.season_show_contacts=arr(sh.season_show_contacts).concat([{id:a.id,role:role,contact:a.contact_id?cnLookup(a.contact_id):null,company:a.company_id?coLookup(a.company_id):null}]);
+     var el=wrap.querySelector('[data-team-list]');if(el)el.innerHTML=creativeTeamHtml();wireTeamRemove();
+     if(searchInput)searchInput.value='';query='';results.innerHTML='';
+    }catch(e){alert(e.message||'Could not attach');b.disabled=false}
+   };
+  });
+ }
+ if(searchInput)searchInput.oninput=function(){query=searchInput.value;results.innerHTML=searchResults();wireSearchHits()};
+ wireTeamRemove();
+}
+
 function dt(v){if(!v)return'—';try{return new Date(v).toLocaleDateString([],{month:'short',day:'2-digit',year:'numeric'})}catch(e){return v}}
 function short(v){if(!v)return'—';try{return new Date(v).toLocaleDateString([],{month:'short',day:'numeric'})}catch(e){return v}}
 function days(v){if(!v)return null;return Math.ceil((new Date(v)-new Date())/86400000)}
@@ -66,7 +131,7 @@ function nav(p){if(typeof window.navTo==='function')window.navTo(p)}
 function modelOpen(m){var id=m.model_id;if(window.VEUX_V10&&VEUX_V10.openModel)return VEUX_V10.openModel(id);window._veuxV10ModelId=id;nav('modelpage')}
 function topSeasonTabs(){var fd=fwData(),active=officialMarket();return ['New York','London','Milan','Paris'].map(function(m){var src=(fd.sources&&fd.sources[m])||{},code=src.code||m,n=((fd.data&&fd.data[m])||[]).length;return '<button class="'+(active===m?'on':'')+'" data-fw-market="'+E(m)+'"><b>'+E(code)+'</b><small>'+n+'</small></button>';}).join('')}
 function timeline(c){var sh=shows().filter(function(x){return x.starts_at}).slice(0,5);var pts=[];if(c&&c.starts_on)pts.push({d:c.starts_on,t:'Market Start'});sh.slice(0,3).forEach(function(x){pts.push({d:x.starts_at,t:x.title})});if(c&&c.ends_on)pts.push({d:c.ends_on,t:'Market End'});return'<div class="ss48-timeline">'+pts.slice(0,5).map(function(x){return'<div><b>'+E(short(x.d))+'</b><span>'+E(x.t)+'</span><i></i></div>'}).join('')+'</div>'}
-function showCards(){var sh=shows().slice(0,5);return sh.length?sh.map(function(x){return'<button class="ss48-show" data-ss-tab="shows"><time>'+E(short(x.starts_at||x.call_time))+'</time><b>'+E(x.title||'Show')+'</b><span>'+E(x.companies&&x.companies.name||x.location||label(x.status))+'</span></button>'}).join(''):'<div class="ss48-empty">No shows added to this season yet.</div>'}
+function showCards(){var sh=shows().slice(0,5);return sh.length?sh.map(function(x){return'<button class="ss48-show" data-open-show="'+E(x.id)+'"><time>'+E(short(x.starts_at||x.call_time))+'</time><b>'+E(x.title||'Show')+'</b><span>'+E(x.companies&&x.companies.name||x.location||label(x.status))+'</span></button>'}).join(''):'<div class="ss48-empty">No shows added to this season yet.</div>'}
 function rows(){
  var q=S.query.toLowerCase(),ms=models().filter(function(m){var mr=marketReadiness(m),ok=S.filter==='all'||status(m)===S.filter,mk=S.marketFilter==='all'||mr.state===S.marketFilter;return ok&&mk&&(!q||modelName(m).toLowerCase().includes(q))});
  if(!ms.length)return'<div class="ss48-empty big">No season models match this readiness view.</div>';
@@ -149,6 +214,7 @@ function bind(el){
  el.querySelectorAll('[data-fw-day]').forEach(function(b){b.onclick=function(e){if(e){e.preventDefault();e.stopPropagation()}S.fwDay=b.getAttribute('data-fw-day');render(el)}});
  el.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(e){if(e){e.preventDefault();e.stopPropagation()}nav(b.dataset.go)}});
  el.querySelectorAll('[data-open-model]').forEach(function(b){b.onclick=function(){var m=models().find(function(x){return x.model_id===b.dataset.openModel});if(m)modelOpen(m)}});
+ el.querySelectorAll('[data-open-show]').forEach(function(b){b.onclick=function(){showDetailModal(b.dataset.openShow)}});
  var q=el.querySelector('#ss48-search');if(q)q.oninput=function(){S.query=q.value;var body=el.querySelector('.ss48-talent');if(body){var head=body.querySelector('header').outerHTML,th=body.querySelector('.ss48-tablehead').outerHTML;body.innerHTML=head+th+rows();bind(el)}};
  var askb=el.querySelector('[data-ss-ask]');if(askb)askb.onclick=ask;
 }

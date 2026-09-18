@@ -18,3 +18,95 @@
 .cvy1402-vera-mark:before{width:13px!important;height:1px!important}.cvy1402-vera-mark:after{width:1px!important;height:13px!important}.cvy1402-vera-mark>span{width:4px!important;height:4px!important;border:1px solid #f0d3a0!important;border-radius:50%!important;display:block!important;box-shadow:0 0 12px rgba(211,168,95,.65)!important}
 /* fail-safe component authority: these selectors do not depend on page route */
 .cvy1401-pipeline,.cvy1401-shows,.cvy1401-visa{width:100%!important;box-sizing:border-box!important}
+
+/* CAVYRE 16.14.18 — Season base structure authority.
+   The .ss48-* classes (talent table, show grid, KPIs, filters, Vera panel,
+   Creative Team) that cavyre-season-command-16.14.17.js renders were never
+   given styling in any currently-loaded stylesheet -- only an orphaned,
+   unloaded file (cavyre-vera-smart-season-command-16.12.48.css) had partial
+   coverage. This block gives the whole structure real layout. */
+#p-seasonmanagement .ss48,#p-season .ss48{--s-line:#403451;--s-soft:#15121a;--s-panel:#0d0c10;--s-muted:#9b94a1;--s-violet:#b18cff;--s-copper:#9d573d;--s-green:#55d99a;--s-gold:#d3a85f;color:#e9e4ee;font-family:var(--fM,monospace);width:100%;box-sizing:border-box}
+#p-seasonmanagement .ss48 *,#p-season .ss48 *{box-sizing:border-box}
+#p-seasonmanagement .ss48-top,#p-season .ss48-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;padding:20px 0;border-bottom:1px solid var(--s-line);margin-bottom:16px;flex-wrap:wrap}
+#p-seasonmanagement .ss48-top h1,#p-season .ss48-top h1{font:32px var(--fD,serif);font-weight:400;margin:4px 0}
+#p-seasonmanagement .ss48-top h1 span,#p-season .ss48-top h1 span{color:var(--s-muted);font-size:16px}
+#p-seasonmanagement .ss48-top small,#p-season .ss48-top small{font-size:8px;letter-spacing:.18em;color:var(--s-muted)}
+#p-seasonmanagement .ss48-top p,#p-season .ss48-top p{margin:0;color:var(--s-muted);font-size:11px}
+#p-seasonmanagement .ss48-season-tabs,#p-season .ss48-season-tabs{display:flex;gap:6px}
+#p-seasonmanagement .ss48-season-tabs button,#p-season .ss48-season-tabs button{background:var(--s-soft);border:1px solid var(--s-line);color:var(--s-muted);padding:8px 12px;cursor:pointer;text-align:center}
+#p-seasonmanagement .ss48-season-tabs button b,#p-season .ss48-season-tabs button b{display:block;font-size:11px;color:#e9e4ee}
+#p-seasonmanagement .ss48-season-tabs button.on,#p-season .ss48-season-tabs button.on{border-color:var(--s-violet);color:var(--s-violet)}
+#p-seasonmanagement .ss48-season-tabs button.on b,#p-season .ss48-season-tabs button.on b{color:var(--s-violet)}
+#p-seasonmanagement .ss48-state,#p-season .ss48-state{text-align:right;font-size:10px;color:var(--s-muted)}
+#p-seasonmanagement .ss48-state b,#p-season .ss48-state b{display:block;color:var(--s-green);letter-spacing:.08em}
+#p-seasonmanagement .ss48-tabs,#p-season .ss48-tabs{display:flex;gap:4px;margin-bottom:18px;flex-wrap:wrap;border-bottom:1px solid var(--s-line)}
+#p-seasonmanagement .ss48-tabs button,#p-season .ss48-tabs button{background:none;border:none;color:var(--s-muted);padding:10px 14px;font:9px var(--fM,monospace);letter-spacing:.1em;cursor:pointer;border-bottom:2px solid transparent}
+#p-seasonmanagement .ss48-tabs button.on,#p-season .ss48-tabs button.on{color:var(--s-gold);border-bottom-color:var(--s-gold)}
+#p-seasonmanagement .ss48-kpis,#p-season .ss48-kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin-bottom:20px}
+#p-seasonmanagement .ss48-kpis div,#p-season .ss48-kpis div{background:var(--s-panel);border:1px solid var(--s-line);padding:14px;text-align:center}
+#p-seasonmanagement .ss48-kpis strong,#p-season .ss48-kpis strong{display:block;font:26px var(--fD,serif);font-weight:400}
+#p-seasonmanagement .ss48-kpis span,#p-season .ss48-kpis span{font-size:8px;letter-spacing:.1em;color:var(--s-muted)}
+#p-seasonmanagement .ss48-middle,#p-season .ss48-middle{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+#p-seasonmanagement .ss48-middle section,#p-season .ss48-middle section{background:var(--s-panel);border:1px solid var(--s-line);padding:16px}
+#p-seasonmanagement .ss48-middle header,#p-season .ss48-middle header{display:flex;align-items:center;justify-content:space-between;font-size:9px;letter-spacing:.12em;color:var(--s-muted);margin-bottom:12px}
+#p-seasonmanagement .ss48-middle header button,#p-season .ss48-middle header button{background:none;border:none;color:var(--s-violet);cursor:pointer;font:9px var(--fM,monospace)}
+#p-seasonmanagement .ss48-timeline,#p-season .ss48-timeline{display:flex;flex-direction:column;gap:10px}
+#p-seasonmanagement .ss48-timeline div,#p-season .ss48-timeline div{display:flex;align-items:center;gap:10px;font-size:11px}
+#p-seasonmanagement .ss48-timeline b,#p-season .ss48-timeline b{min-width:64px;color:var(--s-gold)}
+#p-seasonmanagement .ss48-showgrid,#p-season .ss48-showgrid{display:flex;flex-direction:column;gap:6px}
+#p-seasonmanagement .ss48-show,#p-season .ss48-show{display:flex;align-items:center;gap:10px;background:var(--s-soft);border:1px solid var(--s-line);padding:9px 12px;text-align:left;color:inherit;cursor:pointer;width:100%}
+#p-seasonmanagement .ss48-show:hover,#p-season .ss48-show:hover{border-color:var(--s-violet)}
+#p-seasonmanagement .ss48-show time,#p-season .ss48-show time{font-size:9px;color:var(--s-muted);min-width:52px}
+#p-seasonmanagement .ss48-show b,#p-season .ss48-show b{flex:1;font-weight:400;font-size:12px}
+#p-seasonmanagement .ss48-show span,#p-season .ss48-show span{font-size:9px;color:var(--s-muted)}
+#p-seasonmanagement .ss48-talent,#p-season .ss48-talent{background:var(--s-panel);border:1px solid var(--s-line);padding:18px}
+#p-seasonmanagement .ss48-talent>header,#p-season .ss48-talent>header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+#p-seasonmanagement .ss48-filters,#p-season .ss48-filters,#p-seasonmanagement .ss48-marketfilters,#p-season .ss48-marketfilters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+#p-seasonmanagement .ss48-filters button,#p-season .ss48-filters button,#p-seasonmanagement .ss48-marketfilters button,#p-season .ss48-marketfilters button{background:var(--s-soft);border:1px solid var(--s-line);color:var(--s-muted);padding:6px 10px;font:8px var(--fM,monospace);letter-spacing:.06em;cursor:pointer}
+#p-seasonmanagement .ss48-filters button.on,#p-season .ss48-filters button.on{border-color:var(--s-gold);color:var(--s-gold)}
+#p-seasonmanagement .ss48-marketfilters button.on,#p-season .ss48-marketfilters button.on{border-color:var(--s-violet);color:var(--s-violet)}
+#p-seasonmanagement #ss48-search,#p-season #ss48-search{width:100%;background:var(--s-soft);border:1px solid var(--s-line);color:#e9e4ee;padding:9px 12px;margin-bottom:10px;font:11px var(--fM,monospace)}
+#p-seasonmanagement .ss48-tablehead,#p-season .ss48-tablehead{display:none}
+#p-seasonmanagement .ss48-row,#p-season .ss48-row{display:flex;align-items:center;gap:12px;padding:10px 6px;border-bottom:1px solid var(--s-line)}
+#p-seasonmanagement .ss48-person,#p-season .ss48-person{display:flex;align-items:center;gap:10px;background:none;border:none;color:inherit;cursor:pointer;flex:1;text-align:left;padding:0}
+#p-seasonmanagement .ss48-person i,#p-season .ss48-person i{width:30px;height:30px;border-radius:50%;background:var(--s-soft);border:1px solid var(--s-line);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:10px;flex:0 0 auto}
+#p-seasonmanagement .ss48-person b,#p-season .ss48-person b{display:block;font-size:12px;font-weight:400}
+#p-seasonmanagement .ss48-person small,#p-season .ss48-person small{color:var(--s-muted);font-size:9px}
+#p-seasonmanagement .ss48-status,#p-season .ss48-status{font-size:9px;padding:4px 8px;border:1px solid var(--s-line);color:var(--s-muted)}
+#p-seasonmanagement .ss48-status.ready,#p-season .ss48-status.ready{border-color:var(--s-green);color:var(--s-green)}
+#p-seasonmanagement .ss48-status.at_risk,#p-season .ss48-status.at_risk{border-color:#e06b6b;color:#e06b6b}
+#p-seasonmanagement .ss48-status.development,#p-season .ss48-status.development{border-color:var(--s-gold);color:var(--s-gold)}
+#p-seasonmanagement .ss48-focus,#p-season .ss48-focus{background:var(--s-panel);border:1px solid var(--s-line);padding:18px}
+#p-seasonmanagement .ss48-focus>header,#p-season .ss48-focus>header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+#p-seasonmanagement .ss48-focus h2,#p-season .ss48-focus h2{font:22px var(--fD,serif);font-weight:400;margin:4px 0}
+#p-seasonmanagement .ss48-dev,#p-season .ss48-dev{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border-bottom:1px solid var(--s-line);cursor:pointer}
+#p-seasonmanagement .ss48-dev h3,#p-season .ss48-dev h3{font-size:12px;font-weight:400;margin:0}
+#p-seasonmanagement .ss48-dev p,#p-season .ss48-dev p{margin:2px 0 0;font-size:9px;color:var(--s-muted)}
+#p-seasonmanagement .ss48-empty,#p-season .ss48-empty{padding:16px;color:var(--s-muted);font-size:11px;text-align:center}
+#p-seasonmanagement .ss48-empty.big,#p-season .ss48-empty.big{padding:60px 20px}
+#p-seasonmanagement .ss48-loading,#p-season .ss48-loading{padding:60px;text-align:center;color:var(--s-muted)}
+#p-seasonmanagement .ss48-loading.bad b,#p-season .ss48-loading.bad b{color:#e06b6b;display:block;margin-bottom:6px}
+#p-seasonmanagement .ss48-vera,#p-season .ss48-vera{background:var(--s-panel);border:1px solid var(--s-violet);padding:16px;margin-bottom:16px}
+#p-seasonmanagement .ss48-vera-title,#p-season .ss48-vera-title{color:var(--s-violet);font-size:9px;letter-spacing:.12em;margin-bottom:8px}
+#p-seasonmanagement .ss48-vera-copy,#p-season .ss48-vera-copy{font-size:11px;color:#e9e4ee}
+#p-seasonmanagement .ss48-health,#p-season .ss48-health{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+#p-seasonmanagement .ss48-ring,#p-season .ss48-ring{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:conic-gradient(var(--s-violet) calc(var(--p,0)*1%),var(--s-line) 0);font:11px var(--fM,monospace)}
+#p-seasonmanagement .ss48-answer,#p-season .ss48-answer{margin-top:10px;padding:10px;background:var(--s-soft);border:1px solid var(--s-line);font-size:11px}
+/* Creative Team / show detail (Vera search + attach) */
+#p-seasonmanagement .ss48-show-detail,#p-season .ss48-show-detail{display:flex;flex-direction:column;gap:16px}
+#p-seasonmanagement .ss48-show-detail section,#p-season .ss48-show-detail section{border:1px solid var(--s-line);padding:14px;background:var(--s-panel)}
+#p-seasonmanagement .ss48-show-detail h3,#p-season .ss48-show-detail h3{font:20px var(--fD,serif);font-weight:400;margin:4px 0}
+#p-seasonmanagement .ss48-show-detail header,#p-season .ss48-show-detail header{display:flex;justify-content:space-between;align-items:baseline;font-size:10px;letter-spacing:.1em;color:var(--s-muted);margin-bottom:10px}
+#p-seasonmanagement .ss48-team-list,#p-season .ss48-team-list{display:flex;flex-direction:column;gap:6px}
+#p-seasonmanagement .ss48-team-row,#p-season .ss48-team-row{display:flex;justify-content:space-between;align-items:center;background:var(--s-soft);border:1px solid var(--s-line);padding:8px 10px}
+#p-seasonmanagement .ss48-team-row b,#p-season .ss48-team-row b{font-size:12px;font-weight:400;display:block}
+#p-seasonmanagement .ss48-team-row small,#p-season .ss48-team-row small{font-size:9px;color:var(--s-gold)}
+#p-seasonmanagement .ss48-team-row button,#p-season .ss48-team-row button{background:none;border:1px solid var(--s-line);color:var(--s-muted);width:22px;height:22px;cursor:pointer;line-height:1}
+#p-seasonmanagement .ss48-team-row button:hover,#p-season .ss48-team-row button:hover{border-color:#e06b6b;color:#e06b6b}
+#p-seasonmanagement #ss48-attach-search,#p-season #ss48-attach-search,#p-seasonmanagement #ss48-attach-role,#p-season #ss48-attach-role{width:100%;background:var(--s-soft);border:1px solid var(--s-line);color:#e9e4ee;padding:9px 10px;margin-bottom:8px;font:11px var(--fM,monospace)}
+#p-seasonmanagement .ss48-search-results,#p-season .ss48-search-results{display:flex;flex-direction:column;gap:4px;max-height:200px;overflow:auto}
+#p-seasonmanagement .ss48-search-hit,#p-season .ss48-search-hit{display:flex;justify-content:space-between;align-items:center;background:var(--s-soft);border:1px solid var(--s-line);padding:8px 10px;text-align:left;color:inherit;cursor:pointer;width:100%}
+#p-seasonmanagement .ss48-search-hit:hover,#p-season .ss48-search-hit:hover{border-color:var(--s-gold)}
+#p-seasonmanagement .ss48-search-hit b,#p-season .ss48-search-hit b{font-size:11px;font-weight:400}
+#p-seasonmanagement .ss48-search-hit small,#p-season .ss48-search-hit small{font-size:9px;color:var(--s-muted)}
+@media(max-width:1180px){#p-seasonmanagement .ss48-middle,#p-season .ss48-middle{grid-template-columns:1fr}#p-seasonmanagement .ss48-kpis,#p-season .ss48-kpis{grid-template-columns:repeat(3,1fr)}}

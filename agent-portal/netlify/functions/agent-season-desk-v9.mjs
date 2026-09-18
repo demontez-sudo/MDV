@@ -51,6 +51,24 @@ export const handler=async(event)=>{
         if(!data||String(data.status)!==status)throw new Error('Show model status could not be verified after write.');
         return json(200,{ok:true,verified:true,show_model:data,persisted_at:new Date().toISOString()});
       }
+      if(action==='attach_show_contact'){
+        const showId=String(body.show_id||'').trim(),role=String(body.role||'').trim();
+        if(!showId)return json(400,{error:'show_id is required'});
+        if(!role)return json(400,{error:'role is required (e.g. Casting Director, Photographer, Creative)'});
+        const contactId=body.contact_id||null,companyId=body.company_id||null;
+        if(!contactId&&!companyId)return json(400,{error:'contact_id or company_id is required'});
+        const show=(await rows(admin.from('season_shows').select('id,season_id').eq('organization_id',organization.id).eq('id',showId).limit(1)))[0];
+        if(!show)return json(404,{error:'Show not found'});
+        const {data,error}=await admin.from('crm_activity').insert({organization_id:organization.id,company_id:companyId,contact_id:contactId,activity_type:'season_assignment',direction:'internal',subject:role,summary:body.notes||null,occurred_at:new Date().toISOString(),created_by:user.id,metadata:{season_show_id:showId,season_id:show.season_id,role}}).select('*').single();
+        if(error)throw error;
+        return json(200,{ok:true,verified:true,assignment:data,persisted_at:data.occurred_at});
+      }
+      if(action==='remove_show_contact'){
+        const id=String(body.assignment_id||'').trim();if(!id)return json(400,{error:'assignment_id is required'});
+        const {error}=await admin.from('crm_activity').delete().eq('organization_id',organization.id).eq('id',id).eq('activity_type','season_assignment');
+        if(error)throw error;
+        return json(200,{ok:true,verified:true});
+      }
       return json(400,{error:'Unsupported season action'});
     }
     const admin=await requirePermission(user.id,organization.id,'season.read'),seasonId=p.season_id||null;
@@ -77,9 +95,12 @@ export const handler=async(event)=>{
       optionalRows('tasks',admin.from('tasks').select('*').eq('organization_id',organization.id).limit(3000),warnings),
       optionalRows('booking_options',admin.from('booking_options').select('*').eq('organization_id',organization.id).in('status',['active','challenged']).limit(3000),warnings),
       optionalRows('work_authorizations',admin.from('work_authorizations').select('*').eq('organization_id',organization.id).limit(3000),warnings),
-      optionalRows('passports',admin.from('passports').select('*').eq('organization_id',organization.id).limit(1500),warnings)
+      optionalRows('passports',admin.from('passports').select('*').eq('organization_id',organization.id).limit(1500),warnings),
+      optionalRows('contacts',admin.from('contacts').select('id,display_name,title,company_id,email').eq('organization_id',organization.id).limit(2000),warnings),
+      optionalRows('season_assignments',admin.from('crm_activity').select('*').eq('organization_id',organization.id).eq('activity_type','season_assignment').limit(3000),warnings)
     ]);
-    const mm=new Map(models.map(x=>[x.id,x])),cm=new Map(companies.map(x=>[x.id,x])),marketMap=new Map(markets.map(x=>[x.id,x])),readyMap=group(readiness,'season_model_id'),showModelMap=group(showModels,'season_show_id');
-    return json(200,{environment:'veux-saas-v13-season-operating-authority',organization,seasons:seasons.map(x=>({...x,markets:marketMap.get(x.market_id)||null})),season_models:seasonModels.map(x=>({...x,models:mm.get(x.model_id)||null,season_readiness_items:readyMap.get(x.id)||[]})),shows:shows.map(x=>({...x,companies:cm.get(x.company_id)||null,season_show_models:(showModelMap.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),travel:travel.map(x=>({...x,models:mm.get(x.model_id)||null})),availability_blocks:availabilityBlocks,bookings:bookings.map(x=>({...x,companies:cm.get(x.company_id)||null,markets:marketMap.get(x.market_id)||null})),booking_models:bookingModels,visa_cases:visaCases,models,castings,casting_models:castingModels,calendar_events:calendarEvents,development_activities:developmentActivities,tasks,booking_options:bookingOptions,work_authorizations:workAuthorizations,passports,warnings,degraded:warnings.length>0});
+    const mm=new Map(models.map(x=>[x.id,x])),cm=new Map(companies.map(x=>[x.id,x])),cnm=new Map(contacts.map(x=>[x.id,x])),marketMap=new Map(markets.map(x=>[x.id,x])),readyMap=group(readiness,'season_model_id'),showModelMap=group(showModels,'season_show_id');
+    const showContactsFor=showId=>seasonAssignments.filter(x=>x.metadata&&x.metadata.season_show_id===showId).map(x=>({id:x.id,role:x.metadata.role||x.subject||'Creative',notes:x.summary||null,occurred_at:x.occurred_at,contact:x.contact_id?cnm.get(x.contact_id)||null:null,company:x.company_id?cm.get(x.company_id)||null:null}));
+    return json(200,{environment:'veux-saas-v13-season-operating-authority',organization,seasons:seasons.map(x=>({...x,markets:marketMap.get(x.market_id)||null})),season_models:seasonModels.map(x=>({...x,models:mm.get(x.model_id)||null,season_readiness_items:readyMap.get(x.id)||[]})),shows:shows.map(x=>({...x,companies:cm.get(x.company_id)||null,season_show_models:(showModelMap.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null})),season_show_contacts:showContactsFor(x.id)})),travel:travel.map(x=>({...x,models:mm.get(x.model_id)||null})),availability_blocks:availabilityBlocks,bookings:bookings.map(x=>({...x,companies:cm.get(x.company_id)||null,markets:marketMap.get(x.market_id)||null})),booking_models:bookingModels,visa_cases:visaCases,models,contacts,companies,castings,casting_models:castingModels,calendar_events:calendarEvents,development_activities:developmentActivities,tasks,booking_options:bookingOptions,work_authorizations:workAuthorizations,passports,warnings,degraded:warnings.length>0});
   }catch(error){return errorResponse(error);}
 };
