@@ -19,6 +19,7 @@ var OPS=[
  ['globalmobility','✈','Travel & Mobility','Flights, arrivals, housing and movement'],
  ['visa','◎','Visa & Compliance','Visas, passports and work authorization'],
  ['agentcommissions','◈','Finance','Commissions, payments and financial operations'],
+ ['modelsubmissions','▣','Development','Skin checks, model walks and portfolio submissions'],
  ['filesforms','▱','Documents','Files, forms and operational documents'],
  ['inbox','✉','Communication','Agency communications and follow-up'],
  ['systemsettings','⚙','Settings','Portal and agency settings']

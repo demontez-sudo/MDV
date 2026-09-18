@@ -1,8 +1,36 @@
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
+import { callVeuxAI } from './_lib/ai-providers.mjs';
 
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 async function one(q){const {data,error}=await q.maybeSingle();if(error)throw error;return data||null;}
+const GRADE_PATTERN=/GRADE:\s*(\d{1,2})\s*\/\s*10/i;
+async function fetchImageAsBase64(url){
+  const res=await fetch(url);
+  if(!res.ok)throw new Error(`Could not download the submitted file (${res.status}).`);
+  const contentType=res.headers.get('content-type')||'image/jpeg';
+  const buf=Buffer.from(await res.arrayBuffer());
+  if(buf.length>5*1024*1024)throw new Error('Submitted image is too large for Vera to grade (5MB limit).');
+  return {mediaType:contentType.split(';')[0].trim(),data:buf.toString('base64')};
+}
+async function gradeSubmissionWithVera(submission){
+  const kind=submission.submission_type==='skin'?'skin condition and skincare readiness':'runway walk and movement quality';
+  const image=(submission.files||[]).find(f=>/^image\//i.test(String(f.mime_type||''))&&f.url);
+  const instructions=`You are Vera, a professional modeling agency's development coach. You grade a model's ${kind} for booking readiness on a strict 1-10 scale (10 = flawless, agency-ready; 5 = developing, needs focused work; 1 = not yet booking-ready). Respond in this exact plain-text format, nothing else:\nGRADE: X/10\nSUMMARY: one or two sentences on what you observed.\nRECOMMENDATION: one concrete, actionable next step for the model.`;
+  let content;
+  if(image){
+    const {mediaType,data}=await fetchImageAsBase64(image.url);
+    content=[
+      {type:'image',source:{type:'base64',media_type:mediaType,data}},
+      {type:'text',text:`Grade this model's ${kind}. Model note from the submission: "${(submission.model_note||'').slice(0,500)||'None provided.'}"`}
+    ];
+  } else {
+    content=`No image is attached to this submission -- grade based only on the model's own note.\nSubmission type: ${submission.submission_type}\nModel note: "${(submission.model_note||'').slice(0,800)||'None provided.'}"\nIf there is not enough information to grade fairly, say so in SUMMARY and give GRADE: 0/10.`;
+  }
+  const result=await callVeuxAI({instructions,input:content});
+  const match=result.text.match(GRADE_PATTERN);
+  return {text:result.text.trim(),grade:match?Number(match[1]):null,provider:result.provider,model:result.model,graded_image:!!image};
+}
 async function notifyModel(admin,org,modelId,submission){
   const link=await one(admin.from('model_user_links').select('user_id').eq('organization_id',org).eq('model_id',modelId));if(!link?.user_id)return;
   const approved=submission.status==='approved',kind=submission.submission_type==='skin'?'Skin submission':'Model walk';
@@ -28,7 +56,20 @@ export const handler=async(event)=>{
     const {organization}=await requireStaffOrganization({user,client,organizationSlug:body.organization_slug||p.organization||'maison-de-veux'});
     const admin=await requirePermission(user.id,organization.id,event.httpMethod==='POST'?'development.write':'development.read');
     if(event.httpMethod==='POST'){
-      if(String(body.action||'')!=='review')return json(400,{error:'Unsupported submission action'});
+      const action=String(body.action||'');
+      if(action==='grade_with_vera'){
+        if(!body.submission_id)return json(400,{error:'submission_id is required'});
+        const list=await hydrate(admin,organization.id,null);
+        const submission=list.find(x=>x.id===body.submission_id);
+        if(!submission)return json(404,{error:'Submission not found'});
+        const graded=await gradeSubmissionWithVera(submission);
+        const veraNote=`VERA GRADE (${graded.provider}): ${graded.text}`;
+        const combinedNote=submission.agent_note?`${submission.agent_note}\n\n---\n${veraNote}`:veraNote;
+        const {data:updated,error}=await admin.from('model_development_submissions').update({agent_note:combinedNote.slice(0,4000),updated_at:new Date().toISOString()}).eq('organization_id',organization.id).eq('id',submission.id).select('*').single();
+        if(error)throw error;
+        return json(200,{ok:true,verified:true,submission:updated,vera_grade:graded.grade,vera_text:graded.text,graded_image:graded.graded_image,persisted_at:updated.updated_at});
+      }
+      if(action!=='review')return json(400,{error:'Unsupported submission action'});
       const status=String(body.status||'');if(!body.submission_id||!['approved','changes_requested'].includes(status))return json(400,{error:'submission_id and approved/changes_requested status are required'});
       const existing=await one(admin.from('model_development_submissions').select('*').eq('organization_id',organization.id).eq('id',body.submission_id));if(!existing)return json(404,{error:'Submission not found'});
       const {data:updated,error}=await admin.from('model_development_submissions').update({status,agent_note:String(body.note||'').trim().slice(0,2000)||null,reviewed_by:user.id,reviewed_at:new Date().toISOString(),updated_at:new Date().toISOString()}).eq('organization_id',organization.id).eq('id',existing.id).select('*').single();if(error)throw error;
