@@ -1,0 +1,22 @@
+/* VEUX 16.9.74 — Calendar recursion recovery + complete navigation flyout */
+@media(min-width:901px){
+ .vx73-shell .topbar.vx73-topbar{display:flex!important;grid-template-columns:none!important;align-items:center!important;gap:16px!important;padding:0 18px!important;overflow:visible!important}
+ .vx73-topbar .tb-brand{display:flex!important;width:auto!important;min-width:190px!important;flex:0 0 190px!important;margin:0!important;padding:0!important;border:0!important;align-self:auto!important}
+ .vx73-topbar .vx73-command{min-width:220px!important;max-width:520px!important;flex:1 1 420px!important}
+ .vx73-topbar .vx73-clocks{flex:0 0 auto!important}
+ .vx73-topbar .vx73-clocks>div{min-width:98px!important;padding:0 12px!important}
+ .vx73-topbar .tb-right{display:flex!important;position:static!important;flex:0 0 auto!important;margin-left:0!important;align-items:center!important;min-width:0!important;gap:8px!important}
+ .vx73-topbar .tb-user{min-width:0!important;padding:0 10px!important}
+ .vx73-topbar .tb-user>div:last-child{min-width:0!important;max-width:220px!important}
+ .vx73-topbar .tb-name,.vx73-topbar .tb-role{white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+ .vx73-shell .sidenav{display:flex!important;visibility:visible!important;position:fixed!important;left:74px!important;top:78px!important;bottom:0!important;width:286px!important;height:auto!important;z-index:195!important;transform:translateX(-110%)!important;opacity:0!important;pointer-events:none!important;transition:transform .18s ease,opacity .18s ease!important;box-shadow:24px 0 55px rgba(0,0,0,.48)!important}
+ .vx73-shell:has(#vx73-rail:hover) .sidenav,.vx73-shell .sidenav:hover,.vx73-shell .sidenav:focus-within{transform:translateX(0)!important;opacity:1!important;pointer-events:auto!important}
+ .vx73-rail:after{content:'ALL PAGES';display:block;margin-top:2px;font:10px var(--fM);letter-spacing:.12em;color:#796b58;writing-mode:vertical-rl}
+}
+@media(max-width:1450px) and (min-width:901px){
+ .vx73-topbar .vx73-command{max-width:390px!important}
+ .vx73-topbar .tb-user>div:last-child{max-width:160px!important}
+}
+@media(max-width:1180px) and (min-width:901px){
+ .vx73-topbar .vx73-command{display:none!important}
+}

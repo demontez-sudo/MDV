@@ -1,0 +1,149 @@
+
+/* CAVYRE 16.11.13 — Month Calendar Weekend Fit
+   Keep all seven days visible inside the center calendar area. */
+
+#p-calendar .vx75-season{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) 300px!important;
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  overflow:hidden!important;
+}
+
+#p-calendar .vx75-season>main{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+}
+
+#p-calendar .vx75-month-grid{
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  grid-template-columns:44px minmax(0,1fr)!important;
+  overflow:hidden!important;
+}
+
+#p-calendar .vx75-dow{
+  width:100%!important;
+  min-width:0!important;
+  display:grid!important;
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;
+}
+
+#p-calendar .vx75-dow>b{
+  min-width:0!important;
+  text-align:center!important;
+  font-size:9px!important;
+  line-height:1.2!important;
+  white-space:nowrap!important;
+}
+
+#p-calendar .vx75-weekrow{
+  width:100%!important;
+  min-width:0!important;
+  display:grid!important;
+  grid-template-columns:repeat(7,minmax(0,1fr))!important;
+  overflow:hidden!important;
+}
+
+#p-calendar .vx75-weekrow>article{
+  min-width:0!important;
+  width:auto!important;
+  overflow:hidden!important;
+  padding:8px!important;
+}
+
+#p-calendar .vx75-weekrow>article b,
+#p-calendar .vx75-weekrow>article span,
+#p-calendar .vx75-weekrow>article small{
+  min-width:0!important;
+}
+
+#p-calendar .vx75-week-head,
+#p-calendar .vx75-weekpulse{
+  width:44px!important;
+  min-width:44px!important;
+  max-width:44px!important;
+  overflow:hidden!important;
+}
+
+/* Let weekend cells retain the same visual width as weekdays. */
+#p-calendar .vx75-weekrow>article:nth-child(6),
+#p-calendar .vx75-weekrow>article:nth-child(7){
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+
+/* Intelligence rail is fixed, never allowed to consume calendar columns. */
+#p-calendar .vx75-month-intel,
+#p-calendar .vx98-month-intel{
+  width:300px!important;
+  min-width:300px!important;
+  max-width:300px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+}
+
+/* Keep month toolbar from forcing extra width. */
+#p-calendar .vx75-season main,
+#p-calendar .vx75-month-grid,
+#p-calendar .vx75-weekrow,
+#p-calendar .vx75-dow{
+  box-sizing:border-box!important;
+}
+
+/* Responsive: preserve all seven columns; reduce the right rail first. */
+@media(max-width:1450px){
+  #p-calendar .vx75-season{
+    grid-template-columns:minmax(0,1fr) 270px!important;
+  }
+  #p-calendar .vx75-month-intel,
+  #p-calendar .vx98-month-intel{
+    width:270px!important;
+    min-width:270px!important;
+    max-width:270px!important;
+  }
+  #p-calendar .vx75-month-grid{
+    grid-template-columns:38px minmax(0,1fr)!important;
+  }
+  #p-calendar .vx75-week-head,
+  #p-calendar .vx75-weekpulse{
+    width:38px!important;
+    min-width:38px!important;
+    max-width:38px!important;
+  }
+}
+
+@media(max-width:1180px){
+  #p-calendar .vx75-season{
+    grid-template-columns:1fr!important;
+    overflow:visible!important;
+  }
+  #p-calendar .vx75-month-intel,
+  #p-calendar .vx98-month-intel{
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+  }
+}
+
+@media(max-width:760px){
+  #p-calendar .vx75-month-grid{
+    grid-template-columns:30px minmax(700px,1fr)!important;
+    overflow-x:auto!important;
+  }
+  #p-calendar .vx75-dow,
+  #p-calendar .vx75-weekrow{
+    min-width:700px!important;
+  }
+  #p-calendar .vx75-week-head,
+  #p-calendar .vx75-weekpulse{
+    width:30px!important;
+    min-width:30px!important;
+    max-width:30px!important;
+  }
+}

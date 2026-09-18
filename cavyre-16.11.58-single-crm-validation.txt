@@ -1,0 +1,18 @@
+PASS — root loads one CRM authority JS
+PASS — admin loads one CRM authority JS
+PASS — root loads one CRM authority CSS
+PASS — admin loads one CRM authority CSS
+PASS — old smart CRM runtime not loaded
+PASS — relationship renderer has no basic company form
+PASS — relationship renderer has no basic contact form
+PASS — relationship create delegates to single CRM
+PASS — legacy stability has no CRM form fields
+PASS — legacy stability has no CRM save renderer
+PASS — single API endpoint
+PASS — canonical multi-company relationship support
+PASS — single CRM global
+PASS — compatibility aliases point to CRM
+PASS — release 16.11.58 root
+PASS — release 16.11.58 admin
+
+16/16 gates passed.

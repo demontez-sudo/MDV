@@ -1,0 +1,16 @@
+
+.cvy161215-back{position:fixed;inset:0;z-index:2147483644;background:rgba(0,0,0,.78);display:grid;place-items:center;padding:28px}
+.cvy161215-modal{width:min(980px,96vw);max-height:92vh;overflow:auto;background:#0c1521;border:1px solid #987cff;color:#eee}
+.cvy161215-modal>header{display:flex;justify-content:space-between;align-items:flex-start;padding:24px 28px;border-bottom:1px solid rgba(152,124,255,.3)}
+.cvy161215-modal>header small,.cvy161215-modal label span,.cvy161215-accessgrid span{font:10px monospace;letter-spacing:.14em;text-transform:uppercase;color:#9da7ba}
+.cvy161215-modal h2{font:32px Georgia,serif;font-weight:400;margin:5px 0 0}
+.cvy161215-modal>header button{background:transparent;border:1px solid #987cff;color:#fff;padding:10px 14px}
+.cvy161215-modal main{padding:28px}
+.cvy161215-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.cvy161215-grid label{display:grid;gap:7px}.cvy161215-grid .wide{grid-column:1/-1}
+.cvy161215-grid input,.cvy161215-grid select,.cvy161215-grid textarea,.cvy161215-repair input{background:#050914;border:1px solid #40506b;color:#fff;padding:12px;min-height:44px}
+.cvy161215-grid textarea{min-height:110px}.cvy161215-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap}
+.cvy161215-actions button,.cvy161215-repair button,.cvy161215-temp button{padding:12px 16px;border:1px solid #6d5a3c;background:#080807;color:#ddd}.cvy161215-actions .primary,.cvy161215-repair .primary{background:#9d7cff;color:#080612;border-color:#9d7cff}
+.cvy161215-error{color:#ff9b9b;margin-top:14px;white-space:pre-wrap}.cvy161215-accessgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.cvy161215-accessgrid>div{border:1px solid #33445f;padding:14px;display:grid;gap:5px}.cvy161215-repair{margin-top:18px;border:1px solid #8a6b33;padding:18px;display:grid;gap:12px}
+.cvy161215-temp{margin-top:18px;padding:18px;border:1px solid #987cff;display:grid;gap:10px}.cvy161215-temp code{font-size:18px;letter-spacing:.05em}
+@media(max-width:760px){.cvy161215-grid{grid-template-columns:1fr}.cvy161215-accessgrid{grid-template-columns:1fr}}

@@ -1,0 +1,8 @@
+/* CAVYRE 16.10.92 release-freeze guardrails */
+html,body,#app{max-width:100%}
+main.pm{overflow-x:clip}
+@media(max-width:760px){
+  #app.on{width:100%;min-width:0}
+  main.pm,.vx73-topbar{width:100%;min-width:0;box-sizing:border-box}
+  input,select,textarea,button{max-width:100%}
+}

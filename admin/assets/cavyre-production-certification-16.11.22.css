@@ -1,0 +1,27 @@
+
+/* CAVYRE 16.11.22 — Production Certification / Final Agency Build */
+.vx161122-production{min-width:0!important;max-width:100%!important}
+.vx161122-production *{box-sizing:border-box}
+.vx161122-production button,
+.vx161122-production [role="button"]{max-width:100%!important}
+.vx161122-production input,
+.vx161122-production select,
+.vx161122-production textarea{max-width:100%!important}
+.vx161122-production img,
+.vx161122-production svg,
+.vx161122-production canvas{max-width:100%}
+.vx161122-production h1,
+.vx161122-production h2,
+.vx161122-production h3,
+.vx161122-production h4,
+.vx161122-production p,
+.vx161122-production span,
+.vx161122-production b,
+.vx161122-production strong{overflow-wrap:anywhere}
+.vx161122-production [class*="error"],
+.vx161122-production [class*="warning"],
+.vx161122-production [class*="empty"]{line-height:1.45!important}
+@media(max-width:900px){
+ .vx161122-production [class*="table"],
+ .vx161122-production [class*="grid"]{max-width:100%!important}
+}

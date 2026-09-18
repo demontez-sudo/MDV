@@ -1,0 +1,54 @@
+/portal/reset*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+  X-CAVYRE-Recovery: 16.15.03
+
+/model-reset*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+  X-CAVYRE-Model-Access: 16.12.97
+
+/portal-password.html
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+
+/portal*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+  X-CAVYRE-Model-Access: 16.12.97
+
+/admin/index.html
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  X-CAVYRE-Release: 16.15.06
+
+/admin
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+  X-CAVYRE-Release: 16.15.06
+
+/admin/*
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+  X-CAVYRE-Release: 16.15.06
+
+/
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+  X-CAVYRE-Release: 16.15.06
+
+/index.html
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+  X-CAVYRE-Release: 16.15.06
+
+/sw.js
+  Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+  Pragma: no-cache
+  Expires: 0
+  X-CAVYRE-Release: 16.15.06

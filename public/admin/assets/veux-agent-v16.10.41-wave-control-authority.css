@@ -1,0 +1,84 @@
+
+/* VEUX Agent 16.10.41 — ZERO LEGACY GOLD OUTSIDE CLASSIC
+   Full Color Wave control authority. Loaded LAST. */
+
+/* Universal bridge: any legacy component using --gold now receives active wave color. */
+html[data-veux-wave]:not([data-veux-wave="classic"]){
+  --gold:var(--skin-accent)!important;
+  --goldl:var(--skin-accent2)!important;
+  --goldp:var(--skin-soft)!important;
+}
+
+/* Calendar control deck */
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx75-scope button,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx75-scopebar button,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx75-orbit-scopebar button,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx75-calendar-scope button,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx75-scope-row button,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx75-agency,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx75-model-select,
+html[data-veux-wave]:not([data-veux-wave="classic"]) [class*="agency-calendar"],
+html[data-veux-wave]:not([data-veux-wave="classic"]) [class*="select-model"]{
+  border-color:color-mix(in srgb,var(--skin-accent) 72%,var(--skin-line2))!important;
+  color:var(--skin-accent2)!important;
+  background:
+    linear-gradient(135deg,
+      color-mix(in srgb,var(--skin-card2) 78%,var(--skin-accent) 22%),
+      color-mix(in srgb,var(--skin-card) 93%,var(--skin-accent) 7%)
+    )!important;
+  box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--skin-soft) 54%,transparent)!important;
+}
+
+/* Active/primary/CTA buttons: use the wave itself. */
+html[data-veux-wave]:not([data-veux-wave="classic"]) button.primary,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .primary,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-primary,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-hero-actions button:last-child,
+html[data-veux-wave]:not([data-veux-wave="classic"]) [data-vx17-vera],
+html[data-veux-wave]:not([data-veux-wave="classic"]) [data-vx17-context-vera],
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx75-add,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .v1682-btn.primary,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx-wave-primary{
+  background:
+    linear-gradient(135deg,var(--skin-accent2),var(--skin-accent))!important;
+  border-color:var(--skin-accent2)!important;
+  color:var(--skin-0)!important;
+  box-shadow:
+    0 8px 24px color-mix(in srgb,var(--skin-glow) 72%,transparent),
+    inset 0 1px 0 color-mix(in srgb,var(--skin-text) 22%,transparent)!important;
+}
+
+/* Agency Command / Overview intelligence CTA specifically shown in screenshot. */
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-command button,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-attention button,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-context-actions button,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-smart-card button,
+html[data-veux-wave]:not([data-veux-wave="classic"]) button[data-vx17-vera]{
+  border-color:var(--skin-line2)!important;
+  background:color-mix(in srgb,var(--skin-card2) 74%,var(--skin-accent) 26%)!important;
+  color:var(--skin-accent2)!important;
+}
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-command button:hover,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-attention button:hover,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-context-actions button:hover,
+html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-smart-card button:hover,
+html[data-veux-wave]:not([data-veux-wave="classic"]) button[data-vx17-vera]:hover{
+  background:var(--skin-accent)!important;
+  border-color:var(--skin-accent2)!important;
+  color:var(--skin-0)!important;
+}
+
+/* Explicit Vera Intelligence buttons found on command surfaces. */
+html[data-veux-wave]:not([data-veux-wave="classic"]) button{
+  --vx-button-accent:var(--skin-accent);
+  --vx-button-accent2:var(--skin-accent2);
+}
+html[data-veux-wave]:not([data-veux-wave="classic"]) button:is(
+  [aria-label*="Vera"],
+  [title*="Vera"]
+){
+  border-color:var(--skin-line2)!important;
+}
+
+/* Keep status colors semantically green/yellow/red; don't wave-tint them.
+   Everything else previously gold follows active Color Wave. */

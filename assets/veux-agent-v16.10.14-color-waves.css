@@ -1,0 +1,436 @@
+
+/* VEUX Agent 16.10.09 — Futuristic Color Waves
+   Theme contract:
+   classic = Maison gold
+   green   = neon emerald
+   blue    = electric cobalt
+   red     = signal crimson
+   white   = future white / chrome
+*/
+
+:root,
+html[data-veux-wave="classic"]{
+  --wave:#C9A66B;
+  --wave-bright:#E2C58F;
+  --wave-soft:rgba(201,166,107,.14);
+  --wave-faint:rgba(201,166,107,.065);
+  --wave-line:rgba(201,166,107,.31);
+  --wave-glow:rgba(201,166,107,.18);
+  --wave-rgb:201,166,107;
+
+  --ivory:#100D0B;
+  --paper:#241E18;
+  --line:#4A3F32;
+  --line2:#5C4F3F;
+  --ink:#F1E4D4;
+  --ink2:#CBBBA5;
+  --mute:#93816D;
+  --faint:#5C5245;
+  --void:#050403;
+
+  --gold:var(--wave);
+  --goldl:var(--wave-bright);
+  --goldp:var(--wave-soft);
+
+  --vx-wave-bg:
+    radial-gradient(circle at 82% 5%, rgba(201,166,107,.075), transparent 31%),
+    linear-gradient(145deg,#080604 0%,#100d0a 42%,#080705 100%);
+}
+
+html[data-veux-wave="green"]{
+  --wave:#50E3A4;
+  --wave-bright:#8FF7CC;
+  --wave-soft:rgba(80,227,164,.14);
+  --wave-faint:rgba(80,227,164,.06);
+  --wave-line:rgba(80,227,164,.30);
+  --wave-glow:rgba(80,227,164,.20);
+  --wave-rgb:80,227,164;
+
+  --ivory:#07100D;
+  --paper:#0C1A15;
+  --line:#1C3A2F;
+  --line2:#28503F;
+  --ink:#E7FFF5;
+  --ink2:#B2D7C8;
+  --mute:#73998A;
+  --faint:#405F53;
+  --void:#020605;
+
+  --gold:var(--wave);
+  --goldl:var(--wave-bright);
+  --goldp:var(--wave-soft);
+  --sage:#70D9AE;
+  --sagep:rgba(112,217,174,.13);
+
+  --vx-wave-bg:
+    radial-gradient(circle at 82% 3%, rgba(80,227,164,.115), transparent 30%),
+    radial-gradient(circle at 8% 94%, rgba(30,121,84,.08), transparent 28%),
+    linear-gradient(145deg,#020605 0%,#07100d 47%,#030907 100%);
+}
+
+html[data-veux-wave="blue"]{
+  --wave:#5B9DFF;
+  --wave-bright:#93BEFF;
+  --wave-soft:rgba(91,157,255,.14);
+  --wave-faint:rgba(91,157,255,.06);
+  --wave-line:rgba(91,157,255,.30);
+  --wave-glow:rgba(91,157,255,.21);
+  --wave-rgb:91,157,255;
+
+  --ivory:#070B12;
+  --paper:#0D1522;
+  --line:#203451;
+  --line2:#2B466C;
+  --ink:#EDF5FF;
+  --ink2:#B7C9DF;
+  --mute:#7D91AA;
+  --faint:#44566E;
+  --void:#020408;
+
+  --gold:var(--wave);
+  --goldl:var(--wave-bright);
+  --goldp:var(--wave-soft);
+  --wblue:#77ABFF;
+  --wbluep:rgba(119,171,255,.14);
+
+  --vx-wave-bg:
+    radial-gradient(circle at 84% 2%, rgba(91,157,255,.13), transparent 31%),
+    radial-gradient(circle at 5% 88%, rgba(30,84,166,.09), transparent 30%),
+    linear-gradient(145deg,#020408 0%,#070c15 48%,#03060c 100%);
+}
+
+html[data-veux-wave="red"]{
+  --wave:#FF645F;
+  --wave-bright:#FF9A94;
+  --wave-soft:rgba(255,100,95,.14);
+  --wave-faint:rgba(255,100,95,.06);
+  --wave-line:rgba(255,100,95,.31);
+  --wave-glow:rgba(255,100,95,.20);
+  --wave-rgb:255,100,95;
+
+  --ivory:#120807;
+  --paper:#21100F;
+  --line:#4B2523;
+  --line2:#65312F;
+  --ink:#FFF0ED;
+  --ink2:#D8B8B3;
+  --mute:#A17D79;
+  --faint:#674A47;
+  --void:#070202;
+
+  --gold:var(--wave);
+  --goldl:var(--wave-bright);
+  --goldp:var(--wave-soft);
+  --burg:#FF716A;
+  --burgp:rgba(255,113,106,.14);
+
+  --vx-wave-bg:
+    radial-gradient(circle at 84% 3%, rgba(255,100,95,.12), transparent 30%),
+    radial-gradient(circle at 7% 93%, rgba(137,31,28,.08), transparent 29%),
+    linear-gradient(145deg,#070202 0%,#120807 48%,#080303 100%);
+}
+
+html[data-veux-wave="white"]{
+  --wave:#F4F4F1;
+  --wave-bright:#FFFFFF;
+  --wave-soft:rgba(244,244,241,.115);
+  --wave-faint:rgba(244,244,241,.05);
+  --wave-line:rgba(244,244,241,.24);
+  --wave-glow:rgba(244,244,241,.14);
+  --wave-rgb:244,244,241;
+
+  /* Future White stays dark/chrome so the portal never becomes beige/ivory. */
+  --ivory:#0A0B0D;
+  --paper:#121418;
+  --line:#2C3037;
+  --line2:#41464F;
+  --ink:#F8F8F5;
+  --ink2:#C8CBD0;
+  --mute:#8D929A;
+  --faint:#555B64;
+  --void:#040506;
+
+  --gold:var(--wave);
+  --goldl:var(--wave-bright);
+  --goldp:var(--wave-soft);
+
+  --vx-wave-bg:
+    radial-gradient(circle at 84% 2%, rgba(255,255,255,.09), transparent 28%),
+    radial-gradient(circle at 12% 92%, rgba(180,190,205,.045), transparent 26%),
+    linear-gradient(145deg,#040506 0%,#0a0c0f 48%,#050607 100%);
+}
+
+/* Global canvas and surface harmonization */
+html,
+body{
+  background:var(--void)!important;
+}
+body{
+  background-image:var(--vx-wave-bg)!important;
+  background-attachment:fixed!important;
+  color:var(--ink);
+}
+#app,
+#pm,
+main,
+.main,
+.portal-main{
+  color:var(--ink);
+}
+
+.sidebar,
+#sidebar,
+.sb,
+.topbar,
+.tb,
+header.topbar{
+  background-color:color-mix(in srgb,var(--void) 91%,var(--wave) 9%)!important;
+  border-color:var(--line)!important;
+}
+
+.card,
+.v152-card,
+.vx-card,
+.vx95-intelligence,
+.vx82-card,
+.vx84-card,
+.v1682-card,
+.vxdir-card,
+.modal,
+.vx-modal,
+.vx-dialog,
+[role="dialog"]{
+  border-color:var(--line)!important;
+}
+
+/* Accent contract across portal */
+a:hover,
+button:hover,
+.btn:hover,
+.nav-item.active,
+.nav-item.on,
+.sb-item.active,
+.sb-item.on,
+.tab.on,
+.v152-tab.on{
+  border-color:var(--wave)!important;
+}
+
+.btn.pri,
+.btn.primary,
+button.pri,
+button.primary,
+.v152-btn.gold,
+.v1682-btn.gold,
+.vx-primary{
+  background:var(--wave)!important;
+  border-color:var(--wave)!important;
+  color:color-mix(in srgb,var(--void) 94%,#000 6%)!important;
+}
+
+input:focus,
+textarea:focus,
+select:focus,
+.vx-select.open .vx-select-btn,
+.vx-select-btn:focus-visible{
+  border-color:var(--wave)!important;
+  box-shadow:0 0 0 2px var(--wave-faint)!important;
+}
+
+/* Calendar intelligence and selection */
+.vx95-intelligence,
+.vx95-event.selected,
+.vx98-selected,
+[data-selected="true"],
+.vx100-dragging{
+  box-shadow:inset 0 0 0 1px var(--wave-line),0 0 28px rgba(var(--wave-rgb),.035)!important;
+}
+.vx95-intelligence > header,
+.vx95-intelligence small,
+.vx95-intelligence .eyebrow{
+  color:var(--wave)!important;
+}
+.vx-select-menu{
+  border-color:var(--wave-line)!important;
+}
+.vx-select-option.selected{
+  background:linear-gradient(90deg,var(--wave-soft),var(--wave-faint))!important;
+  color:var(--wave-bright)!important;
+}
+.vx-select-option.selected::after,
+.vx-select-chevron{
+  color:var(--wave)!important;
+}
+
+/* Theme transitions. Avoid layout transitions. */
+body,
+.sidebar,#sidebar,.sb,.topbar,.tb,
+.card,.v152-card,.vx-card,.vx95-intelligence,
+button,.btn,input,textarea,.vx-select-btn,.vx-select-menu{
+  transition:
+    background-color .28s ease,
+    border-color .28s ease,
+    color .22s ease,
+    box-shadow .28s ease!important;
+}
+
+@media (prefers-reduced-motion:reduce){
+  body,.sidebar,#sidebar,.sb,.topbar,.tb,
+  .card,.v152-card,.vx-card,.vx95-intelligence,
+  button,.btn,input,textarea,.vx-select-btn,.vx-select-menu{
+    transition:none!important;
+  }
+}
+
+/* Settings — Color Wave control */
+.vx-wave-settings{
+  grid-column:1/-1;
+  overflow:hidden;
+  position:relative;
+}
+.vx-wave-settings::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  background:
+    linear-gradient(105deg,var(--wave-faint),transparent 28%),
+    radial-gradient(circle at 94% 0%,var(--wave-soft),transparent 34%);
+  opacity:.8;
+}
+.vx-wave-settings > *{position:relative;z-index:1}
+.vx-wave-settings header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:18px;
+}
+.vx-wave-settings header span{
+  color:var(--wave)!important;
+}
+.vx-wave-sub{
+  max-width:760px;
+  color:var(--mute);
+  font-size:12px;
+  line-height:1.55;
+  margin-top:5px;
+}
+.vx-wave-grid{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:9px;
+  margin-top:16px;
+}
+.vx-wave-option{
+  min-width:0;
+  min-height:96px;
+  position:relative;
+  padding:13px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:#090909;
+  color:#eee;
+  cursor:pointer;
+  text-align:left;
+  overflow:hidden;
+}
+.vx-wave-option::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:var(--preview-bg);
+  opacity:.96;
+}
+.vx-wave-option::after{
+  content:"";
+  position:absolute;
+  width:84px;
+  height:84px;
+  right:-26px;
+  top:-30px;
+  border-radius:50%;
+  background:var(--preview);
+  filter:blur(24px);
+  opacity:.24;
+}
+.vx-wave-option > *{position:relative;z-index:1}
+.vx-wave-option b{
+  display:block;
+  font:500 16px/1 var(--fD);
+  color:var(--preview-text,#fff);
+}
+.vx-wave-option small{
+  display:block;
+  margin-top:6px;
+  font:600 9px/1.25 var(--fM);
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  color:var(--preview);
+}
+.vx-wave-option .vx-wave-line{
+  display:block;
+  width:30px;
+  height:2px;
+  margin-top:15px;
+  background:var(--preview);
+  box-shadow:0 0 14px color-mix(in srgb,var(--preview) 60%,transparent);
+}
+.vx-wave-option:hover{
+  transform:translateY(-1px);
+  border-color:var(--preview)!important;
+}
+.vx-wave-option.on{
+  border-color:var(--preview)!important;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--preview) 50%,transparent),
+             inset 0 0 24px color-mix(in srgb,var(--preview) 7%,transparent)!important;
+}
+.vx-wave-option.on .vx-wave-line{width:52px}
+.vx-wave-check{
+  position:absolute!important;
+  top:10px;
+  right:10px;
+  width:18px;
+  height:18px;
+  display:grid;
+  place-items:center;
+  border:1px solid color-mix(in srgb,var(--preview) 60%,transparent);
+  border-radius:50%;
+  color:var(--preview);
+  opacity:0;
+  font-size:10px;
+}
+.vx-wave-option.on .vx-wave-check{opacity:1}
+.vx-wave-status{
+  margin-top:11px;
+  color:var(--mute);
+  font:500 10px/1.4 var(--fM);
+  letter-spacing:.04em;
+}
+.vx-wave-status strong{color:var(--wave);font-weight:600}
+
+@media(max-width:1000px){
+  .vx-wave-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:620px){
+  .vx-wave-grid{grid-template-columns:1fr 1fr}
+  .vx-wave-option{min-height:88px}
+}
+
+/* 16.10.09 — first-class Settings placement */
+.vx-wave-settings-native{
+  margin:18px 0 22px!important;
+  width:100%!important;
+  box-sizing:border-box!important;
+}
+.v152-page > .vx-wave-settings-native{
+  display:block!important;
+}
+.vx-wave-settings-native .vx-wave-grid{
+  padding:0 16px 16px;
+}
+.vx-wave-settings-native > header{
+  padding:16px!important;
+}
+.vx-wave-settings-native .vx-wave-status{
+  padding:0 16px 15px;
+}

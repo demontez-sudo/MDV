@@ -1,0 +1,98 @@
+
+/* VEUX Agent 16.10.21 — Roster + Header Command Repair */
+
+/* Header command is a closed flex component. Nothing may escape its border. */
+html[data-veux-wave] .vx73-command{
+  display:grid!important;
+  grid-template-columns:26px minmax(0,1fr) 38px!important;
+  align-items:center!important;
+  column-gap:8px!important;
+  width:min(610px,44vw)!important;
+  max-width:610px!important;
+  height:46px!important;
+  min-height:46px!important;
+  padding:4px 5px 4px 14px!important;
+  overflow:hidden!important;
+  border-radius:24px!important;
+  box-sizing:border-box!important;
+}
+html[data-veux-wave] .vx73-command > .vx20-vera-wave-mark{
+  grid-column:1!important;
+  width:20px!important;height:20px!important;
+  justify-self:center!important;
+  margin:0!important;
+}
+html[data-veux-wave] .vx73-command input{
+  grid-column:2!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:none!important;
+  height:36px!important;
+  padding:0 6px!important;
+  margin:0!important;
+  border:0!important;
+  box-shadow:none!important;
+  background:transparent!important;
+}
+html[data-veux-wave] .vx73-command > button{
+  grid-column:3!important;
+  position:static!important;
+  inset:auto!important;
+  width:36px!important;
+  min-width:36px!important;
+  max-width:36px!important;
+  height:36px!important;
+  min-height:36px!important;
+  max-height:36px!important;
+  padding:0!important;
+  margin:0!important;
+  display:grid!important;
+  place-items:center!important;
+  justify-self:end!important;
+  align-self:center!important;
+  border-radius:18px!important;
+  overflow:hidden!important;
+}
+html[data-veux-wave] .vx73-command > button .vx20-vera-wave-mark,
+html[data-veux-wave] .vx73-command > button .vera-mark,
+html[data-veux-wave] .vx73-command > button .vera-mark-img{
+  display:none!important;
+}
+html[data-veux-wave] .vx21-command-arrow{
+  display:block!important;
+  color:var(--skin-accent2)!important;
+  font:700 17px/1 var(--fM)!important;
+  transform:translateY(-1px);
+}
+@media(max-width:1260px){
+  html[data-veux-wave] .vx73-command{width:min(520px,38vw)!important}
+}
+@media(max-width:1180px){
+  html[data-veux-wave] .vx73-command{display:none!important}
+}
+
+/* Roster rows must be real interaction targets above decorative layers. */
+html[data-veux-wave] #p-roster .v155-table-card,
+html[data-veux-wave] #p-roster .v155-table-scroll,
+html[data-veux-wave] #p-roster .v155-table-row{
+  position:relative!important;
+  z-index:2!important;
+  pointer-events:auto!important;
+}
+html[data-veux-wave] #p-roster .v155-table-row.roster{
+  cursor:pointer!important;
+  user-select:none!important;
+}
+html[data-veux-wave] #p-roster .v155-table-row.roster:hover{
+  border-color:var(--skin-accent)!important;
+  background:var(--skin-soft)!important;
+}
+html[data-veux-wave] #p-roster .v155-table-row.roster.on{
+  border-color:var(--skin-accent)!important;
+  background:linear-gradient(90deg,var(--skin-soft),transparent)!important;
+  box-shadow:inset 3px 0 0 var(--skin-accent)!important;
+}
+html[data-veux-wave] #p-roster .v155-side,
+html[data-veux-wave] #p-roster .v155-side-actions button{
+  pointer-events:auto!important;
+}

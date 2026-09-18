@@ -1,0 +1,14 @@
+/* CAVYRE 16.10.53 — Package Select + Travel Booking Detail */
+.v16845-field>.vx-select{display:none!important}
+.v16845-native{position:absolute!important;left:-9999px!important;top:auto!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important}
+.v16845-picker{display:block!important;width:100%!important}
+.v16845-picker-trigger{width:100%!important;min-height:52px!important}
+#v16848-picker-portal{box-sizing:border-box!important}
+.v16853-booking-detail{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;margin-top:-2px;border:1px solid rgba(84,143,232,.28);background:rgba(84,143,232,.08)}
+.v16853-booking-detail>div{padding:9px 10px;background:rgba(4,10,18,.72);min-width:0}
+.v16853-booking-detail .wide{grid-column:1/-1}
+.v16853-booking-detail small{display:block;font:700 6px "Space Mono",monospace;letter-spacing:.09em;color:rgba(255,255,255,.38)}
+.v16853-booking-detail b{display:block;margin-top:4px;font-size:9px;font-weight:500;color:var(--ink)}
+.v16853-booking-detail .wide span{display:inline-block;margin:5px 8px 0 0;padding:4px 6px;border:1px solid rgba(255,255,255,.08);font:600 7px "Space Mono",monospace;color:rgba(255,255,255,.7)}
+.v16853-booking-empty{padding:9px 10px;border:1px dashed rgba(255,255,255,.09);font-size:8px;color:var(--mute)}
+@media(max-width:760px){.v16853-booking-detail{grid-template-columns:1fr 1fr}.v16853-booking-detail .wide{grid-column:1/-1}}

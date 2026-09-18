@@ -1,0 +1,210 @@
+
+/* CAVYRE 16.11.06 — Full Agent Portal Stabilization */
+
+/* =========================================================
+   1) AGENCY OVERVIEW — exact structural height repair
+   ========================================================= */
+.vx17-main-grid{
+  align-items:start!important;
+  grid-auto-rows:max-content!important;
+}
+
+.vx17-overview-panel{
+  display:grid!important;
+  grid-template-rows:auto auto 245px!important;
+  align-self:start!important;
+  height:max-content!important;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important;
+}
+
+.vx17-overview-panel>header{
+  grid-row:1!important;
+}
+.vx17-overview-panel>.vx17-kpis{
+  grid-row:2!important;
+}
+.vx17-overview-panel>.vx17-bars{
+  grid-row:3!important;
+  height:245px!important;
+  min-height:245px!important;
+  max-height:245px!important;
+  margin:0!important;
+  padding:22px 18px 34px!important;
+  overflow:visible!important;
+  align-self:start!important;
+}
+
+.vx17-overview-panel .vx17-bar{
+  max-height:185px!important;
+  min-height:26px!important;
+}
+
+/* Priority is independent; it cannot dictate Overview height. */
+.vx17-priority-panel{
+  display:flex!important;
+  flex-direction:column!important;
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+  max-height:520px!important;
+  overflow:hidden!important;
+}
+.vx17-priority-panel>.vx17-priority{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  max-height:462px!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+}
+
+/* Desk panel has its own natural height. */
+.vx17-desk-panel{
+  align-self:start!important;
+  height:auto!important;
+  min-height:0!important;
+}
+
+/* =========================================================
+   2) READABILITY — portal-wide minimum legible typography
+   ========================================================= */
+
+/* Main content baseline */
+#app, main.pm, #pm{
+  font-size:12px!important;
+}
+
+/* Forms, menus, dropdowns, sliders, search, selectors */
+#app input,
+#app textarea,
+#app select,
+#app option,
+#app button,
+#app [role="button"],
+#app [role="option"],
+#app [role="menuitem"],
+#app .vx-select-btn,
+#app .vx-select-menu,
+#app .vx-select-menu *,
+#app [class*="dropdown"] *,
+#app [class*="select"] *,
+#app [class*="menu"] *{
+  font-size:max(10px,.72rem)!important;
+  line-height:1.35!important;
+}
+
+/* Standard labels + metadata should never disappear into 6–7px type */
+#app label,
+#app small,
+#app [class*="label"],
+#app [class*="meta"],
+#app [class*="eyebrow"],
+#app [class*="caption"],
+#app [class*="kicker"],
+#app [class*="crumb"]{
+  font-size:max(9px,.64rem)!important;
+  line-height:1.35!important;
+}
+
+/* Tables / cards / intelligence text */
+#app td,
+#app th,
+#app .vx17-signal span,
+#app .vx17-desk-item span,
+#app .vx17-smart-card span,
+#app .vx95-runway-event small,
+#app .vx95-runway-event span{
+  font-size:max(9.5px,.67rem)!important;
+  line-height:1.4!important;
+}
+
+/* Headings retain hierarchy */
+#app h1{line-height:1.08!important}
+#app h2{line-height:1.12!important}
+#app h3{line-height:1.2!important}
+
+/* Sidebar/topbar microtype: readable but still compact */
+.vx73-rail,
+.vx73-topbar{
+  --cavyre-micro:9px;
+}
+.vx73-rail small,
+.vx73-topbar small,
+.vx73-rail [class*="label"],
+.vx73-topbar [class*="label"]{
+  font-size:var(--cavyre-micro)!important;
+}
+
+/* =========================================================
+   3) GENERIC LAYOUT SAFETY
+   ========================================================= */
+#app *{
+  box-sizing:border-box;
+}
+main.pm,
+#pm,
+#app .panel,
+#app [role="dialog"]{
+  max-width:100%!important;
+}
+
+/* Long data must wrap instead of colliding. */
+#app button,
+#app td,
+#app th,
+#app span,
+#app p,
+#app b,
+#app strong{
+  overflow-wrap:anywhere;
+}
+
+/* Do not let generic panel rules create giant blank floors. */
+.vx17-main-grid>.vx17-panel{
+  min-height:0!important;
+}
+
+/* Calendar footer/time-gutter repairs remain authoritative. */
+.vx95-calendar-legend{
+  position:relative!important;
+  bottom:auto!important;
+}
+.vx95-hours{
+  flex:0 0 auto!important;
+}
+
+/* =========================================================
+   4) RESPONSIVE
+   ========================================================= */
+@media(max-width:1150px){
+  .vx17-main-grid{
+    grid-template-columns:1fr!important;
+  }
+  .vx17-priority-panel{
+    max-height:none!important;
+  }
+  .vx17-priority-panel>.vx17-priority{
+    max-height:none!important;
+    overflow-y:visible!important;
+  }
+}
+
+@media(max-width:760px){
+  #app,main.pm,#pm{font-size:12px!important}
+  #app input,#app textarea,#app select,#app button,#app [role="button"]{
+    font-size:11px!important;
+  }
+  #app label,#app small{font-size:9.5px!important}
+  .vx17-overview-panel{
+    grid-template-rows:auto auto 210px!important;
+  }
+  .vx17-overview-panel>.vx17-bars{
+    height:210px!important;
+    min-height:210px!important;
+    max-height:210px!important;
+  }
+  .vx17-overview-panel .vx17-bar{
+    max-height:155px!important;
+  }
+}

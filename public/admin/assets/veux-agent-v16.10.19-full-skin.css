@@ -1,0 +1,331 @@
+
+/* VEUX Agent 16.10.19 — TRUE FULL PORTAL COLOR WAVE
+   Loaded after the shell so legacy black/gold CSS cannot win.
+*/
+
+/* Palette */
+html[data-veux-wave="classic"]{
+  --skin-0:#050403;--skin-1:#0b0907;--skin-2:#120f0b;--skin-3:#19140e;
+  --skin-card:#17130e;--skin-card2:#211a12;--skin-line:#4a3b26;--skin-line2:#6a5232;
+  --skin-accent:#caa052;--skin-accent2:#e2c282;--skin-text:#f5ecdd;--skin-text2:#c1b19b;--skin-muted:#877863;
+  --skin-soft:rgba(202,160,82,.09);--skin-glow:rgba(202,160,82,.20);
+}
+html[data-veux-wave="blue"]{
+  --skin-0:#020814;--skin-1:#061221;--skin-2:#0a192a;--skin-3:#10253c;
+  --skin-card:#0c1b2d;--skin-card2:#132943;--skin-line:#294a68;--skin-line2:#467392;
+  --skin-accent:#77ace1;--skin-accent2:#afd2f5;--skin-text:#f2f8ff;--skin-text2:#b3c7da;--skin-muted:#768fa7;
+  --skin-soft:rgba(119,172,225,.10);--skin-glow:rgba(119,172,225,.23);
+}
+html[data-veux-wave="green"]{
+  --skin-0:#030904;--skin-1:#081309;--skin-2:#0d1d10;--skin-3:#142918;
+  --skin-card:#0e1e11;--skin-card2:#172b1a;--skin-line:#334d34;--skin-line2:#59735b;
+  --skin-accent:#97aa78;--skin-accent2:#c2ceaa;--skin-text:#f2f6eb;--skin-text2:#b7c2aa;--skin-muted:#7e8e76;
+  --skin-soft:rgba(151,170,120,.10);--skin-glow:rgba(151,170,120,.23);
+}
+html[data-veux-wave="red"]{
+  --skin-0:#110305;--skin-1:#1b080b;--skin-2:#270d12;--skin-3:#35151b;
+  --skin-card:#251014;--skin-card2:#351820;--skin-line:#69333d;--skin-line2:#8f4c57;
+  --skin-accent:#d8796f;--skin-accent2:#efada5;--skin-text:#fff1ef;--skin-text2:#d6aaa5;--skin-muted:#a07a76;
+  --skin-soft:rgba(216,121,111,.10);--skin-glow:rgba(216,121,111,.24);
+}
+html[data-veux-wave="white"]{
+  --skin-0:#05070a;--skin-1:#0b0f14;--skin-2:#121820;--skin-3:#1c242e;
+  --skin-card:#141a21;--skin-card2:#202832;--skin-line:#434e5a;--skin-line2:#66717d;
+  --skin-accent:#eef1f3;--skin-accent2:#fff;--skin-text:#fff;--skin-text2:#c9cfd6;--skin-muted:#929ba5;
+  --skin-soft:rgba(238,241,243,.07);--skin-glow:rgba(238,241,243,.16);
+}
+
+/* 16.10.37 — Additional full-portal color waves */
+html[data-veux-wave="purple"]{
+  --skin-0:#080510;--skin-1:#10091b;--skin-2:#191027;--skin-3:#26163a;
+  --skin-card:#171020;--skin-card2:#241832;--skin-line:#4f3a65;--skin-line2:#735493;
+  --skin-accent:#9b78d0;--skin-accent2:#cbb3ef;--skin-text:#f7f0ff;--skin-text2:#cbbdd8;--skin-muted:#91829f;
+  --skin-soft:rgba(155,120,208,.11);--skin-glow:rgba(155,120,208,.25);
+}
+html[data-veux-wave="burntOrange"]{
+  --skin-0:#0d0603;--skin-1:#170b06;--skin-2:#231109;--skin-3:#32190d;
+  --skin-card:#21130c;--skin-card2:#321b0f;--skin-line:#64401f;--skin-line2:#8b572a;
+  --skin-accent:#c8753e;--skin-accent2:#e6a06c;--skin-text:#fff2e8;--skin-text2:#d8b9a3;--skin-muted:#9c7c68;
+  --skin-soft:rgba(200,117,62,.11);--skin-glow:rgba(200,117,62,.25);
+}
+html[data-veux-wave="turquoise"]{
+  --skin-0:#020b0b;--skin-1:#061514;--skin-2:#0a201f;--skin-3:#0e2d2b;
+  --skin-card:#0b211f;--skin-card2:#10312e;--skin-line:#285c58;--skin-line2:#3d817b;
+  --skin-accent:#4fbdb5;--skin-accent2:#83ddd6;--skin-text:#edfffd;--skin-text2:#b2d7d3;--skin-muted:#789b98;
+  --skin-soft:rgba(79,189,181,.11);--skin-glow:rgba(79,189,181,.25);
+}
+html[data-veux-wave="blueNude"]{
+  --skin-0:#071016;--skin-1:#0d1921;--skin-2:#14242e;--skin-3:#1d313d;
+  --skin-card:#152630;--skin-card2:#203541;--skin-line:#405e6e;--skin-line2:#5d7d8e;
+  --skin-accent:#8eafc3;--skin-accent2:#bdd0db;--skin-text:#f1f7fa;--skin-text2:#c0ced5;--skin-muted:#879aa4;
+  --skin-soft:rgba(142,175,195,.10);--skin-glow:rgba(142,175,195,.22);
+}
+html[data-veux-wave="greenNude"]{
+  --skin-0:#080b07;--skin-1:#10150e;--skin-2:#182016;--skin-3:#232c20;
+  --skin-card:#192018;--skin-card2:#252e22;--skin-line:#4c5946;--skin-line2:#697761;
+  --skin-accent:#9ba58a;--skin-accent2:#c4cbb8;--skin-text:#f4f6ef;--skin-text2:#c6cbbd;--skin-muted:#8f9786;
+  --skin-soft:rgba(155,165,138,.10);--skin-glow:rgba(155,165,138,.22);
+}
+
+
+html[data-veux-wave]{
+  --wave:var(--skin-accent)!important;
+  --wave-bright:var(--skin-accent2)!important;
+  --wave-soft:var(--skin-glow)!important;
+  --wave-faint:var(--skin-soft)!important;
+  --wave-line:var(--skin-line)!important;
+  --gold:var(--skin-accent)!important;
+  --goldl:var(--skin-accent2)!important;
+  --goldp:var(--skin-soft)!important;
+  --void:var(--skin-0)!important;
+  --ivory:var(--skin-1)!important;
+  --paper:var(--skin-card)!important;
+  --line:var(--skin-line)!important;
+  --line2:var(--skin-line2)!important;
+  --ink:var(--skin-text)!important;
+  --ink2:var(--skin-text2)!important;
+  --mute:var(--skin-muted)!important;
+}
+
+/* Entire browser workspace */
+html[data-veux-wave],
+html[data-veux-wave] body,
+html[data-veux-wave] #app,
+html[data-veux-wave] .shell,
+html[data-veux-wave] #pm,
+html[data-veux-wave] main.pm{
+  background:
+    radial-gradient(circle at 84% -5%,var(--skin-glow),transparent 34%),
+    radial-gradient(circle at 5% 110%,var(--skin-soft),transparent 32%),
+    linear-gradient(155deg,var(--skin-0) 0%,var(--skin-1) 50%,var(--skin-0) 100%)!important;
+  color:var(--skin-text)!important;
+}
+
+/* Top bar */
+html[data-veux-wave] .topbar,
+html[data-veux-wave] .vx73-topbar{
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb,var(--skin-1) 91%,var(--skin-accent) 9%),
+      color-mix(in srgb,var(--skin-2) 88%,var(--skin-accent) 12%)
+    )!important;
+  border-bottom:1px solid var(--skin-line)!important;
+  box-shadow:0 12px 38px rgba(0,0,0,.28),0 1px 0 var(--skin-line)!important;
+}
+
+/* Primary rail/sidebar */
+html[data-veux-wave] #vx73-rail,
+html[data-veux-wave] .vx73-rail,
+html[data-veux-wave] .sidenav,
+html[data-veux-wave] #sidenav{
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb,var(--skin-1) 91%,var(--skin-accent) 9%),
+      var(--skin-0)
+    )!important;
+  border-color:var(--skin-line)!important;
+  box-shadow:inset -1px 0 0 var(--skin-line)!important;
+}
+html[data-veux-wave] #vx73-rail button,
+html[data-veux-wave] .vx73-rail button{
+  color:var(--skin-text2)!important;
+  border-color:color-mix(in srgb,var(--skin-line) 65%,transparent)!important;
+  background:transparent!important;
+}
+html[data-veux-wave] #vx73-rail button:hover,
+html[data-veux-wave] #vx73-rail button.on,
+html[data-veux-wave] .vx73-rail button:hover,
+html[data-veux-wave] .vx73-rail button.on{
+  color:var(--skin-accent2)!important;
+  background:linear-gradient(90deg,var(--skin-soft),transparent)!important;
+  border-color:var(--skin-accent)!important;
+  box-shadow:inset 3px 0 0 var(--skin-accent)!important;
+}
+
+/* New uploaded Maison mark replaces the text M */
+html[data-veux-wave] .vx73-monogram{
+  font-size:0!important;
+  text-indent:-9999px!important;
+  width:46px!important;height:46px!important;
+  display:block!important;
+  margin:13px auto 14px!important;
+  background:var(--skin-accent)!important;
+  -webkit-mask:url("brand/maison-new-mark.png") center/78% auto no-repeat!important;
+  mask:url("brand/maison-new-mark.png") center/78% auto no-repeat!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+html[data-veux-wave] .vx73-monogram:hover{
+  background:var(--skin-accent2)!important;
+  filter:drop-shadow(0 0 12px var(--skin-glow));
+}
+
+/* Page canvases */
+html[data-veux-wave] #pm>.panel,
+html[data-veux-wave] .panel.on,
+html[data-veux-wave] .v148-page,
+html[data-veux-wave] .v152-page,
+html[data-veux-wave] .v1682-mob,
+html[data-veux-wave] .vx17-command{
+  background:
+    radial-gradient(circle at 94% 0%,var(--skin-soft),transparent 28%),
+    linear-gradient(155deg,var(--skin-0),var(--skin-1) 55%,var(--skin-0))!important;
+}
+
+/* The actual Season Matrix layout from the screenshot */
+html[data-veux-wave] .vx85-shell,
+html[data-veux-wave] .vx85-layout,
+html[data-veux-wave] .vx85-models,
+html[data-veux-wave] .vx85-calendar,
+html[data-veux-wave] .vx85-intel,
+html[data-veux-wave] .vx85-intelligence,
+html[data-veux-wave] .vx85-month,
+html[data-veux-wave] .vx85-grid,
+html[data-veux-wave] .vx83-month,
+html[data-veux-wave] .vx75-calendar{
+  background:var(--skin-0)!important;
+  border-color:var(--skin-line)!important;
+  color:var(--skin-text)!important;
+}
+html[data-veux-wave] .vx85-models{
+  background:linear-gradient(180deg,var(--skin-1),var(--skin-0))!important;
+}
+html[data-veux-wave] .vx85-intel,
+html[data-veux-wave] .vx85-intelligence,
+html[data-veux-wave] [class*="model-intel"]{
+  background:
+    radial-gradient(circle at 90% 0%,var(--skin-soft),transparent 34%),
+    linear-gradient(180deg,var(--skin-1),var(--skin-0))!important;
+}
+html[data-veux-wave] [data-month-day],
+html[data-veux-wave] [data-day],
+html[data-veux-wave] .vx85-day,
+html[data-veux-wave] .vx83-day{
+  background:color-mix(in srgb,var(--skin-card) 91%,var(--skin-accent) 9%)!important;
+  border-color:var(--skin-line)!important;
+}
+html[data-veux-wave] [data-month-day]:nth-child(even),
+html[data-veux-wave] .vx85-day:nth-child(even){
+  background:color-mix(in srgb,var(--skin-card2) 89%,var(--skin-accent) 11%)!important;
+}
+html[data-veux-wave] [data-month-day]:hover,
+html[data-veux-wave] [data-day]:hover{
+  background:color-mix(in srgb,var(--skin-card2) 78%,var(--skin-accent) 22%)!important;
+  border-color:var(--skin-accent)!important;
+}
+html[data-veux-wave] [data-month-day].selected,
+html[data-veux-wave] [data-day].selected{
+  box-shadow:inset 0 0 0 1px var(--skin-accent),0 0 24px var(--skin-soft)!important;
+}
+
+/* Intelligence cards/event rows */
+html[data-veux-wave] .vx75-event,
+html[data-veux-wave] .vx85-event,
+html[data-veux-wave] .vx161016-day-item,
+html[data-veux-wave] [data-event]{
+  background:color-mix(in srgb,var(--skin-card2) 94%,var(--skin-accent) 6%)!important;
+  border-color:var(--skin-line2)!important;
+  color:var(--skin-text)!important;
+}
+html[data-veux-wave] .vx75-event:hover,
+html[data-veux-wave] .vx85-event:hover,
+html[data-veux-wave] [data-event]:hover{
+  border-color:var(--skin-accent)!important;
+  background:color-mix(in srgb,var(--skin-card2) 82%,var(--skin-accent) 18%)!important;
+}
+
+/* All portal cards/surfaces */
+html[data-veux-wave] .card,
+html[data-veux-wave] [class*="-card"],
+html[data-veux-wave] .v148-card,
+html[data-veux-wave] .v152-card,
+html[data-veux-wave] .vx17-panel,
+html[data-veux-wave] .vx17-market,
+html[data-veux-wave] .vx17-kpi{
+  background:
+    linear-gradient(145deg,
+      color-mix(in srgb,var(--skin-card) 95%,var(--skin-accent) 5%),
+      var(--skin-card)
+    )!important;
+  border-color:var(--skin-line)!important;
+  color:var(--skin-text)!important;
+}
+
+/* Menus/modal/forms */
+html[data-veux-wave] [role="dialog"],
+html[data-veux-wave] .vx-select-menu,
+html[data-veux-wave] .modal,
+html[data-veux-wave] [class*="-modal"],
+html[data-veux-wave] #_notif-panel{
+  background:
+    linear-gradient(155deg,var(--skin-card2),var(--skin-1))!important;
+  border-color:var(--skin-line2)!important;
+  color:var(--skin-text)!important;
+  box-shadow:0 30px 90px rgba(0,0,0,.58),0 0 42px var(--skin-soft)!important;
+}
+html[data-veux-wave] input,
+html[data-veux-wave] textarea,
+html[data-veux-wave] select,
+html[data-veux-wave] .vx-select-btn{
+  background:color-mix(in srgb,var(--skin-0) 82%,var(--skin-card) 18%)!important;
+  border-color:var(--skin-line)!important;
+  color:var(--skin-text)!important;
+}
+html[data-veux-wave] .vx-select-option:hover,
+html[data-veux-wave] .vx-select-option.selected{
+  background:var(--skin-soft)!important;
+  color:var(--skin-accent2)!important;
+}
+
+/* Agency Command / Vera intelligence */
+html[data-veux-wave] .vx17-attention,
+html[data-veux-wave] .vx95-intelligence,
+html[data-veux-wave] [class*="intelligence"]{
+  background:
+    radial-gradient(circle at 88% 20%,var(--skin-glow),transparent 36%),
+    linear-gradient(115deg,var(--skin-card),color-mix(in srgb,var(--skin-card2) 80%,var(--skin-accent) 20%))!important;
+  border-color:var(--skin-line2)!important;
+}
+html[data-veux-wave] .vx17-bar{
+  background:linear-gradient(180deg,var(--skin-accent2),var(--skin-accent),color-mix(in srgb,var(--skin-accent) 35%,var(--skin-0) 65%))!important;
+}
+
+/* Buttons / selected states */
+html[data-veux-wave] .primary,
+html[data-veux-wave] .pri,
+html[data-veux-wave] .gold,
+html[data-veux-wave] button.primary,
+html[data-veux-wave] button.pri{
+  background:var(--skin-accent)!important;
+  border-color:var(--skin-accent)!important;
+  color:var(--skin-0)!important;
+}
+html[data-veux-wave] button:hover,
+html[data-veux-wave] .btn:hover{
+  border-color:var(--skin-accent)!important;
+}
+html[data-veux-wave] .on,
+html[data-veux-wave] [aria-selected="true"]{
+  --selected-wave:var(--skin-accent);
+}
+
+/* Hard reset of legacy literal black surface utilities */
+html[data-veux-wave] .vx73-shell,
+html[data-veux-wave] .vx77-single-nav{
+  background:var(--skin-0)!important;
+}
+
+/* Theme animation */
+html[data-veux-wave] body,
+html[data-veux-wave] #app,
+html[data-veux-wave] #vx73-rail,
+html[data-veux-wave] .topbar,
+html[data-veux-wave] #pm,
+html[data-veux-wave] .panel,
+html[data-veux-wave] .vx85-models,
+html[data-veux-wave] .vx85-intel,
+html[data-veux-wave] [data-month-day],
+html[data-veux-wave] [role="dialog"]{
+  transition:background .3s ease,background-color .3s ease,border-color .3s ease,color .22s ease,box-shadow .3s ease!important;
+}
+@media(prefers-reduced-motion:reduce){html[data-veux-wave] *{transition:none!important}}

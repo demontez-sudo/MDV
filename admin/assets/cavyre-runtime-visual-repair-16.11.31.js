@@ -1,0 +1,8 @@
+(function(){'use strict';if(window.__CAVYRE_161131__)return;window.__CAVYRE_161131__=1;
+function important(el,p,v){if(el)el.style.setProperty(p,v,'important')}
+function agenda(){var root=document.querySelector('#p-calendar .vx75-orbit'),rail=root&&root.querySelector(':scope > .vx161128-agenda-side-intel');if(!root||!rail)return;root.classList.add('vx161131-agenda-fixed');important(root,'display','grid');important(root,'grid-template-columns',innerWidth>1360?'minmax(0,1fr) 390px':'minmax(0,1fr) 340px');important(root,'gap','16px');var main=root.querySelector(':scope > main');important(main,'grid-column','1');important(rail,'grid-column','2');important(rail,'display','block');important(rail,'position','sticky');important(rail,'top','100px');var panel=rail.querySelector(':scope > .vx161125-native-panel');important(panel,'display','block');important(panel,'position','relative');important(panel,'opacity','1');important(panel,'visibility','visible');important(panel,'transform','none');}
+function packageMenus(){var page=document.getElementById('p-multipackage');if(!page)return;page.querySelectorAll('[role="listbox"],[class*="dropdown-menu"],[class*="select-menu"],[class*="options"]').forEach(function(menu){var o=menu.parentElement;if(!o)return;o.classList.add('vx161131-menu-owner');important(o,'position','relative');});}
+function stamp(){}
+function run(){agenda();packageMenus();stamp()}
+var mo=new MutationObserver(function(){requestAnimationFrame(run)});function boot(){run();mo.observe(document.body,{subtree:true,childList:true});window.addEventListener('resize',run,{passive:true})}document.readyState==='loading'?document.addEventListener('DOMContentLoaded',boot,{once:true}):boot();
+})();

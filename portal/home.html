@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Maison de Veux — Model Portal</title>
+<style>
+body{font-family:Arial,Helvetica,sans-serif;margin:0;background:#f5f1ea;color:#171512}
+main{min-height:100vh;display:grid;place-items:center;padding:32px}
+.card{max-width:680px;background:#fffdf8;border:1px solid #d8d0c4;padding:44px}
+h1{font-family:Georgia,serif;font-weight:400;font-size:42px;margin:0 0 18px}
+p{line-height:1.6;color:#645d54}
+a{display:inline-block;margin-top:18px;color:#171512}
+</style>
+<script>
+(function(){
+  var h=(location.hostname||'').toLowerCase();
+  if(h==='maisondeveux.com'||h.endsWith('.netlify.app')){
+    location.replace('https://www.maisondeveux.com'+location.pathname+location.search+location.hash);
+  }
+})();
+</script>
+</head>
+<body><main><div class="card">
+<div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#7a7268">Maison de Veux · Model Portal</div>
+<h1>Access verified.</h1>
+<p>Your model login has been verified. The secure Model Portal application can now load from this authenticated session.</p>
+<p>If your production Model Portal is deployed separately, route <strong>/portal/home</strong> to that application while keeping the same <strong>www.maisondeveux.com</strong> origin so the session remains available.</p>
+<a href="/portal/account">Account & Password</a>
+</div></main></body></html>

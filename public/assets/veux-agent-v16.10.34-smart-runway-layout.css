@@ -1,0 +1,135 @@
+
+/* VEUX Agent 16.10.34 — Smart Runway Collision Layout
+   Calculated event lanes own horizontal positioning. No visual stacking. */
+
+html[data-veux-wave] .vx95-day-column{
+  overflow:hidden!important;
+}
+
+/* IMPORTANT: restore lane geometry produced by runwayLayout(). */
+html[data-veux-wave] .vx95-runway-event{
+  left:var(--vx-runway-left)!important;
+  right:auto!important;
+  width:var(--vx-runway-width)!important;
+  top:var(--vx-runway-top)!important;
+  height:var(--vx-runway-height)!important;
+  min-width:0!important;
+  max-width:none!important;
+  box-sizing:border-box!important;
+  padding:8px 9px!important;
+  border-radius:7px!important;
+  overflow:hidden!important;
+}
+
+/* Smart density: progressively simplify cards as lanes get narrower. */
+html[data-veux-wave] .vx95-runway-event.lanes-1{
+  padding:9px 11px!important;
+}
+html[data-veux-wave] .vx95-runway-event.lanes-2{
+  padding:8px 9px!important;
+}
+html[data-veux-wave] .vx95-runway-event.lanes-3,
+html[data-veux-wave] .vx95-runway-event.lanes-4,
+html[data-veux-wave] .vx95-runway-event.lanes-5{
+  padding:7px 7px!important;
+}
+html[data-veux-wave] .vx95-runway-event.lanes-3 b,
+html[data-veux-wave] .vx95-runway-event.lanes-4 b,
+html[data-veux-wave] .vx95-runway-event.lanes-5 b{
+  font-size:8px!important;
+  line-height:1.18!important;
+}
+html[data-veux-wave] .vx95-runway-event.lanes-3 strong,
+html[data-veux-wave] .vx95-runway-event.lanes-4 strong,
+html[data-veux-wave] .vx95-runway-event.lanes-5 strong{
+  font-size:7px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+html[data-veux-wave] .vx95-runway-event.lanes-4 span,
+html[data-veux-wave] .vx95-runway-event.lanes-5 span{
+  display:none!important;
+}
+html[data-veux-wave] .vx95-runway-event.lanes-4 em,
+html[data-veux-wave] .vx95-runway-event.lanes-5 em{
+  font-size:5.5px!important;
+}
+html[data-veux-wave] .vx95-runway-event.lanes-5 small{
+  font-size:5.5px!important;
+}
+
+/* Visual lane separation */
+html[data-veux-wave] .vx95-runway-event{
+  border:1px solid color-mix(in srgb,var(--skin-line2) 78%,var(--skin-accent) 22%)!important;
+  box-shadow:
+    0 5px 14px rgba(0,0,0,.19),
+    inset 3px 0 0 color-mix(in srgb,var(--skin-accent) 56%,transparent)!important;
+}
+html[data-veux-wave] .vx95-runway-event:hover,
+html[data-veux-wave] .vx95-runway-event.selected{
+  z-index:40!important;
+  border-color:var(--skin-accent2)!important;
+  box-shadow:
+    0 12px 28px rgba(0,0,0,.34),
+    0 0 22px var(--skin-soft),
+    inset 3px 0 0 var(--skin-accent2)!important;
+}
+
+/* More readable title hierarchy */
+html[data-veux-wave] .vx95-runway-event b{
+  white-space:normal!important;
+  display:-webkit-box!important;
+  -webkit-box-orient:vertical!important;
+  -webkit-line-clamp:2!important;
+  overflow:hidden!important;
+}
+html[data-veux-wave] .vx95-runway-event strong{
+  display:block!important;
+  margin-top:4px!important;
+  color:var(--skin-text2)!important;
+  font-weight:560!important;
+}
+html[data-veux-wave] .vx95-runway-event span{
+  margin-top:3px!important;
+  opacity:.72!important;
+}
+
+/* Give each day enough horizontal room for true collision lanes. */
+html[data-veux-wave] .vx95-calendar-main{
+  min-width:0!important;
+}
+html[data-veux-wave] .vx95-timeline{
+  min-width:0!important;
+}
+html[data-veux-wave] .vx95-day-column{
+  min-width:0!important;
+}
+
+/* Full-day Intelligence is a smart companion rather than another crowded calendar. */
+html[data-veux-wave] .vx131-day-intel{
+  width:320px!important;
+  min-width:320px!important;
+}
+html[data-veux-wave] .vx131-schedule-item{
+  position:relative!important;
+}
+html[data-veux-wave] .vx131-schedule-item:hover{
+  padding-left:12px!important;
+}
+html[data-veux-wave] .vx131-schedule-item:hover:before{
+  content:"";
+  position:absolute!important;
+  left:0!important;top:8px!important;bottom:8px!important;
+  width:2px!important;
+  border-radius:2px!important;
+  background:var(--skin-accent)!important;
+}
+
+/* At extreme density, maintain legibility rather than growing cards. */
+@media(max-width:1300px){
+  html[data-veux-wave] .vx95-runway-event.lanes-4 strong,
+  html[data-veux-wave] .vx95-runway-event.lanes-5 strong{
+    display:none!important;
+  }
+}

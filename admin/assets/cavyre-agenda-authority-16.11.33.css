@@ -1,0 +1,154 @@
+
+/* CAVYRE 16.11.33 — Single Daily Agenda Layout Authority
+   This replaces the retired 16.11.28 / 16.11.29 side-intelligence CSS.
+   The :has() selector intentionally matches/exceeds the specificity of the retired rules. */
+
+@media (min-width:1081px){
+  #p-calendar .vx75-orbit:has(> .vx161128-agenda-side-intel){
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr) 380px!important;
+    grid-template-rows:minmax(0,1fr)!important;
+    gap:14px!important;
+    align-items:start!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    overflow:visible!important;
+  }
+
+  #p-calendar .vx75-orbit:has(> .vx161128-agenda-side-intel) > main{
+    grid-column:1!important;
+    grid-row:1!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:100%!important;
+    overflow:hidden!important;
+  }
+
+  #p-calendar .vx75-orbit:has(> .vx161128-agenda-side-intel) > .vx161128-agenda-side-intel{
+    grid-column:2!important;
+    grid-row:1!important;
+    display:grid!important;
+    grid-template-rows:auto minmax(0,1fr)!important;
+    position:sticky!important;
+    top:96px!important;
+    bottom:auto!important;
+    align-self:start!important;
+    width:380px!important;
+    min-width:380px!important;
+    max-width:380px!important;
+    height:calc(100vh - 120px)!important;
+    max-height:820px!important;
+    overflow:hidden!important;
+    z-index:70!important;
+    border:1px solid rgba(78,151,255,.38)!important;
+    border-radius:9px!important;
+    background:
+      radial-gradient(circle at 86% 0%,rgba(65,145,255,.09),transparent 26%),
+      linear-gradient(165deg,#0b1119,#070b11)!important;
+    box-shadow:0 18px 44px rgba(0,0,0,.34)!important;
+  }
+
+  #p-calendar .vx161128-agenda-side-intel > .vx161125-native-bar{
+    display:grid!important;
+    grid-template-columns:1fr!important;
+    gap:9px!important;
+    min-height:96px!important;
+    padding:13px 14px!important;
+    border:0!important;
+    border-bottom:1px solid rgba(78,151,255,.2)!important;
+    background:rgba(255,255,255,.018)!important;
+    box-shadow:none!important;
+    cursor:default!important;
+  }
+
+  #p-calendar .vx161128-agenda-side-intel .vx161125-native-brand b{
+    font-size:13px!important;
+    white-space:normal!important;
+    line-height:1.25!important;
+  }
+
+  #p-calendar .vx161128-agenda-side-intel .vx161125-native-stats{
+    width:100%!important;
+    display:grid!important;
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    padding-top:8px!important;
+    border-top:1px solid rgba(255,255,255,.07)!important;
+  }
+
+  #p-calendar .vx161128-agenda-side-intel .vx161125-native-open{
+    display:none!important;
+  }
+
+  #p-calendar .vx161128-agenda-side-intel > .vx161125-native-panel{
+    display:block!important;
+    position:relative!important;
+    inset:auto!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    max-height:none!important;
+    opacity:1!important;
+    visibility:visible!important;
+    transform:none!important;
+    transition:none!important;
+    border:0!important;
+    box-shadow:none!important;
+    background:transparent!important;
+    overflow:hidden!important;
+  }
+
+  #p-calendar .vx161128-agenda-side-intel > .vx161125-native-panel > header{
+    display:none!important;
+  }
+
+  #p-calendar .vx161128-agenda-side-intel .vx161125-native-content{
+    display:block!important;
+    width:100%!important;
+    height:100%!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    padding:12px!important;
+  }
+
+  #p-calendar .vx161128-agenda-side-intel .vx89-event-intel,
+  #p-calendar .vx161128-agenda-side-intel .vx75-intel{
+    display:block!important;
+    position:relative!important;
+    inset:auto!important;
+    width:100%!important;
+    min-width:0!important;
+    max-width:none!important;
+    margin:0!important;
+    border:0!important;
+    background:transparent!important;
+  }
+
+  #p-calendar .vx161128-agenda-side-intel .vx89-event-intel > *,
+  #p-calendar .vx161128-agenda-side-intel .vx75-intel > *{
+    width:100%!important;
+    min-width:0!important;
+    margin:0 0 10px!important;
+  }
+}
+
+@media (min-width:1081px) and (max-width:1360px){
+  #p-calendar .vx75-orbit:has(> .vx161128-agenda-side-intel){
+    grid-template-columns:minmax(0,1fr) 330px!important;
+  }
+
+  #p-calendar .vx75-orbit:has(> .vx161128-agenda-side-intel) > .vx161128-agenda-side-intel{
+    width:330px!important;
+    min-width:330px!important;
+    max-width:330px!important;
+  }
+}
+
+@media (max-width:1080px){
+  #p-calendar .vx75-orbit{
+    display:grid!important;
+    grid-template-columns:minmax(0,1fr)!important;
+    grid-template-rows:auto auto!important;
+  }
+}

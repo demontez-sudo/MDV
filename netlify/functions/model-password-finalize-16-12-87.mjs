@@ -1,0 +1,2 @@
+import { handler as authority } from './model-password-authority.mjs';
+export async function handler(event){let body={};try{body=event.body?JSON.parse(event.body):{}}catch{};const recovery_token=body.recovery_token||body.token_hash||body.token||'';const new_password=body.new_password||body.password||'';return authority({...event,body:JSON.stringify({action:'recover',recovery_token,new_password})});}

@@ -1,0 +1,9 @@
+(function(){
+'use strict';
+if(window.__CAVYRE_ORBIT_CINEMATIC_161319__)return;window.__CAVYRE_ORBIT_CINEMATIC_161319__=1;
+function decorate(){document.querySelectorAll('.vx75-orbit>main').forEach(function(main){if(main.querySelector('.cvy-orbit-space'))return;var space=document.createElement('div');space.className='cvy-orbit-space';for(var i=0;i<28;i++){var s=document.createElement('i');s.style.setProperty('--x',((i*37)%97)+'%');s.style.setProperty('--y',((i*61)%89)+'%');s.style.setProperty('--z',String((i%5)+1));space.appendChild(s);}main.prepend(space);var dial=main.querySelector('.vx75-dial');if(dial){['deep','mid','high'].forEach(function(k){var p=document.createElement('div');p.className='cvy-orbit-depth cvy-'+k;dial.prepend(p);});var beam=document.createElement('div');beam.className='cvy-orbit-beam';dial.prepend(beam);}
+ if(!main.__cvyParallax){main.__cvyParallax=1;main.addEventListener('pointermove',function(e){var r=main.getBoundingClientRect();main.style.setProperty('--mx',((e.clientX-r.left)/Math.max(1,r.width)*100).toFixed(1)+'%');main.style.setProperty('--my',((e.clientY-r.top)/Math.max(1,r.height)*100).toFixed(1)+'%');main.style.setProperty('--rx',((((e.clientY-r.top)/Math.max(1,r.height))-.5)*-3).toFixed(2)+'deg');main.style.setProperty('--rz',((((e.clientX-r.left)/Math.max(1,r.width))-.5)*2.4).toFixed(2)+'deg');},{passive:true});main.addEventListener('pointerleave',function(){main.style.setProperty('--rx','0deg');main.style.setProperty('--rz','0deg');},{passive:true});}
+});}
+var q=false;function tick(){if(q)return;q=true;requestAnimationFrame(function(){q=false;decorate();});}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',tick,{once:true});else tick();new MutationObserver(function(m){for(var i=0;i<m.length;i++)if(m[i].addedNodes&&m[i].addedNodes.length){tick();break;}}).observe(document.documentElement,{subtree:true,childList:true});
+})();
