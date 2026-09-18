@@ -1,0 +1,13 @@
+{
+  "name": "maison-models-standalone",
+  "version": "16.9.73",
+  "private": true,
+  "type": "module",
+  "description": "Maison de Veux standalone Model Portal with restored authenticated API gateway",
+  "dependencies": {
+    "@supabase/supabase-js": "2.112.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

@@ -27,7 +27,11 @@ variables in Netlify; nothing secret lives in this repo.
 
 ## Known gaps
 
-- `model-portal` and `mother-agency-portal` came from Netlify deploy exports, which do not include
-  Netlify Function source. Their backends (e.g. `model-legacy-gateway`) are not in this repo.
-- `main-site/netlify.toml` and `mother-agency-portal/netlify.toml` declare `publish = "public"` but
-  have no `public/` folder; the real setting is presumably in the Netlify dashboard.
+- `model-portal/netlify` (from the 16.9.73 standalone project) and `mother-agency-portal/netlify`
+  (from the 16.7.16 project) are the backend functions recovered from older project folders, because
+  Netlify deploy downloads do not include function source. Their `netlify.toml` files are identical
+  to the ones deployed, so they match production. Netlify's dashboard cannot download function source.
+- Layout: agent-portal, mother-agency-portal and model-portal publish `public/` and keep functions
+  in `netlify/functions`. main-site publishes its own folder root (`publish = "."`).
+- The main site also proxies ~40 individual model pages (`/adenike`, `/ayan`, ...) to separate
+  `maison-<name>.netlify.app` sites. Those sites are not part of this repo.

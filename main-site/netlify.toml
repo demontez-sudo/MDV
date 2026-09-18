@@ -1,5 +1,5 @@
 [build]
-  publish = "public"
+  publish = "."
   functions = "netlify/functions"
 
 # Maison de Veux — main public site

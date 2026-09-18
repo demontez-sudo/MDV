@@ -1,0 +1,29 @@
+{
+  "name": "veux-desk-mother-agency-portal",
+  "version": "16.7.16",
+  "private": true,
+  "type": "module",
+  "description": "Mother Agency Portal \u2014 VEUX DESK 16.7.16 unified design and interaction system.",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check:v16": "node scripts/check-v16.mjs",
+    "check:contracts": "node scripts/check-portal-contracts.mjs",
+    "check:release": "npm run check:v16 && npm run check:contracts && npm run check:route && npm run check:1678-bootstrap && npm run check:1679-query && npm run check:16710-shell && npm run check:16711-calendar && npm run check:16712-write && npm run check:16713-access && npm run check:16714-smart",
+    "check:rc": "npm run check:release && node scripts/check-rc.mjs && npm run check:16715-mobile && npm run check:16716-design",
+    "check:route": "node scripts/check-branded-route.mjs",
+    "check:1678-bootstrap": "node scripts/check-bootstrap-1678.mjs",
+    "check:1679-query": "node scripts/check-query-integrity-1679.mjs",
+    "check:16710-shell": "node scripts/check-shell-handoff-16710.mjs",
+    "check:16711-calendar": "node scripts/check-calendar-16711.mjs",
+    "check:16712-write": "node scripts/check-write-integrity-16712.mjs",
+    "check:16713-access": "node scripts/check-access-16713.mjs",
+    "check:16714-smart": "node scripts/check-smart-calendar-16714.mjs",
+    "check:16715-mobile": "node scripts/check-mobile-certification-16715.mjs",
+    "check:16716-design": "node scripts/check-design-system-16716.mjs"
+  }
+}
