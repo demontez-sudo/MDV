@@ -18,6 +18,7 @@ export const handler=async(event)=>{
       }
       const normalizedAction=String(body.action||action||'').toLowerCase();
       if(normalizedAction==='assign' || normalizedAction==='bulk_assign'){
+        const admin=await requirePermission(user.id,organization.id,'tasks.write');
         const ids=normalizedAction==='assign'?[body.task_id]:(Array.isArray(body.task_ids)?body.task_ids:[]);
         const memberId=body.member_id||body.assigned_member_id||null;
         if(!ids.length||!memberId)return json(400,{error:'Task and assignee are required'});
