@@ -39,7 +39,7 @@ function render(el,d,cal){
  var target=el.querySelector('.v1682-tabs');if(target&&!el.querySelector('.cvsm-command'))target.insertAdjacentHTML('beforebegin',html);
 }
 async function enhance(el){try{var d=await api('/api/agent/mobility?organization='+encodeURIComponent(org()));var cal=await api('/api/agent/calendar/v9?organization='+encodeURIComponent(org())).catch(function(){return{events:[]}});render(el,d,cal)}catch(e){console.warn('[CAVYRE Smart Mobility]',e)}}
-function wrap(){var old=window.renderGlobalMobility;if(typeof old!=='function'||old.__cvsm)return false;var fn=function(el){var r=old.apply(this,arguments);setTimeout(function(){if(el&&el.isConnected)enhance(el)},300);return r};fn.__cvsm=true;window.renderGlobalMobility=fn;return true}
+function wrap(){return true;var old=window.renderGlobalMobility;if(typeof old!=='function'||old.__cvsm)return false;var fn=function(el){var r=old.apply(this,arguments);setTimeout(function(){if(el&&el.isConnected)enhance(el)},300);return r};fn.__cvsm=true;window.renderGlobalMobility=fn;return true}
 var tries=0,t=setInterval(function(){tries++;if(wrap()||tries>60)clearInterval(t)},100);
 console.info('[CAVYRE] Smart Mobility 16.10.36 loaded');
 })();

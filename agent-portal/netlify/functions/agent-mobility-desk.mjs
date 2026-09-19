@@ -26,6 +26,23 @@ function oneOf(value,allowed,fallback,aliases={}){
 }
 function validationError(message,code='MOBILITY_VALIDATION_ERROR'){const e=new Error(message);e.statusCode=400;e.code=code;return e;}
 function countryCode(value){const code=String(value||'').trim().toUpperCase();if(!/^[A-Z]{2}$/.test(code))throw validationError('Enter a valid 2-letter country code.','MOBILITY_COUNTRY_INVALID');return code;}
+
+const PLACE_CODES=[['FR',/\b(france|paris|lyon|nice|marseille)\b/i],['IT',/\b(italy|milan|milano|rome|roma|florence)\b/i],['GB',/\b(united kingdom|uk|england|london|manchester)\b/i],['US',/\b(united states|usa|new york|nyc|los angeles|miami|atlanta|chicago)\b/i],['DE',/\b(germany|berlin|munich|hamburg)\b/i],['ES',/\b(spain|madrid|barcelona)\b/i],['NL',/\b(netherlands|amsterdam)\b/i],['PT',/\b(portugal|lisbon|porto)\b/i],['BE',/\b(belgium|brussels)\b/i],['CH',/\b(switzerland|zurich|geneva)\b/i],['DK',/\b(denmark|copenhagen)\b/i],['SE',/\b(sweden|stockholm)\b/i],['JP',/\b(japan|tokyo)\b/i],['CN',/\b(china|shanghai|beijing)\b/i],['CA',/\b(canada|toronto|vancouver|montreal)\b/i],['AU',/\b(australia|sydney|melbourne)\b/i],['AE',/\b(uae|dubai|abu dhabi)\b/i],['ZA',/\b(south africa|cape town|johannesburg)\b/i],['NG',/\b(nigeria|lagos)\b/i],['BR',/\b(brazil|sao paulo|são paulo|rio)\b/i]];
+const SCHENGEN=new Set(['FR','IT','DE','ES','NL','PT','BE','CH','DK','SE','AT','GR','FI','NO','PL','CZ','HU','LU','MT','IS','EE','LV','LT','SK','SI','LI','HR']);
+function placeCountry(text){const t=String(text||'').trim();if(!t)return null;const tail=t.match(/[,\s]([A-Za-z]{2})$/);if(tail&&/,\s*[A-Za-z]{2}$/.test(t))return tail[1].toUpperCase();for(const [code,re] of PLACE_CODES)if(re.test(t))return code;return null;}
+function visaGateFor(trip,visas){
+  const code=placeCountry(trip.destination);if(!code)return {state:'unknown',country_code:null,message:'Destination country not recognised — add the country to check visa clearance.'};
+  const start=trip.starts_at?String(trip.starts_at).slice(0,10):null;
+  const mine=visas.filter(v=>v.model_id===trip.model_id&&(v.country_code===code||(/schengen/i.test(String(v.visa_type||''))&&SCHENGEN.has(code)&&SCHENGEN.has(v.country_code))));
+  if(!mine.length)return {state:'none',country_code:code,message:`No visa case on file for ${code}. Confirm the model does not need one.`};
+  const good=mine.filter(v=>/^(approved|issued)$/.test(String(v.status||'')));
+  const valid=good.find(v=>!v.expires_on||!start||String(v.expires_on).slice(0,10)>=start);
+  if(valid)return {state:'clear',country_code:code,visa_case_id:valid.id,message:`Visa ${valid.status}${valid.expires_on?` · valid to ${String(valid.expires_on).slice(0,10)}`:''}.`};
+  if(good.length)return {state:'expired',country_code:code,visa_case_id:good[0].id,message:`Visa expires before this trip starts (${String(good[0].expires_on).slice(0,10)}).`};
+  const open=mine.find(v=>!/^(refused|cancelled|expired)$/.test(String(v.status||'')))||mine[0];
+  return {state:'pending',country_code:code,visa_case_id:open.id,message:`Visa ${String(open.status||'not started').replace(/_/g,' ')} — must be approved before travel is confirmed.`};
+}
+const VISA_AUTO_DATES={submitted:'submitted_on',processing:'submitted_on',approved:'approved_on',issued:'issued_on'};
 function currencyCode(value){const code=String(value||'USD').trim().toUpperCase();if(!/^[A-Z]{3}$/.test(code))throw validationError('Enter a valid 3-letter currency code.','MOBILITY_CURRENCY_INVALID');return code;}
 function moneyValue(value){if(value==null||value==='')return null;const n=Number(value);if(!Number.isFinite(n)||n<0)throw validationError('Cost must be a valid non-negative number.','MOBILITY_COST_INVALID');return n;}
 function validateTemporal(value,label){if(value&& !Number.isFinite(Date.parse(value)))throw validationError(`${label} is invalid.`,'MOBILITY_DATE_INVALID');return value||null;}
@@ -186,11 +203,16 @@ export const handler=async(event)=>{
       const profileMap=new Map(profiles.map(p=>[p.user_id,p]));
       const hydrateModel=(r)=>({...r,models:modelMap.get(r.model_id)||null});
       const hydratedPassports=passports.map(hydrateModel);
-      const hydratedVisa=visaCases.map(r=>({...hydrateModel(r),companies:companyMap.get(r.sponsor_company_id)||null,documents:visaDocuments.filter(d=>d.visa_case_id===r.id)}));
+      const visaFileIds=[...new Set(visaCases.flatMap(v=>Array.isArray(v.metadata?.documents)?v.metadata.documents.map(d=>d.id):[]).filter(Boolean))];
+      const visaFileDocs=visaFileIds.length?await safeRows(admin.from('documents').select('id,name,mime_type,storage_provider,storage_bucket,storage_path,external_url,status').eq('organization_id',organization.id).in('id',visaFileIds),'visa_files',warnings):[];
+      const visaFileMap=new Map();
+      for(const d of visaFileDocs){let url=d.external_url||null;if(d.storage_provider==='supabase'&&d.storage_bucket&&d.storage_path){try{const sg=await admin.storage.from(d.storage_bucket).createSignedUrl(d.storage_path,900);if(!sg.error)url=sg.data?.signedUrl||null;}catch(_e){}}visaFileMap.set(d.id,{id:d.id,name:d.name,mime_type:d.mime_type,url,status:d.status});}
+      const visaFilesFor=r=>(Array.isArray(r.metadata?.documents)?r.metadata.documents:[]).map(d=>({...d,...(visaFileMap.get(d.id)||{}),doc_type:d.doc_type||'document',uploaded_at:d.uploaded_at||null})).filter(d=>d.name||d.url);
+      const hydratedVisa=visaCases.map(r=>({...hydrateModel(r),companies:companyMap.get(r.sponsor_company_id)||null,documents:visaDocuments.filter(d=>d.visa_case_id===r.id),files:visaFilesFor(r)}));
       const hydratedAuth=workAuth.map(hydrateModel);
       const travelIdSet=new Set(travelIds);
       const scopedSegments=segments.filter(s=>travelIdSet.has(s.travel_record_id));
-      const hydratedTravel=travel.map(r=>({...hydrateModel(r),segments:scopedSegments.filter(s=>s.travel_record_id===r.id),housing:housing.filter(h=>h.travel_record_id===r.id).map(hydrateModel)}));
+      const hydratedTravel=travel.map(r=>({...hydrateModel(r),visa_gate:visaGateFor(r,visaCases),segments:scopedSegments.filter(s=>s.travel_record_id===r.id),housing:housing.filter(h=>h.travel_record_id===r.id).map(hydrateModel)}));
       const modelTravelCards=hydratedTravel.filter(r=>r.visible_to_model!==false&&String(r.status||'').toLowerCase()!=='cancelled').map(r=>({
         id:r.id,model_id:r.model_id,status:r.status,purpose:r.purpose||null,origin:r.origin||null,destination:r.destination||null,starts_at:r.starts_at||null,ends_at:r.ends_at||null,booking_id:r.booking_id||null,
         segments:(Array.isArray(r.segments)?r.segments:[]).map(s=>({id:s.id,segment_type:s.segment_type,provider:s.provider||null,confirmation_number:s.confirmation_number||null,origin:s.origin||null,destination:s.destination||null,departs_at:s.departs_at||null,arrives_at:s.arrives_at||null})),
@@ -282,15 +304,38 @@ export const handler=async(event)=>{
     if(action==='save_visa'){
       const payload={organization_id:organization.id,model_id:body.model_id,country_code:countryCode(body.country_code),visa_type:body.visa_type||null,case_type:oneOf(body.case_type,['visa','residency','work_permit','eta','other'],'visa',{work_visa:'work_permit',business_visa:'visa',residence:'residency',schengen:'visa'}),status:oneOf(body.status,['not_started','gathering_documents','appointment_pending','submitted','processing','approved','issued','refused','expired','cancelled'],'not_started'),sponsor_company_id:body.sponsor_company_id||null,assigned_member_id:body.assigned_member_id||null,appointment_at:body.appointment_at||null,submitted_on:body.submitted_on||null,approved_on:body.approved_on||null,issued_on:body.issued_on||null,valid_from:body.valid_from||null,expires_on:body.expires_on||null,hard_deadline:body.hard_deadline||null,reference_number:body.reference_number||null,consulate:body.consulate||null,notes:body.notes||null,visible_to_model:body.visible_to_model!==false,visible_to_partner:body.visible_to_partner!==false};
       if(!payload.model_id)throw validationError('model_id is required.');
+      {const auto=VISA_AUTO_DATES[payload.status];if(auto&&!payload[auto])payload[auto]=new Date().toISOString().slice(0,10);}
+      if(payload.status==='approved'&&!payload.approved_on)payload.approved_on=new Date().toISOString().slice(0,10);
+      {let meta=null;
+        if(body.id){const {data:cur,error:curErr}=await admin.from('visa_cases').select('metadata').eq('organization_id',organization.id).eq('id',body.id).maybeSingle();if(curErr)throw curErr;meta=cur?.metadata&&typeof cur.metadata==='object'?{...cur.metadata}:{};}
+        const addDocs=Array.isArray(body.add_documents)?body.add_documents:[],rmDocs=new Set(Array.isArray(body.remove_document_ids)?body.remove_document_ids.map(String):[]);
+        if(addDocs.length||rmDocs.size){meta=meta||{};let list=Array.isArray(meta.documents)?meta.documents.filter(d=>!rmDocs.has(String(d.id))):[];for(const d of addDocs){if(!d||!d.id||list.some(x=>x.id===d.id))continue;list.push({id:String(d.id),name:String(d.name||'Document').slice(0,200),doc_type:String(d.doc_type||'document').slice(0,40),uploaded_at:new Date().toISOString()});}meta.documents=list;}
+        if(meta)payload.metadata={...(payload.metadata||{}),...meta};}
       for(const [value,label] of [[payload.appointment_at,'Appointment'],[payload.submitted_on,'Submitted date'],[payload.approved_on,'Approved date'],[payload.issued_on,'Issued date'],[payload.valid_from,'Valid from'],[payload.expires_on,'Expiry date'],[payload.hard_deadline,'Hard deadline']])validateTemporal(value,label);
       validateRange(payload.valid_from,payload.expires_on,'Valid from','Expiry date');
       if(body.source_task_id){const {data:sourceTask,error:sourceError}=await admin.from('tasks').select('id,model_id,title').eq('organization_id',organization.id).eq('id',body.source_task_id).maybeSingle();if(sourceError)throw sourceError;if(!sourceTask)throw validationError('Source visa task was not found.','MOBILITY_VISA_SOURCE_TASK_MISSING');if(sourceTask.model_id!==payload.model_id)throw validationError('Source visa task belongs to a different model.','MOBILITY_VISA_SOURCE_TASK_MODEL_MISMATCH');payload.metadata={source:'visa_task_recovery',source_task_id:sourceTask.id,source_task_title:sourceTask.title,recovered_at:new Date().toISOString()};}
       let q=body.id?admin.from('visa_cases').update(payload).eq('organization_id',organization.id).eq('id',body.id):admin.from('visa_cases').insert(payload);const {data,error}=await q.select('*').single();if(error)throw error;const calendar_events=await syncVisaCalendar(admin,organization.id,user.id,data);const notification_warning=await notifyMobilityStateSafe(admin,organization.id,data,'visa');return json(200,{ok:true,verified:true,visa_case:data,calendar_synced:calendar_events.length>0,calendar_events,notification_warning,persisted_at:data?.updated_at||data?.created_at||new Date().toISOString()});
     }
+    if(action==='set_visa_status'){
+      const st=oneOf(body.status,['not_started','gathering_documents','appointment_pending','submitted','processing','approved','issued','refused','expired','cancelled'],null);
+      if(!body.id||!st)throw validationError('id and a valid status are required.');
+      const patch={status:st};const today=new Date().toISOString().slice(0,10);
+      const {data:cur,error:curErr}=await admin.from('visa_cases').select('*').eq('organization_id',organization.id).eq('id',body.id).maybeSingle();if(curErr)throw curErr;if(!cur)throw validationError('Visa case not found.');
+      const auto=VISA_AUTO_DATES[st];if(auto&&!cur[auto])patch[auto]=today;
+      if(st==='issued'&&!cur.approved_on)patch.approved_on=today;
+      const {data,error}=await admin.from('visa_cases').update(patch).eq('organization_id',organization.id).eq('id',body.id).select('*').single();if(error)throw error;
+      const calendar_events=await syncVisaCalendar(admin,organization.id,user.id,data);const notification_warning=await notifyMobilityStateSafe(admin,organization.id,data,'visa');
+      return json(200,{ok:true,verified:true,visa_case:data,calendar_events,notification_warning,persisted_at:data?.updated_at||new Date().toISOString()});
+    }
     if(action==='save_travel'){
       const payload={organization_id:organization.id,model_id:body.model_id,booking_id:body.booking_id||null,season_id:body.season_id||null,purpose:body.purpose||null,origin:body.origin||null,destination:String(body.destination||'').trim(),starts_at:body.starts_at||null,ends_at:body.ends_at||null,status:oneOf(body.status,['planning','requested','booked','confirmed','in_progress','completed','cancelled'],'planning'),assigned_member_id:body.assigned_member_id||null,cost_amount:moneyValue(body.cost_amount),currency:currencyCode(body.currency),paid_by:body.paid_by?oneOf(body.paid_by,['agency','model','mother_agency','client','split','other'],null):null,visible_to_model:body.visible_to_model!==false,visible_to_partner:body.visible_to_partner!==false,notes:body.notes||null};
       if(!payload.model_id||!payload.destination)throw validationError('model_id and destination are required.');
       if(!payload.starts_at)throw validationError('Travel start date/time is required.');
+      if(['booked','confirmed','in_progress'].includes(payload.status)){
+        const visas=await rows(admin.from('visa_cases').select('id,model_id,country_code,visa_type,status,expires_on').eq('organization_id',organization.id).eq('model_id',payload.model_id));
+        const gate=visaGateFor(payload,visas);
+        if(gate.state==='pending'||gate.state==='expired')throw validationError(`Travel cannot be ${payload.status} yet. ${gate.message}`,'MOBILITY_VISA_NOT_APPROVED');
+      }
       validateRange(payload.starts_at,payload.ends_at,'Start date/time','End date/time');
       if(payload.booking_id){
         let linked=null,assigned=false;
