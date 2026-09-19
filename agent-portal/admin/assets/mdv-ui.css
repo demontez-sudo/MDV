@@ -262,3 +262,33 @@ html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-stats>
 html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-stats>span small{font-size:12px!important}
 @media(max-width:1000px){html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview{grid-template-columns:1fr!important}html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview>*{grid-column:1!important;grid-row:auto!important}}
 html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx161112-week-date{justify-content:flex-start!important}
+
+/* ===== global type system: Inter, calm sizes, no wide tracking ===== */
+html body :is(.ph-h1,.v152-head h1,.v155-head h1,.v1686-pagehead h1,.v144-page h1,.vx75-error h1){font:600 26px/1.2 'Inter',sans-serif!important;letter-spacing:-.012em!important;text-transform:none!important}
+html body :is(.ph-h1,.v152-head h1,.v155-head h1) em{font-family:'Inter',sans-serif!important;font-style:normal!important;color:var(--mdv-gold-2)!important}
+html body :is(.ph-eye,.ph-sub,.v152-head>div>span,.v155-head span,.v1686-pagehead small){font-family:'Inter',sans-serif!important;letter-spacing:.06em!important;font-size:11px!important}
+html body :is(.ph-sub,.v152-head p,.v155-head p){letter-spacing:0!important;font-size:13px!important;text-transform:none!important}
+html body :is(.stat b,.stat strong,.v152-stat strong,.v155-stat strong,.vx17-kpi b,.v1686-kpi b){font:600 24px/1.1 'Inter',sans-serif!important;letter-spacing:-.01em!important;font-variant-numeric:lining-nums}
+html body :is(.vx17-hero h1,.vx17-hero h2,[class*="hero"] h1){font:600 clamp(26px,2.6vw,36px)/1.2 'Inter',sans-serif!important;letter-spacing:-.015em!important;text-transform:none!important}
+html body :is(.vx17-hero p,[class*="hero"]>p){font-size:14px!important;letter-spacing:0!important}
+html body :is(.sn-grp-hd,.sn-b,.vx73-rail button span){font-family:'Inter',sans-serif!important;letter-spacing:.01em!important;text-transform:none!important}
+html body .sn-grp-hd{font-size:13px!important;font-weight:600!important}
+/* sidebar flyout submenu */
+html body #vx81-nav-flyout{font-family:'Inter',sans-serif!important;background:var(--mdv-panel)!important;border:1px solid var(--mdv-line)!important;border-radius:16px!important;box-shadow:0 30px 80px rgba(0,0,0,.55)!important;overflow:hidden;backdrop-filter:blur(18px)}
+html body #vx81-nav-flyout>header{display:flex!important;align-items:center;gap:14px;padding:16px 18px!important;border:0!important;border-bottom:1px solid var(--mdv-line-2)!important;background:linear-gradient(90deg,color-mix(in srgb,var(--mdv-gold) 8%,transparent),transparent)!important}
+html body #vx81-nav-flyout>header>i{width:38px;height:38px;display:grid;place-items:center;border-radius:11px;background:color-mix(in srgb,var(--mdv-gold) 14%,transparent);border:1px solid var(--mdv-line);color:var(--mdv-gold-2)!important;font-size:19px!important}
+html body #vx81-nav-flyout>header small{display:block;font:600 10px 'Inter',sans-serif!important;letter-spacing:.1em!important;text-transform:uppercase;color:var(--mdv-gold)!important;margin:0 0 3px!important}
+html body #vx81-nav-flyout>header h2{font:600 18px/1.2 'Inter',sans-serif!important;letter-spacing:-.01em!important;text-transform:none!important;color:#fff!important;margin:0!important}
+html body #vx81-nav-flyout>header>button{margin-left:auto;width:32px!important;height:32px!important;border:1px solid var(--mdv-line-2)!important;border-radius:9px!important;background:transparent!important;color:var(--mdv-mute)!important;font:400 18px/1 'Inter',sans-serif!important;clip-path:none!important;cursor:pointer}
+html body #vx81-nav-flyout>nav{padding:8px!important}
+html body #vx81-nav-flyout>nav>button{display:flex!important;align-items:center;justify-content:space-between;width:100%;padding:12px 14px!important;margin:2px 0!important;border:0!important;border-left:2px solid transparent!important;border-radius:10px!important;background:transparent!important;color:var(--mdv-ink)!important;font:500 14px 'Inter',sans-serif!important;letter-spacing:0!important;text-transform:none!important;text-align:left;cursor:pointer;clip-path:none!important;box-shadow:none!important;transform:none!important;transition:background .12s}
+html body #vx81-nav-flyout>nav>button span{font:500 14px 'Inter',sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+html body #vx81-nav-flyout>nav>button:hover{background:color-mix(in srgb,var(--mdv-gold) 10%,transparent)!important}
+html body #vx81-nav-flyout>nav>button.on,html body #vx81-nav-flyout>nav>button.active{background:color-mix(in srgb,var(--mdv-gold) 14%,transparent)!important;border-left-color:var(--mdv-gold)!important;color:var(--mdv-gold-2)!important}
+html body #vx81-nav-flyout>nav>button>i{color:var(--mdv-mute)!important;font-size:14px!important}
+/* operations panel (rail) */
+html body .cvy167-ops{font-family:'Inter',sans-serif!important}
+html body .cvy167-ops h2{font:600 18px 'Inter',sans-serif!important;letter-spacing:-.01em!important;text-transform:none!important}
+html body .cvy167-ops small{letter-spacing:.06em!important}
+html body .cvy167-ops nav button b{font:600 14px 'Inter',sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+html body .cvy167-ops nav button small{font:400 12px 'Inter',sans-serif!important;letter-spacing:0!important;text-transform:none!important}

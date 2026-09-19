@@ -30,6 +30,18 @@ export const handler=async(event)=>{
         }
         return json(200,{ok:true,verified:true,task,persisted_at:new Date().toISOString()});
       }
+      if(action==='add_comment'){
+        const admin=await requirePermission(user.id,organization.id,'tasks.write');
+        const taskId=String(body.task_id||'').trim(),text=String(body.body||'').trim().slice(0,4000);
+        if(!taskId||!text)return json(400,{error:'task_id and comment text are required'});
+        const {data:owned,error:ownErr}=await admin.from('tasks').select('id').eq('organization_id',organization.id).eq('id',taskId).maybeSingle();if(ownErr)throw ownErr;if(!owned)return json(404,{error:'Task not found'});
+        const base={organization_id:organization.id,task_id:taskId};
+        const variants=[{author_id:user.id,body:text},{user_id:user.id,body:text},{created_by:user.id,body:text},{author_id:user.id,comment:text},{author_user_id:user.id,body:text},{author_id:user.id,content:text},{body:text}];
+        let saved=null,lastError=null;
+        for(const v of variants){const {data,error}=await admin.from('task_comments').insert({...base,...v}).select('*').single();if(!error){saved=data;break;}lastError=error;if(!['42703','PGRST204','PGRST102','23502'].includes(String(error.code||'')))break;}
+        if(!saved)return json(400,{error:'Comment could not be saved: '+(lastError?.message||'unknown error')});
+        return json(200,{ok:true,verified:true,comment:saved,persisted_at:new Date().toISOString()});
+      }
       if(action==='approval_decision'){
         const {data,error}=await client.rpc('decide_approval_request',{target_org:organization.id,target_request:body.request_id,target_status:body.status,decision_note_value:body.note||null});if(error)throw error;return json(200,{ok:true,verified:true,approval:data,persisted_at:new Date().toISOString()});
       }
