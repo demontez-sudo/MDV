@@ -235,3 +235,30 @@ html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-overvi
 html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-stats{align-items:start!important;align-content:start!important;height:auto!important;min-height:0!important}
 html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-stats>span{align-self:start!important;justify-content:flex-start!important;aspect-ratio:auto!important}
 html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-overview>header{align-self:start!important}
+/* ===== week: day header, horizontal breakdown, icon badges ===== */
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx161112-week-head{flex-direction:column!important;align-items:flex-start!important;justify-content:flex-start!important;gap:10px!important;padding:16px 16px 14px!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx161112-week-date{align-items:baseline!important;gap:10px!important;width:100%}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx161112-week-date small{font:600 12px/1 'Inter',sans-serif!important;letter-spacing:.1em!important;color:var(--mdv-gold)!important;text-transform:uppercase}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx161112-week-date b{font:600 30px/1 'Inter',sans-serif!important;color:#fff!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx161112-week-metrics{gap:8px!important;flex-wrap:nowrap;width:100%}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx161112-week-metrics span{display:inline-flex!important;align-items:baseline;gap:5px;padding:5px 9px!important;border:1px solid var(--mdv-line-2)!important;border-radius:999px;background:rgba(255,255,255,.03)!important;white-space:nowrap;overflow:visible!important;width:auto!important;min-width:0!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx161112-week-metrics b{font:600 13px 'Inter',sans-serif!important;color:#fff!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx161112-week-metrics small{font:500 11px 'Inter',sans-serif!important;color:var(--mdv-mute)!important;text-transform:none!important;white-space:nowrap;overflow:visible!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-day.today .vx161112-week-date b{color:var(--mdv-gold-2)!important}
+/* overview: top row header | stats | market, second row horizontal breakdown */
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview{grid-template-columns:190px minmax(0,1fr) minmax(240px,.55fr)!important;grid-template-rows:auto auto!important;row-gap:18px!important;column-gap:22px!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview>header{grid-column:1!important;grid-row:1!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview>.vx89-flow-stats{grid-column:2!important;grid-row:1!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview>section.vx161123-market{grid-column:3!important;grid-row:1!important;display:block!important;padding:0!important;border:0!important;margin:0!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview>section:not(.vx161123-market){grid-column:1/-1!important;grid-row:2!important;display:flex!important;flex-wrap:wrap;align-items:center;gap:8px 10px!important;padding:14px 0 0!important;margin:0!important;border:0!important;border-top:1px solid var(--mdv-line-2)!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview>section:not(.vx161123-market) h3{margin:0 8px 0 0!important;flex:0 0 auto;grid-column:auto}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview>section:not(.vx161123-market)>div{display:inline-flex!important;align-items:center;gap:8px!important;grid-template-columns:none!important;padding:7px 12px!important;margin:0!important;border:1px solid var(--mdv-line-2);border-radius:999px;background:rgba(255,255,255,.03)}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview>section:not(.vx161123-market)>div span{font:500 12.5px 'Inter',sans-serif!important;color:var(--mdv-ink)!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview>section:not(.vx161123-market)>div b{font:700 13px 'Inter',sans-serif!important;color:var(--mdv-gold-2)!important;padding-left:2px}
+/* stat tiles: larger icon badge */
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-stats>span i.vxi{display:grid!important;place-items:center;width:40px!important;height:40px!important;border-radius:12px!important;background:rgba(212,176,119,.13)!important;border:1px solid var(--mdv-line)!important;color:var(--mdv-gold-2)!important;font-size:0!important;margin-bottom:6px}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-stats>span i.vxi svg{width:22px;height:22px}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-stats>span b{font-size:30px!important}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-stats>span small{font-size:12px!important}
+@media(max-width:1000px){html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview{grid-template-columns:1fr!important}html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview>*{grid-column:1!important;grid-row:auto!important}}
+html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx161112-week-date{justify-content:flex-start!important}
