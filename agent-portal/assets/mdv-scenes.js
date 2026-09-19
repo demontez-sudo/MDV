@@ -171,7 +171,7 @@ var CFG={
  galaxy:{gl:'galaxy'},
  earth:{video:['earth-1.mp4','earth-2.mp4'],poster:'earth.jpg',fallback:'earth'},
  waterfall:{video:['waterfall.mp4'],poster:'waterfall.jpg',fallback:'waterfall'},
- christmas:{video:['christmas.mp4'],poster:'christmas.jpg',fallback:'christmas',snow:true}
+ christmas:{video:['christmas.mp4'],poster:'christmas.jpg',fallback:'christmas',snow:true,filter:'brightness(.48) saturate(.8) contrast(1.05)'}
 };
 function reduced(){try{return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}}
 function saveData(){try{return !!(navigator.connection&&navigator.connection.saveData);}catch(e){return false;}}
@@ -192,7 +192,7 @@ var gv=new GLView('mdv-scene-canvas',false,.62),sv=new GLView('mdv-snow-canvas',
 var vs=null,FADE=1.6;
 function stopVideo(){if(!vs)return;clearInterval(vs.timer);var w=document.getElementById('mdv-scene-video');if(w)w.remove();vs=null;}
 function startVideo(key,cfg,onFail){stopVideo();var st=stage();if(!st)return false;var w=document.createElement('div');w.id='mdv-scene-video';w.setAttribute('aria-hidden','true');var img=document.createElement('img');img.className='mdv-poster';img.alt='';img.src=BASE+cfg.poster;w.appendChild(img);
- var still=reduced()||saveData();
+ if(cfg.filter)w.style.filter=cfg.filter;var still=reduced()||saveData();
  if(!still){var vids=[0,1].map(function(){var v=document.createElement('video');v.muted=true;v.defaultMuted=true;v.playsInline=true;v.setAttribute('playsinline','');v.setAttribute('muted','');v.preload='auto';v.disablePictureInPicture=true;v.className='mdv-vid';v.style.opacity='0';w.appendChild(v);return v;});
   var n=cfg.video.length,s={key:key,v:vids,i:0,idx:0,switching:false,n:n,timer:0,ok:false};vs=s;
   vids[0].src=BASE+cfg.video[0];vids[1].src=BASE+cfg.video[1%n];
