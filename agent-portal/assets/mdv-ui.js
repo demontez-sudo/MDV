@@ -40,5 +40,16 @@ function lb(items,i){var cur=i,root=el('div','mdv-lb'),stage=el('div','stage'),t
  function k(e){if(e.key==='Escape'){e.stopPropagation();close();}else if(e.key==='ArrowRight'&&items.length>1){cur=(cur+1)%items.length;show();}else if(e.key==='ArrowLeft'&&items.length>1){cur=(cur-1+items.length)%items.length;show();}}
  root.addEventListener('mousedown',function(e){if(e.target===root||e.target===stage)close();});document.addEventListener('keydown',k,true);document.body.appendChild(root);show();}
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-mdv-view]');if(!b)return;e.preventDefault();e.stopPropagation();var g=b.getAttribute('data-gallery'),nodes=g?[].slice.call(document.querySelectorAll('[data-mdv-view][data-gallery="'+g+'"]')):[b];var items=[],seen={};nodes.forEach(function(n){var u=n.getAttribute('data-mdv-view');if(seen[u])return;seen[u]=1;items.push({url:u,name:n.getAttribute('data-name'),kind:n.getAttribute('data-kind')||'image'});});lb(items,Math.max(0,items.findIndex(function(x){return x.url===b.getAttribute('data-mdv-view');})));},true);
+
+/* orbit: mouse tilt + live time sweep (only runs while an Orbit dial is on screen) */
+(function(){var raf=0,tx=58,tz=0,cx=58,cz=0,lastNow=-1;
+ function loop(){var dial=document.querySelector('#p-calendar .vx75-dial');if(!dial||document.hidden){raf=0;return;}
+  var t=Date.now()/1000,idle=Math.sin(t/3.2)*1.6;cx+=(tx-cx)*.08;cz+=((tz+idle)-cz)*.08;dial.style.setProperty('--ox',cx.toFixed(2)+'deg');dial.style.setProperty('--oz',cz.toFixed(2)+'deg');
+  var d=new Date(),m=d.getHours()*60+d.getMinutes();if(m!==lastNow){lastNow=m;dial.style.setProperty('--now',(m/1440*360).toFixed(2)+'deg');}
+  raf=setTimeout(loop,33);}
+ function kick(){if(!raf&&document.querySelector('#p-calendar .vx75-dial'))raf=setTimeout(loop,33);}
+ document.addEventListener('pointermove',function(e){var main=e.target.closest&&e.target.closest('#p-calendar .vx75-orbit>main');if(!main){return;}var r=main.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;tz=x*22;tx=58-y*14;kick();},{passive:true});
+ document.addEventListener('pointerleave',function(){tx=58;tz=0;},true);
+ setInterval(kick,1500);})();
 window.MDV_UI={enhance:enhance,scan:scan,lightbox:lb};
 })();
