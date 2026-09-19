@@ -1,0 +1,10 @@
+/* Realistic animated backdrops (Galaxy, Christmas, Earth, Waterfall): full-screen layer behind the portal. */
+html body #cavyre-environment-stage{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;z-index:0!important;pointer-events:none!important;overflow:hidden}
+#mdv-scene-canvas{position:absolute;inset:0;width:100%;height:100%;display:none;background:#020408}
+html.mdv-gl body #cavyre-environment-stage .cvy-env-scene{display:none!important}
+/* let the scene show through: page panels become frosted glass only while one of the four scenes is active */
+html[data-cavyre-environment-active] body{background:transparent!important}
+html[data-cavyre-environment-active] body #app,html[data-cavyre-environment-active] body #app .shell,html[data-cavyre-environment-active] body #app #pm{background:transparent!important}
+html[data-cavyre-environment-active] body #app :is([class*="panel"],[class*="card"],.vx17-panel,.v152-card,.v155-card,.v144-card,.vx75-calendar>*,.vx161125-native-drawer){background-color:color-mix(in srgb,var(--skin-card,#0d0d10) 46%,transparent)!important;background-image:none!important;backdrop-filter:blur(16px) saturate(120%);-webkit-backdrop-filter:blur(16px) saturate(120%);border-color:color-mix(in srgb,var(--skin-accent,#fff) 22%,transparent)!important}
+html[data-cavyre-environment-active] body :is(.vx73-topbar,.tb,#vx73-rail){background-color:color-mix(in srgb,var(--skin-0,#050508) 62%,transparent)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+html[data-cavyre-environment-active] body .vx75-orbit>main.mo-main{background:transparent!important}
