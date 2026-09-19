@@ -100,4 +100,44 @@
 .tk-pop{font-family:'Inter',sans-serif}.tk-pop .tk-in{width:100%;height:40px;padding:0 12px;border:1px solid var(--mdv-line-2);border-radius:9px;background:var(--mdv-field);color:var(--mdv-ink);font:400 13px 'Inter',sans-serif;color-scheme:dark}
 .tk-pop .tk-link{background:none;border:0;color:var(--mdv-gold-2);font:500 12px 'Inter',sans-serif;cursor:pointer;margin-top:8px;padding:4px 0}
 .tk-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);z-index:500000;padding:12px 20px;border-radius:12px;background:var(--mdv-glass,#14120f);border:1px solid var(--mdv-line);color:var(--mdv-ink,#fff);font:500 13px 'Inter',sans-serif;backdrop-filter:blur(14px);box-shadow:0 20px 50px rgba(0,0,0,.5)}.tk-toast.risk{border-color:#e0685a}
-@media(max-width:1000px){.mdv-tasks .tk-head{display:none}.mdv-tasks .tk-row{grid-template-columns:30px 1fr auto;gap:8px}.mdv-tasks .tk-row .tk-c.pri,.mdv-tasks .tk-row .tk-c.st{display:none}.mdv-tasks .tk-props{grid-template-columns:1fr}.mdv-tasks .tk-page{padding:16px}}
+@media(max-width:1000px){.mdv-tasks .tk-head{display:none}.mdv-tasks .tk-row{grid-template-columns:30px 1fr auto;gap:8px}.mdv-tasks .tk-row .tk-c.c-pri,.mdv-tasks .tk-row .tk-c.c-st{display:none}.mdv-tasks .tk-props{grid-template-columns:1fr}.mdv-tasks .tk-page{padding:16px}}
+
+/* ===== hardening: beat the portal's global button/input/heading rules ===== */
+html body .mdv-tasks.mdv-tasks :is(button,input,textarea,h1,h2,h3,p,label,em,b,span,small){font-family:'Inter',sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+html body .mdv-tasks.mdv-tasks button{min-height:0!important;clip-path:none!important;box-shadow:none;transform:none}
+html body .mdv-tasks.mdv-tasks .tk-top h1{font:600 24px/1.15 'Inter',sans-serif!important;letter-spacing:-.015em!important;color:#fff!important;margin:0!important}
+html body .mdv-tasks.mdv-tasks .tk-top p{font-size:12.5px!important;color:var(--mdv-mute)!important;margin:4px 0 0!important}
+html body .mdv-tasks.mdv-tasks .tk-views{border-radius:10px!important;border:1px solid var(--mdv-line)!important;background:var(--mdv-field)!important;overflow:hidden}
+html body .mdv-tasks.mdv-tasks .tk-views button{border:0!important;border-radius:0!important;background:transparent!important;color:var(--mdv-mute)!important;padding:9px 18px!important;font:600 12px 'Inter',sans-serif!important;height:auto!important;min-height:0!important}
+html body .mdv-tasks.mdv-tasks .tk-views button.on{background:linear-gradient(135deg,var(--mdv-gold-2),var(--mdv-gold))!important;color:#15110a!important}
+html body .mdv-tasks.mdv-tasks .tk-btn{border:1px solid var(--mdv-line)!important;border-radius:10px!important;background:rgba(255,255,255,.04)!important;color:var(--mdv-ink)!important;padding:10px 16px!important;height:auto!important;font:600 12px 'Inter',sans-serif!important}
+html body .mdv-tasks.mdv-tasks .tk-btn.gold{background:linear-gradient(135deg,var(--mdv-gold-2),var(--mdv-gold))!important;color:#15110a!important;border-color:transparent!important}
+html body .mdv-tasks.mdv-tasks .tk-btn.ghost{background:transparent!important}
+html body .mdv-tasks.mdv-tasks .tk-pill{height:38px!important;border-radius:999px!important;border:1px solid var(--tc-line)!important;background:rgba(255,255,255,.03)!important;color:var(--mdv-ink)!important;padding:0 14px!important;font:500 12px 'Inter',sans-serif!important}
+html body .mdv-tasks.mdv-tasks .tk-pill.on{border-color:var(--mdv-gold)!important;background:color-mix(in srgb,var(--mdv-gold) 14%,transparent)!important;color:var(--mdv-gold-2)!important}
+html body .mdv-tasks.mdv-tasks .tk-link{background:none!important;border:0!important;padding:6px!important;color:var(--mdv-gold-2)!important;border-radius:0!important;font:500 12px 'Inter',sans-serif!important}
+html body .mdv-tasks.mdv-tasks .tk-check{width:20px!important;height:20px!important;min-width:0!important;padding:0!important;border-radius:50%!important;background:transparent!important;border:1.6px solid var(--mdv-mute)!important;flex:0 0 auto}
+html body .mdv-tasks.mdv-tasks .tk-row.done .tk-check,html body .mdv-tasks.mdv-tasks .tk-card.done .tk-check,html body .mdv-tasks.mdv-tasks .tk-ci.done .tk-check{background:#6fbf73!important;border-color:#6fbf73!important}
+html body .mdv-tasks.mdv-tasks .tk-x{width:32px!important;height:32px!important;border-radius:9px!important;border:1px solid var(--tc-line)!important;background:transparent!important;padding:0!important;color:var(--mdv-mute)!important}
+html body .mdv-tasks.mdv-tasks .tk-x.sm{width:24px!important;height:24px!important;border:0!important}
+html body .mdv-tasks.mdv-tasks .tk-calbar button{min-width:34px!important;height:34px!important;border:1px solid var(--tc-line)!important;background:rgba(255,255,255,.03)!important;border-radius:9px!important;color:var(--mdv-ink)!important;padding:0 10px!important}
+html body .mdv-tasks.mdv-tasks .tk-chip{border:0!important;border-left:3px solid var(--c)!important;border-radius:6px!important;background:color-mix(in srgb,var(--c) 14%,transparent)!important;color:var(--mdv-ink)!important;padding:4px 8px!important;height:auto!important;font:500 11.5px 'Inter',sans-serif!important}
+html body .mdv-tasks.mdv-tasks .tk-prop>button{min-height:40px!important;border:1px solid var(--tc-line)!important;border-radius:9px!important;background:var(--mdv-field)!important;color:var(--mdv-ink)!important;padding:0 12px!important;font:400 13px 'Inter',sans-serif!important}
+html body .mdv-tasks.mdv-tasks .tk-stat{border:0!important;border-radius:999px!important;padding:4px 10px!important;background:color-mix(in srgb,var(--c) 15%,transparent)!important;color:var(--c)!important;font:600 11px 'Inter',sans-serif!important}
+html body .mdv-tasks.mdv-tasks .tk-c{background:none!important;border:0!important;padding:0!important;height:100%!important;min-height:0!important;width:auto!important}
+html body .mdv-tasks.mdv-tasks .tk-prio,html body .mdv-tasks.mdv-tasks .tk-due{background:none!important;border:0!important;padding:0!important}
+/* inputs: no boxes inside boxes */
+html body .mdv-tasks.mdv-tasks :is(.tk-search input,.tk-add input,.tk-ci input){background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;min-height:0!important;height:auto!important;border-radius:0!important;padding:6px 0!important;color:var(--mdv-ink)!important;font:400 13px 'Inter',sans-serif!important}
+html body .mdv-tasks.mdv-tasks .tk-search{border:1px solid var(--tc-line)!important;background:var(--mdv-field)!important;border-radius:10px!important;height:38px!important;padding:0 12px!important}
+html body .mdv-tasks.mdv-tasks .tk-search input{padding:0!important}
+html body .mdv-tasks.mdv-tasks .tk-dtitle{background:transparent!important;border:0!important;border-bottom:1px solid transparent!important;border-radius:0!important;min-height:0!important;padding:4px 0 8px!important;box-shadow:none!important;font:600 21px/1.3 'Inter',sans-serif!important;color:#fff!important}
+html body .mdv-tasks.mdv-tasks .tk-dtitle:focus{border-bottom-color:var(--mdv-gold)!important}
+html body .mdv-tasks.mdv-tasks :is(.tk-in,.tk-desc,.tk-newc textarea){background:var(--mdv-field)!important;border:1px solid var(--tc-line)!important;border-radius:9px!important;color:var(--mdv-ink)!important;box-shadow:none!important;font:400 13.5px 'Inter',sans-serif!important}
+html body .mdv-tasks.mdv-tasks .tk-in{min-height:40px!important;padding:0 12px!important}
+html body .mdv-tasks.mdv-tasks .tk-desc,html body .mdv-tasks.mdv-tasks .tk-newc textarea{padding:11px 12px!important;min-height:0!important}
+html body .mdv-tasks.mdv-tasks :is(.tk-in,.tk-desc,.tk-newc textarea,.tk-dtitle,.tk-search):focus,html body .mdv-tasks.mdv-tasks .tk-search:focus-within{border-color:var(--mdv-gold)!important}
+.tk-pop .tk-in{min-height:40px!important;background:var(--mdv-field)!important;border:1px solid var(--mdv-line-2)!important;border-radius:9px!important;color:var(--mdv-ink)!important}
+.tk-pop button{letter-spacing:0!important;text-transform:none!important;font-family:'Inter',sans-serif!important}
+.tk-pop .mdv-dd-quick button{min-height:0!important;border-radius:999px!important;padding:6px 10px!important}
+html body .mdv-tasks.mdv-tasks :is(.tk-prop label,.tk-sec>label,.tk-head span){text-transform:uppercase!important;letter-spacing:.06em!important;font-size:10.5px!important;font-weight:600!important;color:var(--mdv-mute)!important}
+html body .mdv-tasks.mdv-tasks .tk-head{background:rgba(0,0,0,.18)!important}
