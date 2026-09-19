@@ -41,15 +41,27 @@ function lb(items,i){var cur=i,root=el('div','mdv-lb'),stage=el('div','stage'),t
  root.addEventListener('mousedown',function(e){if(e.target===root||e.target===stage)close();});document.addEventListener('keydown',k,true);document.body.appendChild(root);show();}
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-mdv-view]');if(!b)return;e.preventDefault();e.stopPropagation();var g=b.getAttribute('data-gallery'),nodes=g?[].slice.call(document.querySelectorAll('[data-mdv-view][data-gallery="'+g+'"]')):[b];var items=[],seen={};nodes.forEach(function(n){var u=n.getAttribute('data-mdv-view');if(seen[u])return;seen[u]=1;items.push({url:u,name:n.getAttribute('data-name'),kind:n.getAttribute('data-kind')||'image'});});lb(items,Math.max(0,items.findIndex(function(x){return x.url===b.getAttribute('data-mdv-view');})));},true);
 
-/* orbit: mouse tilt + live time sweep (only runs while an Orbit dial is on screen) */
-(function(){var raf=0,tx=58,tz=0,cx=58,cz=0,lastNow=-1;
- function loop(){var dial=document.querySelector('#p-calendar .vx75-dial');if(!dial||document.hidden){raf=0;return;}
-  var t=Date.now()/1000,idle=Math.sin(t/3.2)*1.6;cx+=(tx-cx)*.08;cz+=((tz+idle)-cz)*.08;dial.style.setProperty('--ox',cx.toFixed(2)+'deg');dial.style.setProperty('--oz',cz.toFixed(2)+'deg');
-  var d=new Date(),m=d.getHours()*60+d.getMinutes();if(m!==lastNow){lastNow=m;dial.style.setProperty('--now',(m/1440*360).toFixed(2)+'deg');}
-  raf=setTimeout(loop,33);}
- function kick(){if(!raf&&document.querySelector('#p-calendar .vx75-dial'))raf=setTimeout(loop,33);}
- document.addEventListener('pointermove',function(e){var main=e.target.closest&&e.target.closest('#p-calendar .vx75-orbit>main');if(!main){return;}var r=main.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;tz=x*22;tx=58-y*14;kick();},{passive:true});
- document.addEventListener('pointerleave',function(){tx=58;tz=0;},true);
- setInterval(kick,1500);})();
+/* orbit controller: drag-to-rotate with inertia, auto-rotate, presets, live clock. Runs only while an Orbit stage is on screen. */
+(function(){var O={ox:58,oz:0,tox:58,toz:0,vz:0,auto:false,drag:null,last:0,nowMin:-1,tick:0,timer:0,sec:0};
+ function stage(){return document.querySelector('#p-calendar .mo-stage');}
+ function loop(){var st=stage();if(!st||document.hidden){O.timer=0;return;}
+  var t=Date.now(),dt=Math.min(64,t-(O.last||t-33));O.last=t;
+  if(!O.drag){if(O.auto){O.toz+=dt*.011;O.vz=0;}else if(Math.abs(O.vz)>.005){O.toz+=O.vz;O.vz*=.94;}}
+  O.oz+=(O.toz-O.oz)*.2;O.ox+=(O.tox-O.ox)*.14;
+  var sway=(!O.auto&&!O.drag&&Math.abs(O.vz)<.01)?Math.sin(t/3200)*1.1:0,ox=O.ox,oz=O.oz+sway;
+  if(Math.abs(ox-(O.sx||0))>.02||Math.abs(oz-(O.sz||0))>.02||st!==O.st){O.sx=ox;O.sz=oz;O.st=st;st.style.setProperty('--ox',ox.toFixed(2)+'deg');st.style.setProperty('--oz',oz.toFixed(2)+'deg');}
+  var d=new Date(),m=d.getHours()*60+d.getMinutes()+d.getSeconds()/60;if(Math.abs(m-O.nowMin)>.05||st!==O.stn){O.nowMin=m;O.stn=st;st.style.setProperty('--now',(m/1440*360).toFixed(2)+'deg');}
+  if(t-O.sec>1000){O.sec=t;var c=st.querySelector('[data-mo-clock]');if(c)c.textContent=d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});}
+  var main=st.closest('.mo-main');if(main){main.classList.toggle('auto',O.auto);main.classList.toggle('dragging',!!O.drag);}
+  O.timer=setTimeout(loop,33);}
+ function kick(){if(!O.timer&&stage()){O.last=0;O.timer=setTimeout(loop,16);}}
+ function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+ document.addEventListener('pointerdown',function(e){var main=e.target.closest&&e.target.closest('.mo-main');if(!main||e.button>0)return;if(e.target.closest('.mo-node,.mo-controls,.vx75-orbit-card,button,a,input,select,textarea'))return;O.drag={x:e.clientX,y:e.clientY,toz0:O.toz,tox0:O.tox,lastZ:O.toz};O.auto=O.auto;try{main.setPointerCapture(e.pointerId);}catch(_e){}kick();});
+ document.addEventListener('pointermove',function(e){if(!O.drag)return;var dx=e.clientX-O.drag.x,dy=e.clientY-O.drag.y;var nz=O.drag.toz0+dx*.45;O.vz=(nz-O.drag.lastZ)*.5;O.drag.lastZ=nz;O.toz=nz;O.tox=clamp(O.drag.tox0-dy*.22,6,84);},{passive:true});
+ function up(){O.drag=null;}document.addEventListener('pointerup',up);document.addEventListener('pointercancel',up);
+ document.addEventListener('dblclick',function(e){if(e.target.closest&&e.target.closest('.mo-main')&&!e.target.closest('.mo-node,.mo-controls,.vx75-orbit-card')){O.tox=58;O.toz=Math.round(O.toz/360)*360;O.vz=0;O.auto=false;kick();}});
+ document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('[data-mo-act]');if(!b)return;e.preventDefault();var a=b.getAttribute('data-mo-act');if(a==='auto')O.auto=!O.auto;else if(a==='top'){O.tox=6;O.auto=false;}else if(a==='tilt'){O.tox=58;}else if(a==='reset'){O.tox=58;O.toz=Math.round(O.toz/360)*360;O.vz=0;O.auto=false;}kick();});
+ setInterval(kick,1500);
+ window.MDV_ORBIT={angle:function(x,y,cx,cy){var dx=x-cx,dy=y-cy,c=Math.cos(O.ox*Math.PI/180)||1,py=dy/Math.max(.2,Math.abs(c)),z=-(O.sz||0)*Math.PI/180,px2=dx*Math.cos(z)-py*Math.sin(z),py2=dx*Math.sin(z)+py*Math.cos(z),a=Math.atan2(py2,px2)+Math.PI/2;return a<0?a+Math.PI*2:a;}};})();
 window.MDV_UI={enhance:enhance,scan:scan,lightbox:lb};
 })();
