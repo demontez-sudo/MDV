@@ -1,12 +1,13 @@
 (function(){'use strict';if(window.__MDV_UI__)return;window.__MDV_UI__=true;
-var SEL='.v1682-modal select,.v1682-mob select,select[data-mdv-dd]',DESC=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value'),openMenu=null;
+var SEL='.v1682-modal select,.v1682-mob select,select[data-mdv-dd],[class*="modal"] select,select.f-inp',DESC=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value'),openMenu=null;
 function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
 function closeMenu(){if(!openMenu)return;var m=openMenu;openMenu=null;m.scrim.remove();m.menu.remove();m.wrap.classList.remove('open');document.removeEventListener('keydown',m.key,true);window.removeEventListener('resize',closeMenu);}
 function enhance(sel){if(sel.__mdv||sel.multiple||sel.size>1||sel.closest('.mdv-dd-menu'))return;sel.__mdv=true;
  var wrap=el('div','mdv-dd'+(sel.classList.contains('v1699-status')?' compact':'')),btn=el('button','mdv-dd-btn');btn.type='button';var lab=el('span','mdv-dd-label'),caret=el('i','mdv-dd-caret');btn.appendChild(lab);btn.appendChild(caret);
- sel.parentNode.insertBefore(wrap,sel);wrap.appendChild(sel);wrap.appendChild(btn);sel.classList.add('mdv-native');sel.tabIndex=-1;
+ ['width','flex','margin','maxWidth','minWidth'].forEach(function(k){if(sel.style[k])wrap.style[k]=sel.style[k];});sel.parentNode.insertBefore(wrap,sel);wrap.appendChild(sel);wrap.appendChild(btn);sel.classList.add('mdv-native');sel.tabIndex=-1;
  function label(){var o=sel.options[sel.selectedIndex];lab.textContent=o?o.text:'';lab.classList.toggle('ph',!o||!o.value);btn.disabled=sel.disabled;}
  Object.defineProperty(sel,'value',{configurable:true,get:function(){return DESC.get.call(sel);},set:function(v){DESC.set.call(sel,v);label();}});
+ var SI=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'selectedIndex');Object.defineProperty(sel,'selectedIndex',{configurable:true,get:function(){return SI.get.call(sel);},set:function(v){SI.set.call(sel,v);label();}});
  sel.addEventListener('change',label);
  new MutationObserver(label).observe(sel,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','selected']});label();
  function pick(i){sel.selectedIndex=i;label();sel.dispatchEvent(new Event('change',{bubbles:true}));sel.dispatchEvent(new Event('input',{bubbles:true}));closeMenu();btn.focus();}
