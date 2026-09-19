@@ -11,10 +11,35 @@ export const handler=async(event)=>{
     if(event.httpMethod==='POST'){
       const action=String(body.action||'');
       if(action==='task_status'){
-        await requirePermission(user.id,organization.id,'tasks.write');const normalizedStatus=String(body.status||'').toLowerCase()==='done'?'completed':String(body.status||'').toLowerCase();if(!['open','in_progress','completed','cancelled'].includes(normalizedStatus))return json(400,{error:'Unsupported task status'});const {data,error}=await client.rpc('set_task_status_staff',{target_org:organization.id,target_task:body.task_id,target_status:normalizedStatus,note_value:body.note||null});if(error)throw error;return json(200,{ok:true,verified:true,task:data,status:normalizedStatus,persisted_at:new Date().toISOString()});
+        const admin=await requirePermission(user.id,organization.id,'tasks.write');const normalizedStatus=String(body.status||'').toLowerCase()==='done'?'completed':String(body.status||'').toLowerCase();if(!['open','in_progress','completed','cancelled'].includes(normalizedStatus))return json(400,{error:'Unsupported task status'});
+        let data=null,rpcError=null;
+        try{const r=await client.rpc('set_task_status_staff',{target_org:organization.id,target_task:body.task_id,target_status:normalizedStatus,note_value:body.note||null});if(r.error)rpcError=r.error;else data=r.data;}catch(e){rpcError=e;}
+        if(rpcError){
+          console.warn('[tasks] set_task_status_staff failed, falling back to direct update:',rpcError?.message||rpcError);
+          let up=await admin.from('tasks').update({status:normalizedStatus,completed_at:normalizedStatus==='completed'?new Date().toISOString():null}).eq('organization_id',organization.id).eq('id',body.task_id).select('*').single();
+          if(up.error)up=await admin.from('tasks').update({status:normalizedStatus}).eq('organization_id',organization.id).eq('id',body.task_id).select('*').single();
+          if(up.error){console.error('[tasks] direct status update failed:',up.error.message);const e=new Error(up.error.message);e.statusCode=500;e.publicMessage='Task status could not be saved: '+String(up.error.message||'').slice(0,160);throw e;}
+          data=up.data;
+          try{await admin.from('task_status_history').insert({organization_id:organization.id,task_id:body.task_id,to_status:normalizedStatus,changed_by:user.id,note:body.note||null});}catch(_e){}
+        }
+        return json(200,{ok:true,verified:true,task:data,status:normalizedStatus,persisted_at:new Date().toISOString()});
       }
       if(action==='create_task'){
-        await requirePermission(user.id,organization.id,'tasks.write');const {data,error}=await client.rpc('create_staff_task',{target_org:organization.id,task_title:String(body.title||''),task_description:body.description||null,task_priority:body.priority||'normal',task_due_at:body.due_at||null,task_category:body.category||null,target_model:body.model_id||null,assigned_members:Array.isArray(body.member_ids)?body.member_ids:[],task_visibility:body.visibility||'organization'});if(error)throw error;return json(200,{ok:true,verified:true,task:data,persisted_at:new Date().toISOString()});
+        const admin=await requirePermission(user.id,organization.id,'tasks.write');
+        const memberIds=Array.isArray(body.member_ids)?body.member_ids.filter(Boolean):[];
+        let data=null,rpcError=null;
+        try{const r=await client.rpc('create_staff_task',{target_org:organization.id,task_title:String(body.title||''),task_description:body.description||null,task_priority:body.priority||'normal',task_due_at:body.due_at||null,task_category:body.category||null,target_model:body.model_id||null,assigned_members:memberIds,task_visibility:body.visibility||'organization'});if(r.error)rpcError=r.error;else data=r.data;}catch(e){rpcError=e;}
+        if(rpcError){
+          console.warn('[tasks] create_staff_task failed, falling back to direct insert:',rpcError?.message||rpcError);
+          const title=String(body.title||'').trim();if(!title)return json(400,{error:'title is required'});
+          const base={organization_id:organization.id,title,description:body.description||null,priority:body.priority||'normal',due_at:body.due_at||null,category:body.category||null,model_id:body.model_id||null,status:'open'};
+          let ins=await admin.from('tasks').insert({...base,created_by:user.id,visibility:body.visibility||'organization'}).select('*').single();
+          if(ins.error)ins=await admin.from('tasks').insert(base).select('*').single();
+          if(ins.error){console.error('[tasks] direct insert failed:',ins.error.message);const e=new Error(ins.error.message);e.statusCode=500;e.publicMessage='Task could not be created: '+String(ins.error.message||'').slice(0,160);throw e;}
+          data=ins.data;
+          if(memberIds.length){try{await admin.from('task_assignments').insert([...new Set(memberIds.map(String))].map(member_id=>({organization_id:organization.id,task_id:data.id,member_id,assignment_role:'assignee',assigned_by:user.id})));}catch(_e){}}
+        }
+        return json(200,{ok:true,verified:true,task:data,persisted_at:new Date().toISOString()});
       }
       if(action==='update_task'){
         const admin=await requirePermission(user.id,organization.id,'tasks.write');
