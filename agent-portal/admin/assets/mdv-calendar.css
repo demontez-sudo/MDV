@@ -349,3 +349,29 @@ body.mdv-dnd-on #p-calendar .vx100-drop-risk{outline:2px dashed #e0685a!importan
   #mdv-vc-launch span{display:none}
   #mdv-vc-launch i{width:34px;height:34px}
 }
+
+/* ---- Home: functional KPIs and bars ---- */
+html body #p-overview .vx17-kpi[data-vx17-nav]{cursor:pointer;transition:border-color .15s,transform .15s,background .15s}
+html body #p-overview .vx17-kpi[data-vx17-nav]:hover,html body #p-overview .vx17-kpi[data-vx17-nav]:focus-visible{border-color:var(--mdv-gold,#d9b866)!important;transform:translateY(-2px);outline:0;background:color-mix(in srgb,var(--mdv-gold,#d9b866) 8%,transparent)}
+html body #p-overview button.vx17-bar{position:relative;appearance:none;border:0;padding:0;cursor:pointer;font:inherit;color:inherit;transition:filter .15s,transform .15s}
+html body #p-overview button.vx17-bar:hover,html body #p-overview button.vx17-bar:focus-visible{filter:brightness(1.25);transform:translateY(-3px);outline:0}
+html body #p-overview button.vx17-bar em{position:absolute;left:0;right:0;top:-20px;text-align:center;font:600 12px 'Inter',sans-serif;font-style:normal;color:var(--mdv-ink,#f3ede0);opacity:.85}
+html body #p-overview button.vx17-bar span{position:absolute;left:0;right:0;text-align:center}
+
+/* ---- deck refinements: one-line filters, market tiles, scope bar retired ---- */
+html body #p-calendar .vx75-calendar>.vx76-scopebar{display:none!important}
+html body #p-calendar .mdv-deck :is(.mdv-deck-filter,.mdv-deck-filter span,.mdv-deck-break>span,.mdv-deck-toggle,.mdv-deck-clear,.mdv-deck-all,.mdv-deck-all span,.mdv-deck-more,.mdv-deck-stats small,.mdv-deck-market span){letter-spacing:0!important;text-transform:none!important;word-spacing:0!important}
+html body #p-calendar .mdv-deck-filters{flex-wrap:nowrap!important;gap:6px!important;overflow-x:auto;scrollbar-width:none;padding-top:10px!important;padding-bottom:10px!important}
+html body #p-calendar .mdv-deck-filters::-webkit-scrollbar{display:none}
+html body #p-calendar .mdv-deck-filters>*{flex:0 0 auto}
+html body #p-calendar .mdv-deck-filter{padding:6px 10px!important;gap:7px!important;font:500 12px 'Inter',sans-serif!important}
+html body #p-calendar .mdv-deck-filter>b{width:26px!important;height:15px!important}
+html body #p-calendar .mdv-deck-filter>b::after{width:11px!important;height:11px!important}
+html body #p-calendar .mdv-deck-filter input:checked~b::after{transform:translateX(11px)!important}
+html body #p-calendar .mdv-deck-intel{grid-template-columns:minmax(190px,auto) minmax(0,1fr) minmax(210px,auto)!important}
+html body #p-calendar .mdv-deck-market{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;align-content:center}
+html body #p-calendar .mdv-deck-market small{grid-column:1/-1;margin:0}
+html body #p-calendar .mdv-deck-market span{display:flex!important;flex-direction:column;gap:2px;padding:8px 12px;border:1px solid var(--mdv-line-2);border-radius:12px;background:rgba(255,255,255,.03);font:500 11.5px 'Inter',sans-serif!important;color:var(--mdv-mute)}
+html body #p-calendar .mdv-deck-market span b{margin:0!important;font:600 20px/1 'Inter',sans-serif!important;color:var(--mdv-ink)}
+html body #p-calendar .mdv-deck-market span:first-of-type b{color:var(--cat-travel)}
+html body #p-calendar .mdv-deck-market span:last-of-type b{color:var(--cat-visa)}

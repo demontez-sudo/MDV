@@ -144,19 +144,18 @@ function open(prompt){
   if(prompt&&typeof prompt==='string'){var cc=cur();if(!cc||cc.msgs.length)cc=newChat();send(prompt);}
 }
 function close(){if(root)root.hidden=true;document.documentElement.classList.remove('vc-open');}
-function launcher(){
-  if(document.getElementById('mdv-vc-launch'))return;
-  var b=document.createElement('button');b.id='mdv-vc-launch';b.type='button';b.setAttribute('aria-label','Open Vera Chat');b.title='Vera Chat (Ctrl/Cmd + J)';
-  b.innerHTML='<i>V</i><span>Vera Chat</span>';
-  b.addEventListener('click',function(){open();});
-  document.body.appendChild(b);
-}
 document.addEventListener('keydown',function(e){
   if((e.metaKey||e.ctrlKey)&&String(e.key).toLowerCase()==='j'){e.preventDefault();root&&!root.hidden?close():open();}
   else if(e.key==='Escape'&&root&&!root.hidden){close();}
 });
 load();
 window.MDV_VERA_CHAT={open:open,close:close};
-function boot(){var app=document.getElementById('app');launcher();var sync=function(){var b=document.getElementById('mdv-vc-launch');if(!b)return;var on=app&&getComputedStyle(app).display!=='none';b.style.display=on?'':'none';};sync();setInterval(sync,1500);}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
+document.addEventListener('click',function(e){
+  var t=e.target&&e.target.closest&&e.target.closest('#_asst-btn,.vera-launcher,[data-vx17-vera]');
+  if(!t)return;
+  e.preventDefault();e.stopImmediatePropagation();
+  var p=document.getElementById('_asst-panel');if(p)p.style.display='none';
+  root&&!root.hidden?close():open();
+},true);
+
 })();
