@@ -212,7 +212,14 @@ export const handler=async(event)=>{
       const hydratedAuth=workAuth.map(hydrateModel);
       const travelIdSet=new Set(travelIds);
       const scopedSegments=segments.filter(s=>travelIdSet.has(s.travel_record_id));
-      const hydratedTravel=travel.map(r=>({...hydrateModel(r),visa_gate:visaGateFor(r,visaCases),segments:scopedSegments.filter(s=>s.travel_record_id===r.id),housing:housing.filter(h=>h.travel_record_id===r.id).map(hydrateModel)}));
+      const travelLinkRows=travelIds.length?await safeRows(admin.from('document_links').select('document_id,resource_id').eq('organization_id',organization.id).eq('resource_type','travel_record').in('resource_id',travelIds),'travel_doc_links',warnings):[];
+      const travelMetaDocs=travel.flatMap(tr=>Array.isArray(tr.metadata?.documents)?tr.metadata.documents.map(d=>({...d,trip:tr.id})):[]);
+      const tDocIds=[...new Set([...travelLinkRows.map(l=>l.document_id),...travelMetaDocs.map(d=>d.id)].filter(Boolean))];
+      const tDocs=tDocIds.length?await safeRows(admin.from('documents').select('id,name,category,mime_type,storage_provider,storage_bucket,storage_path,external_url,status').eq('organization_id',organization.id).in('id',tDocIds),'travel_files',warnings):[];
+      const tDocMap=new Map();
+      for(const d of tDocs){if(String(d.status||'')==='archived')continue;let url=d.external_url||null;if(d.storage_provider==='supabase'&&d.storage_bucket&&d.storage_path){try{const sg=await admin.storage.from(d.storage_bucket).createSignedUrl(d.storage_path,900);if(!sg.error)url=sg.data?.signedUrl||null;}catch(_e){}}tDocMap.set(d.id,{id:d.id,name:d.name,mime_type:d.mime_type,url,category:d.category});}
+      const travelFilesFor=id=>{const seen=new Set(),out=[];const push=(docId,type)=>{if(!docId||seen.has(docId))return;const d=tDocMap.get(docId);if(!d)return;seen.add(docId);out.push({id:docId,name:d.name,mime_type:d.mime_type,url:d.url,doc_type:type||String(d.category||'').replace(/^travel-/,'')||'other'});};travelLinkRows.filter(l=>l.resource_id===id).forEach(l=>push(l.document_id));travelMetaDocs.filter(d=>d.trip===id).forEach(d=>push(d.id,d.doc_type));return out;};
+      const hydratedTravel=travel.map(r=>({...hydrateModel(r),visa_gate:visaGateFor(r,visaCases),files:travelFilesFor(r.id),segments:scopedSegments.filter(s=>s.travel_record_id===r.id),housing:housing.filter(h=>h.travel_record_id===r.id).map(hydrateModel)}));
       const modelTravelCards=hydratedTravel.filter(r=>r.visible_to_model!==false&&String(r.status||'').toLowerCase()!=='cancelled').map(r=>({
         id:r.id,model_id:r.model_id,status:r.status,purpose:r.purpose||null,origin:r.origin||null,destination:r.destination||null,starts_at:r.starts_at||null,ends_at:r.ends_at||null,booking_id:r.booking_id||null,
         segments:(Array.isArray(r.segments)?r.segments:[]).map(s=>({id:s.id,segment_type:s.segment_type,provider:s.provider||null,confirmation_number:s.confirmation_number||null,origin:s.origin||null,destination:s.destination||null,departs_at:s.departs_at||null,arrives_at:s.arrives_at||null})),
@@ -363,6 +370,31 @@ export const handler=async(event)=>{
       validateRange(payload.departs_at,payload.arrives_at,'Departure','Arrival');
       const {data:trip,error:te}=await admin.from('travel_records').select('id,model_id').eq('organization_id',organization.id).eq('id',payload.travel_record_id).maybeSingle();if(te)throw te;if(!trip)return json(404,{error:'Travel record not found'});
       let q=body.id?admin.from('travel_segments').update(payload).eq('organization_id',organization.id).eq('id',body.id):admin.from('travel_segments').insert(payload);const {data,error}=await q.select('*').single();if(error)throw error;const {data:freshTrip,error:freshTripError}=await admin.from('travel_records').select('*').eq('organization_id',organization.id).eq('id',payload.travel_record_id).single();if(freshTripError)throw freshTripError;const calendar_event=await syncTravelCalendar(admin,organization.id,user.id,freshTrip);return json(200,{ok:true,verified:true,travel_segment:data,calendar_synced:!!calendar_event,calendar_event,persisted_at:data?.updated_at||data?.created_at||new Date().toISOString()});
+    }
+    if(action==='attach_travel_documents'){
+      const tripId=String(body.travel_record_id||'').trim(),docs=(Array.isArray(body.documents)?body.documents:[]).filter(d=>d&&d.id).slice(0,40);
+      if(!tripId||!docs.length)throw validationError('travel_record_id and documents are required.');
+      const {data:trip,error:te}=await admin.from('travel_records').select('id,metadata').eq('organization_id',organization.id).eq('id',tripId).maybeSingle();if(te)throw te;if(!trip)return json(404,{error:'Travel record not found'});
+      let linked=true;
+      for(const d of docs){const ins=await admin.from('document_links').insert({organization_id:organization.id,document_id:d.id,resource_type:'travel_record',resource_id:tripId,relationship:'attachment',visible_to_model:false,visible_to_partner:false});if(ins.error){console.warn('[mobility] document_links insert failed, using trip metadata:',ins.error.message);linked=false;break;}}
+      if(linked){for(const d of docs){try{await admin.from('documents').update({category:'travel-'+String(d.doc_type||'other').slice(0,30)}).eq('organization_id',organization.id).eq('id',d.id);}catch(_e){}}}
+      else{
+        await admin.from('document_links').delete().eq('organization_id',organization.id).eq('resource_type','travel_record').eq('resource_id',tripId).in('document_id',docs.map(d=>d.id));
+        const meta=trip.metadata&&typeof trip.metadata==='object'?{...trip.metadata}:{};const list=Array.isArray(meta.documents)?meta.documents.slice():[];
+        for(const d of docs){if(!list.some(x=>x.id===d.id))list.push({id:String(d.id),name:String(d.name||'Document').slice(0,200),doc_type:String(d.doc_type||'other').slice(0,40),uploaded_at:new Date().toISOString()});}
+        meta.documents=list;const up=await admin.from('travel_records').update({metadata:meta}).eq('organization_id',organization.id).eq('id',tripId);
+        if(up.error){console.error('[mobility] attach travel documents failed:',up.error.message);const e=new Error(up.error.message);e.statusCode=500;e.publicMessage='Documents could not be attached to the trip: '+String(up.error.message||'').slice(0,160);throw e;}
+      }
+      return json(200,{ok:true,verified:true,attached:docs.length,persisted_at:new Date().toISOString()});
+    }
+    if(action==='remove_travel_document'){
+      const tripId=String(body.travel_record_id||'').trim(),docId=String(body.document_id||'').trim();
+      if(!tripId||!docId)throw validationError('travel_record_id and document_id are required.');
+      try{await admin.from('document_links').delete().eq('organization_id',organization.id).eq('resource_type','travel_record').eq('resource_id',tripId).eq('document_id',docId);}catch(_e){}
+      const {data:trip}=await admin.from('travel_records').select('metadata').eq('organization_id',organization.id).eq('id',tripId).maybeSingle();
+      if(trip&&Array.isArray(trip.metadata?.documents)&&trip.metadata.documents.some(x=>String(x.id)===docId)){const meta={...trip.metadata,documents:trip.metadata.documents.filter(x=>String(x.id)!==docId)};await admin.from('travel_records').update({metadata:meta}).eq('organization_id',organization.id).eq('id',tripId);}
+      try{await admin.from('documents').update({status:'archived'}).eq('organization_id',organization.id).eq('id',docId);}catch(_e){}
+      return json(200,{ok:true,verified:true,removed:true});
     }
     if(action==='delete_travel_segment'){
       if(!body.id)throw validationError('id is required.');
