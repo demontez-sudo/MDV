@@ -55,6 +55,34 @@ export const handler=async(event)=>{
         }
         return json(200,{ok:true,verified:true,task,persisted_at:new Date().toISOString()});
       }
+      if(action==='bulk_update'){
+        const admin=await requirePermission(user.id,organization.id,'tasks.write');
+        const ids=[...new Set((Array.isArray(body.task_ids)?body.task_ids:[]).map(String).filter(Boolean))].slice(0,500);
+        if(!ids.length)return json(400,{error:'task_ids is required'});
+        const patch={};
+        if(body.status!=null){const st=String(body.status).toLowerCase()==='done'?'completed':String(body.status).toLowerCase();if(!['open','in_progress','completed','cancelled'].includes(st))return json(400,{error:'Unsupported task status'});patch.status=st;}
+        if(body.priority!=null){const pr=String(body.priority).toLowerCase();if(!['low','normal','high','urgent'].includes(pr))return json(400,{error:'Unsupported priority'});patch.priority=pr;}
+        if(body.due_at!==undefined&&body.due_at!==null)patch.due_at=body.due_at;
+        const addMembers=[...new Set((Array.isArray(body.member_ids_add)?body.member_ids_add:[]).filter(Boolean).map(String))];
+        if(!Object.keys(patch).length&&!addMembers.length)return json(400,{error:'Nothing to update'});
+        let updated=0;
+        if(Object.keys(patch).length){
+          const withDone=patch.status?{...patch,completed_at:patch.status==='completed'?new Date().toISOString():null}:patch;
+          let up=await admin.from('tasks').update(withDone).eq('organization_id',organization.id).in('id',ids).select('id');
+          if(up.error&&patch.status)up=await admin.from('tasks').update(patch).eq('organization_id',organization.id).in('id',ids).select('id');
+          if(up.error){console.error('[tasks] bulk_update failed:',up.error.message);const e=new Error(up.error.message);e.statusCode=500;e.publicMessage='Bulk update failed: '+String(up.error.message||'').slice(0,160);throw e;}
+          updated=(up.data||[]).length;
+          if(patch.status){try{await admin.from('task_status_history').insert((up.data||[]).map(r=>({organization_id:organization.id,task_id:r.id,to_status:patch.status,changed_by:user.id,note:'Bulk update'})));}catch(_e){}}
+        }
+        if(addMembers.length){
+          try{await admin.from('task_assignments').delete().eq('organization_id',organization.id).in('task_id',ids).in('member_id',addMembers);}catch(_e){}
+          const rowsToAdd=ids.flatMap(task_id=>addMembers.map(member_id=>({organization_id:organization.id,task_id,member_id,assignment_role:'assignee',assigned_by:user.id})));
+          const ins=await admin.from('task_assignments').insert(rowsToAdd);
+          if(ins.error)throw ins.error;
+          updated=Math.max(updated,ids.length);
+        }
+        return json(200,{ok:true,verified:true,updated,persisted_at:new Date().toISOString()});
+      }
       if(action==='add_comment'){
         const admin=await requirePermission(user.id,organization.id,'tasks.write');
         const taskId=String(body.task_id||'').trim(),text=String(body.body||'').trim().slice(0,4000);
