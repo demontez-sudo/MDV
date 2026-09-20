@@ -13,6 +13,8 @@ function toast(m){M().toast(m);}
 function kindOf(x){return x._kind||'show';}
 function shows(season){return M().C.shows.filter(function(x){return x.season_id===season.id;}).sort(function(a,b){return new Date(a.starts_at)-new Date(b.starts_at);});}
 function rosterName(id){var r=(M().C.roster||[]).find(function(x){return x.id===id;});return r&&r.display_name||'Model';}
+function mdUrl(x){var n=String(x.title||'').replace(/\s*\(by appointment\)\s*$/i,'').trim();return 'https://www.google.com/search?q='+encodeURIComponent('site:models.com '+n);}
+function extLinks(x){var n=String(x.title||'').replace(/\s*\(by appointment\)\s*$/i,'').trim();return '<div class="sc-ext"><a href="'+mdUrl(x)+'" target="_blank" rel="noopener noreferrer">Search models.com ↗</a><a href="https://www.google.com/search?q='+encodeURIComponent(n+' casting director')+'" target="_blank" rel="noopener noreferrer">Casting director ↗</a><a href="https://www.instagram.com/explore/search/keyword/?q='+encodeURIComponent(n)+'" target="_blank" rel="noopener noreferrer">Instagram ↗</a></div>';}
 function directorsFor(x){return (M().C.castingByCompany||{})[x.company_id]||[];}
 
 function rowHtml(x,tz){
@@ -88,7 +90,7 @@ function removeModel(showId,modelId){
 /* ---- Vera analysis ---- */
 function veraPanel(showId,instruction){
   var m=M(),x=m.C.shows.find(function(s){return s.id===showId;});if(!x)return;
-  var box=modal('<header><div><small>Vera · designer intelligence</small><h2>'+esc(x.title)+'</h2></div><button type="button" data-sc-x aria-label="Close">×</button></header><div class="sc-body vera"><div class="sc-loading"><i></i><b>Researching the designer on the web…</b><span>Casting history, casting director, aesthetic and which of your models fit. This can take up to 30 seconds.</span></div></div>','wide');
+  var box=modal('<header><div><small>Vera · designer intelligence</small><h2>'+esc(x.title)+'</h2>'+extLinks(x)+'</div><button type="button" data-sc-x aria-label="Close">×</button></header><div class="sc-body vera"><div class="sc-loading"><i></i><b>Researching the designer on the web…</b><span>Casting history, casting director, aesthetic and which of your models fit. This can take up to 30 seconds.</span></div></div>','wide');
   var body=box.querySelector('.sc-body');
   m.api('/api/agent/season/vera',{method:'POST',body:JSON.stringify({organization_slug:m.slug(),show_id:showId,instruction:instruction||''})}).then(function(st){
     if(!st||!st.job_id)return st;
