@@ -371,7 +371,7 @@ window.addEventListener('veux:page-rendered',function(e){if(!e.detail||e.detail.
 (function(){
 'use strict';if(window.__CAVYRE_PACKAGE_COMMAND_161066__)return;window.__CAVYRE_PACKAGE_COMMAND_161066__=true;
 var A=function(v){return Array.isArray(v)?v:[]},E=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})};
-function get(){return fetch('/api/agent/packages?organization=maison-de-veux',{credentials:'include'}).then(function(r){if(!r.ok)throw new Error('Package workflow unavailable');return r.json()})}
+function get(){var V=window.VEUX_AGENT_V4;if(!V||!V.api||!V.state||!V.state.session)return Promise.reject(new Error('not signed in'));return V.api('/api/agent/packages?organization=maison-de-veux',{method:'GET',headers:{}})}
 function state(d){
  var pk=A(d.packages),fb=A(d.open_feedback),sg=A(d.client_model_signals),now=Date.now();
  var drafts=pk.filter(function(x){return /draft/i.test(x.status||'')});
@@ -391,7 +391,7 @@ function render(host,d){
  try{sessionStorage.setItem('cavyre.vera.context.packages',JSON.stringify({packages:s.pk.length,drafts:s.drafts.length,live_or_sent:s.sent.length,open_feedback:s.fb.length,high_intent_signals:s.hot.length,expiring_within_7_days:s.expiring.length,feedback:s.fb.slice(0,5).map(function(f){return[(f.packages&&f.packages.title)||'Package',(f.models&&f.models.display_name)||'Model',f.feedback_type||'feedback'].join(' · ')})}));}catch(_e){}
 }
 function commandHost(){return document.querySelector('#p-command .cnt,#p-agencycommand .cnt,[data-page-root="command"] .cnt,.vx161061-command,.vx161062-relationship')?.parentElement||null}
-function run(){var h=commandHost();if(!h||h.querySelector('.vx161066-package-command'))return;get().then(function(d){render(h,d)}).catch(function(){})}
+var lastTry=0;function run(){var h=commandHost();if(!h||h.querySelector('.vx161066-package-command'))return;if(Date.now()-lastTry<60000)return;lastTry=Date.now();get().then(function(d){render(h,d)}).catch(function(){})}
 new MutationObserver(function(){setTimeout(run,80)}).observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('veux:page-rendered',function(){setTimeout(run,80)});/* 16.11.48 consolidated: redundant package polling removed */setTimeout(run,500);
 })();
 ;/* END cavyre-package-client-command-16.10.66.js */
