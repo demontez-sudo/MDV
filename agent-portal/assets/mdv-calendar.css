@@ -213,3 +213,87 @@ html body #p-calendar .vx75-orbit .vx75-orbit-card dd{font-weight:500!important;
 html body #p-calendar .vx75-orbit .vx75-orbit-card .vx75-dossier{position:static!important;width:100%!important;margin:14px 0 0!important;padding:12px 16px!important;border:0!important;border-radius:11px!important;background:linear-gradient(135deg,var(--mdv-gold-2),var(--mdv-gold))!important;color:#15110a!important;font:700 12px 'Inter',sans-serif!important;letter-spacing:.05em!important;text-transform:uppercase;cursor:pointer;clip-path:none!important;box-shadow:0 6px 20px color-mix(in srgb,var(--mdv-gold) 26%,transparent)!important;text-align:center;transform:none!important}
 html body #p-calendar .vx75-orbit .vx75-orbit-card .vx75-dossier:hover{filter:brightness(1.06)}
 html body #p-calendar .vx75-orbit .vx75-orbit-card dd{text-align:left!important}
+
+/* ---- Unified command deck: models + filters + overview + breakdown + industry intelligence (all views) ---- */
+html body #p-calendar .vx75-calendar{display:flex!important;flex-direction:column}
+html body #p-calendar .vx75-calendar>.vx75-control{order:-4}
+html body #p-calendar .vx75-calendar>.vx76-scopebar{order:-3}
+html body #p-calendar .vx75-calendar>.mdv-deck{order:-2}
+html body #p-calendar .vx75-calendar>.vx1044-agency-intel.vx1044-agency-intel.vx1044-agency-intel{order:-1!important}
+html body #p-calendar .vx85-season.vx85-season>.vx85-models.vx85-models,html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard>.vx89-flow-overview.vx89-flow-overview{display:none!important}
+html body #p-calendar .vx85-season.vx85-season.vx85-season,html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard.vx89-flow-dashboard{grid-template-columns:minmax(0,1fr)!important}
+html body #p-calendar .mdv-deck{display:flex;flex-direction:column;gap:0;margin:18px 0 0;border:1px solid var(--mdv-line-2);border-bottom:0;border-radius:16px 16px 0 0;background:var(--mdv-panel);font-family:'Inter',sans-serif;color:var(--mdv-ink);overflow:hidden}
+html body #p-calendar .mdv-deck>*{padding:14px 22px}
+html body #p-calendar .mdv-deck>*+*{border-top:1px solid var(--mdv-line-2)}
+html body #p-calendar .mdv-deck-label{font:600 10px 'Inter',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mdv-gold);flex:0 0 auto}
+html body #p-calendar .mdv-deck-models,html body #p-calendar .mdv-deck-filters,html body #p-calendar .mdv-deck-break{display:flex;align-items:center;flex-wrap:wrap;gap:10px 12px}
+html body #p-calendar .mdv-deck-search{position:relative;flex:0 1 220px}
+html body #p-calendar .mdv-deck-search input{width:100%;height:40px;padding:0 36px 0 14px;background:var(--mdv-field);border:1px solid var(--mdv-line-2);border-radius:999px;color:var(--mdv-ink);font:400 13px 'Inter',sans-serif;outline:0}
+html body #p-calendar .mdv-deck-search input:focus{border-color:var(--mdv-gold)}
+html body #p-calendar .mdv-deck-search i{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--mdv-gold);font-style:normal;pointer-events:none}
+html body #p-calendar .mdv-deck-all{display:inline-flex;align-items:center;gap:10px;height:40px;padding:0 16px;border:1px solid var(--mdv-line);border-radius:999px;background:transparent;color:var(--mdv-ink);font:600 13px 'Inter',sans-serif;cursor:pointer}
+html body #p-calendar .mdv-deck-all b{min-width:24px;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--mdv-gold) 22%,transparent);font:600 11px 'Inter',sans-serif;text-align:center}
+html body #p-calendar .mdv-deck-all.on{background:linear-gradient(135deg,var(--mdv-gold-2),var(--mdv-gold));color:#15110a;border-color:transparent}
+html body #p-calendar .mdv-deck-chips,html body #p-calendar .mdv-deck-extra{display:contents}
+html body #p-calendar .mdv-deck-extra{display:flex;flex-wrap:wrap;gap:10px 12px;padding:0 22px 14px!important;border-top:0!important}
+html body #p-calendar .mdv-deck :is(.mdv-deck-chips,.mdv-deck-extra)>button{display:inline-flex;align-items:center;gap:10px;padding:5px 16px 5px 5px;border:1px solid var(--mdv-line-2);border-radius:999px;background:rgba(255,255,255,.03);color:var(--mdv-ink);text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
+html body #p-calendar .mdv-deck :is(.mdv-deck-chips,.mdv-deck-extra)>button:hover{border-color:var(--mdv-line);background:color-mix(in srgb,var(--mdv-gold) 8%,transparent)}
+html body #p-calendar .mdv-deck :is(.mdv-deck-chips,.mdv-deck-extra)>button.on{border-color:var(--mdv-gold);background:color-mix(in srgb,var(--mdv-gold) 14%,transparent)}
+html body #p-calendar .mdv-deck :is(.mdv-deck-chips,.mdv-deck-extra)>button>:first-child{width:36px;height:36px;border-radius:50%;object-fit:cover;flex:0 0 auto;display:grid;place-items:center;background:color-mix(in srgb,var(--mdv-gold) 16%,#000);color:var(--mdv-gold-2);font:600 12px 'Inter',sans-serif;font-style:normal}
+html body #p-calendar .mdv-deck :is(.mdv-deck-chips,.mdv-deck-extra)>button span{display:flex;flex-direction:column;gap:2px}
+html body #p-calendar .mdv-deck :is(.mdv-deck-chips,.mdv-deck-extra)>button b{font:600 12.5px/1.2 'Inter',sans-serif;color:var(--mdv-ink);white-space:nowrap}
+html body #p-calendar .mdv-deck :is(.mdv-deck-chips,.mdv-deck-extra)>button small{font:400 10.5px/1.2 'Inter',sans-serif;color:var(--mdv-mute)}
+html body #p-calendar .mdv-deck :is(.mdv-deck-chips,.mdv-deck-extra)>button em{display:none}
+html body #p-calendar .mdv-deck-more{height:40px;padding:0 16px;border:1px dashed var(--mdv-line);border-radius:999px;background:transparent;color:var(--mdv-gold-2);font:600 12px 'Inter',sans-serif;cursor:pointer}
+html body #p-calendar .mdv-deck-clear{border:0;background:none;color:var(--mdv-mute);font:500 12px 'Inter',sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0}
+html body #p-calendar .mdv-deck-filter{position:relative;display:inline-flex;align-items:center;gap:9px;padding:7px 12px;border:1px solid var(--mdv-line-2);border-radius:999px;background:rgba(255,255,255,.03);cursor:pointer;font:500 12.5px 'Inter',sans-serif;color:var(--mdv-ink);transition:opacity .15s,border-color .15s}
+html body #p-calendar .mdv-deck-filter input{position:absolute;opacity:0;inset:0;cursor:pointer}
+html body #p-calendar .mdv-deck-filter>i{font-style:normal;color:var(--cat,var(--mdv-gold))}
+html body #p-calendar .mdv-deck-filter>b{width:30px;height:17px;border-radius:999px;background:rgba(255,255,255,.14);position:relative;transition:background .15s}
+html body #p-calendar .mdv-deck-filter>b::after{content:'';position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:transform .15s}
+html body #p-calendar .mdv-deck-filter input:checked~b{background:var(--mdv-gold)}
+html body #p-calendar .mdv-deck-filter input:checked~b::after{transform:translateX(13px)}
+html body #p-calendar .mdv-deck-filter:has(input:not(:checked)){opacity:.5}
+html body #p-calendar .mdv-deck-filter.travel{--cat:var(--cat-travel)}html body #p-calendar .mdv-deck-filter.visa{--cat:var(--cat-visa)}html body #p-calendar .mdv-deck-filter.casting{--cat:var(--cat-casting)}html body #p-calendar .mdv-deck-filter.fitting{--cat:var(--cat-fitting)}html body #p-calendar .mdv-deck-filter.booking{--cat:var(--cat-booking)}html body #p-calendar .mdv-deck-filter.other{--cat:var(--cat-other)}html body #p-calendar .mdv-deck-filter.risk{--cat:var(--cat-risk)}
+html body #p-calendar .mdv-deck-intel{display:grid;grid-template-columns:minmax(200px,auto) minmax(0,1fr) auto;align-items:center;gap:18px 26px;background:color-mix(in srgb,var(--mdv-gold) 4%,transparent)}
+html body #p-calendar .mdv-deck-title small{display:block;font:600 10px 'Inter',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mdv-gold);margin-bottom:5px}
+html body #p-calendar .mdv-deck-title h3{margin:0;font:600 18px/1.15 'Inter',sans-serif;letter-spacing:-.01em;text-transform:none;color:var(--mdv-ink)}
+html body #p-calendar .mdv-deck-title h3 em{font-style:normal;color:var(--mdv-gold-2)}
+html body #p-calendar .mdv-deck-range{display:block;margin-top:6px;font:500 12px 'Inter',sans-serif;color:var(--mdv-mute)}
+html body #p-calendar .mdv-deck-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+html body #p-calendar .mdv-deck-stats>span{display:grid;grid-template-columns:auto 1fr;grid-template-areas:'i n' 'i l';column-gap:12px;align-items:center;padding:10px 14px;border:1px solid var(--mdv-line-2);border-radius:12px;background:rgba(255,255,255,.03)}
+html body #p-calendar .mdv-deck-ico{grid-area:i;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;border:1px solid var(--mdv-line);background:color-mix(in srgb,var(--mdv-gold) 10%,transparent);color:var(--mdv-gold-2);font-style:normal}
+html body #p-calendar .mdv-deck-stats b{grid-area:n;font:600 22px/1 'Inter',sans-serif;color:var(--mdv-ink)}
+html body #p-calendar .mdv-deck-stats small{grid-area:l;font:400 11px 'Inter',sans-serif;color:var(--mdv-mute);margin-top:3px}
+html body #p-calendar .mdv-deck-stats .risk .mdv-deck-ico{color:var(--cat-risk);border-color:color-mix(in srgb,var(--cat-risk) 40%,transparent);background:color-mix(in srgb,var(--cat-risk) 12%,transparent)}
+html body #p-calendar .mdv-deck-market{display:flex;flex-direction:column;gap:5px;font:500 12px 'Inter',sans-serif;color:var(--mdv-mute)}
+html body #p-calendar .mdv-deck-market small{font:600 10px 'Inter',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:var(--mdv-gold)}
+html body #p-calendar .mdv-deck-market b{color:var(--mdv-ink);font:600 15px 'Inter',sans-serif;margin-right:5px}
+html body #p-calendar .mdv-deck-break>span{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--mdv-line-2);border-radius:999px;font:500 12px 'Inter',sans-serif;color:var(--mdv-ink)}
+html body #p-calendar .mdv-deck-break>span i{width:8px;height:8px;border-radius:50%;background:var(--cat-other)}
+html body #p-calendar .mdv-deck-break>span.travel i{background:var(--cat-travel)}html body #p-calendar .mdv-deck-break>span.visa i{background:var(--cat-visa)}html body #p-calendar .mdv-deck-break>span.casting i{background:var(--cat-casting)}html body #p-calendar .mdv-deck-break>span.fitting i{background:var(--cat-fitting)}html body #p-calendar .mdv-deck-break>span.booking i{background:var(--cat-booking)}html body #p-calendar .mdv-deck-break>span.risk i{background:var(--cat-risk)}
+html body #p-calendar .mdv-deck-break>span.off{opacity:.45}
+html body #p-calendar .mdv-deck-break>span b{font:600 12px 'Inter',sans-serif;color:var(--mdv-gold-2)}
+html body #p-calendar .mdv-deck-toggle{margin-left:auto;height:34px;padding:0 16px;border:1px solid var(--mdv-line);border-radius:999px;background:transparent;color:var(--mdv-gold-2);font:600 12px 'Inter',sans-serif;cursor:pointer}
+/* intelligence section joins the deck */
+html body #p-calendar .vx75-calendar>.vx1044-agency-intel.vx1044-agency-intel.vx1044-agency-intel{margin:0 0 20px!important;border-radius:0 0 16px 16px!important;border-top:1px solid var(--mdv-line-2)!important;box-shadow:none!important;padding:14px 22px 18px!important;gap:16px!important}
+html body #p-calendar .vx1044-agency-intel .vx1044-title{display:none!important}
+html body #p-calendar .vx1044-agency-intel .vx1044-head{justify-content:flex-end}
+html body #p-calendar .vx75-calendar:not(.mdv-intel-open) .vx1044-agency-intel.vx1044-agency-intel.vx1044-agency-intel :is(.vx1044-pipeline,.vx1044-bottom){visibility:hidden!important;height:0!important;min-height:0!important;max-height:0!important;overflow:hidden!important;margin:0!important;padding:0!important;border:0!important;position:absolute!important;pointer-events:none}
+html body #p-calendar .vx75-calendar:not(.mdv-intel-open) .vx1044-agency-intel.vx1044-agency-intel.vx1044-agency-intel{position:relative!important;gap:0!important}
+html body #p-calendar .mdv-deck .mdv-deck-title h3,html body #p-calendar .mdv-deck .mdv-deck-title h3 em{font-family:'Inter',sans-serif!important;font-style:normal!important;font-weight:600!important;font-size:18px!important;letter-spacing:-.01em!important;text-transform:none!important;line-height:1.15!important}
+html body #p-calendar .mdv-deck .mdv-deck-title h3 em{color:var(--mdv-gold-2)!important}
+html body #p-calendar .vx1044-agency-intel.vx1044-agency-intel .vx1044-head{padding:0!important;min-height:0!important}
+html body #p-calendar .vx1044-agency-intel .vx1044-sync{height:34px!important}
+@media(max-width:1100px){html body #p-calendar .mdv-deck-intel{grid-template-columns:1fr}html body #p-calendar .mdv-deck-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---- smooth drag & drop ---- */
+.mdv-dnd-ghost{box-shadow:0 18px 44px rgba(0,0,0,.5),0 0 0 1.5px var(--mdv-gold,#d9b866)!important;border-radius:12px!important;opacity:.96;cursor:grabbing!important;transition:opacity .16s ease;will-change:transform;overflow:visible!important;background:var(--mdv-panel,#14120f)!important}
+.mdv-dnd-ghost.risk{box-shadow:0 18px 44px rgba(0,0,0,.5),0 0 0 1.5px #e0685a!important}
+.mdv-dnd-badge{position:absolute;left:0;top:calc(100% + 8px);white-space:nowrap;padding:5px 11px;border-radius:999px;background:var(--mdv-gold,#d9b866);color:#15110a;font:700 11px 'Inter',sans-serif;letter-spacing:.01em;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.mdv-dnd-badge.risk{background:#e0685a;color:#fff}
+body.mdv-dnd-on,body.mdv-dnd-on *{cursor:grabbing!important;user-select:none!important;-webkit-user-select:none!important}
+#p-calendar .mdv-dnd-src{opacity:.32!important;filter:saturate(.6);transition:opacity .15s}
+body.mdv-dnd-on #p-calendar .vx100-drop-target{outline:2px dashed var(--mdv-gold,#d9b866)!important;outline-offset:-3px;background-color:color-mix(in srgb,var(--mdv-gold,#d9b866) 10%,transparent)!important;transition:background-color .12s}
+body.mdv-dnd-on #p-calendar .vx100-drop-risk{outline:2px dashed #e0685a!important;outline-offset:-3px;background-color:rgba(224,104,90,.12)!important}
+#p-calendar [data-vx-drag-ref]{cursor:grab}

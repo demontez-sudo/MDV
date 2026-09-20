@@ -1,0 +1,18 @@
+/* Model 360 buttons: pills that match the calendar/tasks design system */
+html body #p-modelpage .v156-tabs{display:flex!important;flex-wrap:wrap;gap:8px!important;padding:6px!important;margin:0 0 18px!important;border:1px solid var(--mdv-line-2)!important;border-radius:16px!important;background:var(--mdv-panel)!important;overflow-x:auto}
+html body #p-modelpage .v156-tab{display:inline-flex!important;align-items:center;gap:8px;height:38px!important;padding:0 16px!important;border:1px solid transparent!important;border-radius:999px!important;background:transparent!important;color:var(--mdv-mute)!important;font:600 12.5px 'Inter',sans-serif!important;letter-spacing:0!important;text-transform:none!important;cursor:pointer;clip-path:none!important;box-shadow:none!important;white-space:nowrap;transition:background .15s,color .15s,border-color .15s}
+html body #p-modelpage .v156-tab:hover{color:var(--mdv-ink)!important;background:color-mix(in srgb,var(--mdv-gold) 8%,transparent)!important}
+html body #p-modelpage .v156-tab.on,html body #p-modelpage .v156-tab[aria-selected="true"]{background:linear-gradient(135deg,var(--mdv-gold-2),var(--mdv-gold))!important;color:#15110a!important;border-color:transparent!important;box-shadow:0 6px 18px color-mix(in srgb,var(--mdv-gold) 28%,transparent)!important}
+html body #p-modelpage .v156-tab[data-tone="visa"]::before{content:'▣'}
+html body #p-modelpage .v156-tab[data-tone="travel"]::before{content:'✈'}
+html body #p-modelpage .v156-tab[data-tone="development"]::before{content:'◔'}
+html body #p-modelpage .v156-tab[data-tone="visa"]::before,html body #p-modelpage .v156-tab[data-tone="travel"]::before,html body #p-modelpage .v156-tab[data-tone="development"]::before{font-size:12px;opacity:.85}
+html body #p-modelpage .v155-head-actions{display:flex;flex-wrap:wrap;gap:10px}
+html body #p-modelpage :is(.v152-btn,.v155-card>header>button,.vx161065-signals article button){display:inline-flex!important;align-items:center;justify-content:center;gap:8px;min-height:38px!important;height:auto!important;padding:0 18px!important;border:1px solid var(--mdv-line)!important;border-radius:999px!important;background:color-mix(in srgb,var(--mdv-gold) 8%,transparent)!important;color:var(--mdv-ink)!important;font:600 12.5px 'Inter',sans-serif!important;letter-spacing:0!important;text-transform:none!important;clip-path:none!important;box-shadow:none!important;cursor:pointer;transition:background .15s,border-color .15s}
+html body #p-modelpage :is(.v152-btn,.v155-card>header>button,.vx161065-signals article button):hover{border-color:var(--mdv-gold)!important;background:color-mix(in srgb,var(--mdv-gold) 16%,transparent)!important}
+html body #p-modelpage .v152-btn.primary{background:linear-gradient(135deg,var(--mdv-gold-2),var(--mdv-gold))!important;color:#15110a!important;border-color:transparent!important}
+html body #p-modelpage .v156-travel{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 16px;margin-top:10px;border:1px solid var(--mdv-line-2);border-radius:14px;background:rgba(255,255,255,.028)}
+html body #p-modelpage .v156-travel b{font:600 14px 'Inter',sans-serif;color:var(--mdv-ink)}
+html body #p-modelpage .v156-travel span{display:block;margin-top:3px;font:400 12px 'Inter',sans-serif;color:var(--mdv-mute)}
+html body #p-modelpage .v156-tab[data-vx1643-access-tab]:not([aria-selected="true"]){background:transparent!important;color:var(--mdv-mute)!important;box-shadow:none!important;border-color:transparent!important;text-transform:none!important;font-size:12.5px!important}
+html body #p-modelpage .v156-tab[data-vx1643-access-tab]::before{content:'⚿';font-size:12px;opacity:.85}
