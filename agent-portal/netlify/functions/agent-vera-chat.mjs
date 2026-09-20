@@ -1,6 +1,7 @@
 import { requireUser, adminClient, assertPermission, json, errorResponse, parseBody } from './_lib/auth.mjs';
 import { requireStaffOrganization } from './_lib/agent-bridge.mjs';
 import { buildAgencyContext } from './agent-assistant.mjs';
+import { startJob, readJob, pollResponse } from './_lib/vera-async.mjs';
 
 const clean = v => String(v == null ? '' : v).trim();
 const env = n => clean(process.env[n]).replace(/^["']|["']$/g, '');
@@ -16,7 +17,8 @@ function providerStatus() {
   const usable = order.filter(n => providers[n].configured);
   return { ok: usable.length > 0, selected: usable[0] || null, usable, providers };
 }
-const TIMEOUT_MS = Math.min(28000, Math.max(8000, Number(process.env.VEUX_CHAT_TIMEOUT_MS || 24000)));
+let TIMEOUT_MS = Math.min(28000, Math.max(8000, Number(process.env.VEUX_CHAT_TIMEOUT_MS || 24000)));
+export function setChatTimeout(ms) { TIMEOUT_MS = ms; }
 
 const SYSTEM = `You are Vera, the AI brain of CAVYRE, a model-agency operating system for Maison de Veux. You work like a top general-purpose assistant (ChatGPT, Claude, Gemini): answer any question, write, analyse, plan, summarise, translate, code and reason step by step, and search the live web whenever the question depends on current or external facts (news, people, brands, casting directors, photographers, fashion weeks, visa and immigration rules, flights, prices, laws).
 
@@ -127,6 +129,29 @@ async function askOpenAI(system, messages, web) {
   return { provider: 'openai', model: data.model || model, text: text.trim(), sources: [...sources.values()], queries };
 }
 
+export async function runChat({ admin, organization, user, body }) {
+  const status = providerStatus();
+  const message = clean(body.message);
+  if (!message) { const e = new Error('Type a message for Vera.'); e.statusCode = 400; throw e; }
+  if (!status.ok) { const e = new Error('Vera is not connected to an AI provider on this deployment. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in Netlify (Site configuration > Environment variables) and redeploy.'); e.statusCode = 503; throw e; }
+  const web = body.web !== false;
+  let agencyContext = {};
+  try { agencyContext = await buildAgencyContext(admin, organization, { message, context: body.context || {} }); } catch (e) { console.error('[Vera chat] context', String(e?.message || e)); agencyContext = { current_time: new Date().toISOString(), note: 'Agency data could not be loaded for this message.' }; }
+  const system = `${SYSTEM}\n\nAGENCY CONTEXT (private, live, JSON):\n${JSON.stringify(agencyContext).slice(0, 60000)}\n\nSigned-in agent: ${clean(user.email)}`;
+  const messages = normalizeHistory(body.history, message);
+  let result = null, lastError = null;
+  for (const provider of status.usable) {
+    try {
+      result = provider === 'anthropic' ? await askAnthropic(system, messages, web) : await askOpenAI(system, messages, web);
+      if (result.text) break;
+      lastError = new Error('The provider returned an empty answer.'); result = null;
+    } catch (e) { lastError = e; result = null; if (e.statusCode === 504) break; }
+  }
+  if (!result) { const e = new Error(clean(lastError?.message) || 'Vera could not reach an AI provider.'); e.statusCode = e502(lastError); throw e; }
+  try { await admin.from('ai_jobs').insert({ organization_id: organization.id, job_type: 'report', status: 'complete', requested_by: user.id, input: { compat: 'vera-chat', message: message.slice(0, 2000), web }, result: { reply: result.text.slice(0, 20000), sources: result.sources, queries: result.queries }, provider: result.provider, provider_model: result.model, completed_at: new Date().toISOString() }); } catch { /* audit is best effort */ }
+  return { ok: true, reply: result.text, sources: result.sources, queries: result.queries, searched: result.queries.length > 0 || result.sources.length > 0, provider: result.provider, model: result.model, web_requested: web };
+}
+
 export const handler = async (event) => {
   if (!['GET', 'POST'].includes(event.httpMethod)) return json(405, { error: 'Method not allowed' });
   try {
@@ -136,38 +161,17 @@ export const handler = async (event) => {
     const { organization } = await requireStaffOrganization({ user, client, organizationId: body.organization_id, organizationSlug: slug });
     const admin = adminClient();
     if (!await assertPermission(admin, user.id, organization.id, 'ai.use')) return json(403, { error: 'You do not have permission to use Vera.' });
-
     const status = providerStatus();
-    if (event.httpMethod === 'GET') return json(200, { ok: status.ok, selected: status.selected, providers: Object.fromEntries(Object.entries(status.providers).map(([k, v]) => [k, { configured: v.configured, model: v.model }])), web_search: status.ok });
-
-    const message = clean(body.message);
-    if (!message) return json(400, { error: 'Type a message for Vera.' });
-    if (!status.ok) return json(503, { error: 'Vera is not connected to an AI provider on this deployment. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in Netlify (Site configuration > Environment variables) and redeploy.', code: 'AI_NOT_CONFIGURED' });
-
-    const web = body.web !== false;
-    const ctxBody = { message, context: body.context || {} };
-    let agencyContext = {};
-    try { agencyContext = await buildAgencyContext(admin, organization, ctxBody); } catch (e) { console.error('[Vera chat] context', String(e?.message || e)); agencyContext = { current_time: new Date().toISOString(), note: 'Agency data could not be loaded for this message.' }; }
-    const system = `${SYSTEM}\n\nAGENCY CONTEXT (private, live, JSON):\n${JSON.stringify(agencyContext).slice(0, 60000)}\n\nSigned-in agent: ${clean(user.email)}`;
-    const messages = normalizeHistory(body.history, message);
-
-    const order = status.usable.length ? status.usable : [];
-    let result = null, lastError = null;
-    for (const provider of order) {
-      try {
-        result = provider === 'anthropic' ? await askAnthropic(system, messages, web) : await askOpenAI(system, messages, web);
-        if (result.text) break;
-        lastError = new Error('The provider returned an empty answer.');
-        result = null;
-      } catch (e) { lastError = e; result = null; if (e.statusCode === 504) break; }
+    if (event.httpMethod === 'GET') {
+      const jobId = clean(event.queryStringParameters?.job_id);
+      if (jobId) return pollResponse(await readJob({ admin, organization, user, id: jobId }), json);
+      return json(200, { ok: status.ok, selected: status.selected, providers: Object.fromEntries(Object.entries(status.providers).map(([k, v]) => [k, { configured: v.configured, model: v.model }])), web_search: status.ok, async: true });
     }
-    if (!result) return json(e502(lastError), { error: clean(lastError?.message) || 'Vera could not reach an AI provider.', code: 'AI_PROVIDER_FAILED' });
-
-    try {
-      await admin.from('ai_jobs').insert({ organization_id: organization.id, job_type: 'report', status: 'complete', requested_by: user.id, input: { compat: 'vera-chat', message: message.slice(0, 2000), web }, result: { reply: result.text.slice(0, 20000), sources: result.sources, queries: result.queries }, provider: result.provider, provider_model: result.model, completed_at: new Date().toISOString() });
-    } catch { /* audit is best effort */ }
-
-    return json(200, { ok: true, reply: result.text, sources: result.sources, queries: result.queries, searched: result.queries.length > 0 || result.sources.length > 0, provider: result.provider, model: result.model, web_requested: web });
+    if (!clean(body.message)) return json(400, { error: 'Type a message for Vera.' });
+    if (!status.ok) return json(503, { error: 'Vera is not connected to an AI provider on this deployment. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in Netlify (Site configuration > Environment variables) and redeploy.', code: 'AI_NOT_CONFIGURED' });
+    const input = { message: clean(body.message).slice(0, 16000), history: Array.isArray(body.history) ? body.history.slice(-20) : [], web: body.web !== false, context: body.context || {} };
+    const jobId = await startJob({ admin, organization, user, event, kind: 'chat', input, background: 'agent-vera-chat-background' });
+    return json(202, { ok: true, status: 'running', job_id: jobId });
   } catch (error) { return errorResponse(error); }
 };
 

@@ -1,7 +1,8 @@
 import { requireUser, adminClient, assertPermission, json, errorResponse, parseBody } from './_lib/auth.mjs';
 import { requireStaffOrganization } from './_lib/agent-bridge.mjs';
 import { parseJsonLoose } from './_lib/ai-providers.mjs';
-import { askWeb } from './agent-vera-chat.mjs';
+import { askWeb, setChatTimeout } from './agent-vera-chat.mjs';
+import { startJob, readJob, pollResponse } from './_lib/vera-async.mjs';
 
 const clean = v => String(v == null ? '' : v).trim();
 async function rows(q) { const { data, error } = await q; if (error) throw error; return data || []; }
@@ -20,18 +21,11 @@ Return ONLY valid JSON, no markdown, with this shape:
  "sources":[{"title":"","url":""}]}
 Suggest up to 8 models ordered by fit, scores 0-100. Only use model_id values from the roster. Casting directors must be real people found in sources; confidence 0-1.`;
 
-export const handler = async (event) => {
-  if (event.httpMethod !== 'POST') return json(405, { error: 'Method not allowed' });
-  try {
-    const { user, client } = await requireUser(event);
-    const body = parseBody(event);
-    const { organization } = await requireStaffOrganization({ user, client, organizationSlug: body.organization_slug || 'maison-de-veux' });
-    const admin = adminClient();
-    if (!await assertPermission(admin, user.id, organization.id, 'ai.use')) return json(403, { error: 'You do not have permission to use Vera.' });
+export async function runSeasonAnalysis({ admin, organization, user, body }) {
     const showId = clean(body.show_id);
-    if (!showId) return json(400, { error: 'show_id is required' });
+    if (!showId) { const e = new Error('show_id is required'); e.statusCode = 400; throw e; }
     const show = (await rows(admin.from('season_shows').select('*').eq('organization_id', organization.id).eq('id', showId).limit(1)))[0];
-    if (!show) return json(404, { error: 'Show not found' });
+    if (!show) { const e = new Error('Show not found'); e.statusCode = 404; throw e; }
     const season = (await rows(admin.from('seasons').select('name,starts_on,ends_on,markets:market_id(name)').eq('organization_id', organization.id).eq('id', show.season_id).limit(1)))[0] || {};
     const [roster, meas, assigned, company] = await Promise.all([
       rows(admin.from('models').select('id,display_name,stage,status,primary_market_label,location').eq('organization_id', organization.id).eq('active', true).limit(300)),
@@ -71,6 +65,24 @@ ${JSON.stringify(compact).slice(0, 70000)}`;
     const directors = (Array.isArray(parsed.casting_directors) ? parsed.casting_directors : []).filter(x => clean(x.display_name)).slice(0, 8).map(x => ({ display_name: clean(x.display_name), role: clean(x.role), company: clean(x.company), email: clean(x.email), instagram: clean(x.instagram), source_url: clean(x.source_url), confidence: Math.max(0, Math.min(1, Number(x.confidence) || 0)) }));
     const result = { ok: true, show_id: showId, designer: parsed.designer || {}, casting_profile: parsed.casting_profile || {}, casting_directors: directors, suggestions, notes: Array.isArray(parsed.notes) ? parsed.notes.map(clean).filter(Boolean).slice(0, 8) : [], sources: [...sources.values()].slice(0, 20), searched: r.queries, provider: r.provider, model: r.model, parse_ok: !!parsed.designer, raw: parsed.designer ? undefined : r.text.slice(0, 4000) };
     try { await admin.from('ai_jobs').insert({ organization_id: organization.id, job_type: 'report', status: 'complete', requested_by: user.id, input: { compat: 'season-show-analysis', show_id: showId }, result, provider: r.provider, provider_model: r.model, completed_at: new Date().toISOString() }); } catch { /* best effort */ }
-    return json(200, result);
+    return result;
+}
+
+export const handler = async (event) => {
+  if (!['GET', 'POST'].includes(event.httpMethod)) return json(405, { error: 'Method not allowed' });
+  try {
+    const { user, client } = await requireUser(event);
+    const body = event.httpMethod === 'POST' ? parseBody(event) : {};
+    const { organization } = await requireStaffOrganization({ user, client, organizationSlug: body.organization_slug || event.queryStringParameters?.organization || 'maison-de-veux' });
+    const admin = adminClient();
+    if (!await assertPermission(admin, user.id, organization.id, 'ai.use')) return json(403, { error: 'You do not have permission to use Vera.' });
+    if (event.httpMethod === 'GET') {
+      const jobId = clean(event.queryStringParameters?.job_id);
+      if (!jobId) return json(400, { error: 'job_id is required' });
+      return pollResponse(await readJob({ admin, organization, user, id: jobId }), json);
+    }
+    if (!clean(body.show_id)) return json(400, { error: 'show_id is required' });
+    const jobId = await startJob({ admin, organization, user, event, kind: 'season-show', input: { show_id: clean(body.show_id), instruction: clean(body.instruction).slice(0, 500) }, background: 'agent-season-vera-background' });
+    return json(202, { ok: true, status: 'running', job_id: jobId });
   } catch (error) { return errorResponse(error); }
 };

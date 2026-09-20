@@ -111,12 +111,25 @@ function api(body,signal){
   if(V&&V.api)return V.api('/api/agent/vera/chat',{method:'POST',body:JSON.stringify(body),signal:signal});
   return fetch('/api/agent/vera/chat',{method:'POST',credentials:'include',headers:{'content-type':'application/json'},body:JSON.stringify(body),signal:signal}).then(function(r){return r.json().then(function(j){if(!r.ok)throw new Error(j&&j.error||'Request failed');return j;});});
 }
+function pollJob(jobId,signal){
+  var V=window.VEUX_AGENT_V4,t0=Date.now();
+  return new Promise(function(resolve,reject){
+    (function tick(){
+      if(signal&&signal.aborted){reject(Object.assign(new Error('Stopped'),{name:'AbortError'}));return;}
+      if(Date.now()-t0>240000){reject(new Error('Vera took too long. Try again or turn off web search.'));return;}
+      V.api('/api/agent/vera/chat?organization=maison-de-veux&job_id='+encodeURIComponent(jobId),{method:'GET',headers:{},__fresh:true}).then(function(r){
+        if(r.status==='complete')resolve(r.result);else if(r.status==='failed')reject(new Error(r.error||'Vera could not answer.'));else setTimeout(tick,1800);
+      }).catch(function(e){if(Date.now()-t0<20000)setTimeout(tick,2500);else reject(e);});
+    })();
+  });
+}
 async function ask(c){
   var history=c.msgs.slice(0,-1).filter(function(m){return !m.error;}).map(function(m){return {role:m.role,content:m.content};});
   var last=c.msgs[c.msgs.length-1];
   S.busy=true;S.abort=new AbortController();renderChat();
   try{
-    var r=await api({message:last.content,history:history,web:S.web,context:ctx(),organization_slug:(window.VEUX_AGENT_V4&&VEUX_AGENT_V4.state&&VEUX_AGENT_V4.state.org&&VEUX_AGENT_V4.state.org.slug)||'maison-de-veux'},S.abort.signal);
+    var started=await api({message:last.content,history:history,web:S.web,context:ctx(),organization_slug:(window.VEUX_AGENT_V4&&VEUX_AGENT_V4.state&&VEUX_AGENT_V4.state.org&&VEUX_AGENT_V4.state.org.slug)||'maison-de-veux'},S.abort.signal);
+    var r=started&&started.job_id?await pollJob(started.job_id,S.abort.signal):started;
     c.msgs.push({role:'assistant',content:r.reply||'No response.',sources:r.sources||[],queries:r.queries||[],provider:r.provider?(r.provider+(r.model?' · '+r.model:'')):''});
   }catch(err){
     if(err&&err.name==='AbortError')c.msgs.push({role:'assistant',content:'Stopped.',error:true});

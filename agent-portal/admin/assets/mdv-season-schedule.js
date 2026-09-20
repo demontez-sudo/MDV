@@ -90,7 +90,17 @@ function veraPanel(showId,instruction){
   var m=M(),x=m.C.shows.find(function(s){return s.id===showId;});if(!x)return;
   var box=modal('<header><div><small>Vera · designer intelligence</small><h2>'+esc(x.title)+'</h2></div><button type="button" data-sc-x aria-label="Close">×</button></header><div class="sc-body vera"><div class="sc-loading"><i></i><b>Researching the designer on the web…</b><span>Casting history, casting director, aesthetic and which of your models fit. This can take up to 30 seconds.</span></div></div>','wide');
   var body=box.querySelector('.sc-body');
-  m.api('/api/agent/season/vera',{method:'POST',body:JSON.stringify({organization_slug:m.slug(),show_id:showId,instruction:instruction||''})}).then(function(r){renderVera(body,x,r);}).catch(function(e){body.innerHTML='<p class="sc-err">'+esc(String(e&&e.message||e))+'</p><p class="sc-hint">If this says the provider timed out, try again. Very long research can hit the server time limit.</p>';});
+  m.api('/api/agent/season/vera',{method:'POST',body:JSON.stringify({organization_slug:m.slug(),show_id:showId,instruction:instruction||''})}).then(function(st){
+    if(!st||!st.job_id)return st;
+    var t0=Date.now();
+    return new Promise(function(resolve,reject){(function tick(){
+      if(!document.getElementById('mdv-sc-modal')){reject(new Error('Closed'));return;}
+      if(Date.now()-t0>300000){reject(new Error('Vera took too long. Please try again.'));return;}
+      m.api('/api/agent/season/vera?organization='+encodeURIComponent(m.slug())+'&job_id='+encodeURIComponent(st.job_id),{method:'GET',headers:{},__fresh:true}).then(function(r){
+        if(r.status==='complete')resolve(r.result);else if(r.status==='failed')reject(new Error(r.error||'Vera could not finish the research.'));else{var s=body.querySelector('.sc-loading span');if(s&&Date.now()-t0>25000)s.textContent='Still researching — deep web research can take a minute or two…';setTimeout(tick,2000);}
+      }).catch(function(e){if(Date.now()-t0<20000)setTimeout(tick,2500);else reject(e);});
+    })();});
+  }).then(function(r){renderVera(body,x,r);}).catch(function(e){body.innerHTML='<p class="sc-err">'+esc(String(e&&e.message||e))+'</p><p class="sc-hint">You can close this and try again.</p>';});
 }
 function renderVera(body,x,r){
   var d=r.designer||{},cp=r.casting_profile||{},dirs=r.casting_directors||[],sug=r.suggestions||[],taken={};(x.season_show_models||[]).forEach(function(q){taken[q.model_id]=1;});
