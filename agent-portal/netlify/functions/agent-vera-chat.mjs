@@ -9,7 +9,7 @@ const anthropicKey = () => env('ANTHROPIC_API_KEY') || env('CAVYRE_ANTHROPIC_API
 function providerStatus() {
   const pref = env('VEUX_AI_PROVIDER').toLowerCase();
   const providers = {
-    anthropic: { configured: !!anthropicKey(), model: env('VEUX_ANTHROPIC_MODEL') || 'claude-sonnet-4-20250514' },
+    anthropic: { configured: !!anthropicKey(), model: env('VEUX_ANTHROPIC_MODEL') || 'claude-sonnet-5' },
     openai: { configured: !!openaiKey(), model: env('VEUX_OPENAI_MODEL') || 'gpt-5.6' }
   };
   const order = pref === 'openai' ? ['openai', 'anthropic'] : pref === 'anthropic' ? ['anthropic', 'openai'] : ['openai', 'anthropic'];
@@ -68,29 +68,38 @@ function addSource(map, url, title) {
 
 async function askAnthropic(system, messages, web) {
   const apiKey = anthropicKey();
-  const model = env('VEUX_ANTHROPIC_MODEL') || 'claude-sonnet-4-20250514';
-  const body = { model, max_tokens: Number(process.env.VEUX_CHAT_MAX_TOKENS || 2600), system, messages };
-  if (web) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: Number(process.env.VEUX_CHAT_MAX_SEARCHES || 5) }];
-  const res = await timedFetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-    body: JSON.stringify(body)
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) { const e = new Error(`Anthropic request failed (${res.status}): ${data?.error?.message || 'error'}`); e.providerFailed = true; throw e; }
-  const sources = new Map(), queries = [];
-  let text = '';
-  for (const block of data.content || []) {
-    if (block.type === 'text') {
-      text += block.text || '';
-      for (const c of block.citations || []) addSource(sources, c.url, c.title);
-    } else if (block.type === 'server_tool_use' && block.name === 'web_search') {
-      if (block.input?.query) queries.push(clean(block.input.query));
-    } else if (block.type === 'web_search_tool_result' && Array.isArray(block.content)) {
-      for (const r of block.content) if (r?.type === 'web_search_result') addSource(sources, r.url, r.title);
+  const candidates = [...new Set([env('VEUX_ANTHROPIC_MODEL'), 'claude-sonnet-5', 'claude-haiku-4-5-20251001'].filter(Boolean))];
+  let lastErr = null;
+  for (const model of candidates) {
+    const body = { model, max_tokens: Number(process.env.VEUX_CHAT_MAX_TOKENS || 2600), system, messages };
+    if (web) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: Number(process.env.VEUX_CHAT_MAX_SEARCHES || 5) }];
+    const res = await timedFetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      lastErr = new Error(`Anthropic request failed (${res.status}) on ${model}: ${data?.error?.message || 'error'}`);
+      lastErr.providerFailed = true;
+      if (res.status === 404 || (res.status === 400 && /model/i.test(data?.error?.message || ''))) continue;
+      throw lastErr;
     }
+    const sources = new Map(), queries = [];
+    let text = '';
+    for (const block of data.content || []) {
+      if (block.type === 'text') {
+        text += block.text || '';
+        for (const c of block.citations || []) addSource(sources, c.url, c.title);
+      } else if (block.type === 'server_tool_use' && block.name === 'web_search') {
+        if (block.input?.query) queries.push(clean(block.input.query));
+      } else if (block.type === 'web_search_tool_result' && Array.isArray(block.content)) {
+        for (const r of block.content) if (r?.type === 'web_search_result') addSource(sources, r.url, r.title);
+      }
+    }
+    return { provider: 'anthropic', model: data.model || model, text: text.trim(), sources: [...sources.values()], queries };
   }
-  return { provider: 'anthropic', model: data.model || model, text: text.trim(), sources: [...sources.values()], queries };
+  throw lastErr || new Error('No Anthropic model is available for this key.');
 }
 
 async function askOpenAI(system, messages, web) {
