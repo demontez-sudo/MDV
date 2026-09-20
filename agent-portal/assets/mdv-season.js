@@ -1,7 +1,7 @@
 /* Season: live strip, add show, import fashion-week schedules, and hand-off to the main Calendar. */
 (function(){
 if(window.__MDV_SEASON__)return;window.__MDV_SEASON__=1;
-var C={at:0,seasons:[],shows:[],busy:false},sig='';
+var C={at:0,seasons:[],shows:[],busy:false,msg:'',msgErr:false,auto:false},sig='';
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function api(path,opt){var V=window.VEUX_AGENT_V4;return V.api(path,opt);}
 function slug(){var V=window.VEUX_AGENT_V4;return V&&V.state&&V.state.org&&V.state.org.slug||'maison-de-veux';}
@@ -29,11 +29,11 @@ function barHtml(season){
   var list=rows.length?rows.map(function(x){return '<li><b>'+esc(fmtT(x.starts_at))+'</b><span>'+esc(x.title)+'</span><em>'+esc(today.length?(x.location||''):fmtD(x.starts_at))+'</em></li>';}).join(''):'<li class="none">'+(shows.length?'No more scheduled shows.':'No shows yet. Import the fashion-week schedule or add a show.')+'</li>';
   return '<div class="mdv-ss-strip"><div class="ss-head"><small>Live season strip</small><b>'+esc(season.starts_on?fmtD(season.starts_on)+' – '+fmtD(season.ends_on||season.starts_on):'Dates to be set')+'</b><span>'+esc(state)+'</span></div><div class="ss-track" role="img" aria-label="'+esc(state)+'"><em style="width:'+pct.toFixed(1)+'%"></em><i style="left:'+pct.toFixed(1)+'%"></i></div><div class="ss-counts"><span><b>'+nShow+'</b>Shows</span><span><b>'+nPres+'</b>Presentations</span><span><b>'+today.length+'</b>Today</span><span><b>'+Object.keys(assigned).length+'</b>Models on shows</span></div></div>'
    +'<div class="mdv-ss-today"><small>'+esc(label)+'</small><ul>'+list+'</ul></div>'
-   +'<div class="mdv-ss-actions"><button type="button" '+(shows.length?'class="primary" ':'')+'data-ss-cal>Open full calendar →</button><button type="button" data-ss-add>+ Add show</button><button type="button" '+(shows.length?'':'class="primary" ')+'data-ss-import>'+(shows.length?'Refresh fashion-week schedules':'Import fashion-week schedules (London, Milan, Paris)')+'</button></div>';
+   +(C.msg?'<p class="mdv-ss-msg'+(C.msgErr?' err':'')+'">'+esc(C.msg)+'</p>':'')+'<div class="mdv-ss-actions"><button type="button" '+(shows.length?'class="primary" ':'')+'data-ss-cal>Open full calendar →</button><button type="button" data-ss-add>+ Add show</button><button type="button" '+(shows.length?'':'class="primary" ')+'data-ss-import>'+(shows.length?'Refresh fashion-week schedules':'Import fashion-week schedules (London, Milan, Paris)')+'</button></div>';
 }
 function render(){
   var root=document.querySelector('#p-seasonmanagement .ss48');if(!root)return;
-  var season=current(root),key=season?season.id+'|'+C.at+'|'+C.shows.length:'none';
+  var season=current(root),key=season?season.id+'|'+C.at+'|'+C.shows.length+'|'+C.msg:'none';
   var bar=root.querySelector('.mdv-ss-bar');
   if(bar&&bar.dataset.sig===key)return;
   if(!bar){bar=document.createElement('section');bar.className='mdv-ss-bar';var tabs=root.querySelector('.ss48-tabs');if(tabs&&tabs.parentNode)tabs.parentNode.insertBefore(bar,tabs.nextSibling);else root.insertBefore(bar,root.firstChild);}
@@ -58,11 +58,14 @@ function addShow(season){
     }).then(function(){var root=document.querySelector('#p-seasonmanagement .ss48');var bar=root&&root.querySelector('.mdv-ss-bar');if(bar)bar.dataset.sig='';render();if(window.navTo)navTo('seasonmanagement');}).catch(function(x){b.disabled=false;b.textContent='Add to season & calendar';err.hidden=false;err.textContent=String(x&&x.message||x);});
   });
 }
+function setMsg(m,err){C.msg=m||'';C.msgErr=!!err;var root=document.querySelector('#p-seasonmanagement .ss48'),bar=root&&root.querySelector('.mdv-ss-bar');if(bar)bar.dataset.sig='';render();}
 function importAll(btn){
-  var o=btn.textContent;btn.disabled=true;btn.textContent='Importing…';
-  api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({action:'import_fashion_weeks',organization_slug:slug()})}).then(function(r){
-    var n=(r.report||[]).reduce(function(a,x){return a+(x.imported||0);},0);toast('Imported '+n+' shows and presentations.');C.at=0;return load(true);
-  }).then(function(){if(window.navTo)navTo('seasonmanagement');}).catch(function(e){toast(String(e&&e.message||e));}).then(function(){btn.disabled=false;btn.textContent=o;});
+  var o=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent='Importing…';}
+  setMsg('Importing the New York, London, Milan and Paris schedules…',false);
+  return api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({action:'import_fashion_weeks',organization_slug:slug()})}).then(function(r){
+    var n=(r.report||[]).reduce(function(a,x){return a+(x.imported||0);},0);
+    C.at=0;return load(true).then(function(){setMsg('Imported '+n+' shows and presentations across '+(r.report||[]).length+' seasons. Reloading Season…',false);toast('Imported '+n+' shows and presentations.');setTimeout(function(){setMsg('',false);if(window.navTo)navTo('seasonmanagement');},900);});
+  }).catch(function(e){setMsg('Import failed: '+String(e&&e.message||e),true);}).then(function(){if(btn){btn.disabled=false;btn.textContent=o;}});
 }
 document.addEventListener('click',function(e){
   var root=document.querySelector('#p-seasonmanagement .ss48');if(!root)return;
@@ -77,5 +80,5 @@ document.addEventListener('click',function(e){
 },true);
 document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('.ss48-season-tabs button'))setTimeout(render,60);},true);
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
-setInterval(function(){if(!document.querySelector('#p-seasonmanagement .ss48'))return;load().then(render);},1000);
+setInterval(function(){if(!document.querySelector('#p-seasonmanagement .ss48'))return;load().then(function(){render();if(!C.auto&&C.at&&!C.shows.length&&C.seasons.length&&!sessionStorage.getItem('mdv-ss-auto')){C.auto=true;try{sessionStorage.setItem('mdv-ss-auto','1');}catch(_e){}importAll(null);}});},1000);
 })();

@@ -38,3 +38,6 @@ html body #p-seasonmanagement .mdv-ss-bar small{display:block;font:600 10px 'Int
 #mdv-ss-modal footer{display:flex;justify-content:flex-end;gap:10px;padding:14px 20px;border-top:1px solid var(--mdv-line-2,rgba(255,255,255,.1))}
 #mdv-ss-modal footer button{height:40px;padding:0 18px;border:1px solid var(--mdv-line-2,rgba(255,255,255,.14));border-radius:999px;background:transparent;color:var(--mdv-ink,#f3ede0);font:600 12.5px 'Inter',sans-serif;letter-spacing:0;text-transform:none;cursor:pointer}
 #mdv-ss-modal footer button.primary{border:0;background:linear-gradient(135deg,var(--mdv-gold-2,#ecd28a),var(--mdv-gold,#d9b866));color:#15110a}
+
+.mdv-ss-msg{grid-column:1/-1;margin:0;padding:10px 14px;border:1px solid var(--mdv-line,rgba(217,184,102,.35));border-radius:12px;background:color-mix(in srgb,var(--mdv-gold,#d9b866) 8%,transparent);font:500 13px 'Inter',sans-serif;color:var(--mdv-ink,#f3ede0)}
+.mdv-ss-msg.err{border-color:#e0685a;background:rgba(224,104,90,.12);color:#f5b5ac;user-select:text}
