@@ -194,3 +194,10 @@ html body .mdv-tasks.mdv-tasks .tk-bx:hover{color:#fff!important;background:rgba
   html body .mdv-tasks.mdv-tasks .tk-row .tk-due,html body .mdv-tasks.mdv-tasks .tk-row .tk-due em{white-space:nowrap!important;width:auto!important;height:auto!important;writing-mode:horizontal-tb!important}
   html body .mdv-tasks.mdv-tasks .tk-row .tk-due svg{width:12px;height:12px}
 }
+
+@media(max-width:820px){
+  html body .mdv-tasks.mdv-tasks .tk-row{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+  html body .mdv-tasks.mdv-tasks .tk-list.selecting .tk-row .tk-sbox{display:grid!important;place-items:center;grid-area:chk;width:22px;height:22px}
+  html body .mdv-tasks.mdv-tasks .tk-list.selecting .tk-row .tk-check{display:none!important}
+  html body .mdv-tasks.mdv-tasks .tk-list:not(.selecting)::before{content:'Tip: press and hold a task to select several';display:block;padding:8px 14px;font:400 11px 'Inter',sans-serif;color:var(--mdv-mute);opacity:.8}
+}
