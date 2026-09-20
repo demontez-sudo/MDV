@@ -1,10 +1,21 @@
 import { requireUser, adminClient, assertPermission, json, errorResponse, parseBody } from './_lib/auth.mjs';
 import { requireStaffOrganization } from './_lib/agent-bridge.mjs';
-import { aiProviderStatus } from './_lib/ai-providers.mjs';
 import { buildAgencyContext } from './agent-assistant.mjs';
 
 const clean = v => String(v == null ? '' : v).trim();
 const env = n => clean(process.env[n]).replace(/^["']|["']$/g, '');
+const openaiKey = () => env('OPENAI_API_KEY') || env('CAVYRE_OPENAI_API_KEY') || env('VEUX_OPENAI_API_KEY');
+const anthropicKey = () => env('ANTHROPIC_API_KEY') || env('CAVYRE_ANTHROPIC_API_KEY') || env('VEUX_ANTHROPIC_API_KEY');
+function providerStatus() {
+  const pref = env('VEUX_AI_PROVIDER').toLowerCase();
+  const providers = {
+    anthropic: { configured: !!anthropicKey(), model: env('VEUX_ANTHROPIC_MODEL') || 'claude-sonnet-4-20250514' },
+    openai: { configured: !!openaiKey(), model: env('VEUX_OPENAI_MODEL') || 'gpt-5.6' }
+  };
+  const order = pref === 'openai' ? ['openai', 'anthropic'] : pref === 'anthropic' ? ['anthropic', 'openai'] : ['openai', 'anthropic'];
+  const usable = order.filter(n => providers[n].configured);
+  return { ok: usable.length > 0, selected: usable[0] || null, usable, providers };
+}
 const TIMEOUT_MS = Math.min(28000, Math.max(8000, Number(process.env.VEUX_CHAT_TIMEOUT_MS || 24000)));
 
 const SYSTEM = `You are Vera, the AI brain of CAVYRE, a model-agency operating system for Maison de Veux. You work like a top general-purpose assistant (ChatGPT, Claude, Gemini): answer any question, write, analyse, plan, summarise, translate, code and reason step by step, and search the live web whenever the question depends on current or external facts (news, people, brands, casting directors, photographers, fashion weeks, visa and immigration rules, flights, prices, laws).
@@ -56,7 +67,7 @@ function addSource(map, url, title) {
 }
 
 async function askAnthropic(system, messages, web) {
-  const apiKey = env('ANTHROPIC_API_KEY');
+  const apiKey = anthropicKey();
   const model = env('VEUX_ANTHROPIC_MODEL') || 'claude-sonnet-4-20250514';
   const body = { model, max_tokens: Number(process.env.VEUX_CHAT_MAX_TOKENS || 2600), system, messages };
   if (web) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: Number(process.env.VEUX_CHAT_MAX_SEARCHES || 5) }];
@@ -83,7 +94,7 @@ async function askAnthropic(system, messages, web) {
 }
 
 async function askOpenAI(system, messages, web) {
-  const apiKey = env('OPENAI_API_KEY') || env('CAVYRE_OPENAI_API_KEY') || env('VEUX_OPENAI_API_KEY');
+  const apiKey = openaiKey();
   const model = env('VEUX_OPENAI_MODEL') || 'gpt-5.6';
   const body = { model, instructions: system, input: messages.map(m => ({ role: m.role, content: m.content })), store: false };
   if (web) body.tools = [{ type: 'web_search' }];
@@ -117,12 +128,12 @@ export const handler = async (event) => {
     const admin = adminClient();
     if (!await assertPermission(admin, user.id, organization.id, 'ai.use')) return json(403, { error: 'You do not have permission to use Vera.' });
 
-    const status = aiProviderStatus();
+    const status = providerStatus();
     if (event.httpMethod === 'GET') return json(200, { ok: status.ok, selected: status.selected, providers: Object.fromEntries(Object.entries(status.providers).map(([k, v]) => [k, { configured: v.configured, model: v.model }])), web_search: status.ok });
 
     const message = clean(body.message);
     if (!message) return json(400, { error: 'Type a message for Vera.' });
-    if (!status.ok) return json(503, { error: 'Vera is not connected to an AI provider on this deployment. Add ANTHROPIC_API_KEY or OPENAI_API_KEY in Netlify environment variables.', code: 'AI_NOT_CONFIGURED' });
+    if (!status.ok) return json(503, { error: 'Vera is not connected to an AI provider on this deployment. Set OPENAI_API_KEY or ANTHROPIC_API_KEY in Netlify (Site configuration > Environment variables) and redeploy.', code: 'AI_NOT_CONFIGURED' });
 
     const web = body.web !== false;
     const ctxBody = { message, context: body.context || {} };
