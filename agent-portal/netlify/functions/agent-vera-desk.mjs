@@ -1,6 +1,6 @@
 import { requireUser, adminClient, assertPermission, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization } from './_lib/agent-bridge.mjs';
-function rows(q){return q.then(({data,error})=>{if(error)throw error;return data||[]})}
+function rows(q){return q.then(({data,error})=>{if(error){console.error('[Vera desk] query failed',String(error.message||error));return []}return data||[]}).catch(e=>{console.error('[Vera desk] query error',String(e&&e.message||e));return []})}
 function ts(v){const n=Date.parse(v||'');return Number.isFinite(n)?n:null}
 function isoDay(n){return new Date(n).toISOString()}
 export const handler=async(event)=>{
@@ -17,7 +17,7 @@ export const handler=async(event)=>{
    rows(admin.from('travel_records').select('id,model_id,purpose,origin,destination,starts_at,ends_at,status').eq('organization_id',organization.id).order('starts_at',{ascending:true,nullsFirst:false}).limit(100)),
    rows(admin.from('castings').select('id,title,status,starts_at,ends_at,location,company_id').eq('organization_id',organization.id).order('starts_at',{ascending:true,nullsFirst:false}).limit(120)),
    rows(admin.from('bookings').select('id,title,status,starts_at,ends_at,location,company_id').eq('organization_id',organization.id).order('starts_at',{ascending:true,nullsFirst:false}).limit(120)),
-   rows(admin.from('calendar_events').select('id,title,status,starts_at,ends_at,event_type,location').eq('organization_id',organization.id).gte('ends_at',isoDay(now-86400000)).lte('starts_at',isoDay(next14)).order('starts_at').limit(180)),
+   rows(admin.from('events').select('id,title,status,starts_at,ends_at,event_type,location').eq('organization_id',organization.id).gte('ends_at',isoDay(now-86400000)).lte('starts_at',isoDay(next14)).order('starts_at').limit(180)),
    rows(admin.from('companies').select('id,name,company_type,status,tier').eq('organization_id',organization.id).limit(300)),
    rows(admin.from('contacts').select('id,display_name,role,company_id,status,market').eq('organization_id',organization.id).limit(400))
   ]);
