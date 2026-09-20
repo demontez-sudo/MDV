@@ -29,7 +29,7 @@ function barHtml(season){
   var list=rows.length?rows.map(function(x){return '<li><b>'+esc(fmtT(x.starts_at))+'</b><span>'+esc(x.title)+'</span><em>'+esc(today.length?(x.location||''):fmtD(x.starts_at))+'</em></li>';}).join(''):'<li class="none">'+(shows.length?'No more scheduled shows.':'No shows yet. Import the fashion-week schedule or add a show.')+'</li>';
   return '<div class="mdv-ss-strip"><div class="ss-head"><small>Live season strip</small><b>'+esc(season.starts_on?fmtD(season.starts_on)+' – '+fmtD(season.ends_on||season.starts_on):'Dates to be set')+'</b><span>'+esc(state)+'</span></div><div class="ss-track" role="img" aria-label="'+esc(state)+'"><em style="width:'+pct.toFixed(1)+'%"></em><i style="left:'+pct.toFixed(1)+'%"></i></div><div class="ss-counts"><span><b>'+nShow+'</b>Shows</span><span><b>'+nPres+'</b>Presentations</span><span><b>'+today.length+'</b>Today</span><span><b>'+Object.keys(assigned).length+'</b>Models on shows</span></div></div>'
    +'<div class="mdv-ss-today"><small>'+esc(label)+'</small><ul>'+list+'</ul></div>'
-   +'<div class="mdv-ss-actions"><button type="button" class="primary" data-ss-cal>Open full calendar →</button><button type="button" data-ss-add>+ Add show</button><button type="button" data-ss-import>Import fashion-week schedules</button></div>';
+   +'<div class="mdv-ss-actions"><button type="button" '+(shows.length?'class="primary" ':'')+'data-ss-cal>Open full calendar →</button><button type="button" data-ss-add>+ Add show</button><button type="button" '+(shows.length?'':'class="primary" ')+'data-ss-import>'+(shows.length?'Refresh fashion-week schedules':'Import fashion-week schedules (London, Milan, Paris)')+'</button></div>';
 }
 function render(){
   var root=document.querySelector('#p-seasonmanagement .ss48');if(!root)return;
@@ -59,7 +59,6 @@ function addShow(season){
   });
 }
 function importAll(btn){
-  if(!confirm('Import the London, Milan and Paris SS27 schedules and create the New York season? Existing shows are not duplicated.'))return;
   var o=btn.textContent;btn.disabled=true;btn.textContent='Importing…';
   api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({action:'import_fashion_weeks',organization_slug:slug()})}).then(function(r){
     var n=(r.report||[]).reduce(function(a,x){return a+(x.imported||0);},0);toast('Imported '+n+' shows and presentations.');C.at=0;return load(true);

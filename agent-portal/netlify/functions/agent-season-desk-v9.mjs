@@ -57,7 +57,10 @@ export const handler=async(event)=>{
         const byName=new Map(companies.map(c=>[String(c.name||'').trim().toLowerCase(),c.id]));
         const markets=await rows(admin.from('markets').select('id,name').eq('organization_id',organization.id).limit(200));
         for(const def of fashionWeeks.seasons){
-          let season=(await rows(admin.from('seasons').select('*').eq('organization_id',organization.id).eq('name',def.name).limit(1)))[0];
+          const allSeasons=await rows(admin.from('seasons').select('*').eq('organization_id',organization.id).limit(500));
+          const pat={'nyfw-ss27':/nyfw|new\s*york/i,'lfw-ss27':/lfw|london/i,'mfw-ss27':/mfw|milan/i,'pfw-ss27':/pfw|paris/i}[def.key];
+          let season=allSeasons.find(x=>x.name===def.name)||allSeasons.find(x=>pat&&pat.test(String(x.name||'')))||null;
+          if(season&&(!season.starts_on||!season.ends_on)&&def.starts_on){const {data:u}=await admin.from('seasons').update({starts_on:season.starts_on||def.starts_on,ends_on:season.ends_on||def.ends_on}).eq('id',season.id).select('*').single();if(u)season=u;}
           const market=markets.find(m=>String(m.name||'').toLowerCase().includes(String(def.market).toLowerCase()))||null;
           if(!season){
             const {data,error}=await admin.from('seasons').insert({organization_id:organization.id,name:def.name,season_type:'fashion_week',market_id:market?.id||null,starts_on:def.starts_on,ends_on:def.ends_on,status:'planning',notes:def.notes}).select('*').single();if(error)throw error;season=data;
