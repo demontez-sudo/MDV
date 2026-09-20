@@ -214,7 +214,7 @@ window.MDV_TASKS={render:render,reload:function(){return load(true);}};
 
 /* long-press a task row on touch screens to start multi-select */
 (function(){var timer=null,sx=0,sy=0,fired=false;
-document.addEventListener('touchstart',function(e){var el=S.root;if(!el||!el.isConnected||!el.contains(e.target))return;var row=e.target.closest&&e.target.closest('.tk-row');if(!row)return;var t=e.touches[0];sx=t.clientX;sy=t.clientY;fired=false;clearTimeout(timer);timer=setTimeout(function(){var b=row.querySelector('.tk-sbox');if(b){fired=true;try{navigator.vibrate&&navigator.vibrate(12);}catch(_e){}b.click();}},480);},{passive:true});
+document.addEventListener('touchstart',function(e){var el=S.root;if(!el||!el.isConnected||!el.contains(e.target))return;var row=e.target.closest&&e.target.closest('.tk-row');if(!row)return;var t=e.touches[0];sx=t.clientX;sy=t.clientY;fired=false;clearTimeout(timer);timer=setTimeout(function(){var b=row.querySelector('.tk-sbox');if(b){try{navigator.vibrate&&navigator.vibrate(12);}catch(_e){}b.click();fired=true;}},480);},{passive:true});
 document.addEventListener('touchmove',function(e){if(!timer)return;var t=e.touches[0];if(Math.abs(t.clientX-sx)>8||Math.abs(t.clientY-sy)>8){clearTimeout(timer);timer=null;}},{passive:true});
 document.addEventListener('touchend',function(e){clearTimeout(timer);timer=null;if(fired){e.preventDefault();setTimeout(function(){fired=false;},350);}},false);
 document.addEventListener('click',function(e){if(fired&&e.target.closest&&e.target.closest('.tk-row')){e.preventDefault();e.stopImmediatePropagation();}},true);
