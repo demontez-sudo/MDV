@@ -97,6 +97,11 @@ to = "/.netlify/functions/agent-vera-intelligence"
 status = 200
 force = true
 [[redirects]]
+from = "/api/agent/vera/chat"
+to = "/.netlify/functions/agent-vera-chat"
+status = 200
+force = true
+[[redirects]]
 from = "/p/*"
 to = "/package/index.html?token=:splat"
 status = 200

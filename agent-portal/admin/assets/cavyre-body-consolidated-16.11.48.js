@@ -914,7 +914,7 @@ function industry(){
   });
 }
 
-function command(){
+function command(){if(window.matchMedia&&window.matchMedia('(max-width: 820px)').matches)return;
   document.querySelectorAll('#p-calendar .vx75-control').forEach(function(c){
     c.classList.add('vx161116-calendar-command-live');
     I(c,'min-height','76px');I(c,'padding','12px 18px');
@@ -1236,7 +1236,7 @@ function week(){
   root.querySelectorAll('.vx89-flow-day').forEach(function(d){I(d,'min-width','0')});
  });
 }
-function command(){
+function command(){if(window.matchMedia&&window.matchMedia('(max-width: 820px)').matches)return;
  document.querySelectorAll('#p-calendar .vx75-control').forEach(function(c){c.classList.add('vx161119-calendar-command')});
 }
 function industry(){

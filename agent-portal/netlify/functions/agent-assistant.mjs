@@ -67,7 +67,7 @@ function topicFlags(message, page) {
   return flags;
 }
 
-async function buildAgencyContext(admin, organization, body) {
+export async function buildAgencyContext(admin, organization, body) {
   const page = body?.context?.page || 'overview';
   const modelId = body?.context?.model_id || null;
   const companyId = body?.context?.company_id || null;
