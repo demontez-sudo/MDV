@@ -78,3 +78,11 @@ html body #p-seasonmanagement .mdv-ss-sched{margin:0 0 16px;border:1px solid var
 @media(max-width:820px){.sc-sug{grid-template-columns:44px minmax(0,1fr)}.sc-sug button{grid-column:1/-1}}
 
 .sc-ext{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.sc-ext a{padding:5px 12px;border:1px solid var(--mdv-line,rgba(217,184,102,.35));border-radius:999px;color:var(--mdv-gold-2,#ecd28a);font:600 11.5px 'Inter',sans-serif;text-decoration:none;letter-spacing:0;text-transform:none}.sc-ext a:hover{border-color:var(--mdv-gold,#d9b866);background:color-mix(in srgb,var(--mdv-gold,#d9b866) 10%,transparent)}
+
+.sc-chip.ev{padding:3px 10px;color:var(--cat-booking,#6fbf73);border-color:color-mix(in srgb,var(--cat-booking,#6fbf73) 45%,transparent);text-transform:capitalize}
+.sc-pills{display:flex;flex-wrap:wrap;gap:8px}.sc-pills button{height:34px;padding:0 14px;border:1px solid var(--mdv-line-2,rgba(255,255,255,.14));border-radius:999px;background:transparent;color:var(--mdv-mute,#a09585);font:600 12.5px 'Inter',sans-serif;letter-spacing:0;text-transform:none;cursor:pointer}.sc-pills button.on{border-color:transparent;background:linear-gradient(135deg,var(--mdv-gold-2,#ecd28a),var(--mdv-gold,#d9b866));color:#15110a}
+.sc-row2{display:grid;grid-template-columns:1.3fr 1fr .7fr;gap:10px}
+#mdv-sc-modal label span,#mdv-sc-modal .sc-lab{display:block;margin-bottom:6px;font:600 11px 'Inter',sans-serif;color:var(--mdv-mute,#a09585)}
+#mdv-sc-modal input[type=date],#mdv-sc-modal input[type=time],#mdv-sc-modal input[type=number],#mdv-sc-modal .sc-body>label input{width:100%;height:42px;padding:0 12px;border:1px solid var(--mdv-line-2,rgba(255,255,255,.14));border-radius:12px;background:var(--mdv-field,rgba(255,255,255,.04));color:var(--mdv-ink,#f3ede0);font:400 14px 'Inter',sans-serif;outline:0;box-sizing:border-box}
+.sc-mchips{display:flex;flex-wrap:wrap;gap:8px}.sc-mc{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border:1px solid var(--mdv-line-2,rgba(255,255,255,.14));border-radius:999px;cursor:pointer}.sc-mc span{margin:0!important;color:var(--mdv-ink,#f3ede0)!important;font:500 12.5px 'Inter',sans-serif!important}
+@media(max-width:820px){.sc-row2{grid-template-columns:1fr 1fr}.sc-row2 label:first-child{grid-column:1/-1}}

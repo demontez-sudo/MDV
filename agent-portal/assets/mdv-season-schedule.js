@@ -15,13 +15,14 @@ function shows(season){return M().C.shows.filter(function(x){return x.season_id=
 function rosterName(id){var r=(M().C.roster||[]).find(function(x){return x.id===id;});return r&&r.display_name||'Model';}
 function mdUrl(x){var n=String(x.title||'').replace(/\s*\(by appointment\)\s*$/i,'').trim();return 'https://www.google.com/search?q='+encodeURIComponent('site:models.com '+n);}
 function extLinks(x){var n=String(x.title||'').replace(/\s*\(by appointment\)\s*$/i,'').trim();return '<div class="sc-ext"><a href="'+mdUrl(x)+'" target="_blank" rel="noopener noreferrer">Search models.com ↗</a><a href="https://www.google.com/search?q='+encodeURIComponent(n+' casting director')+'" target="_blank" rel="noopener noreferrer">Casting director ↗</a><a href="https://www.instagram.com/explore/search/keyword/?q='+encodeURIComponent(n)+'" target="_blank" rel="noopener noreferrer">Instagram ↗</a></div>';}
+function dayShort(iso,tz){return new Date(iso).toLocaleDateString([], {month:'short',day:'numeric',timeZone:tz});}
 function directorsFor(x){return (M().C.castingByCompany||{})[x.company_id]||[];}
 
 function rowHtml(x,tz){
   var end=x._ends?tf(x._ends,tz):'',dirs=directorsFor(x),ms=x.season_show_models||[];
-  var chips=dirs.slice(0,3).map(function(d){return '<span class="sc-chip cd" title="'+esc(d.role||'Casting')+'">CD · '+esc(d.display_name)+'</span>';}).join('')
+  var linked=((M().C.linked||{})[x.id]||[]).slice().sort(function(a,b){return new Date(a.starts_at)-new Date(b.starts_at);});var chips=linked.slice(0,4).map(function(e){return '<span class="sc-chip ev" title="'+esc(e.title)+'">'+esc(String(e.stage||'event').replace(/_/g,' '))+' · '+esc(dayShort(e.starts_at,tz))+' '+esc(tf(e.starts_at,tz))+'</span>';}).join('')+dirs.slice(0,3).map(function(d){return '<span class="sc-chip cd" title="'+esc(d.role||'Casting')+'">CD · '+esc(d.display_name)+'</span>';}).join('')
     +ms.map(function(m){var n=rosterName(m.model_id);return '<span class="sc-chip md" title="'+esc(n)+'"><i>'+esc(initials(n))+'</i>'+esc(n)+'<button type="button" data-sc-rm="'+esc(x.id)+'|'+esc(m.model_id)+'" aria-label="Remove '+esc(n)+'">×</button></span>';}).join('');
-  return '<article class="sc-row" data-sc-show="'+esc(x.id)+'"><time>'+esc(tf(x.starts_at,tz))+(end?'<small>– '+esc(end)+'</small>':'')+'</time><div class="sc-main"><b>'+esc(x.title)+'</b><span>'+esc(x.location||'')+(kindOf(x)==='presentation'?' · Presentation':'')+'</span>'+(chips?'<div class="sc-chips">'+chips+'</div>':'')+'</div><div class="sc-acts"><button type="button" data-sc-models="'+esc(x.id)+'">＋ Models</button><button type="button" class="vera" data-sc-vera="'+esc(x.id)+'">✦ Vera</button></div></article>';
+  return '<article class="sc-row" data-sc-show="'+esc(x.id)+'"><time>'+esc(tf(x.starts_at,tz))+(end?'<small>– '+esc(end)+'</small>':'')+'</time><div class="sc-main"><b>'+esc(x.title)+'</b><span>'+esc(x.location||'')+(kindOf(x)==='presentation'?' · Presentation':'')+'</span>'+(chips?'<div class="sc-chips">'+chips+'</div>':'')+'</div><div class="sc-acts"><button type="button" data-sc-models="'+esc(x.id)+'">＋ Models</button><button type="button" data-sc-step="'+esc(x.id)+'">＋ Step</button><button type="button" class="vera" data-sc-vera="'+esc(x.id)+'">✦ Vera</button></div></article>';
 }
 function listHtml(season){
   var tz=tzFor(season),q=S.q.trim().toLowerCase(),days=[],cur=null,n=0;
@@ -87,6 +88,38 @@ function removeModel(showId,modelId){
   M().api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({action:'remove_show_model',organization_slug:M().slug(),show_id:showId,model_id:modelId})}).then(refresh).catch(function(e){toast(String(e&&e.message||e));});
 }
 
+
+/* ---- add a casting / fitting / option step (becomes a Calendar event linked to this show) ---- */
+var STEPS=[['submission','Submission'],['casting','Casting'],['go_see','Go-see'],['callback','Callback'],['fitting','Fitting'],['option','Option / hold'],['confirmation','Confirmation'],['follow_up','Follow-up']];
+function pad(n){return (n<10?'0':'')+n;}
+function addStep(showId){
+  var m=M(),x=m.C.shows.find(function(s){return s.id===showId;});if(!x)return;
+  var season=m.C.seasons.find(function(s){return s.id===x.season_id;})||{},tz=tzFor(season);
+  var base=new Date(x.starts_at),day=new Date(base.getTime()-86400000);
+  var dstr=day.toLocaleDateString('en-CA',{timeZone:tz});
+  var models=(x.season_show_models||[]);
+  var box=modal('<header><div><small>'+esc(season.name||'Season')+' · '+esc(x.title)+'</small><h2>Add step to this show</h2></div><button type="button" data-sc-x aria-label="Close">×</button></header><div class="sc-body"><div class="sc-pills" role="group">'+STEPS.map(function(s,i){return '<button type="button" class="'+(i===1?'on':'')+'" data-sc-stage="'+s[0]+'">'+s[1]+'</button>';}).join('')+'</div><div class="sc-row2"><label><span>Date</span><input id="sc-d" type="date" value="'+dstr+'"></label><label><span>Time ('+esc(tz.split('/')[1].replace('_',' '))+')</span><input id="sc-t" type="time" value="14:00"></label><label><span>Minutes</span><input id="sc-m" type="number" min="5" step="5" value="30"></label></div><label><span>Location</span><input id="sc-l" value="'+esc(x.location||'')+'"></label><div><span class="sc-lab">Models</span><div class="sc-mchips">'+(models.length?models.map(function(r){return '<label class="sc-mc"><input type="checkbox" checked data-sc-mm="'+esc(r.model_id)+'"><span>'+esc(rosterName(r.model_id))+'</span></label>';}).join(''):'<p class="sc-hint">No models on this show yet. Add models first, or save the step without models.</p>')+'</div></div><p class="sc-hint">Creates one Calendar event linked to '+esc(x.title)+'. It shows on the Calendar and here, with no duplicate entry.</p><p class="sc-err" hidden></p></div><footer><button type="button" data-sc-x>Cancel</button><button type="button" class="primary" data-sc-save-step>Add to calendar</button></footer>');
+  var stage='casting';
+  box.addEventListener('click',function(e){
+    var p=e.target.closest('[data-sc-stage]');if(p){stage=p.dataset.scStage;[].slice.call(box.querySelectorAll('[data-sc-stage]')).forEach(function(b){b.classList.toggle('on',b===p);});return;}
+    var b=e.target.closest('[data-sc-save-step]');if(!b)return;
+    var d=box.querySelector('#sc-d').value,tm=box.querySelector('#sc-t').value,mins=Number(box.querySelector('#sc-m').value)||30,err=box.querySelector('.sc-err');
+    if(!d||!tm){err.hidden=false;err.textContent='Choose a date and time.';return;}
+    var label=(STEPS.find(function(s){return s[0]===stage;})||['','Step'])[1];
+    var start=wallToDate(d,tm,tz),end=new Date(start.getTime()+mins*60000);
+    var ids=[].slice.call(box.querySelectorAll('[data-sc-mm]:checked')).map(function(c){return c.dataset.scMm;});
+    b.disabled=true;b.textContent='Saving…';
+    m.api('/api/agent/calendar/v9',{method:'POST',body:JSON.stringify({action:'create_event',organization_slug:m.slug(),title:String(x.title).replace(/\s*\(by appointment\)\s*$/i,'')+' — '+label,starts_at:start.toISOString(),ends_at:end.toISOString(),timezone:tz,location:box.querySelector('#sc-l').value.trim()||null,company_id:x.company_id||null,model_ids:ids,event_type:'meeting',calendar_event_type:label,season_id:x.season_id,show_id:x.id,season_stage:stage,status:'pending'})}).then(function(){
+      toast(label+' added. It is on the Calendar and linked to '+x.title+'.');closeModal();return refresh();
+    }).catch(function(er){b.disabled=false;b.textContent='Add to calendar';err.hidden=false;err.textContent=String(er&&er.message||er);});
+  });
+}
+function wallToDate(d,t,tz){
+  var guess=new Date(d+'T'+t+':00Z'),p={};
+  new Intl.DateTimeFormat('en-CA',{timeZone:tz,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(guess).forEach(function(q){p[q.type]=q.value;});
+  var shown=Date.UTC(+p.year,+p.month-1,+p.day,+p.hour,+p.minute);
+  return new Date(guess.getTime()-(shown-guess.getTime()));
+}
 /* ---- Vera analysis ---- */
 function veraPanel(showId,instruction){
   var m=M(),x=m.C.shows.find(function(s){return s.id===showId;});if(!x)return;
@@ -135,6 +168,7 @@ function linkCrm(x,d,dirs,body,btn){
 document.addEventListener('click',function(e){
   var root=document.querySelector('#p-seasonmanagement .ss48');if(!root||!root.contains(e.target))return;
   var b;
+  if((b=e.target.closest('[data-sc-step]'))){e.preventDefault();addStep(b.dataset.scStep);return;}
   if((b=e.target.closest('[data-sc-models]'))){e.preventDefault();pickModels(b.dataset.scModels);return;}
   if((b=e.target.closest('[data-sc-vera]'))){e.preventDefault();veraPanel(b.dataset.scVera);return;}
   if((b=e.target.closest('[data-sc-rm]'))){e.preventDefault();var p=b.dataset.scRm.split('|');removeModel(p[0],p[1]);return;}
