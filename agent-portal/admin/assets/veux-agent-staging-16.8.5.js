@@ -33,10 +33,10 @@ async function api(path,options){
     if(cached&&cached.expires>now)return cached.data;
     var pending=state.inflight.get(key);if(pending)return pending;
   }
-  var requestOptions=Object.assign({},options);delete requestOptions.__fresh;
+  var requestOptions=Object.assign({},options);delete requestOptions.__fresh;var _tmo=requestOptions.timeoutMs;delete requestOptions.timeoutMs;var _tid=null;if(_tmo&&!requestOptions.signal&&typeof AbortController!=='undefined'){var _ac=new AbortController();requestOptions.signal=_ac.signal;_tid=setTimeout(function(){_ac.abort()},_tmo)}
   var headers=Object.assign({'Content-Type':'application/json'},requestOptions.headers||{});if(token())headers.Authorization='Bearer '+token();
   var work=(async function(){
-    var r=await nativeFetch(portalPath(path),Object.assign({},requestOptions,{headers:headers}));
+    var r;try{r=await nativeFetch(portalPath(path),Object.assign({},requestOptions,{headers:headers}))}catch(fe){if(fe&&fe.name==='AbortError'&&_tmo){var te=new Error('The server took too long to respond ('+String(path).replace(/\?.*$/,'')+').');te.status=0;throw te}throw fe}finally{if(_tid)clearTimeout(_tid)}
     var body=await r.json().catch(function(){return{};});
     if(!r.ok){var e=new Error(body.error||('VEUX API '+r.status));e.status=r.status;e.data=body;throw e;}
     if(method==='GET')state.responseCache.set(key,{data:body,expires:Date.now()+cacheTtl(path)});
@@ -160,12 +160,14 @@ function installAssistant(){
 async function openSession(first){
   loginBusy(true,'Loading agency…');
   var shellPromise=window.__VEUX_ENSURE_SHELL__?window.__VEUX_ENSURE_SHELL__():Promise.resolve(true);
-  var both=await Promise.all([
-    api('/api/agent/bootstrap?organization='+encodeURIComponent(orgSlug),{method:'GET',headers:{},__fresh:!!first}),
-    api('/api/agent/bootstrap?organization='+encodeURIComponent(orgSlug)+'&section=roster',{method:'GET',headers:{},__fresh:!!first})
-  ]),core=both[0],roster=both[1];
+  var coreP=api('/api/agent/bootstrap?organization='+encodeURIComponent(orgSlug),{method:'GET',headers:{},__fresh:!!first,timeoutMs:30000});
+  var rosterP=api('/api/agent/bootstrap?organization='+encodeURIComponent(orgSlug)+'&section=roster',{method:'GET',headers:{},__fresh:!!first,timeoutMs:60000});
+  var core=await coreP;
+  var roster=await Promise.race([rosterP.catch(function(){return null}),new Promise(function(r){setTimeout(function(){r(undefined)},15000)})]);
+  var rosterLate=(roster===undefined);if(roster==null)roster={roster:[]};
   Object.assign(core,roster);state.bootstrap=core;state.org=core.organization;state.permissions=new Set(core.current_user&&core.current_user.permissions||[]);
   hydrateTeam(core);hydrateModels(roster.roster||roster);installAssistant();
+  if(rosterLate)rosterP.then(function(late){if(!late)return;Object.assign(state.bootstrap,late);hydrateModels(late.roster||late);if(typeof window.rerender==='function')window.rerender()}).catch(function(){});
   await shellPromise;
   await waitForShellReady();
   var app=qs('app'),login=qs('login');if(login)login.style.display='none';if(app)app.style.display='';if(document.body)document.body.dataset.veuxSessionReady='1';
