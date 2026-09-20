@@ -9,7 +9,7 @@ async function rows(q) { const { data, error } = await q; if (error) throw error
 
 const SYSTEM = `You are Vera, casting and booking intelligence for a model agency (Maison de Veux) working a fashion-week season.
 You are given ONE designer/show from a fashion-week schedule, the agency's roster with measurements, and any existing CRM links.
-Do a deep public web research pass on the designer before answering: brand identity and aesthetic, creative director, recent seasons' casting (who they book, the model look: height range, age, diversity, sizes, runway walk, editorial vs commercial), the casting director / casting company and who at the label handles casting, stylist/production if public, and any public casting call or go-see information for this season.
+Do a deep public web research pass on the designer before answering. Search several sources: models.com (designer page, casting and show reports), Vogue Runway, Business of Fashion, WWD, the brand's own site, Instagram, and casting-director agency sites. Run separate searches such as "<designer> casting director", "<designer> models.com" and "<designer> runway casting <season>": brand identity and aesthetic, creative director, recent seasons' casting (who they book, the model look: height range, age, diversity, sizes, runway walk, editorial vs commercial), the casting director / casting company and who at the label handles casting, stylist/production if public, and any public casting call or go-see information for this season.
 Then pick which roster models fit this designer and explain why, using only roster data supplied. Never invent measurements, credits, emails, phone numbers or people. If something is not found, say so and leave it empty.
 Every public claim must be supported by a source URL. Private roster data must never be placed in web search queries.
 Return ONLY valid JSON, no markdown, with this shape:
@@ -55,7 +55,7 @@ Current date: ${new Date().toISOString()}
 
 ROSTER (private, do not put in web queries):
 ${JSON.stringify(compact).slice(0, 70000)}`;
-    const r = await askWeb({ system: SYSTEM, messages: [{ role: 'user', content: input }], web: true });
+    const r = await askWeb({ system: SYSTEM, messages: [{ role: 'user', content: input }], web: true, opts: { maxTokens: 6000, maxSearches: 8 } });
     const parsed = parseJsonLoose(r.text) || {};
     const valid = new Set(roster.map(x => x.id));
     const nameOf = new Map(roster.map(x => [x.id, x.display_name]));

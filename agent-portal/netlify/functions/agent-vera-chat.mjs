@@ -68,38 +68,53 @@ function addSource(map, url, title) {
   map.set(u, { url: u, title: clean(title).slice(0, 200) || host || u, host });
 }
 
-async function askAnthropic(system, messages, web) {
+async function askAnthropic(system, messages, web, opts = {}) {
   const apiKey = anthropicKey();
   const candidates = [...new Set([env('VEUX_ANTHROPIC_MODEL'), 'claude-sonnet-5', 'claude-haiku-4-5-20251001'].filter(Boolean))];
+  const maxTokens = Number(opts.maxTokens || process.env.VEUX_CHAT_MAX_TOKENS || 4096);
+  const maxSearches = Number(opts.maxSearches || process.env.VEUX_CHAT_MAX_SEARCHES || 6);
   let lastErr = null;
   for (const model of candidates) {
-    const body = { model, max_tokens: Number(process.env.VEUX_CHAT_MAX_TOKENS || 2600), system, messages };
-    if (web) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: Number(process.env.VEUX_CHAT_MAX_SEARCHES || 5) }];
-    const res = await timedFetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify(body)
-    });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      lastErr = new Error(`Anthropic request failed (${res.status}) on ${model}: ${data?.error?.message || 'error'}`);
-      lastErr.providerFailed = true;
-      if (res.status === 404 || (res.status === 400 && /model/i.test(data?.error?.message || ''))) continue;
-      throw lastErr;
-    }
+    const convo = messages.map(m => ({ role: m.role, content: m.content }));
     const sources = new Map(), queries = [];
-    let text = '';
-    for (const block of data.content || []) {
-      if (block.type === 'text') {
-        text += block.text || '';
-        for (const c of block.citations || []) addSource(sources, c.url, c.title);
-      } else if (block.type === 'server_tool_use' && block.name === 'web_search') {
-        if (block.input?.query) queries.push(clean(block.input.query));
-      } else if (block.type === 'web_search_tool_result' && Array.isArray(block.content)) {
-        for (const r of block.content) if (r?.type === 'web_search_result') addSource(sources, r.url, r.title);
+    let text = '', usedModel = model, failed = false;
+    for (let round = 0; round < 5; round++) {
+      const body = { model, max_tokens: maxTokens, system, messages: convo };
+      if (web) body.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: maxSearches }];
+      const res = await timedFetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'x-api-key': apiKey, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        lastErr = new Error(`Anthropic request failed (${res.status}) on ${model}: ${data?.error?.message || 'error'}`);
+        lastErr.providerFailed = true;
+        if (round === 0 && (res.status === 404 || (res.status === 400 && /model/i.test(data?.error?.message || '')))) { failed = true; break; }
+        throw lastErr;
       }
+      usedModel = data.model || model;
+      for (const block of data.content || []) {
+        if (block.type === 'text') {
+          text += block.text || '';
+          for (const c of block.citations || []) addSource(sources, c.url, c.title);
+        } else if (block.type === 'server_tool_use' && block.name === 'web_search') {
+          if (block.input?.query) queries.push(clean(block.input.query));
+        } else if (block.type === 'web_search_tool_result' && Array.isArray(block.content)) {
+          for (const r of block.content) if (r?.type === 'web_search_result') addSource(sources, r.url, r.title);
+        }
+      }
+      const done = data.stop_reason === 'end_turn' || data.stop_reason === 'stop_sequence';
+      if (done && text.trim()) break;
+      if (data.stop_reason === 'pause_turn') { convo.push({ role: 'assistant', content: data.content }); continue; }
+      if (text.trim() && data.stop_reason !== 'max_tokens') break;
+      convo.push({ role: 'assistant', content: data.content && data.content.length ? data.content : [{ type: 'text', text: '(continuing)' }] });
+      convo.push({ role: 'user', content: 'Stop searching now. Using everything you have found so far, give your complete final answer in the requested format.' });
+      web = false;
+      text = '';
     }
-    return { provider: 'anthropic', model: data.model || model, text: text.trim(), sources: [...sources.values()], queries };
+    if (failed) continue;
+    return { provider: 'anthropic', model: usedModel, text: text.trim(), sources: [...sources.values()], queries };
   }
   throw lastErr || new Error('No Anthropic model is available for this key.');
 }
@@ -177,13 +192,13 @@ export const handler = async (event) => {
 
 function e502(err) { return err?.statusCode === 504 ? 504 : 502; }
 
-export async function askWeb({ system, messages, web = true }) {
+export async function askWeb({ system, messages, web = true, opts = {} }) {
   const status = providerStatus();
   if (!status.ok) { const e = new Error('Vera is not connected to an AI provider. Set ANTHROPIC_API_KEY or OPENAI_API_KEY in Netlify.'); e.statusCode = 503; throw e; }
   let lastError = null;
   for (const provider of status.usable) {
     try {
-      const r = provider === 'anthropic' ? await askAnthropic(system, messages, web) : await askOpenAI(system, messages, web);
+      const r = provider === 'anthropic' ? await askAnthropic(system, messages, web, opts) : await askOpenAI(system, messages, web);
       if (r.text) return r;
       lastError = new Error('The provider returned an empty answer.');
     } catch (e) { lastError = e; if (e.statusCode === 504) break; }
