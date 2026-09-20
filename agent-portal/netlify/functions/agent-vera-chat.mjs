@@ -172,3 +172,17 @@ export const handler = async (event) => {
 };
 
 function e502(err) { return err?.statusCode === 504 ? 504 : 502; }
+
+export async function askWeb({ system, messages, web = true }) {
+  const status = providerStatus();
+  if (!status.ok) { const e = new Error('Vera is not connected to an AI provider. Set ANTHROPIC_API_KEY or OPENAI_API_KEY in Netlify.'); e.statusCode = 503; throw e; }
+  let lastError = null;
+  for (const provider of status.usable) {
+    try {
+      const r = provider === 'anthropic' ? await askAnthropic(system, messages, web) : await askOpenAI(system, messages, web);
+      if (r.text) return r;
+      lastError = new Error('The provider returned an empty answer.');
+    } catch (e) { lastError = e; if (e.statusCode === 504) break; }
+  }
+  throw lastError || new Error('Vera could not reach an AI provider.');
+}

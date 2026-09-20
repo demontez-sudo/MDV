@@ -89,6 +89,63 @@ export const handler=async(event)=>{
         const {data,error}=await admin.from('seasons').update(patch).eq('organization_id',organization.id).eq('id',body.season_id).select('*').single();if(error)throw error;
         return json(200,{ok:true,verified:true,season:data,persisted_at:new Date().toISOString()});
       }
+      if(action==='remove_show_model'){
+        const {error}=await admin.from('season_show_models').delete().eq('organization_id',organization.id).eq('season_show_id',body.show_id).eq('model_id',body.model_id);if(error)throw error;
+        return json(200,{ok:true,verified:true,persisted_at:new Date().toISOString()});
+      }
+      if(action==='assign_show_models'){
+        const ids=[...new Set((Array.isArray(body.model_ids)?body.model_ids:[]).filter(Boolean).map(String))];if(!body.show_id||!ids.length)return json(400,{error:'show_id and model_ids are required'});
+        const have=await rows(admin.from('season_show_models').select('model_id').eq('organization_id',organization.id).eq('season_show_id',body.show_id).limit(500));
+        const seen=new Set(have.map(x=>x.model_id));const fresh=ids.filter(x=>!seen.has(x));
+        if(fresh.length){const {error}=await admin.from('season_show_models').insert(fresh.map(id=>({organization_id:organization.id,season_show_id:body.show_id,model_id:id,status:'submitted',notes:body.notes||null})));if(error)throw error;}
+        return json(200,{ok:true,verified:true,added:fresh.length,already:ids.length-fresh.length,persisted_at:new Date().toISOString()});
+      }
+      if(action==='crm_link_designer'){
+        await requirePermission(user.id,organization.id,'crm.write');
+        const clean=v=>String(v==null?'':v).trim();
+        const name=clean(body.company&&body.company.name);if(!body.show_id)return json(400,{error:'show_id is required'});
+        const out={company:null,created_company:false,contacts:[],created_contacts:0,linked:0};
+        const show=(await rows(admin.from('season_shows').select('id,title,company_id').eq('organization_id',organization.id).eq('id',body.show_id).limit(1)))[0];if(!show)return json(404,{error:'Show not found'});
+        let company=null;
+        if(show.company_id)company=(await rows(admin.from('companies').select('*').eq('organization_id',organization.id).eq('id',show.company_id).limit(1)))[0]||null;
+        if(!company&&(name||show.title)){
+          const nm=name||show.title;
+          company=(await rows(admin.from('companies').select('*').eq('organization_id',organization.id).ilike('name',nm).limit(1)))[0]||null;
+          if(!company){
+            const ct=['brand','agency','casting_office','photographer','media','production','other'].includes(clean(body.company&&body.company.company_type))?body.company.company_type:'brand';
+            const {data,error}=await admin.from('companies').insert({organization_id:organization.id,name:nm,company_type:ct,website:clean(body.company&&body.company.website)||null,notes:clean(body.company&&body.company.notes)||'Added from Season by Vera research. Verify details.'}).select('*').single();if(error)throw error;company=data;out.created_company=true;
+          }
+          await admin.from('season_shows').update({company_id:company.id}).eq('organization_id',organization.id).eq('id',show.id);
+        }
+        out.company=company&&{id:company.id,name:company.name};
+        for(const c of Array.isArray(body.contacts)?body.contacts.slice(0,12):[]){
+          const dn=clean(c.display_name);if(!dn)continue;
+          let contact=(await rows(admin.from('contacts').select('*').eq('organization_id',organization.id).ilike('display_name',dn).limit(1)))[0]||null;
+          if(!contact){
+            const {data,error}=await admin.from('contacts').insert({organization_id:organization.id,display_name:dn,role:clean(c.role)||'Casting Director',company_id:company?.id||null,email:clean(c.email)||null,instagram:clean(c.instagram)||null,market:clean(c.market)||null,notes:clean(c.notes)||'Added from Season by Vera research. Verify details.'}).select('*').single();if(error)throw error;contact=data;out.created_contacts++;
+          }
+          if(company){
+            const ex=(await rows(admin.from('contact_company_links').select('contact_id').eq('organization_id',organization.id).eq('contact_id',contact.id).eq('company_id',company.id).limit(1)))[0];
+            if(!ex){const {error}=await admin.from('contact_company_links').insert({organization_id:organization.id,contact_id:contact.id,company_id:company.id,relationship_role:clean(c.role)||'casting_director',is_primary:false});if(error)throw error;out.linked++;}
+          }
+          out.contacts.push({id:contact.id,display_name:contact.display_name});
+        }
+        return json(200,{ok:true,verified:true,...out,persisted_at:new Date().toISOString()});
+      }
+      if(action==='import_designers_to_crm'){
+        await requirePermission(user.id,organization.id,'crm.write');
+        const seasonId=body.season_id;const list=await rows(admin.from('season_shows').select('id,title,company_id').eq('organization_id',organization.id).eq('season_id',seasonId).limit(3000));
+        const companies=await rows(admin.from('companies').select('id,name').eq('organization_id',organization.id).limit(5000));
+        const by=new Map(companies.map(c=>[String(c.name||'').trim().toLowerCase(),c.id]));let created=0,linked=0;
+        for(const sh of list){
+          if(sh.company_id)continue;
+          const base=String(sh.title||'').replace(/\s*\(by appointment\)\s*$/i,'').trim();if(!base)continue;
+          let id=by.get(base.toLowerCase());
+          if(!id){const {data,error}=await admin.from('companies').insert({organization_id:organization.id,name:base,company_type:'brand',notes:'Designer added from a fashion-week schedule.'}).select('id').single();if(error)throw error;id=data.id;by.set(base.toLowerCase(),id);created++;}
+          const {error:ue}=await admin.from('season_shows').update({company_id:id}).eq('organization_id',organization.id).eq('id',sh.id);if(ue)throw ue;linked++;
+        }
+        return json(200,{ok:true,verified:true,created_companies:created,linked_shows:linked,persisted_at:new Date().toISOString()});
+      }
       return json(400,{error:'Unsupported season action'});
     }
     const admin=await requirePermission(user.id,organization.id,'season.read'),seasonId=p.season_id||null;
@@ -96,9 +153,13 @@ export const handler=async(event)=>{
     let modelQ=admin.from('season_models').select('*').eq('organization_id',organization.id).order('readiness_percent',{ascending:true});if(seasonId)modelQ=modelQ.eq('season_id',seasonId);
     let showQ=admin.from('season_shows').select('*').eq('organization_id',organization.id).order('starts_at',{ascending:true});if(seasonId)showQ=showQ.eq('season_id',seasonId);
     const [seasons,seasonModels,shows,readiness,showModels,travel,models,companies,markets]=await Promise.all([
-      rows(seasonsQ.limit(100)),rows(modelQ.limit(700)),rows(showQ.limit(3000)),rows(admin.from('season_readiness_items').select('*').eq('organization_id',organization.id).limit(5000)),rows(admin.from('season_show_models').select('*').eq('organization_id',organization.id).limit(8000)),rows(admin.from('travel_records').select('*').eq('organization_id',organization.id).order('starts_at',{ascending:true}).limit(500)),rows(admin.from('models').select('id,display_name,public_slug,primary_market_label').eq('organization_id',organization.id).limit(1000)),rows(admin.from('companies').select('id,name').eq('organization_id',organization.id).limit(1000)),rows(admin.from('markets').select('id,name,code').eq('organization_id',organization.id).limit(100))
+      rows(seasonsQ.limit(100)),rows(modelQ.limit(700)),rows(showQ.limit(3000)),rows(admin.from('season_readiness_items').select('*').eq('organization_id',organization.id).limit(5000)),rows(admin.from('season_show_models').select('*').eq('organization_id',organization.id).limit(8000)),rows(admin.from('travel_records').select('*').eq('organization_id',organization.id).order('starts_at',{ascending:true}).limit(500)),rows(admin.from('models').select('id,display_name,public_slug,primary_market_label,stage,status').eq('organization_id',organization.id).limit(1000)),rows(admin.from('companies').select('id,name,company_type,website').eq('organization_id',organization.id).limit(3000)),rows(admin.from('markets').select('id,name,code').eq('organization_id',organization.id).limit(100))
     ]);
     const mm=new Map(models.map(x=>[x.id,x])),cm=new Map(companies.map(x=>[x.id,x])),marketMap=new Map(markets.map(x=>[x.id,x])),readyMap=group(readiness,'season_model_id'),showModelMap=group(showModels,'season_show_id');
-    return json(200,{environment:'veux-saas-v9',organization,seasons:seasons.map(x=>({...x,markets:marketMap.get(x.market_id)||null})),season_models:seasonModels.map(x=>({...x,models:mm.get(x.model_id)||null,season_readiness_items:readyMap.get(x.id)||[]})),shows:shows.map(x=>({...x,companies:cm.get(x.company_id)||null,season_show_models:(showModelMap.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),travel:travel.map(x=>({...x,models:mm.get(x.model_id)||null}))});
+    const [crmContacts,crmLinks]=await Promise.all([rows(admin.from('contacts').select('id,display_name,role,company_id,email,instagram').eq('organization_id',organization.id).limit(4000)),rows(admin.from('contact_company_links').select('contact_id,company_id,relationship_role,is_primary').eq('organization_id',organization.id).limit(8000))]);
+    const contactById=new Map(crmContacts.map(x=>[x.id,x])),castingByCompany={};
+    for(const l of crmLinks){const c=contactById.get(l.contact_id);if(!c)continue;(castingByCompany[l.company_id]=castingByCompany[l.company_id]||[]).push({id:c.id,display_name:c.display_name,role:l.relationship_role||c.role||'',email:c.email||null,instagram:c.instagram||null});}
+    for(const c of crmContacts){if(c.company_id&&!(castingByCompany[c.company_id]||[]).some(x=>x.id===c.id))(castingByCompany[c.company_id]=castingByCompany[c.company_id]||[]).push({id:c.id,display_name:c.display_name,role:c.role||'',email:c.email||null,instagram:c.instagram||null});}
+    return json(200,{roster:models,companies,casting_by_company:castingByCompany,environment:'veux-saas-v9',organization,seasons:seasons.map(x=>({...x,markets:marketMap.get(x.market_id)||null})),season_models:seasonModels.map(x=>({...x,models:mm.get(x.model_id)||null,season_readiness_items:readyMap.get(x.id)||[]})),shows:shows.map(x=>({...x,companies:cm.get(x.company_id)||null,season_show_models:(showModelMap.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),travel:travel.map(x=>({...x,models:mm.get(x.model_id)||null}))});
   }catch(error){return errorResponse(error);}
 };

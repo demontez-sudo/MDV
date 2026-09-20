@@ -10,11 +10,12 @@ function load(force){
   if(C.busy||(!force&&C.at&&Date.now()-C.at<30000))return Promise.resolve();
   C.busy=true;
   return api('/api/agent/season/v9?organization='+encodeURIComponent(slug()),{method:'GET',headers:{},__fresh:true}).then(function(d){
-    C.seasons=d.seasons||[];C.shows=(d.shows||[]).map(function(x){var n=String(x.notes||'');x._kind=(n.match(/kind=(\w+)/)||[])[1]||'show';x._ends=(n.match(/ends=([^;]+)/)||[])[1]||'';return x;});C.at=Date.now();
+    C.seasons=d.seasons||[];C.roster=d.roster||[];C.companies=d.companies||[];C.castingByCompany=d.casting_by_company||{};C.shows=(d.shows||[]).map(function(x){var n=String(x.notes||'');x._kind=(n.match(/kind=(\w+)/)||[])[1]||'show';x._ends=(n.match(/ends=([^;]+)/)||[])[1]||'';return x;});C.at=Date.now();
   }).catch(function(){}).then(function(){C.busy=false;});
 }
 function fmtD(iso){var d=new Date(iso+(String(iso).length<=10?'T12:00:00':''));return isNaN(d)?'':d.toLocaleDateString([],{month:'short',day:'numeric'});}
-function fmtT(iso){var d=new Date(iso);return isNaN(d)?'':d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false});}
+function tzOf(season){var n=String(season&&season.name||'').toLowerCase();return /new york|nyfw/.test(n)?'America/New_York':/london|lfw/.test(n)?'Europe/London':'Europe/Paris';}
+function fmtT(iso,tz){var d=new Date(iso);return isNaN(d)?'':d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:tz});}
 function sameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate();}
 function current(root){var b=root.querySelector('.ss48-season-tabs button.on');var name=b&&b.textContent.trim();return C.seasons.find(function(s){return s.name===name;})||null;}
 function barHtml(season){
@@ -26,19 +27,28 @@ function barHtml(season){
   if(s0&&e0){var total=e0-s0;pct=Math.max(0,Math.min(100,(now-s0)/total*100));var days=Math.ceil((e0-s0)/86400000);if(now<s0)state='Starts in '+Math.ceil((s0-now)/86400000)+' days';else if(now>e0)state='Season complete';else state='Day '+(Math.floor((now-s0)/86400000)+1)+' of '+days;}
   var assigned={};shows.forEach(function(x){(x.season_show_models||[]).forEach(function(m){assigned[m.model_id]=1;});});
   var rows=today.length?today.slice(0,6):upcoming.slice(0,5),label=today.length?'Today · '+now.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'}):'Next up';
-  var list=rows.length?rows.map(function(x){return '<li><b>'+esc(fmtT(x.starts_at))+'</b><span>'+esc(x.title)+'</span><em>'+esc(today.length?(x.location||''):fmtD(x.starts_at))+'</em></li>';}).join(''):'<li class="none">'+(shows.length?'No more scheduled shows.':'No shows yet. Import the fashion-week schedule or add a show.')+'</li>';
+  var list=rows.length?rows.map(function(x){return '<li><b>'+esc(fmtT(x.starts_at,tzOf(season)))+'</b><span>'+esc(x.title)+'</span><em>'+esc(today.length?(x.location||''):fmtD(x.starts_at))+'</em></li>';}).join(''):'<li class="none">'+(shows.length?'No more scheduled shows.':'No shows yet. Import the fashion-week schedule or add a show.')+'</li>';
   return '<div class="mdv-ss-strip"><div class="ss-head"><small>Live season strip</small><b>'+esc(season.starts_on?fmtD(season.starts_on)+' – '+fmtD(season.ends_on||season.starts_on):'Dates to be set')+'</b><span>'+esc(state)+'</span></div><div class="ss-track" role="img" aria-label="'+esc(state)+'"><em style="width:'+pct.toFixed(1)+'%"></em><i style="left:'+pct.toFixed(1)+'%"></i></div><div class="ss-counts"><span><b>'+nShow+'</b>Shows</span><span><b>'+nPres+'</b>Presentations</span><span><b>'+today.length+'</b>Today</span><span><b>'+Object.keys(assigned).length+'</b>Models on shows</span></div></div>'
    +'<div class="mdv-ss-today"><small>'+esc(label)+'</small><ul>'+list+'</ul></div>'
-   +(C.msg?'<p class="mdv-ss-msg'+(C.msgErr?' err':'')+'">'+esc(C.msg)+'</p>':'')+'<div class="mdv-ss-actions"><button type="button" '+(shows.length?'class="primary" ':'')+'data-ss-cal>Open full calendar →</button><button type="button" data-ss-add>+ Add show</button><button type="button" '+(shows.length?'':'class="primary" ')+'data-ss-import>'+(shows.length?'Refresh fashion-week schedules':'Import fashion-week schedules (London, Milan, Paris)')+'</button></div>';
+   +(C.msg?'<p class="mdv-ss-msg'+(C.msgErr?' err':'')+'">'+esc(C.msg)+'</p>':'')+'<div class="mdv-ss-actions"><button type="button" '+(shows.length?'class="primary" ':'')+'data-ss-cal>Open full calendar →</button><button type="button" data-ss-add>+ Add show</button><button type="button" data-ss-designers>Add all designers to Companies</button><button type="button" '+(shows.length?'':'class="primary" ')+'data-ss-import>'+(shows.length?'Refresh fashion-week schedules':'Import fashion-week schedules (London, Milan, Paris)')+'</button></div>';
 }
 function render(){
   var root=document.querySelector('#p-seasonmanagement .ss48');if(!root)return;
   var season=current(root),key=season?season.id+'|'+C.at+'|'+C.shows.length+'|'+C.msg:'none';
   var bar=root.querySelector('.mdv-ss-bar');
-  if(bar&&bar.dataset.sig===key)return;
+  var tabOn=root.querySelector('.ss48-tabs button.on'),isShows=!!(tabOn&&/^shows$/i.test(tabOn.textContent.trim())),schedMismatch=isShows!==!!root.querySelector('.mdv-ss-sched');
+  if(bar&&bar.dataset.sig===key&&!schedMismatch)return;
   if(!bar){bar=document.createElement('section');bar.className='mdv-ss-bar';var tabs=root.querySelector('.ss48-tabs');if(tabs&&tabs.parentNode)tabs.parentNode.insertBefore(bar,tabs.nextSibling);else root.insertBefore(bar,root.firstChild);}
-  bar.dataset.sig=key;
+  var changed=bar.dataset.sig!==key;bar.dataset.sig=key;
   bar.innerHTML=season?barHtml(season):'<div class="mdv-ss-strip"><div class="ss-head"><small>Live season strip</small><b>No season selected</b></div></div><div class="mdv-ss-actions"><button type="button" data-ss-import>Import fashion-week schedules</button></div>';
+  if(window.MDV_SEASON_SCHED){if(changed){var h0=root.querySelector('.mdv-ss-sched');if(h0)h0.remove();}window.MDV_SEASON_SCHED.render(root,season);}
+}
+function designersToCrm(btn,season){
+  if(!season){toast('Select a season first.');return;}
+  var o=btn.textContent;btn.disabled=true;btn.textContent='Adding designers…';
+  api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({action:'import_designers_to_crm',organization_slug:slug(),season_id:season.id})}).then(function(r){
+    setMsg('Added '+(r.created_companies||0)+' new designers to Companies and connected '+(r.linked_shows||0)+' shows.',false);C.at=0;return load(true);
+  }).catch(function(e){setMsg('Could not add designers: '+String(e&&e.message||e),true);}).then(function(){btn.disabled=false;btn.textContent=o;});
 }
 function closeModal(){var m=document.getElementById('mdv-ss-modal');if(m)m.remove();}
 function addShow(season){
@@ -69,10 +79,11 @@ function importAll(btn){
 }
 document.addEventListener('click',function(e){
   var root=document.querySelector('#p-seasonmanagement .ss48');if(!root)return;
-  var b=e.target.closest&&e.target.closest('[data-ss-cal],[data-ss-add],[data-ss-import]');if(!b||!root.contains(b))return;
+  var b=e.target.closest&&e.target.closest('[data-ss-cal],[data-ss-add],[data-ss-import],[data-ss-designers]');if(!b||!root.contains(b))return;
   e.preventDefault();e.stopImmediatePropagation();
   var season=current(root);
   if(b.hasAttribute('data-ss-import'))return importAll(b);
+  if(b.hasAttribute('data-ss-designers'))return designersToCrm(b,current(root));
   if(!season){toast('Select a season first.');return;}
   if(b.hasAttribute('data-ss-add'))return addShow(season);
   if(window.MDV_CAL&&MDV_CAL.openSeason)MDV_CAL.openSeason(season.id,season.starts_on);
@@ -81,4 +92,5 @@ document.addEventListener('click',function(e){
 document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('.ss48-season-tabs button'))setTimeout(render,60);},true);
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeModal();});
 setInterval(function(){if(!document.querySelector('#p-seasonmanagement .ss48'))return;load().then(function(){render();if(!C.auto&&C.at&&!C.shows.length&&C.seasons.length&&!sessionStorage.getItem('mdv-ss-auto')){C.auto=true;try{sessionStorage.setItem('mdv-ss-auto','1');}catch(_e){}importAll(null);}});},1000);
+window.MDV_SEASON={C:C,load:load,api:api,slug:slug,toast:toast,current:current,render:render};
 })();
