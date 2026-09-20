@@ -364,6 +364,20 @@ export const handler=async(event)=>{
       const {data:trip,error:te}=await admin.from('travel_records').select('id,model_id').eq('organization_id',organization.id).eq('id',payload.travel_record_id).maybeSingle();if(te)throw te;if(!trip)return json(404,{error:'Travel record not found'});
       let q=body.id?admin.from('travel_segments').update(payload).eq('organization_id',organization.id).eq('id',body.id):admin.from('travel_segments').insert(payload);const {data,error}=await q.select('*').single();if(error)throw error;const {data:freshTrip,error:freshTripError}=await admin.from('travel_records').select('*').eq('organization_id',organization.id).eq('id',payload.travel_record_id).single();if(freshTripError)throw freshTripError;const calendar_event=await syncTravelCalendar(admin,organization.id,user.id,freshTrip);return json(200,{ok:true,verified:true,travel_segment:data,calendar_synced:!!calendar_event,calendar_event,persisted_at:data?.updated_at||data?.created_at||new Date().toISOString()});
     }
+    if(action==='delete_travel_segment'){
+      if(!body.id)throw validationError('id is required.');
+      const {data:seg,error:se}=await admin.from('travel_segments').select('id,travel_record_id').eq('organization_id',organization.id).eq('id',body.id).maybeSingle();if(se)throw se;if(!seg)return json(200,{ok:true,verified:true,deleted:false});
+      const {error:de}=await admin.from('travel_segments').delete().eq('organization_id',organization.id).eq('id',body.id);if(de)throw de;
+      let calendar_event=null;try{const {data:trip}=await admin.from('travel_records').select('*').eq('organization_id',organization.id).eq('id',seg.travel_record_id).maybeSingle();if(trip)calendar_event=await syncTravelCalendar(admin,organization.id,user.id,trip);}catch(_e){}
+      return json(200,{ok:true,verified:true,deleted:true,calendar_synced:!!calendar_event});
+    }
+    if(action==='delete_housing'){
+      if(!body.id)throw validationError('id is required.');
+      const {data:hs,error:he}=await admin.from('housing_bookings').select('id,travel_record_id').eq('organization_id',organization.id).eq('id',body.id).maybeSingle();if(he)throw he;if(!hs)return json(200,{ok:true,verified:true,deleted:false});
+      const {error:de}=await admin.from('housing_bookings').delete().eq('organization_id',organization.id).eq('id',body.id);if(de)throw de;
+      let calendar_event=null;try{if(hs.travel_record_id){const {data:trip}=await admin.from('travel_records').select('*').eq('organization_id',organization.id).eq('id',hs.travel_record_id).maybeSingle();if(trip)calendar_event=await syncTravelCalendar(admin,organization.id,user.id,trip);}}catch(_e){}
+      return json(200,{ok:true,verified:true,deleted:true,calendar_synced:!!calendar_event});
+    }
     if(action==='save_housing'){
       const payload={organization_id:organization.id,model_id:body.model_id,travel_record_id:body.travel_record_id||null,provider:body.provider||null,property_name:body.property_name||null,address:body.address||null,check_in_at:body.check_in_at||null,check_out_at:body.check_out_at||null,confirmation_number:body.confirmation_number||null,room_label:body.room_label||null,roommate_notes:body.roommate_notes||null,cost_amount:moneyValue(body.cost_amount),currency:currencyCode(body.currency),paid_by:body.paid_by?oneOf(body.paid_by,['agency','model','mother_agency','client','split','other'],null):null,status:oneOf(body.status,['planning','requested','booked','confirmed','completed','cancelled'],'planning',{checked_in:'confirmed'}),visible_to_model:body.visible_to_model!==false,visible_to_partner:body.visible_to_partner!==false,notes:body.notes||null};
       if(!payload.model_id)throw validationError('model_id is required.');
