@@ -2,7 +2,7 @@
 'use strict';
 if(window.__CAVYRE_VERA_ADVANCED_161154__)return;window.__CAVYRE_VERA_ADVANCED_161154__=1;
 var mount=window.__VEUX_AGENT_MOUNT__;if(mount==null)mount=/^\/(?:admin|team)(?:\/|$)/.test(location.pathname)?'/admin':'';
-var AVATAR='/assets/vera/vera-avatar-circle.svg?v=16.11.54';
+var AVATAR='/admin/assets/vera/vera-avatar-circle.svg?v=16.11.54';
 function q(s,r){return (r||document).querySelector(s)}function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function bridge(){return window.VEUX_AGENT_V4&&VEUX_AGENT_V4.api?VEUX_AGENT_V4:null}function org(){try{return bridge().state.org.slug||'maison-de-veux'}catch(e){return'maison-de-veux'}}
 function api(path,opt){var b=bridge();if(!b)return Promise.reject(new Error('Agency bridge is still loading.'));return b.api(path,opt||{method:'GET',headers:{}})}

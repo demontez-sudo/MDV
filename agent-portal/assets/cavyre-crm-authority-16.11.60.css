@@ -26,3 +26,21 @@
 .cvycrm55-connect-chip small{opacity:.62;margin-top:3px;font-size:9px}
 .cvycrm55-inline-action{margin-top:8px;color:var(--gold,#c9a66b);font-family:var(--fM,monospace);font-size:9px;letter-spacing:.08em;text-transform:uppercase}
 .cvycrm55-field select+input[id$="-custom"]{margin-top:7px}
+
+/* CAVYRE 16.12.12 — CRM 360 detail */
+.v1686-crm360{overflow:auto;max-height:calc(100vh - 190px);padding-bottom:28px}
+.v1686-360-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.v1686-360-head h2{margin:4px 0 2px}
+.v1686-360-head p{margin:0;color:var(--mute)}
+.v1686-360-actions{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 16px}
+.v1686-360-section{border-top:1px solid var(--line);padding:15px 0}
+.v1686-360-section>header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.v1686-360-section>header b{font-family:var(--fM);font-size:9px;letter-spacing:.12em;text-transform:uppercase}
+.v1686-360-section p{font-size:11px;line-height:1.55;color:var(--mute)}
+.v1686-360-contacts{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.v1686-360-contacts button{border:1px solid var(--line);background:var(--paper);padding:9px 10px;text-align:left;color:var(--ink);cursor:pointer}
+.v1686-360-contacts strong,.v1686-360-contacts small{display:block}
+.v1686-360-contacts small{margin-top:3px;color:var(--mute);font-size:8px}
+.v1686-360-vera{border:1px solid rgba(158,124,255,.32);padding:10px;background:rgba(158,124,255,.05)}
+.v1686-detail-grid .wide{grid-column:1/-1}
+@media(max-width:900px){.v1686-360-contacts{grid-template-columns:1fr}.v1686-crm360{max-height:none}}
