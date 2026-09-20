@@ -1,0 +1,2166 @@
+{
+"generated_from": [
+"Paris Fashion Week provisional calendar W SS27 (FHCM)",
+"Milano Moda Donna final calendar 22-28 Sept 2026 (CNMI)",
+"London Fashion Week main event schedule Sept 2026 (BFC)"
+],
+"seasons": [
+{
+"key": "nyfw-ss27",
+"name": "New York Women's SS27",
+"market": "New York",
+"city": "New York",
+"starts_on": null,
+"ends_on": null,
+"notes": "New York Fashion Week schedule not yet imported. Add shows in Season or import the CFDA calendar.",
+"shows": []
+},
+{
+"key": "lfw-ss27",
+"name": "London Women's SS27",
+"market": "London",
+"city": "London",
+"starts_on": "2026-09-17",
+"ends_on": "2026-09-21",
+"notes": "London Fashion Week Sept 17-21, 2026.",
+"shows": [
+{
+"title": "Paul Costelloe",
+"starts_at": "2026-09-17T10:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Joyce Bao",
+"starts_at": "2026-09-17T11:30:00+01:00",
+"ends_at": "2026-09-17T13:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Keburia",
+"starts_at": "2026-09-17T12:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Agro Studio",
+"starts_at": "2026-09-17T13:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Francesca Lake",
+"starts_at": "2026-09-17T13:30:00+01:00",
+"ends_at": "2026-09-17T15:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Maximilian Raynor",
+"starts_at": "2026-09-17T14:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Mithridate",
+"starts_at": "2026-09-17T15:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Sarah Regensburger",
+"starts_at": "2026-09-17T15:30:00+01:00",
+"ends_at": "2026-09-17T17:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Mark Fast",
+"starts_at": "2026-09-17T16:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Barbour",
+"starts_at": "2026-09-17T16:30:00+01:00",
+"ends_at": "2026-09-17T18:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Ebay Endless Runway",
+"starts_at": "2026-09-17T17:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Harris Reed",
+"starts_at": "2026-09-17T18:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Ksenia Schnaider",
+"starts_at": "2026-09-17T19:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "H&M & You & I: A Fashion Story",
+"starts_at": "2026-09-17T20:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Petrafagerström",
+"starts_at": "2026-09-18T10:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "kyle ho",
+"starts_at": "2026-09-18T10:30:00+01:00",
+"ends_at": "2026-09-18T11:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Bora Aksu",
+"starts_at": "2026-09-18T11:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "M&S",
+"starts_at": "2026-09-18T12:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Jenn Lee",
+"starts_at": "2026-09-18T12:30:00+01:00",
+"ends_at": "2026-09-18T14:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Susan Fang",
+"starts_at": "2026-09-18T13:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Ashley Williams",
+"starts_at": "2026-09-18T14:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "raych u",
+"starts_at": "2026-09-18T14:30:00+01:00",
+"ends_at": "2026-09-18T16:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Oscar Ouyang",
+"starts_at": "2026-09-18T15:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "A Letter",
+"starts_at": "2026-09-18T16:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Fashion East",
+"starts_at": "2026-09-18T17:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Annie'S",
+"starts_at": "2026-09-18T18:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "The Ouze",
+"starts_at": "2026-09-18T18:30:00+01:00",
+"ends_at": "2026-09-18T20:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Aaron Esh",
+"starts_at": "2026-09-18T19:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Natasha Zinko",
+"starts_at": "2026-09-18T20:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Paolo Carzana",
+"starts_at": "2026-09-18T21:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Geordie Campbell",
+"starts_at": "2026-09-19T10:30:00+01:00",
+"ends_at": "2026-09-19T12:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Patrick Mcdowell",
+"starts_at": "2026-09-19T11:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "John Richmond",
+"starts_at": "2026-09-19T12:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Ahluwalia",
+"starts_at": "2026-09-19T13:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Pauline Dujancourt",
+"starts_at": "2026-09-19T14:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Steve O Smith",
+"starts_at": "2026-09-19T14:30:00+01:00",
+"ends_at": "2026-09-19T16:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Chopova Lowena",
+"starts_at": "2026-09-19T20:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Simone Rocha",
+"starts_at": "2026-09-20T10:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Edeline Lee",
+"starts_at": "2026-09-20T11:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Liberowe",
+"starts_at": "2026-09-20T11:30:00+01:00",
+"ends_at": "2026-09-20T14:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Erdem",
+"starts_at": "2026-09-20T12:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Gui Rosa",
+"starts_at": "2026-09-20T12:30:00+01:00",
+"ends_at": "2026-09-20T14:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Labrum",
+"starts_at": "2026-09-20T13:30:00+01:00",
+"ends_at": "2026-09-20T15:30:00+01:00",
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Charlieconstanti Nou",
+"starts_at": "2026-09-20T15:30:00+01:00",
+"ends_at": "2026-09-20T17:30:00+01:00",
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Rory William Docherty",
+"starts_at": "2026-09-20T18:30:00+01:00",
+"ends_at": "2026-09-20T20:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Selasi",
+"starts_at": "2026-09-21T10:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Octi",
+"starts_at": "2026-09-21T10:30:00+01:00",
+"ends_at": null,
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Lovebirds",
+"starts_at": "2026-09-21T11:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Dipets A",
+"starts_at": "2026-09-21T12:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Tolucoker",
+"starts_at": "2026-09-21T12:30:00+01:00",
+"ends_at": "2026-09-21T14:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Clara Chu",
+"starts_at": "2026-09-21T14:30:00+01:00",
+"ends_at": "2026-09-21T16:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Liza Keane",
+"starts_at": "2026-09-21T16:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+},
+{
+"title": "Sól Hansdóttir",
+"starts_at": "2026-09-21T16:30:00+01:00",
+"ends_at": "2026-09-21T18:30:00+01:00",
+"kind": "presentation",
+"location": "London"
+},
+{
+"title": "Burberry",
+"starts_at": "2026-09-21T19:00:00+01:00",
+"ends_at": null,
+"kind": "show",
+"location": "London"
+}
+]
+},
+{
+"key": "mfw-ss27",
+"name": "Milan Women's SS27",
+"market": "Milan",
+"city": "Milan",
+"starts_on": "2026-09-22",
+"ends_on": "2026-09-28",
+"notes": "Milano Moda Donna Sept 22-28, 2026 (CNMI final calendar, updated 14/09/2026).",
+"shows": [
+{
+"title": "Prada",
+"starts_at": "2026-09-22T14:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Lorenzini, 14"
+},
+{
+"title": "Dhruv Kapoor",
+"starts_at": "2026-09-22T15:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via A. Calabiana, 6"
+},
+{
+"title": "Diesel",
+"starts_at": "2026-09-22T16:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Moncucco, 35"
+},
+{
+"title": "J.Salinas",
+"starts_at": "2026-09-22T17:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Soncino, 2"
+},
+{
+"title": "Venerdì Pomeriggio",
+"starts_at": "2026-09-22T18:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Toti, 2"
+},
+{
+"title": "Luisa Beccaria",
+"starts_at": "2026-09-23T09:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Location in invitation"
+},
+{
+"title": "Jil Sander",
+"starts_at": "2026-09-23T10:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Location in invitation"
+},
+{
+"title": "Daniela Gregis",
+"starts_at": "2026-09-23T11:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Piazza Sant'Ambrogio, 23A"
+},
+{
+"title": "Antonio Marras",
+"starts_at": "2026-09-23T12:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Cola Di Rienzo Angolo Via Moisè Loria"
+},
+{
+"title": "Fendi",
+"starts_at": "2026-09-23T14:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Solari, 35"
+},
+{
+"title": "Vivetta",
+"starts_at": "2026-09-23T15:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Soncino, 2"
+},
+{
+"title": "Missoni",
+"starts_at": "2026-09-23T16:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Dei Cavalieri Del Santo Sepolcro"
+},
+{
+"title": "Mm6 Maison Margiela",
+"starts_at": "2026-09-23T18:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Location in invitation"
+},
+{
+"title": "Etro",
+"starts_at": "2026-09-23T19:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Piazza Lina Bo Bardi, 2"
+},
+{
+"title": "Onitsuka Tiger",
+"starts_at": "2026-09-23T20:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Cosenz, 11"
+},
+{
+"title": "Max Mara",
+"starts_at": "2026-09-24T09:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Piranesi, 14"
+},
+{
+"title": "Genny",
+"starts_at": "2026-09-24T10:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Rubattino, 56"
+},
+{
+"title": "Phan Dang Hoang",
+"starts_at": "2026-09-24T11:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Padova, 11"
+},
+{
+"title": "Anteprima",
+"starts_at": "2026-09-24T12:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via San Luca, 3"
+},
+{
+"title": "Marni",
+"starts_at": "2026-09-24T14:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Viale Umbria, 42"
+},
+{
+"title": "Francesco Murano",
+"starts_at": "2026-09-24T15:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Maiocchi, 23"
+},
+{
+"title": "Alberta Ferretti",
+"starts_at": "2026-09-24T16:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via G. Donizetti, 48"
+},
+{
+"title": "Roberto Cavalli",
+"starts_at": "2026-09-24T18:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Piazza Vetra, 7"
+},
+{
+"title": "Florania",
+"starts_at": "2026-09-24T19:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "P.za Tomasi Di Lampedusa"
+},
+{
+"title": "Emporio Armani",
+"starts_at": "2026-09-24T20:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Bergognone, 59"
+},
+{
+"title": "Tod'S",
+"starts_at": "2026-09-25T09:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Palestro, 14"
+},
+{
+"title": "Institution By Galib Gassanoff",
+"starts_at": "2026-09-25T10:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Location in invitation"
+},
+{
+"title": "Sportmax",
+"starts_at": "2026-09-25T11:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Corso Magenta, 24"
+},
+{
+"title": "Blumarine",
+"starts_at": "2026-09-25T12:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Olona, 4"
+},
+{
+"title": "Gucci",
+"starts_at": "2026-09-25T14:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via B. Colleoni, Gate 11"
+},
+{
+"title": "Simon Cracker",
+"starts_at": "2026-09-25T15:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "P.za Tomasi Di Lampedusa"
+},
+{
+"title": "Elisabetta Franchi",
+"starts_at": "2026-09-25T16:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Sammartini, 63"
+},
+{
+"title": "Moschino",
+"starts_at": "2026-09-25T17:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Location in invitation"
+},
+{
+"title": "Luisa Spagnoli",
+"starts_at": "2026-09-25T18:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Turati, 34"
+},
+{
+"title": "The Attico",
+"starts_at": "2026-09-25T19:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Sammartini, 36"
+},
+{
+"title": "Neithan Herbert",
+"starts_at": "2026-09-26T09:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Location TBC"
+},
+{
+"title": "Ermanno Scervino",
+"starts_at": "2026-09-26T10:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Piazza Lina Bo Bardi, 1"
+},
+{
+"title": "Ferragamo",
+"starts_at": "2026-09-26T11:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Viale Emilio Alemagna, 6"
+},
+{
+"title": "Dolce&Gabbana",
+"starts_at": "2026-09-26T12:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Viale Piave, 24"
+},
+{
+"title": "Msgm",
+"starts_at": "2026-09-26T14:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Tortona, 32"
+},
+{
+"title": "Laura Biagiotti",
+"starts_at": "2026-09-26T15:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Rivoli, 6"
+},
+{
+"title": "Act N°1",
+"starts_at": "2026-09-26T16:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Location TBC"
+},
+{
+"title": "Marco Rambaldi",
+"starts_at": "2026-09-26T17:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Meravigli, 7"
+},
+{
+"title": "Victor-Hart",
+"starts_at": "2026-09-26T18:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Padova, 11"
+},
+{
+"title": "Bottega Veneta",
+"starts_at": "2026-09-26T20:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Location in invitation"
+},
+{
+"title": "Philipp Plein",
+"starts_at": "2026-09-26T21:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Piazzale Dello Sport, 6"
+},
+{
+"title": "Hui",
+"starts_at": "2026-09-27T10:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Location in invitation"
+},
+{
+"title": "Giorgio Armani",
+"starts_at": "2026-09-27T11:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Bergognone, 59"
+},
+{
+"title": "Milano Moda Graduate",
+"starts_at": "2026-09-27T12:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Besana, 12"
+},
+{
+"title": "Marques' Almeida",
+"starts_at": "2026-09-27T13:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Corso Monforte, 35"
+},
+{
+"title": "Casa Preti",
+"starts_at": "2026-09-27T14:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Viale Monza, 4"
+},
+{
+"title": "Tell The Truth",
+"starts_at": "2026-09-27T15:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "P.za De Angeli Ernesto, 1"
+},
+{
+"title": "Francesca Liberatore",
+"starts_at": "2026-09-27T16:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Location in invitation"
+},
+{
+"title": "Miguel Vieira",
+"starts_at": "2026-09-27T17:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Via Besana, 12"
+},
+{
+"title": "Uni Form",
+"starts_at": "2026-09-28T09:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Digital"
+},
+{
+"title": "Nadya Dzyak",
+"starts_at": "2026-09-28T10:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Digital"
+},
+{
+"title": "Timisola Shasanya",
+"starts_at": "2026-09-28T10:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Digital"
+},
+{
+"title": "Mastewal Alemu",
+"starts_at": "2026-09-28T11:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Digital"
+},
+{
+"title": "Maxivive",
+"starts_at": "2026-09-28T11:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Digital"
+},
+{
+"title": "Banke Kuku",
+"starts_at": "2026-09-28T12:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Digital"
+},
+{
+"title": "Rechenberg",
+"starts_at": "2026-09-28T12:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Digital"
+},
+{
+"title": "Simonetta Ravizza",
+"starts_at": "2026-09-22T10:00:00+02:00",
+"ends_at": "2026-09-22T14:30:00+02:00",
+"kind": "presentation",
+"location": "Via Vincenzo Monti, 27"
+},
+{
+"title": "Elena Miro'",
+"starts_at": "2026-09-22T10:00:00+02:00",
+"ends_at": "2026-09-22T18:00:00+02:00",
+"kind": "presentation",
+"location": "Piazza Cordusio, 2"
+},
+{
+"title": "Blauer Glam",
+"starts_at": "2026-09-22T10:00:00+02:00",
+"ends_at": "2026-09-22T19:00:00+02:00",
+"kind": "presentation",
+"location": "Via Carlo Goldoni, 44"
+},
+{
+"title": "Zona20 Milano",
+"starts_at": "2026-09-22T11:00:00+02:00",
+"ends_at": "2026-09-22T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Morimondo, 26"
+},
+{
+"title": "Misenithe",
+"starts_at": "2026-09-22T12:00:00+02:00",
+"ends_at": "2026-09-22T16:00:00+02:00",
+"kind": "presentation",
+"location": "Via Sannio, 20"
+},
+{
+"title": "Fabio Quaranta",
+"starts_at": "2026-09-22T13:00:00+02:00",
+"ends_at": "2026-09-22T19:00:00+02:00",
+"kind": "presentation",
+"location": "Via Privata Passo Pordoi, 6"
+},
+{
+"title": "Curiel",
+"starts_at": "2026-09-22T14:00:00+02:00",
+"ends_at": "2026-09-22T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Montenapoleone, 13"
+},
+{
+"title": "Saman Loira",
+"starts_at": "2026-09-22T14:00:00+02:00",
+"ends_at": "2026-09-22T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Fatebenefratelli, 5"
+},
+{
+"title": "Sagio",
+"starts_at": "2026-09-22T16:00:00+02:00",
+"ends_at": "2026-09-22T19:00:00+02:00",
+"kind": "presentation",
+"location": "Corso Venezia, 51"
+},
+{
+"title": "Lacca",
+"starts_at": "2026-09-22T16:00:00+02:00",
+"ends_at": "2026-09-22T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Cappuccio, 3"
+},
+{
+"title": "Giuseppe Buccinnà",
+"starts_at": "2026-09-22T17:00:00+02:00",
+"ends_at": "2026-09-22T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via G. B. Sammartini, 40/40Bis"
+},
+{
+"title": "Durazzi Milano",
+"starts_at": "2026-09-22T17:00:00+02:00",
+"ends_at": "2026-09-22T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Rosolino Pilo, 14"
+},
+{
+"title": "Sézane",
+"starts_at": "2026-09-23T09:30:00+02:00",
+"ends_at": "2026-09-23T17:00:00+02:00",
+"kind": "presentation",
+"location": "Via Palermo, 5"
+},
+{
+"title": "Themoirè",
+"starts_at": "2026-09-23T10:00:00+02:00",
+"ends_at": "2026-09-23T13:00:00+02:00",
+"kind": "presentation",
+"location": "Via Manzoni, 41"
+},
+{
+"title": "Marina Rinaldi",
+"starts_at": "2026-09-23T10:00:00+02:00",
+"ends_at": "2026-09-23T17:00:00+02:00",
+"kind": "presentation",
+"location": "Piazza Del Liberty, 2"
+},
+{
+"title": "Weekend Max Mara With Marie Louise Sciò",
+"starts_at": "2026-09-23T10:00:00+02:00",
+"ends_at": "2026-09-23T18:00:00+02:00",
+"kind": "presentation",
+"location": "Piazza Del Liberty, 4"
+},
+{
+"title": "Off-White™",
+"starts_at": "2026-09-23T11:00:00+02:00",
+"ends_at": "2026-09-23T14:00:00+02:00",
+"kind": "presentation",
+"location": "Via Orobia, 13"
+},
+{
+"title": "Sarawong",
+"starts_at": "2026-09-23T11:00:00+02:00",
+"ends_at": "2026-09-23T14:00:00+02:00",
+"kind": "presentation",
+"location": "Corso Como, 10"
+},
+{
+"title": "Forte_Forte",
+"starts_at": "2026-09-23T11:00:00+02:00",
+"ends_at": "2026-09-23T16:00:00+02:00",
+"kind": "presentation",
+"location": "Via Tortona, 31"
+},
+{
+"title": "Herno",
+"starts_at": "2026-09-23T11:00:00+02:00",
+"ends_at": "2026-09-23T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Vespri Siciliani, 9"
+},
+{
+"title": "Kenneth Tetteh",
+"starts_at": "2026-09-23T11:00:00+02:00",
+"ends_at": "2026-09-23T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Montenapoleone, 5"
+},
+{
+"title": "Alessandro Enriquez",
+"starts_at": "2026-09-23T12:00:00+02:00",
+"ends_at": "2026-09-23T19:00:00+02:00",
+"kind": "presentation",
+"location": "Piazza Fontana, 3"
+},
+{
+"title": "Be Nina",
+"starts_at": "2026-09-23T14:00:00+02:00",
+"ends_at": "2026-09-23T19:00:00+02:00",
+"kind": "presentation",
+"location": "Via Fatebenefratelli, 5"
+},
+{
+"title": "Alice Yu",
+"starts_at": "2026-09-23T14:00:00+02:00",
+"ends_at": "2026-09-23T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Lazzaro Palazzi, 24"
+},
+{
+"title": "Lug Von Siga",
+"starts_at": "2026-09-23T15:00:00+02:00",
+"ends_at": "2026-09-23T19:00:00+02:00",
+"kind": "presentation",
+"location": "Via Enrico Toti, 2"
+},
+{
+"title": "Rodo",
+"starts_at": "2026-09-23T15:00:00+02:00",
+"ends_at": "2026-09-23T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Sigieri, 1"
+},
+{
+"title": "Redemption",
+"starts_at": "2026-09-23T16:00:00+02:00",
+"ends_at": "2026-09-23T19:00:00+02:00",
+"kind": "presentation",
+"location": "Piazza Del Duomo, 21"
+},
+{
+"title": "Brunello Cucinelli",
+"starts_at": "2026-09-23T16:00:00+02:00",
+"ends_at": "2026-09-23T21:00:00+02:00",
+"kind": "presentation",
+"location": "Viale Montello, 16"
+},
+{
+"title": "Saelf",
+"starts_at": "2026-09-23T17:00:00+02:00",
+"ends_at": "2026-09-23T22:00:00+02:00",
+"kind": "presentation",
+"location": "Via Carlo Poma, 54"
+},
+{
+"title": "Îacaré",
+"starts_at": "2026-09-23T18:00:00+02:00",
+"ends_at": "2026-09-23T21:00:00+02:00",
+"kind": "presentation",
+"location": "Via Gesù, 6/8"
+},
+{
+"title": "Mantù",
+"starts_at": "2026-09-24T09:00:00+02:00",
+"ends_at": "2026-09-24T13:00:00+02:00",
+"kind": "presentation",
+"location": "C.so Monforte, 39"
+},
+{
+"title": "Agnona",
+"starts_at": "2026-09-24T09:30:00+02:00",
+"ends_at": "2026-09-24T13:30:00+02:00",
+"kind": "presentation",
+"location": "Via Archimede, 53"
+},
+{
+"title": "Capasa Milano Shoes Collection",
+"starts_at": "2026-09-24T10:00:00+02:00",
+"ends_at": "2026-09-24T14:00:00+02:00",
+"kind": "presentation",
+"location": "Via Archimede, 6"
+},
+{
+"title": "Fratelli Rossetti",
+"starts_at": "2026-09-24T10:00:00+02:00",
+"ends_at": "2026-09-24T18:00:00+02:00",
+"kind": "presentation",
+"location": "Piazza Della Repubblica & Via Pisani 2"
+},
+{
+"title": "Giada",
+"starts_at": "2026-09-24T10:00:00+02:00",
+"ends_at": "2026-09-24T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Brera, 12"
+},
+{
+"title": "Fabiana Filippi",
+"starts_at": "2026-09-24T11:00:00+02:00",
+"ends_at": "2026-09-24T16:00:00+02:00",
+"kind": "presentation",
+"location": "Via Vivaio, 7"
+},
+{
+"title": "Blazé Milano",
+"starts_at": "2026-09-24T11:00:00+02:00",
+"ends_at": "2026-09-24T17:00:00+02:00",
+"kind": "presentation",
+"location": "Corso Venezia, 36"
+},
+{
+"title": "Serapian",
+"starts_at": "2026-09-24T11:00:00+02:00",
+"ends_at": "2026-09-24T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Mozart, 9"
+},
+{
+"title": "Pecoranera",
+"starts_at": "2026-09-24T11:00:00+02:00",
+"ends_at": "2026-09-24T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Fatebenefretalle, 5"
+},
+{
+"title": "Casadei",
+"starts_at": "2026-09-24T12:00:00+02:00",
+"ends_at": "2026-09-24T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Bigli, 4"
+},
+{
+"title": "La Doublej",
+"starts_at": "2026-09-24T12:00:00+02:00",
+"ends_at": "2026-09-24T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Clerici, 5"
+},
+{
+"title": "Daily Mirror",
+"starts_at": "2026-09-24T13:00:00+02:00",
+"ends_at": "2026-09-24T15:00:00+02:00",
+"kind": "presentation",
+"location": "Location in invitation"
+},
+{
+"title": "Furla",
+"starts_at": "2026-09-24T13:00:00+02:00",
+"ends_at": "2026-09-24T17:00:00+02:00",
+"kind": "presentation",
+"location": "Via Filodrammatici, 2"
+},
+{
+"title": "Nissa",
+"starts_at": "2026-09-24T14:00:00+02:00",
+"ends_at": "2026-09-24T21:00:00+02:00",
+"kind": "presentation",
+"location": "Via Senato, 5"
+},
+{
+"title": "Ports 1961",
+"starts_at": "2026-09-24T14:30:00+02:00",
+"ends_at": "2026-09-24T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Spartaco, 34"
+},
+{
+"title": "Borsalino",
+"starts_at": "2026-09-24T14:30:00+02:00",
+"ends_at": "2026-09-24T20:30:00+02:00",
+"kind": "presentation",
+"location": "Via Borgonuovo, 12"
+},
+{
+"title": "Taller Marmo",
+"starts_at": "2026-09-24T15:00:00+02:00",
+"ends_at": "2026-09-24T19:00:00+02:00",
+"kind": "presentation",
+"location": "Via Passione, 8"
+},
+{
+"title": "Rene Caovilla",
+"starts_at": "2026-09-24T15:00:00+02:00",
+"ends_at": "2026-09-24T21:00:00+02:00",
+"kind": "presentation",
+"location": "Corso Matteotti, 10"
+},
+{
+"title": "Des_Phemmes",
+"starts_at": "2026-09-24T17:00:00+02:00",
+"ends_at": "2026-09-24T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Meravigli, 7"
+},
+{
+"title": "Gianvito Rossi",
+"starts_at": "2026-09-24T18:00:00+02:00",
+"ends_at": "2026-09-24T21:00:00+02:00",
+"kind": "presentation",
+"location": "Corso Venezia, 16"
+},
+{
+"title": "Kiton",
+"starts_at": "2026-09-24T18:30:00+02:00",
+"ends_at": "2026-09-24T21:00:00+02:00",
+"kind": "presentation",
+"location": "Via Sant’andrea, 16"
+},
+{
+"title": "Pollini",
+"starts_at": "2026-09-25T09:00:00+02:00",
+"ends_at": "2026-09-25T17:00:00+02:00",
+"kind": "presentation",
+"location": "Via Donizetti, 48"
+},
+{
+"title": "Eleventy",
+"starts_at": "2026-09-25T10:00:00+02:00",
+"ends_at": "2026-09-25T13:00:00+02:00",
+"kind": "presentation",
+"location": "Via Vosconti Di Modrone, 11"
+},
+{
+"title": "Paris Texas",
+"starts_at": "2026-09-25T10:00:00+02:00",
+"ends_at": "2026-09-25T13:00:00+02:00",
+"kind": "presentation",
+"location": "Foro Buonaparte, 22"
+},
+{
+"title": "Sergio Rossi",
+"starts_at": "2026-09-25T10:00:00+02:00",
+"ends_at": "2026-09-25T16:00:00+02:00",
+"kind": "presentation",
+"location": "Via Pontaccio, 13"
+},
+{
+"title": "Paul Andrew",
+"starts_at": "2026-09-25T10:00:00+02:00",
+"ends_at": "2026-09-25T16:00:00+02:00",
+"kind": "presentation",
+"location": "C.so Magenta, 31"
+},
+{
+"title": "Jimmy Choo",
+"starts_at": "2026-09-25T10:00:00+02:00",
+"ends_at": "2026-09-25T17:00:00+02:00",
+"kind": "presentation",
+"location": "Via San Gregorio, 29"
+},
+{
+"title": "Gherardini",
+"starts_at": "2026-09-25T10:00:00+02:00",
+"ends_at": "2026-09-25T17:00:00+02:00",
+"kind": "presentation",
+"location": "Via A. Manzoni, 5"
+},
+{
+"title": "Erika Cavallini",
+"starts_at": "2026-09-25T10:00:00+02:00",
+"ends_at": "2026-09-25T17:00:00+02:00",
+"kind": "presentation",
+"location": "Via Della Spiga, 19"
+},
+{
+"title": "Loro Piana",
+"starts_at": "2026-09-25T10:00:00+02:00",
+"ends_at": "2026-09-25T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Brera, 26"
+},
+{
+"title": "Santoni",
+"starts_at": "2026-09-25T10:00:00+02:00",
+"ends_at": "2026-09-25T18:00:00+02:00",
+"kind": "presentation",
+"location": "Via Montenapoleone, 9"
+},
+{
+"title": "Absent Findings",
+"starts_at": "2026-09-25T10:00:00+02:00",
+"ends_at": "2026-09-25T18:00:00+02:00",
+"kind": "presentation",
+"location": "P.za Tomasi Di Lampedusa"
+},
+{
+"title": "Unknown Artisan",
+"starts_at": "2026-09-25T11:00:00+02:00",
+"ends_at": "2026-09-25T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Fatebenefratelli, 5"
+},
+{
+"title": "Alanui",
+"starts_at": "2026-09-25T11:30:00+02:00",
+"ends_at": "2026-09-25T15:30:00+02:00",
+"kind": "presentation",
+"location": "Via Torquato Tasso, 1"
+},
+{
+"title": "Mario Valentino",
+"starts_at": "2026-09-25T14:00:00+02:00",
+"ends_at": "2026-09-25T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Della Spiga, 8"
+},
+{
+"title": "Valentino Shoes",
+"starts_at": "2026-09-25T14:00:00+02:00",
+"ends_at": "2026-09-25T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Della Spiga, 8"
+},
+{
+"title": "Sara Behbud",
+"starts_at": "2026-09-25T15:00:00+02:00",
+"ends_at": "2026-09-25T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Della Spiga, 7"
+},
+{
+"title": "Giuseppe Zanotti",
+"starts_at": "2026-09-25T16:00:00+02:00",
+"ends_at": "2026-09-25T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Montenapoleone, 18"
+},
+{
+"title": "Le Silla",
+"starts_at": "2026-09-25T17:00:00+02:00",
+"ends_at": "2026-09-25T19:00:00+02:00",
+"kind": "presentation",
+"location": "Via Sant'Andrea, 3"
+},
+{
+"title": "Amato Daniele",
+"starts_at": "2026-09-25T17:00:00+02:00",
+"ends_at": "2026-09-25T21:00:00+02:00",
+"kind": "presentation",
+"location": "Via Cosimo Del Fante, 13"
+},
+{
+"title": "Cycle",
+"starts_at": "2026-09-25T17:00:00+02:00",
+"ends_at": "2026-09-25T21:00:00+02:00",
+"kind": "presentation",
+"location": "Via Gaetano Pisoni, 2"
+},
+{
+"title": "Gio Giovanni Gerosa",
+"starts_at": "2026-09-26T09:30:00+02:00",
+"ends_at": "2026-09-26T18:30:00+02:00",
+"kind": "presentation",
+"location": "Via Conca Del Naviglio, 9"
+},
+{
+"title": "Pé De Chumbo",
+"starts_at": "2026-09-26T10:30:00+02:00",
+"ends_at": "2026-09-26T12:30:00+02:00",
+"kind": "presentation",
+"location": "Location TBC"
+},
+{
+"title": "Davii",
+"starts_at": "2026-09-26T10:30:00+02:00",
+"ends_at": "2026-09-26T12:30:00+02:00",
+"kind": "presentation",
+"location": "Location TBC"
+},
+{
+"title": "Andrea Brocca",
+"starts_at": "2026-09-26T11:00:00+02:00",
+"ends_at": "2026-09-26T14:00:00+02:00",
+"kind": "presentation",
+"location": "Via Fatebenefratelli, 5"
+},
+{
+"title": "Gongdid Design",
+"starts_at": "2026-09-26T11:00:00+02:00",
+"ends_at": "2026-09-26T17:00:00+02:00",
+"kind": "presentation",
+"location": "Via Borgonuovo, 25"
+},
+{
+"title": "Moorer",
+"starts_at": "2026-09-26T12:00:00+02:00",
+"ends_at": "2026-09-26T18:00:00+02:00",
+"kind": "presentation",
+"location": "Viale Regina Giovanna, 27/29"
+},
+{
+"title": "Kasai",
+"starts_at": "2026-09-26T13:30:00+02:00",
+"ends_at": "2026-09-26T15:30:00+02:00",
+"kind": "presentation",
+"location": "Location TBC"
+},
+{
+"title": "Henri Paris",
+"starts_at": "2026-09-26T13:30:00+02:00",
+"ends_at": "2026-09-26T15:30:00+02:00",
+"kind": "presentation",
+"location": "Location TBC"
+},
+{
+"title": "Jarelzhang",
+"starts_at": "2026-09-26T13:30:00+02:00",
+"ends_at": "2026-09-26T16:30:00+02:00",
+"kind": "presentation",
+"location": "Via Cesare Correnti, 11"
+},
+{
+"title": "Marea",
+"starts_at": "2026-09-26T15:00:00+02:00",
+"ends_at": "2026-09-26T17:00:00+02:00",
+"kind": "presentation",
+"location": "Via Benedetto Marcello, 59"
+},
+{
+"title": "La Perla",
+"starts_at": "2026-09-26T16:00:00+02:00",
+"ends_at": "2026-09-26T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Di Porta Tenaglia, 7"
+},
+{
+"title": "Dodo",
+"starts_at": "2026-09-26T17:00:00+02:00",
+"ends_at": "2026-09-26T20:00:00+02:00",
+"kind": "presentation",
+"location": "Piazza Del Duomo, 21"
+},
+{
+"title": "Sirivannavari",
+"starts_at": "2026-09-27T12:00:00+02:00",
+"ends_at": "2026-09-27T16:00:00+02:00",
+"kind": "presentation",
+"location": "Via Borgonuovo, 23"
+},
+{
+"title": "Christopher",
+"starts_at": "2026-09-27T16:00:00+02:00",
+"ends_at": "2026-09-27T19:30:00+02:00",
+"kind": "presentation",
+"location": "Via Gesù, 5"
+},
+{
+"title": "Marios",
+"starts_at": "2026-09-27T17:00:00+02:00",
+"ends_at": "2026-09-27T20:00:00+02:00",
+"kind": "presentation",
+"location": "Via Giovanni Paisiello, 6"
+}
+]
+},
+{
+"key": "pfw-ss27",
+"name": "Paris Women's SS27",
+"market": "Paris",
+"city": "Paris",
+"starts_on": "2026-09-28",
+"ends_on": "2026-10-06",
+"notes": "Paris Fashion Week Sept 28 - Oct 6, 2026 (FHCM provisional calendar).",
+"shows": [
+{
+"title": "Julie Kegels",
+"starts_at": "2026-09-28T14:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Fidan Novruzova",
+"starts_at": "2026-09-28T15:00:00+02:00",
+"ends_at": "2026-09-28T18:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Kimhēkim",
+"starts_at": "2026-09-28T15:30:00+02:00",
+"ends_at": "2026-09-28T18:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Weinsanto",
+"starts_at": "2026-09-28T16:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Vautrait",
+"starts_at": "2026-09-28T16:30:00+02:00",
+"ends_at": "2026-09-28T19:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Maxhosa Africa",
+"starts_at": "2026-09-28T17:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Hodakova",
+"starts_at": "2026-09-28T18:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Matières Fécales",
+"starts_at": "2026-09-28T19:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Ester Manas",
+"starts_at": "2026-09-29T10:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Alexandra Golovanoff",
+"starts_at": "2026-09-29T10:00:00+02:00",
+"ends_at": "2026-09-29T18:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Ganni",
+"starts_at": "2026-09-29T10:00:00+02:00",
+"ends_at": "2026-09-29T18:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Marie Adam-Leenaerdt",
+"starts_at": "2026-09-29T11:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Mame Kurogouchi",
+"starts_at": "2026-09-29T13:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Christian Dior",
+"starts_at": "2026-09-29T14:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Burc Akyol",
+"starts_at": "2026-09-29T16:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Maison Margiela",
+"starts_at": "2026-09-29T17:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Pressiat",
+"starts_at": "2026-09-29T18:00:00+02:00",
+"ends_at": "2026-09-29T20:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Anrealage",
+"starts_at": "2026-09-29T19:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Saint Laurent",
+"starts_at": "2026-09-29T21:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Vaillant",
+"starts_at": "2026-09-30T09:30:00+02:00",
+"ends_at": "2026-09-30T15:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Loulou de Saison",
+"starts_at": "2026-09-30T10:00:00+02:00",
+"ends_at": "2026-09-30T18:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Courrèges",
+"starts_at": "2026-09-30T10:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "The Row",
+"starts_at": "2026-09-30T12:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Balmain",
+"starts_at": "2026-09-30T13:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Ruohan",
+"starts_at": "2026-09-30T14:00:00+02:00",
+"ends_at": "2026-09-30T16:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Dries Van Noten",
+"starts_at": "2026-09-30T15:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Maitrepierre",
+"starts_at": "2026-09-30T15:30:00+02:00",
+"ends_at": "2026-09-30T20:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Stella McCartney",
+"starts_at": "2026-09-30T16:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Vaquera",
+"starts_at": "2026-09-30T17:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Acne Studios",
+"starts_at": "2026-09-30T18:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Tom Ford",
+"starts_at": "2026-09-30T20:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Chloé",
+"starts_at": "2026-10-01T10:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Junko Shimada",
+"starts_at": "2026-10-01T11:00:00+02:00",
+"ends_at": "2026-10-01T19:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "ALAINPAUL",
+"starts_at": "2026-10-01T11:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Carven",
+"starts_at": "2026-10-01T12:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Balenciaga",
+"starts_at": "2026-10-01T14:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Cecilie Bahnsen",
+"starts_at": "2026-10-01T15:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Uma Wang",
+"starts_at": "2026-10-01T16:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Icicle",
+"starts_at": "2026-10-01T17:00:00+02:00",
+"ends_at": "2026-10-01T19:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Rick Owens",
+"starts_at": "2026-10-01T17:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "GAUCHERE",
+"starts_at": "2026-10-01T18:00:00+02:00",
+"ends_at": "2026-10-01T20:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Schiaparelli",
+"starts_at": "2026-10-01T19:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Isabel Marant",
+"starts_at": "2026-10-01T20:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Léonard Paris",
+"starts_at": "2026-10-02T09:30:00+02:00",
+"ends_at": "2026-10-02T13:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Undercover",
+"starts_at": "2026-10-02T10:00:00+02:00",
+"ends_at": "2026-10-02T19:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Loewe",
+"starts_at": "2026-10-02T11:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Issey Miyake",
+"starts_at": "2026-10-02T13:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Jitrois",
+"starts_at": "2026-10-02T14:00:00+02:00",
+"ends_at": "2026-10-02T18:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Casablanca",
+"starts_at": "2026-10-02T14:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Lanvin",
+"starts_at": "2026-10-02T15:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Reverie by Caroline Hú",
+"starts_at": "2026-10-02T16:00:00+02:00",
+"ends_at": "2026-10-02T18:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Ottolinger",
+"starts_at": "2026-10-02T16:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Givenchy",
+"starts_at": "2026-10-02T17:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Y ohji Y amamoto",
+"starts_at": "2026-10-02T19:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Victoria Beckham",
+"starts_at": "2026-10-02T20:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Barbara Bui",
+"starts_at": "2026-10-03T10:00:00+02:00",
+"ends_at": "2026-10-03T18:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Véronique Leroy",
+"starts_at": "2026-10-03T10:00:00+02:00",
+"ends_at": "2026-10-03T18:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Junya Watanabe",
+"starts_at": "2026-10-03T10:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Celine",
+"starts_at": "2026-10-03T12:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Noir Kei Ninomiya",
+"starts_at": "2026-10-03T13:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Nehera",
+"starts_at": "2026-10-03T13:30:00+02:00",
+"ends_at": "2026-10-03T18:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Vivienne Westwood",
+"starts_at": "2026-10-03T14:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Hermès",
+"starts_at": "2026-10-03T15:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Elie Saab",
+"starts_at": "2026-10-03T16:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Comme des Garçons",
+"starts_at": "2026-10-03T17:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Alaïa",
+"starts_at": "2026-10-03T18:00:00+02:00",
+"ends_at": "2026-10-03T20:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Ann Demeulemeester",
+"starts_at": "2026-10-03T18:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Margaret Howell",
+"starts_at": "2026-10-04T10:00:00+02:00",
+"ends_at": "2026-10-04T16:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Lacoste",
+"starts_at": "2026-10-04T10:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Niccolò Pasqualetti",
+"starts_at": "2026-10-04T12:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Miu Miu",
+"starts_at": "2026-10-04T13:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Akris",
+"starts_at": "2026-10-04T14:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Dice Kayek",
+"starts_at": "2026-10-04T14:00:00+02:00",
+"ends_at": "2026-10-04T18:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Paloma Wool",
+"starts_at": "2026-10-04T14:30:00+02:00",
+"ends_at": "2026-10-04T17:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Valentino",
+"starts_at": "2026-10-04T15:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Zomer",
+"starts_at": "2026-10-04T16:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Mossi",
+"starts_at": "2026-10-04T18:00:00+02:00",
+"ends_at": "2026-10-04T20:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Mugler",
+"starts_at": "2026-10-04T18:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Jean Paul Gaultier",
+"starts_at": "2026-10-04T20:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Sacai",
+"starts_at": "2026-10-05T10:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Ungaro",
+"starts_at": "2026-10-05T10:00:00+02:00",
+"ends_at": "2026-10-05T18:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Shiatzy Chen",
+"starts_at": "2026-10-05T11:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Abra",
+"starts_at": "2026-10-05T12:00:00+02:00",
+"ends_at": "2026-10-05T14:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Gabriela Hearst",
+"starts_at": "2026-10-05T13:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "TIME",
+"starts_at": "2026-10-05T14:00:00+02:00",
+"ends_at": "2026-10-05T16:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Zimmermann",
+"starts_at": "2026-10-05T14:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Kiko Kostadinov",
+"starts_at": "2026-10-05T16:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Florentina Leitner",
+"starts_at": "2026-10-05T16:30:00+02:00",
+"ends_at": "2026-10-05T19:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Agnès b.",
+"starts_at": "2026-10-05T17:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Chanel",
+"starts_at": "2026-10-05T20:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Xuly. Bët",
+"starts_at": "2026-10-06T09:30:00+02:00",
+"ends_at": "2026-10-06T18:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Ujoh",
+"starts_at": "2026-10-06T10:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Didu",
+"starts_at": "2026-10-06T10:30:00+02:00",
+"ends_at": "2026-10-06T17:00:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Litkovska",
+"starts_at": "2026-10-06T11:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Christopher Esber",
+"starts_at": "2026-10-06T12:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "CFCL",
+"starts_at": "2026-10-06T13:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "EENK",
+"starts_at": "2026-10-06T14:00:00+02:00",
+"ends_at": "2026-10-06T16:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Situationist",
+"starts_at": "2026-10-06T15:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Boyarovskaya",
+"starts_at": "2026-10-06T16:00:00+02:00",
+"ends_at": "2026-10-06T18:30:00+02:00",
+"kind": "presentation",
+"location": "Paris"
+},
+{
+"title": "Pierre Cardin",
+"starts_at": "2026-10-06T17:00:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+},
+{
+"title": "Louis Vuitton",
+"starts_at": "2026-10-06T18:30:00+02:00",
+"ends_at": null,
+"kind": "show",
+"location": "Paris"
+}
+]
+}
+]
+}

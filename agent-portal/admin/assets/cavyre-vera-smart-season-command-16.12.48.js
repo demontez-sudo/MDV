@@ -6,9 +6,9 @@ function E(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return(
 function bridge(){if(!window.VEUX_AGENT_V4||!VEUX_AGENT_V4.api)throw new Error('CAVYRE secure bridge is not ready');return VEUX_AGENT_V4}
 function org(){var s=bridge().state||{};return s.org&&s.org.slug||'maison-de-veux'}
 function get(){return bridge().api('/api/agent/season/v9?organization='+encodeURIComponent(org()),{method:'GET',headers:{}})}
-function dt(v){if(!v)return'—';try{return new Date(v).toLocaleDateString([],{month:'short',day:'2-digit',year:'numeric'})}catch(e){return v}}
-function short(v){if(!v)return'—';try{return new Date(v).toLocaleDateString([],{month:'short',day:'numeric'})}catch(e){return v}}
-function days(v){if(!v)return null;return Math.ceil((new Date(v)-new Date())/86400000)}
+function pd(v){return /^\d{4}-\d{2}-\d{2}$/.test(String(v))?new Date(v+'T12:00:00'):new Date(v)} function dt(v){if(!v)return'—';try{return pd(v).toLocaleDateString([],{month:'short',day:'2-digit',year:'numeric'})}catch(e){return v}}
+function short(v){if(!v)return'—';try{return pd(v).toLocaleDateString([],{month:'short',day:'numeric'})}catch(e){return v}}
+function days(v){if(!v)return null;return Math.ceil((pd(v)-new Date())/86400000)}
 function current(){var ss=(S.data&&S.data.seasons)||[];return ss.find(function(x){return x.id===S.seasonId})||ss.find(function(x){return x.status==='active'})||ss[0]||null}
 function models(){var c=current();return ((S.data&&S.data.season_models)||[]).filter(function(x){return c&&x.season_id===c.id})}
 function shows(){var c=current();return ((S.data&&S.data.shows)||[]).filter(function(x){return c&&x.season_id===c.id})}

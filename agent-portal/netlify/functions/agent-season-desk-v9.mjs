@@ -1,5 +1,6 @@
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
+import fashionWeeks from './_data/fashion-weeks-ss27.json';
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 const group=(list,key)=>{const m=new Map();for(const x of list){const k=x[key];if(!m.has(k))m.set(k,[]);m.get(k).push(x);}return m;};
 function normSeasonType(v){const s=String(v||'fashion_week').toLowerCase();const map={commercial:'campaign',fashionweek:'fashion_week',market:'market_stay'};const out=map[s]||s;return ['fashion_week','couture','mens','womens','campaign','market_stay','other'].includes(out)?out:'other';}
@@ -50,6 +51,41 @@ export const handler=async(event)=>{
         if(!data||String(data.status)!==status)throw new Error('Show model status could not be verified after write.');
         return json(200,{ok:true,verified:true,show_model:data,persisted_at:new Date().toISOString()});
       }
+      if(action==='import_fashion_weeks'){
+        const report=[];
+        const companies=await rows(admin.from('companies').select('id,name').eq('organization_id',organization.id).limit(3000));
+        const byName=new Map(companies.map(c=>[String(c.name||'').trim().toLowerCase(),c.id]));
+        const markets=await rows(admin.from('markets').select('id,name').eq('organization_id',organization.id).limit(200));
+        for(const def of fashionWeeks.seasons){
+          let season=(await rows(admin.from('seasons').select('*').eq('organization_id',organization.id).eq('name',def.name).limit(1)))[0];
+          const market=markets.find(m=>String(m.name||'').toLowerCase().includes(String(def.market).toLowerCase()))||null;
+          if(!season){
+            const {data,error}=await admin.from('seasons').insert({organization_id:organization.id,name:def.name,season_type:'fashion_week',market_id:market?.id||null,starts_on:def.starts_on,ends_on:def.ends_on,status:'planning',notes:def.notes}).select('*').single();if(error)throw error;season=data;
+          }
+          const have=await rows(admin.from('season_shows').select('id,title,starts_at').eq('season_id',season.id).limit(5000));
+          const key=x=>String(x.title||'').trim().toLowerCase()+'|'+new Date(x.starts_at).toISOString();
+          const seen=new Set(have.map(key));
+          const fresh=def.shows.filter(x=>!seen.has(key(x)));
+          const payload=fresh.map(x=>({organization_id:organization.id,season_id:season.id,title:x.title,company_id:byName.get(String(x.title).trim().toLowerCase())||null,starts_at:x.starts_at,location:x.location||def.city,status:'planned',notes:`kind=${x.kind};ends=${x.ends_at||''};src=fashion-week-calendar`}));
+          for(let i=0;i<payload.length;i+=150){const {error}=await admin.from('season_shows').insert(payload.slice(i,i+150));if(error)throw error;}
+          report.push({season:def.name,season_id:season.id,imported:payload.length,already_present:def.shows.length-payload.length});
+        }
+        return json(200,{ok:true,verified:true,report,persisted_at:new Date().toISOString()});
+      }
+      if(action==='update_show'){
+        const patch={};for(const k of ['title','starts_at','location','notes'])if(body[k]!==undefined)patch[k]=body[k]===''?null:body[k];if(body.status)patch.status=normShowStatus(body.status);if(body.company_id!==undefined)patch.company_id=body.company_id||null;
+        const {data,error}=await admin.from('season_shows').update(patch).eq('organization_id',organization.id).eq('id',body.show_id).select('*').single();if(error)throw error;
+        return json(200,{ok:true,verified:true,show:data,persisted_at:new Date().toISOString()});
+      }
+      if(action==='delete_show'){
+        const {error}=await admin.from('season_shows').delete().eq('organization_id',organization.id).eq('id',body.show_id);if(error)throw error;
+        return json(200,{ok:true,verified:true,deleted:body.show_id,persisted_at:new Date().toISOString()});
+      }
+      if(action==='update_season'){
+        const patch={};for(const k of ['name','starts_on','ends_on','notes'])if(body[k]!==undefined)patch[k]=body[k]===''?null:body[k];if(body.status)patch.status=normSeasonStatus(body.status);
+        const {data,error}=await admin.from('seasons').update(patch).eq('organization_id',organization.id).eq('id',body.season_id).select('*').single();if(error)throw error;
+        return json(200,{ok:true,verified:true,season:data,persisted_at:new Date().toISOString()});
+      }
       return json(400,{error:'Unsupported season action'});
     }
     const admin=await requirePermission(user.id,organization.id,'season.read'),seasonId=p.season_id||null;
@@ -57,7 +93,7 @@ export const handler=async(event)=>{
     let modelQ=admin.from('season_models').select('*').eq('organization_id',organization.id).order('readiness_percent',{ascending:true});if(seasonId)modelQ=modelQ.eq('season_id',seasonId);
     let showQ=admin.from('season_shows').select('*').eq('organization_id',organization.id).order('starts_at',{ascending:true});if(seasonId)showQ=showQ.eq('season_id',seasonId);
     const [seasons,seasonModels,shows,readiness,showModels,travel,models,companies,markets]=await Promise.all([
-      rows(seasonsQ.limit(100)),rows(modelQ.limit(700)),rows(showQ.limit(500)),rows(admin.from('season_readiness_items').select('*').eq('organization_id',organization.id).limit(5000)),rows(admin.from('season_show_models').select('*').eq('organization_id',organization.id).limit(3000)),rows(admin.from('travel_records').select('*').eq('organization_id',organization.id).order('starts_at',{ascending:true}).limit(500)),rows(admin.from('models').select('id,display_name,public_slug,primary_market_label').eq('organization_id',organization.id).limit(1000)),rows(admin.from('companies').select('id,name').eq('organization_id',organization.id).limit(1000)),rows(admin.from('markets').select('id,name,code').eq('organization_id',organization.id).limit(100))
+      rows(seasonsQ.limit(100)),rows(modelQ.limit(700)),rows(showQ.limit(3000)),rows(admin.from('season_readiness_items').select('*').eq('organization_id',organization.id).limit(5000)),rows(admin.from('season_show_models').select('*').eq('organization_id',organization.id).limit(8000)),rows(admin.from('travel_records').select('*').eq('organization_id',organization.id).order('starts_at',{ascending:true}).limit(500)),rows(admin.from('models').select('id,display_name,public_slug,primary_market_label').eq('organization_id',organization.id).limit(1000)),rows(admin.from('companies').select('id,name').eq('organization_id',organization.id).limit(1000)),rows(admin.from('markets').select('id,name,code').eq('organization_id',organization.id).limit(100))
     ]);
     const mm=new Map(models.map(x=>[x.id,x])),cm=new Map(companies.map(x=>[x.id,x])),marketMap=new Map(markets.map(x=>[x.id,x])),readyMap=group(readiness,'season_model_id'),showModelMap=group(showModels,'season_show_id');
     return json(200,{environment:'veux-saas-v9',organization,seasons:seasons.map(x=>({...x,markets:marketMap.get(x.market_id)||null})),season_models:seasonModels.map(x=>({...x,models:mm.get(x.model_id)||null,season_readiness_items:readyMap.get(x.id)||[]})),shows:shows.map(x=>({...x,companies:cm.get(x.company_id)||null,season_show_models:(showModelMap.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),travel:travel.map(x=>({...x,models:mm.get(x.model_id)||null}))});
