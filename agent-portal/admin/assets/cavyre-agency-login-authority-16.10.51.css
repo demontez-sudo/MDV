@@ -140,3 +140,6 @@
  #login[data-cavyre-login="16.10.51"] .lg-h1{font-size:31px!important}
  #login[data-cavyre-login="16.10.51"] .lg-secure,#login[data-cavyre-login="16.10.51"] .lg-foot{padding-left:22px!important;padding-right:22px!important}
 }
+
+/* hide login once signed in */
+body[data-veux-session-ready="1"] #login,body[data-veux-session-ready="1"] #login[data-cavyre-login]{display:none!important;visibility:hidden!important;pointer-events:none!important}
