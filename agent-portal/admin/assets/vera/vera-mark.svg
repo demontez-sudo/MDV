@@ -1,5 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <line x1="18.5" y1="14" x2="29.5" y2="41" stroke="#C9A24B" stroke-width="3" stroke-linecap="square"/>
-  <line x1="45.5" y1="14" x2="34.5" y2="41" stroke="#C9A24B" stroke-width="3" stroke-linecap="square"/>
-  <rect x="29.6" y="43.4" width="4.8" height="4.8" fill="#C9A24B" transform="rotate(45 32 45.8)"/>
-</svg>

@@ -2,7 +2,7 @@ import { requireUser, adminClient, assertPermission, json, errorResponse } from 
 import { requireStaffOrganization } from './_lib/agent-bridge.mjs';
 import { aiProviderStatus } from './_lib/ai-providers.mjs';
 
-const TABLES=['models','tasks','companies','contacts','castings','bookings','events','visa_cases','travel_records','ai_jobs'];
+const TABLES=['models','tasks','companies','contacts','castings','bookings','calendar_events','visa_cases','travel_records','ai_jobs'];
 async function tableCheck(admin,organizationId,table){
   const {error}=await admin.from(table).select('id').eq('organization_id',organizationId).limit(1);
   return error?{ok:false,error:String(error.message||error).slice(0,180)}:{ok:true};

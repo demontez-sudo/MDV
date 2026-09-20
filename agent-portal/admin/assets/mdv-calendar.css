@@ -400,22 +400,3 @@ html body #p-calendar .mdv-deck-fold{display:none}
   html body #p-calendar#p-calendar .mdv-deck.collapsed>:is(.mdv-deck-season,.mdv-deck-models,.mdv-deck-extra,.mdv-deck-filters,.mdv-deck-break){display:none!important}
   html body #p-calendar#p-calendar .mdv-deck.collapsed .mdv-deck-title small{display:none}
 }
-
-/* ---- Orbit: live Now / Next / Tomorrow ---- */
-html body #p-calendar .mdv-deck-clients{display:flex;align-items:center;flex-wrap:wrap;gap:10px 12px}
-html body #p-calendar .mdv-now{display:grid;grid-template-columns:1.2fr 1.4fr 1fr;gap:12px;margin:0 0 14px;font-family:'Inter',sans-serif;color:var(--mdv-ink)}
-html body #p-calendar .mdv-now-cell{display:flex;flex-direction:column;gap:6px;padding:16px 18px;border:1px solid var(--mdv-line-2);border-radius:16px;background:var(--mdv-panel);min-width:0}
-html body #p-calendar .mdv-now-cell>small{display:flex;align-items:center;gap:8px;font:600 10px 'Inter',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mdv-gold)}
-html body #p-calendar .mdv-now-cell.live{border-color:color-mix(in srgb,var(--mdv-gold) 55%,transparent);background:radial-gradient(120% 140% at 0% 0%,color-mix(in srgb,var(--mdv-gold) 16%,transparent),transparent 60%),var(--mdv-panel)}
-html body #p-calendar .mdv-now-cell.live small i{width:8px;height:8px;border-radius:50%;background:#e0685a;box-shadow:0 0 0 0 rgba(224,104,90,.6);animation:mdvPulse 1.8s infinite}
-@keyframes mdvPulse{0%{box-shadow:0 0 0 0 rgba(224,104,90,.55)}70%{box-shadow:0 0 0 9px rgba(224,104,90,0)}100%{box-shadow:0 0 0 0 rgba(224,104,90,0)}}
-html body #p-calendar .mdv-now-cell b{font:600 17px/1.25 'Inter',sans-serif;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis}
-html body #p-calendar .mdv-now-cell b.dim{color:var(--mdv-mute);font-size:15px}
-html body #p-calendar .mdv-now-cell>span{font:400 12.5px 'Inter',sans-serif;color:var(--mdv-mute)}
-html body #p-calendar .mdv-now-cell>span.warn{color:#e8b070}
-html body #p-calendar .mdv-now .nx{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid var(--mdv-line-2)}
-html body #p-calendar .mdv-now .nx:first-of-type{border-top:0}
-html body #p-calendar .mdv-now .nx em{font:600 12.5px 'Inter',sans-serif;font-style:normal;color:var(--mdv-gold-2);font-variant-numeric:tabular-nums}
-html body #p-calendar .mdv-now .nx b{display:block;font:600 13.5px 'Inter',sans-serif}
-html body #p-calendar .mdv-now .nx small{display:block;font:400 11.5px 'Inter',sans-serif;color:var(--mdv-mute)}
-@media(max-width:1000px){html body #p-calendar .mdv-now{grid-template-columns:1fr}}

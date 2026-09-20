@@ -93,10 +93,7 @@ export const handler=async(event)=>{
           currency:String(body.currency||prior?.metadata?.currency||'USD').slice(0,3).toUpperCase(),
           travel_required:!!body.travel_required,
           visa_required:!!body.visa_required,
-          booker_handoff:body.booker_handoff&&typeof body.booker_handoff==='object'?body.booker_handoff:{},
-          season_id:body.season_id||prior?.metadata?.season_id||null,
-          show_id:body.show_id||prior?.metadata?.show_id||null,
-          season_stage:body.season_stage||prior?.metadata?.season_stage||null
+          booker_handoff:body.booker_handoff&&typeof body.booker_handoff==='object'?body.booker_handoff:{}
         };
         const payload={
           organization_id:organization.id,

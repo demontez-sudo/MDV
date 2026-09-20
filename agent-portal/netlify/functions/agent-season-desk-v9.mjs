@@ -65,22 +65,13 @@ export const handler=async(event)=>{
           if(!season){
             const {data,error}=await admin.from('seasons').insert({organization_id:organization.id,name:def.name,season_type:'fashion_week',market_id:market?.id||null,starts_on:def.starts_on,ends_on:def.ends_on,status:'planning',notes:def.notes}).select('*').single();if(error)throw error;season=data;
           }
-          const have=await rows(admin.from('season_shows').select('id,title,starts_at,location,notes').eq('season_id',season.id).limit(5000));
+          const have=await rows(admin.from('season_shows').select('id,title,starts_at').eq('season_id',season.id).limit(5000));
           const key=x=>String(x.title||'').trim().toLowerCase()+'|'+new Date(x.starts_at).toISOString();
           const seen=new Set(have.map(key));
-          const slot=x=>new Date(x.starts_at).toISOString()+'|'+String(x.location||'').trim().toLowerCase();
-          const bySlot=new Map(have.filter(x=>/src=fashion-week-calendar/.test(String(x.notes||''))).map(x=>[slot(x),x]));
-          let renamed=0;
-          const fresh=[];
-          for(const x of def.shows){
-            if(seen.has(key(x)))continue;
-            const ex=bySlot.get(slot({starts_at:x.starts_at,location:x.location||def.city}));
-            if(ex&&ex.title!==x.title){const {error:re}=await admin.from('season_shows').update({title:x.title}).eq('id',ex.id);if(re)throw re;renamed++;seen.add(key(x));continue;}
-            fresh.push(x);
-          }
+          const fresh=def.shows.filter(x=>!seen.has(key(x)));
           const payload=fresh.map(x=>({organization_id:organization.id,season_id:season.id,title:x.title,company_id:byName.get(String(x.title).trim().toLowerCase())||null,starts_at:x.starts_at,location:x.location||def.city,status:'planned',notes:`kind=${x.kind};ends=${x.ends_at||''};src=fashion-week-calendar`}));
           for(let i=0;i<payload.length;i+=150){const {error}=await admin.from('season_shows').insert(payload.slice(i,i+150));if(error)throw error;}
-          report.push({season:def.name,season_id:season.id,imported:payload.length,renamed,already_present:def.shows.length-payload.length-renamed});
+          report.push({season:def.name,season_id:season.id,imported:payload.length,already_present:def.shows.length-payload.length});
         }
         return json(200,{ok:true,verified:true,report,persisted_at:new Date().toISOString()});
       }
@@ -97,30 +88,6 @@ export const handler=async(event)=>{
         const patch={};for(const k of ['name','starts_on','ends_on','notes'])if(body[k]!==undefined)patch[k]=body[k]===''?null:body[k];if(body.status)patch.status=normSeasonStatus(body.status);
         const {data,error}=await admin.from('seasons').update(patch).eq('organization_id',organization.id).eq('id',body.season_id).select('*').single();if(error)throw error;
         return json(200,{ok:true,verified:true,season:data,persisted_at:new Date().toISOString()});
-      }
-      if(action==='diagnose'){
-        const checks=[
-          ['seasons','id,organization_id,name,season_type,market_id,starts_on,ends_on,status,notes'],
-          ['season_shows','id,organization_id,season_id,title,company_id,starts_at,location,status,notes'],
-          ['season_show_models','id,organization_id,season_show_id,model_id,status,notes'],
-          ['season_models','id,organization_id,season_id,model_id,status'],
-          ['companies','id,organization_id,name,company_type,website,notes'],
-          ['contacts','id,organization_id,display_name,role,company_id,email,instagram,market,notes'],
-          ['contact_company_links','contact_id,company_id,relationship_role,is_primary,organization_id'],
-          ['markets','id,organization_id,name'],
-          ['models','id,organization_id,display_name,stage,status,primary_market_label,location,active'],
-          ['model_measurements','*'],
-          ['ai_jobs','id,organization_id,job_type,status,requested_by,input,result,error_message,started_at,completed_at']
-        ];
-        const out=[];
-        for(const [table,cols] of checks){
-          const {error}=await admin.from(table).select(cols).limit(1);
-          out.push({table,columns:cols==='*'?'*':cols.split(','),ok:!error,error:error?String(error.message||error).slice(0,200):null});
-        }
-        const shows=await admin.from('season_shows').select('id',{count:'exact',head:true}).eq('organization_id',organization.id);
-        const seasons=await admin.from('seasons').select('id,name',{count:'exact'}).eq('organization_id',organization.id).limit(20);
-        const ai=(process.env.ANTHROPIC_API_KEY||process.env.CAVYRE_ANTHROPIC_API_KEY||process.env.VEUX_ANTHROPIC_API_KEY)?'anthropic':(process.env.OPENAI_API_KEY||process.env.CAVYRE_OPENAI_API_KEY||process.env.VEUX_OPENAI_API_KEY)?'openai':'none';
-        return json(200,{ok:out.every(x=>x.ok),checks:out,season_rows:(seasons.data||[]).map(x=>x.name),show_count:shows.count??null,ai_provider:ai,site_url:process.env.URL||null,persisted_at:new Date().toISOString()});
       }
       if(action==='remove_show_model'){
         const {error}=await admin.from('season_show_models').delete().eq('organization_id',organization.id).eq('season_show_id',body.show_id).eq('model_id',body.model_id);if(error)throw error;
@@ -190,11 +157,9 @@ export const handler=async(event)=>{
     ]);
     const mm=new Map(models.map(x=>[x.id,x])),cm=new Map(companies.map(x=>[x.id,x])),marketMap=new Map(markets.map(x=>[x.id,x])),readyMap=group(readiness,'season_model_id'),showModelMap=group(showModels,'season_show_id');
     const [crmContacts,crmLinks]=await Promise.all([rows(admin.from('contacts').select('id,display_name,role,company_id,email,instagram').eq('organization_id',organization.id).limit(4000)),rows(admin.from('contact_company_links').select('contact_id,company_id,relationship_role,is_primary').eq('organization_id',organization.id).limit(8000))]);
-    let linkedEvents={};
-    try{const evs=await rows(admin.from('events').select('id,title,starts_at,ends_at,status,location,metadata').eq('organization_id',organization.id).not('metadata->>show_id','is',null).limit(3000));for(const e of evs){const k=e.metadata&&e.metadata.show_id;if(!k)continue;(linkedEvents[k]=linkedEvents[k]||[]).push({id:e.id,title:e.title,starts_at:e.starts_at,ends_at:e.ends_at,status:e.status,location:e.location,stage:e.metadata.season_stage||e.metadata.calendar_event_type||'event'});}}catch(_e){linkedEvents={};}
     const contactById=new Map(crmContacts.map(x=>[x.id,x])),castingByCompany={};
     for(const l of crmLinks){const c=contactById.get(l.contact_id);if(!c)continue;(castingByCompany[l.company_id]=castingByCompany[l.company_id]||[]).push({id:c.id,display_name:c.display_name,role:l.relationship_role||c.role||'',email:c.email||null,instagram:c.instagram||null});}
     for(const c of crmContacts){if(c.company_id&&!(castingByCompany[c.company_id]||[]).some(x=>x.id===c.id))(castingByCompany[c.company_id]=castingByCompany[c.company_id]||[]).push({id:c.id,display_name:c.display_name,role:c.role||'',email:c.email||null,instagram:c.instagram||null});}
-    return json(200,{roster:models,companies,casting_by_company:castingByCompany,linked_events:linkedEvents,environment:'veux-saas-v9',organization,seasons:seasons.map(x=>({...x,markets:marketMap.get(x.market_id)||null})),season_models:seasonModels.map(x=>({...x,models:mm.get(x.model_id)||null,season_readiness_items:readyMap.get(x.id)||[]})),shows:shows.map(x=>({...x,companies:cm.get(x.company_id)||null,season_show_models:(showModelMap.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),travel:travel.map(x=>({...x,models:mm.get(x.model_id)||null}))});
+    return json(200,{roster:models,companies,casting_by_company:castingByCompany,environment:'veux-saas-v9',organization,seasons:seasons.map(x=>({...x,markets:marketMap.get(x.market_id)||null})),season_models:seasonModels.map(x=>({...x,models:mm.get(x.model_id)||null,season_readiness_items:readyMap.get(x.id)||[]})),shows:shows.map(x=>({...x,companies:cm.get(x.company_id)||null,season_show_models:(showModelMap.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),travel:travel.map(x=>({...x,models:mm.get(x.model_id)||null}))});
   }catch(error){return errorResponse(error);}
 };

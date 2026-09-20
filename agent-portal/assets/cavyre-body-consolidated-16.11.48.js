@@ -96,7 +96,6 @@ new MutationObserver(function(){setTimeout(inject,80)}).observe(document.body,{s
 if(window.__CAVYRE_LOGIN_AUTHORITY_161051__)return;
 window.__CAVYRE_LOGIN_AUTHORITY_161051__=true;
 
-function setHtml(el,html){if(el.__cvyH===html&&el.firstChild)return;el.__cvyH=html;el.innerHTML=html}
 function ensure(){
   var login=document.getElementById('login');
   if(!login)return;
@@ -110,7 +109,7 @@ function ensure(){
     login.insertBefore(brand,login.firstChild);
   }
   brand.setAttribute('aria-label','CAVYRE Network Premium');
-  setHtml(brand,
+  brand.innerHTML=
     '<div class="lg-brand-copy">'+
       '<div class="lg-wordmark">CAVYRE</div>'+
       '<div class="lg-network">NETWORK PREMIUM · AGENCY ACCESS</div>'+
@@ -123,7 +122,7 @@ function ensure(){
       '<div class="lg-point"><i>02</i><b>Smart Operations</b><span>Calendar · Mobility · Finance</span></div>'+
       '<div class="lg-point"><i>03</i><b>Connected Talent</b><span>Agency ↔ Model ↔ Partner</span></div>'+
       '<div class="lg-point"><i>04</i><b>Private Platform</b><span>Secure agency control</span></div>'+
-    '</div>');
+    '</div>';
 
   var entry=login.querySelector('.lg-entry');
   if(!entry){
@@ -145,11 +144,11 @@ function ensure(){
     top.className='lg-top';
     card.insertBefore(top,card.firstChild);
   }
-  setHtml(top,
+  top.innerHTML=
     '<div class="lg-mark"><span>C</span></div>'+
     '<div class="lg-eyebrow">CAVYRE · MAISON DE VEUX</div>'+
     '<div class="lg-h1">Agency <em>Network</em></div>'+
-    '<div class="lg-sub">Secure staff access to your CAVYRE workspace.</div>');
+    '<div class="lg-sub">Secure staff access to your CAVYRE workspace.</div>';
 
   var body=card.querySelector('.lg-body');
   if(body){
@@ -187,7 +186,7 @@ function protect(){
       clearTimeout(protect._t);
       protect._t=setTimeout(function(){
         var h=(document.getElementById('login')||{}).textContent||'';
-        if(/VEUX DESK|Agency Portal|Secure Staff Access|ENTER VEUX/.test(h))ensure();
+        if(/VEUX DESK|Agency Portal|Secure Staff Access|ENTER VEUX/i.test(h))ensure();
       },20);
     }
   });
@@ -371,7 +370,7 @@ window.addEventListener('veux:page-rendered',function(e){if(!e.detail||e.detail.
 (function(){
 'use strict';if(window.__CAVYRE_PACKAGE_COMMAND_161066__)return;window.__CAVYRE_PACKAGE_COMMAND_161066__=true;
 var A=function(v){return Array.isArray(v)?v:[]},E=function(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})};
-function get(){var V=window.VEUX_AGENT_V4;if(!V||!V.api||!V.state||!V.state.session)return Promise.reject(new Error('not signed in'));return V.api('/api/agent/packages?organization=maison-de-veux',{method:'GET',headers:{}})}
+function get(){return fetch('/api/agent/packages?organization=maison-de-veux',{credentials:'include'}).then(function(r){if(!r.ok)throw new Error('Package workflow unavailable');return r.json()})}
 function state(d){
  var pk=A(d.packages),fb=A(d.open_feedback),sg=A(d.client_model_signals),now=Date.now();
  var drafts=pk.filter(function(x){return /draft/i.test(x.status||'')});
@@ -391,7 +390,7 @@ function render(host,d){
  try{sessionStorage.setItem('cavyre.vera.context.packages',JSON.stringify({packages:s.pk.length,drafts:s.drafts.length,live_or_sent:s.sent.length,open_feedback:s.fb.length,high_intent_signals:s.hot.length,expiring_within_7_days:s.expiring.length,feedback:s.fb.slice(0,5).map(function(f){return[(f.packages&&f.packages.title)||'Package',(f.models&&f.models.display_name)||'Model',f.feedback_type||'feedback'].join(' · ')})}));}catch(_e){}
 }
 function commandHost(){return document.querySelector('#p-command .cnt,#p-agencycommand .cnt,[data-page-root="command"] .cnt,.vx161061-command,.vx161062-relationship')?.parentElement||null}
-var lastTry=0;function run(){var h=commandHost();if(!h||h.querySelector('.vx161066-package-command'))return;if(Date.now()-lastTry<60000)return;lastTry=Date.now();get().then(function(d){render(h,d)}).catch(function(){})}
+function run(){var h=commandHost();if(!h||h.querySelector('.vx161066-package-command'))return;get().then(function(d){render(h,d)}).catch(function(){})}
 new MutationObserver(function(){setTimeout(run,80)}).observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('veux:page-rendered',function(){setTimeout(run,80)});/* 16.11.48 consolidated: redundant package polling removed */setTimeout(run,500);
 })();
 ;/* END cavyre-package-client-command-16.10.66.js */
@@ -1669,7 +1668,7 @@ function ci(id){return (S.intel&&S.intel.company_insights||[]).find(x=>x.company
 function cti(id){return (S.intel&&S.intel.contact_insights||[]).find(x=>x.contact_id===id)||{score:0,band:'New',last_activity_days:null,linked_company_count:0,next_action:'Build relationship'} }
 function companyName(id){var c=companies().find(x=>x.id===id);return c?c.name:'Independent'}
 async function load(){var r=await Promise.all([api('/api/agent/crm/v9?organization='+encodeURIComponent(org())),api('/api/agent/crm/intelligence/v2?organization='+encodeURIComponent(org())).catch(()=>null)]);S.data=r[0]||{};S.intel=r[1]||{};return S.data}
-function veraLogo(){return '<span class="vxvera-logo"><img src="/admin/assets/vera/vera-mark.svg" alt=""></span>'}
+function veraLogo(){return '<span class="vxvera-logo"><img src="/assets/vera/vera-mark.svg" alt=""></span>'}
 function shell(content){var sum=S.intel&&S.intel.summary||{};return '<div class="vxrel"><header class="vxrel-head"><div><div class="vxrel-eye">CAVYRE · Relationship Intelligence</div><h1>Relationships</h1><div class="vxrel-sub">Companies, contacts, agencies, clients and projects — one connected relationship graph.</div></div><div class="vxrel-actions"><button class="vxrel-btn" onclick="CavyreRelationships.openCompany()">+ Company</button><button class="vxrel-btn fill" onclick="CavyreRelationships.openContact()">+ Contact</button></div></header><nav class="vxrel-tabs">'+[['desk','Relationship Desk'],['companies','Companies'],['contacts','Contacts'],['agencies','Agencies'],['projects','Projects']].map(x=>'<button class="'+(S.view===x[0]?'on':'')+'" onclick="CavyreRelationships.go(\''+x[0]+'\')">'+x[1]+'</button>').join('')+'</nav><div class="vxrel-layout"><main class="vxrel-main">'+content+'</main><aside class="vxrel-vera"><div class="vxvera-title">'+veraLogo()+' Vera Intelligence</div><p class="vxvera-copy">Search the relationship network, research public work, discover connections and keep every contact attached to one canonical record.</p><div class="vxvera-search"><input id="vxvera-q" placeholder="Ask Vera about a contact, company or project…"><button onclick="CavyreRelationships.veraAsk()">→</button></div><div class="vxvera-card"><small>Relationship Watch</small><b>'+(sum.needs_follow_up||0)+' follow-ups</b><p>Vera is watching relationship recency, package activity, bookings and contact coverage.</p></div><div class="vxvera-card"><small>Connected Records</small><b>'+(contacts().length||0)+' contacts · '+(companies().length||0)+' companies</b><p>Contacts can connect to multiple agencies, clients and project relationships without duplicate profiles.</p></div><div class="vxvera-card"><small>Web Research</small><b>Research + Review</b><p>Open targeted public searches for recent work, Instagram and credits. Add findings only after agent review.</p></div></aside></div></div>'}
 function toolbar(ph){return '<div class="vxrel-toolbar"><input class="vxrel-search" value="'+esc(S.search)+'" oninput="CavyreRelationships.search(this.value)" placeholder="'+ph+'"><button class="vxrel-btn purple" onclick="CavyreRelationships.veraAsk()">'+veraLogo()+' Ask Vera</button></div>'}
 function desk(){var sum=S.intel&&S.intel.summary||{},top=companies().slice().sort((a,b)=>ci(b.id).score-ci(a.id).score).slice(0,6),recent=S.data&&S.data.recent_activity||[];return '<div class="vxrel-kpis"><div class="vxrel-kpi"><small>Relationships</small><b>'+companies().length+'</b></div><div class="vxrel-kpi"><small>Contacts</small><b>'+contacts().length+'</b></div><div class="vxrel-kpi"><small>Priority</small><b>'+(sum.priority_relationships||0)+'</b></div><div class="vxrel-kpi"><small>Needs Follow-Up</small><b>'+(sum.needs_follow_up||0)+'</b></div></div><div class="vxrel-grid"><section class="vxrel-card"><h3>Priority Relationships</h3>'+top.map(c=>'<div class="vxrel-listitem" onclick="CavyreRelationships.companyDetail(\''+c.id+'\')" style="cursor:pointer"><b>'+esc(c.name)+'</b><span>'+ci(c.id).score+' · '+esc(ci(c.id).band)+'</span></div>').join('')+'</section><section class="vxrel-card"><h3>Recent Relationship Activity</h3>'+(recent.slice(0,8).map(a=>'<div class="vxrel-listitem"><b>'+esc(a.subject||a.activity_type||'Activity')+'</b><span>'+esc(a.companies&&a.companies.name||a.contacts&&a.contacts.display_name||'CRM')+'</span></div>').join('')||'<div class="vxrel-empty">No activity yet.</div>')+'</section></div>'}

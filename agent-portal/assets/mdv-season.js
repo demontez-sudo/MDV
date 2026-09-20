@@ -10,7 +10,7 @@ function load(force){
   if(C.busy||(!force&&C.at&&Date.now()-C.at<30000))return Promise.resolve();
   C.busy=true;
   return api('/api/agent/season/v9?organization='+encodeURIComponent(slug()),{method:'GET',headers:{},__fresh:true}).then(function(d){
-    C.seasons=d.seasons||[];C.roster=d.roster||[];C.companies=d.companies||[];C.castingByCompany=d.casting_by_company||{};C.linked=d.linked_events||{};C.shows=(d.shows||[]).map(function(x){var n=String(x.notes||'');x._kind=(n.match(/kind=(\w+)/)||[])[1]||'show';x._ends=(n.match(/ends=([^;]+)/)||[])[1]||'';return x;});C.at=Date.now();
+    C.seasons=d.seasons||[];C.roster=d.roster||[];C.companies=d.companies||[];C.castingByCompany=d.casting_by_company||{};C.shows=(d.shows||[]).map(function(x){var n=String(x.notes||'');x._kind=(n.match(/kind=(\w+)/)||[])[1]||'show';x._ends=(n.match(/ends=([^;]+)/)||[])[1]||'';return x;});C.at=Date.now();
   }).catch(function(){}).then(function(){C.busy=false;});
 }
 function fmtD(iso){var d=new Date(iso+(String(iso).length<=10?'T12:00:00':''));return isNaN(d)?'':d.toLocaleDateString([],{month:'short',day:'numeric'});}
@@ -30,7 +30,7 @@ function barHtml(season){
   var list=rows.length?rows.map(function(x){return '<li><b>'+esc(fmtT(x.starts_at,tzOf(season)))+'</b><span>'+esc(x.title)+'</span><em>'+esc(today.length?(x.location||''):fmtD(x.starts_at))+'</em></li>';}).join(''):'<li class="none">'+(shows.length?'No more scheduled shows.':'No shows yet. Import the fashion-week schedule or add a show.')+'</li>';
   return '<div class="mdv-ss-strip"><div class="ss-head"><small>Live season strip</small><b>'+esc(season.starts_on?fmtD(season.starts_on)+' – '+fmtD(season.ends_on||season.starts_on):'Dates to be set')+'</b><span>'+esc(state)+'</span></div><div class="ss-track" role="img" aria-label="'+esc(state)+'"><em style="width:'+pct.toFixed(1)+'%"></em><i style="left:'+pct.toFixed(1)+'%"></i></div><div class="ss-counts"><span><b>'+nShow+'</b>Shows</span><span><b>'+nPres+'</b>Presentations</span><span><b>'+today.length+'</b>Today</span><span><b>'+Object.keys(assigned).length+'</b>Models on shows</span></div></div>'
    +'<div class="mdv-ss-today"><small>'+esc(label)+'</small><ul>'+list+'</ul></div>'
-   +(C.msg?'<p class="mdv-ss-msg'+(C.msgErr?' err':'')+'">'+esc(C.msg)+'</p>':'')+'<div class="mdv-ss-actions"><button type="button" '+(shows.length?'class="primary" ':'')+'data-ss-cal>Open full calendar →</button><button type="button" data-ss-add>+ Add show</button><button type="button" data-ss-designers>Add all designers to Companies</button><button type="button" data-ss-diag>Check setup</button><button type="button" '+(shows.length?'':'class="primary" ')+'data-ss-import>'+(shows.length?'Refresh fashion-week schedules':'Import fashion-week schedules (London, Milan, Paris)')+'</button></div>';
+   +(C.msg?'<p class="mdv-ss-msg'+(C.msgErr?' err':'')+'">'+esc(C.msg)+'</p>':'')+'<div class="mdv-ss-actions"><button type="button" '+(shows.length?'class="primary" ':'')+'data-ss-cal>Open full calendar →</button><button type="button" data-ss-add>+ Add show</button><button type="button" data-ss-designers>Add all designers to Companies</button><button type="button" '+(shows.length?'':'class="primary" ')+'data-ss-import>'+(shows.length?'Refresh fashion-week schedules':'Import fashion-week schedules (London, Milan, Paris)')+'</button></div>';
 }
 function render(){
   var root=document.querySelector('#p-seasonmanagement .ss48');if(!root)return;
@@ -49,14 +49,6 @@ function designersToCrm(btn,season){
   api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({action:'import_designers_to_crm',organization_slug:slug(),season_id:season.id})}).then(function(r){
     setMsg('Added '+(r.created_companies||0)+' new designers to Companies and connected '+(r.linked_shows||0)+' shows.',false);C.at=0;return load(true);
   }).catch(function(e){setMsg('Could not add designers: '+String(e&&e.message||e),true);}).then(function(){btn.disabled=false;btn.textContent=o;});
-}
-function diagnose(btn){
-  var o=btn.textContent;btn.disabled=true;btn.textContent='Checking…';
-  api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({action:'diagnose',organization_slug:slug()})}).then(function(r){
-    var bad=(r.checks||[]).filter(function(x){return !x.ok;});
-    var txt='Setup check: '+(bad.length?bad.length+' problem'+(bad.length===1?'':'s')+' found. ':'database OK. ')+'AI provider: '+r.ai_provider+'. Seasons: '+(r.season_rows||[]).length+', shows saved: '+(r.show_count==null?'?':r.show_count)+'.'+bad.map(function(x){return ' ['+x.table+': '+x.error+']';}).join('');
-    setMsg(txt,!!bad.length||r.ai_provider==='none');
-  }).catch(function(e){setMsg('Setup check failed: '+String(e&&e.message||e),true);}).then(function(){btn.disabled=false;btn.textContent=o;});
 }
 function closeModal(){var m=document.getElementById('mdv-ss-modal');if(m)m.remove();}
 function addShow(season){
@@ -87,12 +79,11 @@ function importAll(btn){
 }
 document.addEventListener('click',function(e){
   var root=document.querySelector('#p-seasonmanagement .ss48');if(!root)return;
-  var b=e.target.closest&&e.target.closest('[data-ss-cal],[data-ss-add],[data-ss-import],[data-ss-designers],[data-ss-diag]');if(!b||!root.contains(b))return;
+  var b=e.target.closest&&e.target.closest('[data-ss-cal],[data-ss-add],[data-ss-import],[data-ss-designers]');if(!b||!root.contains(b))return;
   e.preventDefault();e.stopImmediatePropagation();
   var season=current(root);
   if(b.hasAttribute('data-ss-import'))return importAll(b);
   if(b.hasAttribute('data-ss-designers'))return designersToCrm(b,current(root));
-  if(b.hasAttribute('data-ss-diag'))return diagnose(b);
   if(!season){toast('Select a season first.');return;}
   if(b.hasAttribute('data-ss-add'))return addShow(season);
   if(window.MDV_CAL&&MDV_CAL.openSeason)MDV_CAL.openSeason(season.id,season.starts_on);

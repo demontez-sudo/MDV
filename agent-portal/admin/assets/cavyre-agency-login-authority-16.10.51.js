@@ -4,7 +4,6 @@
 if(window.__CAVYRE_LOGIN_AUTHORITY_161051__)return;
 window.__CAVYRE_LOGIN_AUTHORITY_161051__=true;
 
-function setHtml(el,html){if(el.__cvyH===html&&el.firstChild)return;el.__cvyH=html;el.innerHTML=html}
 function ensure(){
   var login=document.getElementById('login');
   if(!login)return;
@@ -18,7 +17,7 @@ function ensure(){
     login.insertBefore(brand,login.firstChild);
   }
   brand.setAttribute('aria-label','CAVYRE Network Premium');
-  setHtml(brand,
+  brand.innerHTML=
     '<div class="lg-brand-copy">'+
       '<div class="lg-wordmark">CAVYRE</div>'+
       '<div class="lg-network">NETWORK PREMIUM · AGENCY ACCESS</div>'+
@@ -31,7 +30,7 @@ function ensure(){
       '<div class="lg-point"><i>02</i><b>Smart Operations</b><span>Calendar · Mobility · Finance</span></div>'+
       '<div class="lg-point"><i>03</i><b>Connected Talent</b><span>Agency ↔ Model ↔ Partner</span></div>'+
       '<div class="lg-point"><i>04</i><b>Private Platform</b><span>Secure agency control</span></div>'+
-    '</div>');
+    '</div>';
 
   var entry=login.querySelector('.lg-entry');
   if(!entry){
@@ -53,11 +52,11 @@ function ensure(){
     top.className='lg-top';
     card.insertBefore(top,card.firstChild);
   }
-  setHtml(top,
+  top.innerHTML=
     '<div class="lg-mark"><span>C</span></div>'+
     '<div class="lg-eyebrow">CAVYRE · MAISON DE VEUX</div>'+
     '<div class="lg-h1">Agency <em>Network</em></div>'+
-    '<div class="lg-sub">Secure staff access to your CAVYRE workspace.</div>');
+    '<div class="lg-sub">Secure staff access to your CAVYRE workspace.</div>';
 
   var body=card.querySelector('.lg-body');
   if(body){
@@ -95,7 +94,7 @@ function protect(){
       clearTimeout(protect._t);
       protect._t=setTimeout(function(){
         var h=(document.getElementById('login')||{}).textContent||'';
-        if(/VEUX DESK|Agency Portal|Secure Staff Access|ENTER VEUX/.test(h))ensure();
+        if(/VEUX DESK|Agency Portal|Secure Staff Access|ENTER VEUX/i.test(h))ensure();
       },20);
     }
   });
