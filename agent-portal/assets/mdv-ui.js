@@ -2,7 +2,7 @@
 var SEL='.v1682-modal select,.v1682-mob select,select[data-mdv-dd],[class*="modal"] select,select.f-inp',DESC=Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype,'value'),openMenu=null;
 function el(t,c,h){var e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;}
 function closeMenu(){if(!openMenu)return;var m=openMenu;openMenu=null;m.scrim.remove();m.menu.remove();m.wrap.classList.remove('open');document.removeEventListener('keydown',m.key,true);window.removeEventListener('resize',closeMenu);}
-function enhance(sel){if(sel.__mdv||sel.multiple||sel.size>1||sel.closest('.mdv-dd-menu')||sel.classList.contains('vx-select-native')||sel.closest('.vx-select'))return;sel.__mdv=true;
+function enhance(sel){if(sel.__mdv||sel.multiple||sel.size>1||sel.closest('.mdv-dd-menu')||sel.classList.contains('vx-select-native')||sel.closest('.vx-select')||sel.hasAttribute('data-native'))return;sel.__mdv=true;
  var wrap=el('div','mdv-dd'+(sel.classList.contains('v1699-status')?' compact':'')),btn=el('button','mdv-dd-btn');btn.type='button';var lab=el('span','mdv-dd-label'),caret=el('i','mdv-dd-caret');btn.appendChild(lab);btn.appendChild(caret);
  ['width','flex','margin','maxWidth','minWidth'].forEach(function(k){if(sel.style[k])wrap.style[k]=sel.style[k];});sel.parentNode.insertBefore(wrap,sel);wrap.appendChild(sel);wrap.appendChild(btn);sel.classList.add('mdv-native');sel.tabIndex=-1;
  function label(){var o=sel.options[sel.selectedIndex];lab.textContent=o?o.text:'';lab.classList.toggle('ph',!o||!o.value);btn.disabled=sel.disabled;}
