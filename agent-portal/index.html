@@ -2323,6 +2323,7 @@ function shell(id,k,title,body){close(id);document.body.insertAdjacentHTML('befo
 function field(label,id,val,type){return '<label><span>'+label+'</span><input id="'+id+'" type="'+(type||'text')+'" value="'+esc(val||'')+'"></label>'}
 async function editProfile(){
  var id=modelId();if(!id)return alert('Select a model first.');
+ if(window.VEUX_V132&&typeof VEUX_V132.editModel==='function'){window._veuxV10ModelId=id;return VEUX_V132.editModel();}
  try{
   var d=await api('/api/agent/model-360?organization='+encodeURIComponent(org())+'&model_id='+encodeURIComponent(id)),m=d.model||{},p=d.private_profile||d.private||{};
   var body='<div class="cvyModelCtl-grid">'+
