@@ -1,0 +1,41 @@
+/* Vera ask bar — soft glass capsule, follows the active skin colours */
+html[data-veux-wave] body .vx73-command{
+  --vb-a:var(--skin-accent,#7fe0c4);--vb-a2:var(--skin-accent2,var(--vb-a));
+  position:relative;display:flex!important;align-items:center!important;gap:12px!important;
+  min-height:56px!important;padding:0 8px 0 10px!important;border-radius:999px!important;
+  border:1px solid color-mix(in srgb,var(--vb-a) 34%,transparent)!important;
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.015)),color-mix(in srgb,var(--skin-card,#111) 88%,#000)!important;
+  box-shadow:0 10px 30px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.07)!important;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  transition:border-color .2s,box-shadow .2s,background .2s}
+html[data-veux-wave] body .vx73-command:hover{border-color:color-mix(in srgb,var(--vb-a) 55%,transparent)!important}
+html[data-veux-wave] body .vx73-command:focus-within{
+  border-color:var(--vb-a)!important;
+  box-shadow:0 0 0 4px color-mix(in srgb,var(--vb-a) 16%,transparent),0 12px 34px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.08)!important}
+html[data-veux-wave] body .vx73-command .vx20-vera-wave-mark{
+  flex:0 0 auto!important;width:38px!important;height:38px!important;border-radius:50%!important;
+  display:grid!important;place-items:center;
+  background:color-mix(in srgb,var(--vb-a) 14%,transparent)!important;
+  border:1px solid color-mix(in srgb,var(--vb-a) 30%,transparent)!important;
+  transform:scale(.86)}
+html[data-veux-wave] body .vx73-command input{
+  flex:1 1 auto!important;min-width:0!important;height:44px!important;background:transparent!important;
+  border:0!important;outline:0!important;box-shadow:none!important;
+  font:400 15.5px/1.2 var(--fB,Inter,system-ui,sans-serif)!important;letter-spacing:.005em!important;
+  color:var(--skin-text,#f4efe6)!important}
+html[data-veux-wave] body .vx73-command input::placeholder{
+  color:color-mix(in srgb,var(--skin-text,#f4efe6) 52%,transparent)!important;font-weight:400!important}
+html[data-veux-wave] body .vx73-command button{
+  flex:0 0 auto!important;width:42px!important;height:42px!important;border-radius:50%!important;
+  display:grid!important;place-items:center;padding:0!important;cursor:pointer;
+  background:var(--vb-a)!important;border:0!important;color:#06100d!important;
+  box-shadow:0 4px 14px color-mix(in srgb,var(--vb-a) 35%,transparent)!important;
+  transition:transform .15s,filter .15s}
+html[data-veux-wave] body .vx73-command button:hover{filter:brightness(1.1);transform:translateX(1px) scale(1.04);background:var(--vb-a)!important}
+html[data-veux-wave] body .vx73-command button:active{transform:scale(.95)}
+html[data-veux-wave] body .vx73-command button .vx21-command-arrow{font-size:19px;line-height:1;color:inherit!important}
+@media(max-width:820px){
+  html[data-veux-wave] body .vx73-command{min-height:50px!important;gap:8px!important}
+  html[data-veux-wave] body .vx73-command input{font-size:16px!important;height:40px!important}
+  html[data-veux-wave] body .vx73-command button{width:38px!important;height:38px!important}
+}
