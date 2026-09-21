@@ -41,7 +41,7 @@ function finish(commit){
   document.removeEventListener('pointermove',onMove,true);document.removeEventListener('pointerup',onUp,true);document.removeEventListener('pointercancel',onCancel,true);document.removeEventListener('keydown',onKey,true);
   document.body.classList.remove('vx100-drag-active','mdv-dnd-on');
   s.el.classList.remove('vx100-dragging','mdv-dnd-src');clearMarks();
-  var M=cal();M.S.dragSuppressUntil=Date.now()+350;M.S.drag=null;
+  var M=cal();if(s.started)M.S.dragSuppressUntil=Date.now()+350;M.S.drag=null;
   var g=s.ghost&&s.ghost.node;
   if(!s.started){return;}
   if(commit&&s.ns&&!s.risk&&String(s.ns.toISOString())!==String(new Date(s.x.starts_at).toISOString())){
