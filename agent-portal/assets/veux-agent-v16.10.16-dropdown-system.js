@@ -233,6 +233,7 @@ function close(w,restore){
 }
 
 function enhance(s){
+  if(s.__mdv||s.closest('.mdv-dd'))return;
   if(!eligible(s)||s._vxSelect)return;
 
   var w=document.createElement('div');
