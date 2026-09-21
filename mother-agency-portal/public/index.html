@@ -12,7 +12,7 @@
 <script>
 (function(){
   /* release lineage: 16.7.8-ma-bootstrap-integrity · 16.7.9-bootstrap-query-integrity · 16.7.10-shell-handoff-integrity · 16.7.11-calendar-views · 16.7.12-write-connection-integrity-20260818 · 16.7.13-mother-agency-access-20260819 · 16.7.14-smart-calendar-travel-documents-20260820 · 16.7.15-mobile-certification-20260820 */
-  window.__VEUX_RELEASE__='17.0.0-agent-look-20260921';
+  window.__VEUX_RELEASE__='17.1.0-readable-messaging-20260921';
   if(/^maison-ma\.netlify\.app$/i.test(location.hostname)){var tail=location.pathname.replace(/^\/ma(?=\/|$)/,'');if(tail==='/'||!tail)tail='';location.replace('https://www.maisondeveux.com/ma'+tail+location.search+location.hash);return;}
   var branded=/^(www\.)?maisondeveux\.com$/i.test(location.hostname)&&/^\/ma(?:\/|$)/.test(location.pathname);
   window.__VEUX_MA_MOUNT__=branded?'/ma':'';
@@ -20,6 +20,7 @@
   var mobileCss=document.createElement('link');mobileCss.rel='stylesheet';mobileCss.href=(window.__VEUX_MA_MOUNT__||'')+'/assets/veux-ma-v16.7.15-mobile-certification.css?v='+encodeURIComponent(window.__VEUX_RELEASE__);document.head.appendChild(mobileCss);
   var designCss=document.createElement('link');designCss.rel='stylesheet';designCss.href=(window.__VEUX_MA_MOUNT__||'')+'/assets/veux-ma-v16.7.16-design-system.css?v='+encodeURIComponent(window.__VEUX_RELEASE__);document.head.appendChild(designCss);
   var lookCss=document.createElement('link');lookCss.rel='stylesheet';lookCss.href=(window.__VEUX_MA_MOUNT__||'')+'/assets/veux-ma-v17-agent-look.css?v='+encodeURIComponent(window.__VEUX_RELEASE__);document.head.appendChild(lookCss);
+  var readCss=document.createElement('link');readCss.rel='stylesheet';readCss.href=(window.__VEUX_MA_MOUNT__||'')+'/assets/veux-ma-v17-readable.css?v='+encodeURIComponent(window.__VEUX_RELEASE__);document.head.appendChild(readCss);
 })();
 </script>
 </head>

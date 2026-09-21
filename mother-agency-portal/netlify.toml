@@ -34,6 +34,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/partner/conversation-start"
+  to = "/.netlify/functions/partner-conversation-start"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/portal/message"
   to = "/.netlify/functions/portal-message"
   status = 200
