@@ -1,0 +1,70 @@
+/* Phone-only layout: compact Season, compact Visa Desk, stable scroll. Desktop untouched. */
+@keyframes mdvfade{from{opacity:0}to{opacity:1}}
+@media(max-width:820px){
+  /* Stable scrolling: no jump when content loads above the view, no slide animation */
+  html body #app{overflow-anchor:none!important;scroll-behavior:auto!important}
+  html body .panel.on{animation:mdvfade .16s ease both!important;transform:none!important}
+
+  /* ---------- Season ---------- */
+  html body #p-seasonmanagement .ss48{padding:12px 12px 26px!important}
+  html body #p-seasonmanagement .ss48-top{display:grid!important;grid-template-columns:1fr!important;gap:8px!important;padding:0 0 10px!important}
+  html body #p-seasonmanagement .ss48-top h1{font-size:26px!important;margin:2px 0 3px!important;line-height:1.1!important}
+  html body #p-seasonmanagement .ss48-top p{font-size:8px!important;letter-spacing:.08em!important}
+  html body #p-seasonmanagement .ss48-season-tabs{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch;gap:0!important;margin:0 -12px!important;padding:0 12px!important}
+  html body #p-seasonmanagement .ss48-season-tabs button{flex:0 0 auto!important;white-space:nowrap!important;padding:9px 12px!important}
+  html body #p-seasonmanagement .ss48-state{gap:8px!important;flex-wrap:wrap}
+  html body #p-seasonmanagement .ss48-tabs{margin-bottom:10px!important}
+  html body #p-seasonmanagement .ss48-tabs button{padding:11px 12px!important}
+
+  /* 7 sections: 4 across, then 3 across */
+  html body #p-seasonmanagement .ss48-kpis{display:grid!important;grid-template-columns:repeat(12,minmax(0,1fr))!important;gap:6px!important;margin:0 0 10px!important;height:auto!important}
+  html body #p-seasonmanagement .ss48-kpis>div{grid-column:span 3!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:0!important;min-height:0!important;height:auto!important;padding:9px 3px 8px!important;text-align:center!important;border-radius:8px}
+  html body #p-seasonmanagement .ss48-kpis>div:nth-child(n+5){grid-column:span 4!important}
+  html body #p-seasonmanagement .ss48-kpis i{display:none!important}
+  html body #p-seasonmanagement .ss48-kpis strong{display:block!important;font-size:21px!important;line-height:1!important;margin:0 0 4px!important}
+  html body #p-seasonmanagement .ss48-kpis span{display:block!important;font-size:7px!important;letter-spacing:.04em!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;max-width:100%!important;text-transform:uppercase}
+
+  html body #p-seasonmanagement .ss48-middle{grid-template-columns:1fr!important;gap:8px!important;margin-bottom:10px!important}
+  html body #p-seasonmanagement .ss48-middle section>header,
+  html body #p-seasonmanagement .ss48-talent>header,
+  html body #p-seasonmanagement .ss48-focus>header{padding:10px 12px!important}
+  html body #p-seasonmanagement .ss48-timeline{padding:10px 12px 16px!important;overflow-x:auto!important;gap:14px}
+  html body #p-seasonmanagement .ss48-showgrid{display:flex!important;overflow-x:auto!important;gap:6px!important;padding:0 10px 10px!important;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+  html body #p-seasonmanagement .ss48-show{flex:0 0 128px!important;min-height:0!important;padding:8px!important;scroll-snap-align:start}
+  html body #p-seasonmanagement .ss48-show time{margin-bottom:6px!important;font-size:14px!important}
+  html body #p-seasonmanagement .ss48-talent>header{gap:8px!important;flex-wrap:wrap!important}
+  html body #p-seasonmanagement .ss48-talent h2{font-size:17px!important}
+  html body #p-seasonmanagement .ss48-filters{overflow-x:auto;max-width:100%}
+  html body #p-seasonmanagement .ss48-filters button{padding:8px 9px!important;white-space:nowrap}
+  html body #p-seasonmanagement .ss48-empty{padding:14px 12px!important}
+  html body #p-seasonmanagement .ss48-empty.big{min-height:0!important}
+  html body #p-seasonmanagement .ss48-vera{padding:8px!important}
+  html body #p-seasonmanagement .ss48-vera-title{padding:6px 6px 10px!important}
+  html body #p-seasonmanagement .ss48-health{padding:10px 12px!important;gap:12px!important}
+  html body #p-seasonmanagement .ss48-ring{width:60px!important;height:60px!important}
+  html body #p-seasonmanagement .ss48-layout{gap:10px!important}
+
+  /* Season strip (add show, import, today) */
+  html body #p-seasonmanagement .mdv-ss-bar{padding:10px 12px!important;margin:0 0 10px!important;gap:8px!important}
+  html body #p-seasonmanagement .mdv-ss-actions{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;gap:6px!important;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+  html body #p-seasonmanagement .mdv-ss-actions button{flex:0 0 auto!important;white-space:nowrap!important;padding:9px 11px!important;min-height:0!important}
+
+
+  /* live season strip: 4 counts in one row */
+  html body #p-seasonmanagement .mdv-ss-strip .ss-counts{grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important;height:auto!important}
+  html body #p-seasonmanagement .mdv-ss-strip .ss-counts>span{display:flex!important;flex-direction:column-reverse!important;align-items:center!important;justify-content:center!important;gap:3px!important;height:auto!important;min-height:0!important;padding:7px 3px!important;text-align:center!important;font-size:7.5px!important;letter-spacing:.03em!important;line-height:1.15!important;white-space:normal!important}
+  html body #p-seasonmanagement .mdv-ss-strip .ss-counts>span b{font-size:17px!important;line-height:1!important;width:auto!important}
+  html body #p-seasonmanagement .mdv-ss-strip .ss-head{padding:0!important;gap:8px!important}
+
+  /* ---------- Visa Desk / Mobility ---------- */
+  html body #app #p-visa .v1682-kpis,html body #app #p-globalmobility .v1682-kpis{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;margin:12px 0!important}
+  html body #app #p-visa .v1682-kpi,html body #app #p-globalmobility .v1682-kpi{grid-column:span 2!important;padding:10px 6px!important;text-align:center;border-right:1px solid var(--m-line,rgba(255,255,255,.1))!important;border-bottom:1px solid var(--m-line,rgba(255,255,255,.1))!important}
+  html body #app #p-visa .v1682-kpi:nth-child(n+4),html body #app #p-globalmobility .v1682-kpi:nth-child(n+4){grid-column:span 3!important}
+  html body #app #p-visa .v1682-kpi b,html body #app #p-globalmobility .v1682-kpi b{font-size:22px!important;line-height:1!important;margin-bottom:4px}
+  html body #app #p-visa .v1682-kpi span,html body #app #p-globalmobility .v1682-kpi span{font-size:7px!important;letter-spacing:.05em!important;line-height:1.25;display:block}
+  html body #app #p-visa .v1682-panel>header,html body #app #p-globalmobility .v1682-panel>header{padding:10px 14px!important}
+  html body #app #p-visa .v1682-panel>header h2,html body #app #p-globalmobility .v1682-panel>header h2{font-size:18px!important}
+  html body #app #p-visa .v1682-body,html body #app #p-globalmobility .v1682-body{padding:4px 12px 8px!important}
+  html body #app #p-visa .v1682-empty,html body #app #p-globalmobility .v1682-empty{padding:12px 10px!important}
+  html body #app #p-visa .v1682-grid,html body #app #p-globalmobility .v1682-grid{gap:8px!important}
+}
