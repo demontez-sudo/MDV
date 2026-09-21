@@ -32,7 +32,7 @@ function packageId(el){
 }
 
 document.addEventListener('click',function(e){
- var b=closest(e.target,'button,a,[role="button"]');if(!b)return;
+ var b=closest(e.target,'button,a,[role="button"]');if(!b)return;var oc=b.getAttribute&&b.getAttribute('onclick')||'';if(/VEUX_V155\.(packageForm|selectPackage|sendPackage)/.test(oc))return;
  var t=label(b),id;
 
  if(/^\+?\s*(new|create)\s+(model\s+)?package$/.test(t)||/^create package$/.test(t)){
