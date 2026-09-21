@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { adminClient, json, errorResponse, parseBody } from './auth.mjs';
 
-const ACCOUNTS = {"fresh models":{"legacy_key":"fresh","display_name":"Fresh Models","hash":"4d42ae4edabc7461e93f06f7b932c2b9c001a8f38732990012bd285a5bd2913b"},"golden city models":{"legacy_key":"golden","display_name":"Golden City Models","hash":"a84052c678a529fff25775053447e5bd488b39fdb61abea4cc1f36bb5faf3ad1"},"itoo models":{"legacy_key":"itoo","display_name":"Itoo Models","hash":"44cf3dfebd8f2c746642d92779b4f30bf505652350eb7fa9827b5b6799e31334"},"felix management":{"legacy_key":"felix","display_name":"Felix Management","hash":"9f6f19b6520e89d10000fff2880ea97387f423a46d0e1446bc3212e7c886f0d0"},"rm models":{"legacy_key":"rm","display_name":"RM Models","hash":"9001ce18992b618a9db312fa141ef69e4d9509edfd23a8c7c47031312ccc9924"},"tomorrow tokyo":{"legacy_key":"tmw","display_name":"Tomorrow Tokyo","hash":"f5767c154d4e78a4a9ed6341f3f0705421566ab5ec2d78fb0020df4c64b49b6d"}};
+const ACCOUNTS = {"fresh models":{"legacy_key":"fresh","display_name":"Fresh Models","hash":"4d42ae4edabc7461e93f06f7b932c2b9c001a8f38732990012bd285a5bd2913b"},"golden city models":{"legacy_key":"golden","display_name":"Golden City Models","hash":"a84052c678a529fff25775053447e5bd488b39fdb61abea4cc1f36bb5faf3ad1"},"itoo models":{"legacy_key":"itoo","display_name":"Itoo Models","hash":"44cf3dfebd8f2c746642d92779b4f30bf505652350eb7fa9827b5b6799e31334"},"felix management":{"legacy_key":"felix","display_name":"Felix Management","hash":"9f6f19b6520e89d10000fff2880ea97387f423a46d0e1446bc3212e7c886f0d0"},"rm models":{"legacy_key":"rm","display_name":"RM Models","hash":"9001ce18992b618a9db312fa141ef69e4d9509edfd23a8c7c47031312ccc9924"},"tomorrow tokyo":{"legacy_key":"tmw","display_name":"Tomorrow Tokyo","hash":"f5767c154d4e78a4a9ed6341f3f0705421566ab5ec2d78fb0020df4c64b49b6d"},"ytm models":{"legacy_key":"ytm","display_name":"YTM Models","hash":"a894d8b7cf66f5f04ea6f126f0a66e3f034c5261272f9267a7fbd17651558e51","models":["Zhiyan Li","Li Zhiyan","Li Zhiayn","Zhiayn Li"]}};
 
 function normalize(value){return String(value||'').trim().toLowerCase().replace(/\s+/g,' ');}
 function slug(value){return normalize(value).replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48)||'portal';}
@@ -95,6 +95,17 @@ export async function legacyAccessHandler(event,portal){
       }
       if(partner.portal_enabled===false)fail('This Mother Agency portal access is disabled.',403);
       targetId=partner.id;
+      if(Array.isArray(account.models)&&account.models.length){
+        try{
+          for(const name of account.models){
+            const model=await one(admin.from('models').select('id,display_name').eq('organization_id',org.id).ilike('display_name',name).maybeSingle());
+            if(!model)continue;
+            const has=await one(admin.from('model_placements').select('id').eq('organization_id',org.id).eq('model_id',model.id).eq('partner_agency_id',partner.id).maybeSingle());
+            if(!has){const ins=await admin.from('model_placements').insert({organization_id:org.id,model_id:model.id,partner_agency_id:partner.id,status:'active'});if(ins.error)console.warn('[MA] placement link skipped:',ins.error.message);}
+            break;
+          }
+        }catch(linkError){console.warn('[MA] placement link skipped:',linkError&&linkError.message);}
+      }
       const link=await one(admin.from('partner_user_links').select('user_id').eq('organization_id',org.id).eq('partner_agency_id',targetId).limit(1).maybeSingle());
       if(link){userId=link.user_id;email=await ensureEmail(admin,userId,`portal-partner-${slug(account.legacy_key)}-${String(targetId).slice(0,8)}@maisondeveux.com`);}
       else{
