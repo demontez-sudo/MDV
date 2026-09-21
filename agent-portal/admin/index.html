@@ -1650,7 +1650,7 @@ window.VEUX_TOPBAR_CONTEXT=function(){};
         asset('veux-agent-v16.9.80-mobile-workspace.js')
       ];
       window.__VEUX_SHELL_LOADING__=true;
-      window.__VEUX_SHELL_PROMISE__=(async function(){var shellResults=[];for(var si=0;si<shell.length;si++){try{await loadScript(shell[si],{retries:1});shellResults.push({status:'fulfilled',value:shell[si]});}catch(err){shellResults.push({status:'rejected',reason:err});}}return shellResults;})().then(function(shellResults){
+      window.__VEUX_SHELL_PROMISE__=Promise.all(shell.map(function(src){return loadScript(src,{retries:1}).then(function(){return {status:'fulfilled',value:src};},function(err){return {status:'rejected',reason:err};});})).then(function(shellResults){
         shellResults.forEach(function(result,i){
           if(result.status==='rejected'){
             console.error('[VEUX 16.10.22] portal asset failed',shell[i],result.reason);
