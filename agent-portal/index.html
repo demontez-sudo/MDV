@@ -2821,10 +2821,10 @@ function revealCompanyDetail(){
 }
 function bind(el){
  el.querySelectorAll('[data-cc49-mode]').forEach(function(b){b.onclick=function(){S.directoryMode=b.dataset.cc49Mode||'companies';S.page=1;S.query='';render(activeHost())}});
- el.querySelectorAll('[data-cc49-opencontact]').forEach(function(b){b.onclick=function(){S.selectedContact=b.dataset.cc49Opencontact;render(activeHost());revealCompanyDetail()}});
+ el.querySelectorAll('[data-cc49-opencontact]').forEach(function(b){b.onclick=function(){S.selectedContact=b.dataset.cc49Opencontact;render(activeHost());revealCompanyDetail();if(window.CavyreCRM&&typeof CavyreCRM.openContact==='function')CavyreCRM.openContact(b.dataset.cc49Opencontact)}});
  el.querySelectorAll('[data-cc49-emailcontact]').forEach(function(b){b.onclick=function(){location.href='mailto:'+b.dataset.cc49Emailcontact}});
  el.querySelectorAll('[data-cc49-company]').forEach(function(b){b.onclick=function(){
-   S.selected=b.dataset.cc49Company;S.detail=null;S.tab='overview';render(activeHost());revealCompanyDetail()
+   S.selected=b.dataset.cc49Company;S.detail=null;S.tab='overview';render(activeHost());revealCompanyDetail();if(window.CavyreCRM&&typeof CavyreCRM.openCompany==='function')CavyreCRM.openCompany(b.dataset.cc49Company)
  }});
  el.querySelectorAll('[data-cc49-cat]').forEach(function(b){b.onclick=function(){S.category=b.dataset.cc49Cat;S.scope='all';S.page=1;render(activeHost())}});
  el.querySelectorAll('[data-cc49-scope]').forEach(function(b){b.onclick=function(){S.scope=b.dataset.cc49Scope||'all';if(b.dataset.cc49Resetcat==='1')S.category='all';S.page=1;render(activeHost())}});
