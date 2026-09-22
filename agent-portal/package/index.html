@@ -260,7 +260,7 @@ async function compCardBack(m,ctx,W,H){
  const first=(m.display_name||'Model').trim().split(/\s+/)[0].toUpperCase();
  ctx.font='500 '+(W*0.095)+'px "Cormorant Garamond", serif';ctx.textBaseline='alphabetic';
  const nameY=H*0.115;ctx.fillText(first,pad,nameY);
- const gridTop=H*0.155,gridBottom=H*0.78,gridLeft=pad,gridRight=W*0.66,gap=W*0.012;
+ const gridTop=H*0.155,gridBottom=H*0.805,gridLeft=pad,gridRight=W*0.66,gap=W*0.012;
  const pics=(m.media||[]).filter(x=>!isVideo(x)&&x.url).slice(0,4);
  const cellW=(gridRight-gridLeft-gap)/2,cellH=(gridBottom-gridTop-gap)/2;
  const cells=[[gridLeft,gridTop],[gridLeft+cellW+gap,gridTop],[gridLeft,gridTop+cellH+gap],[gridLeft+cellW+gap,gridTop+cellH+gap]];
@@ -274,7 +274,7 @@ async function compCardBack(m,ctx,W,H){
   ctx.fillStyle='#171512';ctx.font='500 '+(W*0.028)+'px "Cormorant Garamond", serif';ctx.fillText(String(val),rx,ry+H*0.038);
   ry+=H*0.083;
  }
- const footY=H*0.88;
+ const footY=H*0.855;
  ctx.strokeStyle='#d8cdbd';ctx.lineWidth=Math.max(1,W*0.0015);ctx.beginPath();ctx.moveTo(pad,footY);ctx.lineTo(W-pad,footY);ctx.stroke();
  ctx.fillStyle='#171512';(function wordmark(x0,y0,size,spacing){ctx.textBaseline='alphabetic';let cx=x0;for(const ch of 'MAISON '){ctx.font='600 '+size+'px Inter, sans-serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing}for(const ch of 'de'){ctx.font='500 italic '+(size*1.05)+'px "Cormorant Garamond", serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing*.6}cx+=spacing*.4;for(const ch of ' VEUX'){if(ch===' '){cx+=spacing*1.4;continue}ctx.font='600 '+size+'px Inter, sans-serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing}})(pad,footY+H*0.05,W*0.016,W*0.003);
  ctx.fillStyle='#8a8074';ctx.font='500 '+(W*0.013)+'px Inter, sans-serif';
@@ -299,7 +299,7 @@ async function generateCompCard(m,btn){
   doc.addImage(c2.toDataURL('image/jpeg',0.93),'JPEG',0,0,5.5,8.5);
   doc.save((m.display_name||'Model').replace(/[^\w\- ]+/g,'').trim()+' Comp Card.pdf');
  }catch(e){showToast(e.message||'Could not build the comp card')}
- finally{if(btn){btn.disabled=false;btn.textContent=original||'Request Comp Card'}}
+ finally{if(btn){btn.disabled=false;btn.textContent=original||'Download Comp Card'}}
 }
 function market(){const ms=(data&&data.models)||[];return (ms.find(x=>x.market)&&ms.find(x=>x.market).market)||''}
 function tags(m){const all=[m.gender,m.stage,m.headline,m.bio,m.note].filter(Boolean).join(' ').toLowerCase();return all}
@@ -373,7 +373,7 @@ function renderDetail(id){
  const models=data.models||[],idx=models.findIndex(m=>String(m.id)===String(id));if(idx<0){history.replaceState({},'',location.pathname+location.search);renderIndex();return}
  const m=models[idx],lead=mediaOf(m),on=shortlist.has(String(m.id));
  if(!viewed.has(String(m.id))){viewed.add(String(m.id));track('model_viewed',m.id)}
- app.className='';app.innerHTML='<section class="model-page"><header class="model-top"><button class="back" id="backSelection">← Private Selection</button><div class="wordmark model-wordmark">Maison de Veux</div><div class="model-count">'+String(idx+1).padStart(2,'0')+' / '+String(models.length).padStart(2,'0')+'</div></header><section class="model-stage '+(models.length===1?'single-model-stage':'')+'"><div class="model-visual">'+mediaTag(lead)+'</div><aside class="model-copy"><div class="kicker">'+esc([m.market||market(),'Available'].filter(Boolean).join(' · '))+'</div><h1 class="model-title">'+String(m.display_name||'Model').split(/\s+/).map(x=>'<span>'+esc(x)+'</span>').join('')+'</h1><div class="model-subline">'+esc([m.stage,m.headline].filter(Boolean).join(' · ')||'Maison de Veux Model')+'</div><dl class="metrics">'+(measures(m)||'<div class="metric"><dt>Measurements</dt><dd>On request</dd></div>')+'</dl><div class="model-actions">'+(m.profile_url?'<a href="'+esc(m.profile_url)+'" target="_blank" rel="noopener" data-profile-open="'+esc(m.id)+'">View Full Book →</a>':'')+'<button class="secondary '+(on?'on':'')+'" data-shortlist="'+esc(m.id)+'">'+(on?'♥ Shortlisted':'♡ Add to Shortlist')+'</button><button class="secondary" id="requestThisModel">Request Availability</button><button class="secondary" id="requestComp">Request Comp Card</button></div></aside></section><nav class="tabs">'+(function(){const approved=new Set(((data.package&&data.package.approved_sections)||['book','digitals','motion']).map(x=>String(x).toLowerCase()));const tabs=['book','digitals','motion'].filter(x=>approved.has(x)).concat(['info','availability']);if(!tabs.includes(detailTab))detailTab=tabs[0]||'info';return tabs.map(t=>'<button class="tab '+(detailTab===t?'on':'')+'" data-tab="'+t+'">'+t+'</button>').join('')})()+'</nav><section class="materials" id="materials"></section></section>'+shortlistDockMarkup();
+ app.className='';app.innerHTML='<section class="model-page"><header class="model-top"><button class="back" id="backSelection">← Private Selection</button><div class="wordmark model-wordmark">Maison de Veux</div><div class="model-count">'+String(idx+1).padStart(2,'0')+' / '+String(models.length).padStart(2,'0')+'</div></header><section class="model-stage '+(models.length===1?'single-model-stage':'')+'"><div class="model-visual">'+mediaTag(lead)+'</div><aside class="model-copy"><div class="kicker">'+esc([m.market||market(),'Available'].filter(Boolean).join(' · '))+'</div><h1 class="model-title">'+String(m.display_name||'Model').split(/\s+/).map(x=>'<span>'+esc(x)+'</span>').join('')+'</h1><div class="model-subline">'+esc([m.stage,m.headline].filter(Boolean).join(' · ')||'Maison de Veux Model')+'</div><dl class="metrics">'+(measures(m)||'<div class="metric"><dt>Measurements</dt><dd>On request</dd></div>')+'</dl><div class="model-actions">'+(m.profile_url?'<a href="'+esc(m.profile_url)+'" target="_blank" rel="noopener" data-profile-open="'+esc(m.id)+'">View Full Book →</a>':'')+'<button class="secondary '+(on?'on':'')+'" data-shortlist="'+esc(m.id)+'">'+(on?'♥ Shortlisted':'♡ Add to Shortlist')+'</button><button class="secondary" id="requestThisModel">Request Availability</button><button class="secondary" id="requestComp">Download Comp Card</button></div></aside></section><nav class="tabs">'+(function(){const approved=new Set(((data.package&&data.package.approved_sections)||['book','digitals','motion']).map(x=>String(x).toLowerCase()));const tabs=['book','digitals','motion'].filter(x=>approved.has(x)).concat(['info','availability']);if(!tabs.includes(detailTab))detailTab=tabs[0]||'info';return tabs.map(t=>'<button class="tab '+(detailTab===t?'on':'')+'" data-tab="'+t+'">'+t+'</button>').join('')})()+'</nav><section class="materials" id="materials"></section></section>'+shortlistDockMarkup();
  document.getElementById('backSelection').onclick=()=>{history.pushState({},'',location.pathname+location.search);detailTab='book';renderIndex()};
  app.querySelectorAll('[data-shortlist]').forEach(b=>b.onclick=()=>toggleShortlist(b.getAttribute('data-shortlist')));
  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{detailTab=b.dataset.tab;renderMaterials(m)});
