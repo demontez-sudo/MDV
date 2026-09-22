@@ -33,20 +33,24 @@ async function compCardFront(model,ctx,W,H){
   ctx.fillStyle='#f7f2e8';ctx.globalAlpha=.82;
   letterSpaced(ctx,'NEW YORK · PARIS',W*0.018,W*0.008,pad,H*0.085+W*0.05);
   ctx.globalAlpha=1;
-  var first=(model.display_name||'Model').trim().split(/\s+/)[0].toUpperCase();
-  ctx.fillStyle='#f7f2e8';ctx.font='500 italic '+(W*0.135)+'px "Cormorant Garamond", serif';
-  var ny=H*0.9;ctx.fillText(first,pad,ny);
-  var tw=ctx.measureText(first).width;
-  ctx.fillRect(pad,ny+H*0.014,Math.min(tw,W*0.5),H*0.0016);
+  var full=(model.display_name||'Model').trim().toUpperCase();
+  var fsz=W*0.135;ctx.font='500 italic '+fsz+'px "Cormorant Garamond", serif';
+  var maxW=W-pad*2;while(ctx.measureText(full).width>maxW&&fsz>W*0.05){fsz-=W*0.004;ctx.font='500 italic '+fsz+'px "Cormorant Garamond", serif';}
+  ctx.fillStyle='#f7f2e8';
+  var ny=H*0.9;ctx.fillText(full,pad,ny);
+  var tw=ctx.measureText(full).width;
+  ctx.fillRect(pad,ny+H*0.014,Math.min(tw,W-pad*2),H*0.0016);
   return pics;
 }
 
 async function compCardBack(model,ctx,W,H,pics){
   ctx.fillStyle='#f5f0e7';ctx.fillRect(0,0,W,H);
   var pad=W*0.065;
-  var first=(model.display_name||'Model').trim().split(/\s+/)[0].toUpperCase();
-  ctx.fillStyle='#171512';ctx.font='500 '+(W*0.095)+'px "Cormorant Garamond", serif';ctx.textBaseline='alphabetic';
-  ctx.fillText(first,pad,H*0.115);
+  var full=(model.display_name||'Model').trim().toUpperCase();
+  var bfsz=W*0.095;ctx.font='500 '+bfsz+'px "Cormorant Garamond", serif';ctx.textBaseline='alphabetic';
+  var bmaxW=W-pad*2;while(ctx.measureText(full).width>bmaxW&&bfsz>W*0.04){bfsz-=W*0.003;ctx.font='500 '+bfsz+'px "Cormorant Garamond", serif';}
+  ctx.fillStyle='#171512';
+  ctx.fillText(full,pad,H*0.115);
   var gridTop=H*0.155,gridBottom=H*0.805,gridLeft=pad,gridRight=W*0.66,gap=W*0.012;
   var cellW=(gridRight-gridLeft-gap)/2,cellH=(gridBottom-gridTop-gap)/2;
   var cells=[[gridLeft,gridTop],[gridLeft+cellW+gap,gridTop],[gridLeft,gridTop+cellH+gap],[gridLeft+cellW+gap,gridTop+cellH+gap]];
@@ -65,7 +69,7 @@ async function compCardBack(model,ctx,W,H,pics){
   ctx.fillStyle='#171512';wordmark(ctx,pad,footY+H*0.05,W*0.016,W*0.003);
   ctx.fillStyle='#8a8074';letterSpaced(ctx,'NEW YORK · PARIS',W*0.012,W*0.005,pad,footY+H*0.075);
   var agent=model.agent||{};
-  var info=[agent.name&&('Agent  '+agent.name),agent.email&&('Email  '+agent.email),agent.phone&&('Contact  '+agent.phone)].filter(Boolean);
+  var info=[agent.name&&('Agent  '+agent.name),agent.address&&('Address  '+agent.address),agent.email&&('Email  '+agent.email),agent.phone&&('Contact  '+agent.phone)].filter(Boolean);
   ctx.font='500 '+(W*0.014)+'px Inter, sans-serif';ctx.fillStyle='#43403a';
   info.forEach(function(line,i){ctx.fillText(line,W*0.44,footY+H*0.05+i*H*0.028);});
 }

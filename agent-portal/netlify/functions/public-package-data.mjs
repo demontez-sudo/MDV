@@ -22,10 +22,10 @@ export const handler = async event => {
       admin.from('packages').select('id,organization_id,title,status,intro_message,layout_key,expires_at,metadata,created_at,updated_at').eq('id',link.package_id).eq('organization_id',link.organization_id).maybeSingle(),
       admin.from('organizations').select('id,name,slug,status').eq('id',link.organization_id).maybeSingle(),
       link.recipient_id?admin.from('package_recipients').select('id,display_name').eq('id',link.recipient_id).eq('organization_id',link.organization_id).maybeSingle():Promise.resolve({data:recipientState,error:null}),
-      admin.from('organization_settings').select('sender_name,sender_email').eq('organization_id',link.organization_id).maybeSingle()
+      admin.from('organization_settings').select('sender_name,sender_email,settings').eq('organization_id',link.organization_id).maybeSingle()
     ]);
     if(pkgErr)throw pkgErr;if(orgErr)throw orgErr;if(recipientErr)throw recipientErr;if(orgSettingsErr)throw orgSettingsErr;
-    const orgAgentFallback={name:orgSettings?.sender_name||org?.name||'Maison de Veux',email:orgSettings?.sender_email||null,phone:null};
+    const orgAgentFallback={name:orgSettings?.sender_name||org?.name||'Maison de Veux',email:orgSettings?.sender_email||null,phone:orgSettings?.settings?.agency_phone||null,address:orgSettings?.settings?.agency_address||null};
     if(!pkg || !org || org.status!=='active' || ['revoked','archived','expired'].includes(String(pkg.status||''))) return json(404,{error:'Package link is unavailable'},cacheHeaders);
 
     const packageModels=await rows(admin.from('package_models').select('id,model_id,sort_order,headline,note,visible').eq('organization_id',link.organization_id).eq('package_id',pkg.id).eq('visible',true).order('sort_order'));
@@ -50,7 +50,7 @@ export const handler = async event => {
       const chosen=hasPackageSelection?packageChosen:(publicByModel.get(pm.model_id)||[]);
       const wm=pp.metadata&&pp.metadata.website_profile||{},route=String(wm.route_key||m.legacy_key||m.public_slug||'').trim(),profileUrl=pp.published&&route?'https://www.maisondeveux.com/'+encodeURIComponent(route):null;
       const media=chosen.slice().sort((a,b)=>hasPackageSelection?Number(a.package_sort_order??0)-Number(b.package_sort_order??0):Number(b.is_primary)-Number(a.is_primary)||Number(a.sort_order??0)-Number(b.sort_order??0)).map(x=>({id:x.id,media_type:x.media_type,category:x.category,url:x.url,caption:x.caption,photographer:x.photographer,season:x.season,usage_permission:x.usage_permission,is_primary:x.is_primary}));
-      return {id:m.id,display_name:m.display_name,public_slug:m.public_slug,gender:m.gender||null,profile_url:profileUrl,headline:pm.headline||pp.headline||null,note:pm.note||null,market:profileFields.includes('market')||profileFields.length===0?(m.primary_market_label||m.location||null):null,stage:m.stage||null,bio:profileFields.includes('bio')?pp.bio||null:null,measurements:profileFields.includes('measurements')&&pp.show_measurements!==false?mm:null,agent:pp.show_agent_contact!==false?{name:pp.contact_name||orgAgentFallback.name,email:pp.contact_email||orgAgentFallback.email,phone:pp.contact_phone||orgAgentFallback.phone}:null,media};
+      return {id:m.id,display_name:m.display_name,public_slug:m.public_slug,gender:m.gender||null,profile_url:profileUrl,headline:pm.headline||pp.headline||null,note:pm.note||null,market:profileFields.includes('market')||profileFields.length===0?(m.primary_market_label||m.location||null):null,stage:m.stage||null,bio:profileFields.includes('bio')?pp.bio||null:null,measurements:profileFields.includes('measurements')&&pp.show_measurements!==false?mm:null,agent:pp.show_agent_contact!==false?{name:pp.contact_name||orgAgentFallback.name,email:pp.contact_email||orgAgentFallback.email,phone:pp.contact_phone||orgAgentFallback.phone,address:orgAgentFallback.address}:null,media};
     });
 
     const feedbackRows=link.recipient_id?await rows(admin.from('package_feedback').select('model_id,feedback_type,status,created_at').eq('organization_id',link.organization_id).eq('package_id',pkg.id).eq('recipient_id',link.recipient_id).order('created_at',{ascending:true})):[];

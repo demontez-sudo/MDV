@@ -247,19 +247,21 @@ async function compCardFront(m,ctx,W,H){
  ctx.fillStyle='#f7f2e8';ctx.globalAlpha=.82;
  (function letterSpaced(text,size,spacing,x0,y0){ctx.font=size+'px Inter, sans-serif';let cx=x0;for(const ch of text){ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing}})('NEW YORK · PARIS',W*0.018,W*0.008,pad,H*0.085+W*0.05);
  ctx.globalAlpha=1;
- const first=(m.display_name||'Model').trim().split(/\s+/)[0].toUpperCase();
- ctx.font='500 italic '+(W*0.135)+'px "Cormorant Garamond", serif';
- const ny=H*0.9;ctx.fillText(first,pad,ny);
- const tw=ctx.measureText(first).width;
- ctx.fillRect(pad,ny+H*0.014,Math.min(tw,W*0.5),H*0.0016);
+ const full=(m.display_name||'Model').trim().toUpperCase();
+ var fsz=W*0.135;ctx.font='500 italic '+fsz+'px "Cormorant Garamond", serif';
+ var maxW=W-pad*2;while(ctx.measureText(full).width>maxW&&fsz>W*0.05){fsz-=W*0.004;ctx.font='500 italic '+fsz+'px "Cormorant Garamond", serif';}
+ const ny=H*0.9;ctx.fillText(full,pad,ny);
+ const tw=ctx.measureText(full).width;
+ ctx.fillRect(pad,ny+H*0.014,Math.min(tw,W-pad*2),H*0.0016);
 }
 async function compCardBack(m,ctx,W,H){
  ctx.fillStyle='#f5f0e7';ctx.fillRect(0,0,W,H);
  const pad=W*0.065;
  ctx.fillStyle='#171512';
- const first=(m.display_name||'Model').trim().split(/\s+/)[0].toUpperCase();
- ctx.font='500 '+(W*0.095)+'px "Cormorant Garamond", serif';ctx.textBaseline='alphabetic';
- const nameY=H*0.115;ctx.fillText(first,pad,nameY);
+ const full=(m.display_name||'Model').trim().toUpperCase();
+ var bfsz=W*0.095;ctx.font='500 '+bfsz+'px "Cormorant Garamond", serif';ctx.textBaseline='alphabetic';
+ var bmaxW=W-pad*2;while(ctx.measureText(full).width>bmaxW&&bfsz>W*0.04){bfsz-=W*0.003;ctx.font='500 '+bfsz+'px "Cormorant Garamond", serif';}
+ const nameY=H*0.115;ctx.fillText(full,pad,nameY);
  const gridTop=H*0.155,gridBottom=H*0.805,gridLeft=pad,gridRight=W*0.66,gap=W*0.012;
  const pics=(m.media||[]).filter(x=>!isVideo(x)&&x.url).slice(0,4);
  const cellW=(gridRight-gridLeft-gap)/2,cellH=(gridBottom-gridTop-gap)/2;
@@ -279,7 +281,7 @@ async function compCardBack(m,ctx,W,H){
  ctx.fillStyle='#171512';(function wordmark(x0,y0,size,spacing){ctx.textBaseline='alphabetic';let cx=x0;for(const ch of 'MAISON '){ctx.font='600 '+size+'px Inter, sans-serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing}for(const ch of 'de'){ctx.font='500 italic '+(size*1.05)+'px "Cormorant Garamond", serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing*.6}cx+=spacing*.4;for(const ch of ' VEUX'){if(ch===' '){cx+=spacing*1.4;continue}ctx.font='600 '+size+'px Inter, sans-serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing}})(pad,footY+H*0.05,W*0.016,W*0.003);
  ctx.fillStyle='#8a8074';ctx.font='500 '+(W*0.013)+'px Inter, sans-serif';
  (function letterSpaced(text,size,spacing,x,y){ctx.font=size+'px Inter, sans-serif';let cx=x;for(const ch of text){ctx.fillText(ch,cx,y);cx+=ctx.measureText(ch).width+spacing}})('NEW YORK · PARIS',W*0.012,W*0.005,pad,footY+H*0.075);
- const agent=m.agent||{},info=[agent.name&&('Agent  '+agent.name),agent.email&&('Email  '+agent.email),agent.phone&&('Contact  '+agent.phone)].filter(Boolean);
+ const agent=m.agent||{},info=[agent.name&&('Agent  '+agent.name),agent.address&&('Address  '+agent.address),agent.email&&('Email  '+agent.email),agent.phone&&('Contact  '+agent.phone)].filter(Boolean);
  ctx.font='500 '+(W*0.014)+'px Inter, sans-serif';ctx.fillStyle='#43403a';
  info.forEach((line,i)=>ctx.fillText(line,W*0.44,footY+H*0.05+i*H*0.028));
 }
