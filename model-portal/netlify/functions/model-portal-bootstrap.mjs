@@ -21,6 +21,16 @@ export const handler=async event=>{
     const model=models?.[0]||null;
     if(!model){ const e=new Error('Linked model profile was not found.'); e.statusCode=404; throw e; }
 
+    const [publicProfile,orgSettings]=await Promise.all([
+      admin.from('model_public_profiles').select('show_agent_contact,contact_name,contact_email,contact_phone').eq('organization_id',organization.id).eq('model_id',modelId).maybeSingle().then(r=>r.data||null).catch(()=>null),
+      admin.from('organization_settings').select('sender_name,sender_email').eq('organization_id',organization.id).maybeSingle().then(r=>r.data||null).catch(()=>null)
+    ]);
+    const agentContact=publicProfile&&publicProfile.show_agent_contact===false?null:{
+      name:publicProfile?.contact_name||orgSettings?.sender_name||organization.name||'Maison de Veux',
+      email:publicProfile?.contact_email||orgSettings?.sender_email||null,
+      phone:publicProfile?.contact_phone||null
+    };
+
     const [bookingLinks,castingLinks,tasks,travel,visa,contracts,ledger,statements,evaluations,plans,notes,availability,documentLinks,notifications]=await Promise.all([
       safe('booking_models',admin.from('booking_models').select('*').eq('organization_id',organization.id).eq('model_id',modelId).order('created_at',{ascending:false}),warnings),
       safe('casting_models',admin.from('casting_models').select('*').eq('organization_id',organization.id).eq('model_id',modelId).order('created_at',{ascending:false}),warnings),
@@ -75,7 +85,8 @@ export const handler=async event=>{
       ok:true,verified:true,release:'17.3.0-local',
       organization:{id:organization.id,name:organization.name,slug:organization.slug},
       account:{user_id:user.id,email:user.email||privateProfile.email||null,member_status:member?.status||'linked',profile:profile||null},
-      model:{...model,private_profile:privateProfile,media:undefined},
+      model:{...model,private_profile:privateProfile,media},
+      agent_contact:agentContact,
       measurements:model.measurement||null,
       media:{all:media,digitals,portfolio,videos},
       commercial:{bookings:bookingView,castings:castingView},

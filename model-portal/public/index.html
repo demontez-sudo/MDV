@@ -151,6 +151,7 @@
     try{
       await loadSupabase();
       await loadScript(asset('veux-model-v15-core.js'));
+      await loadScript(asset('mdv-compcard.js'));
       await loadScript(asset('veux-model-staging-16.9.73.js?v=16973'));
     }catch(e){
       console.error('[VEUX Model 16.9.6] bootstrap failed',e);
