@@ -471,6 +471,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/site-control"
+to = "/.netlify/functions/agent-site-control"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/availability/v10"
 to = "/.netlify/functions/agent-availability-desk-v10"
 status = 200

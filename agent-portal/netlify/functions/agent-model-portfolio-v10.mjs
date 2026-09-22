@@ -4,6 +4,16 @@ import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 async function one(q){const {data,error}=await q.maybeSingle();if(error)throw error;return data||null;}
 
+const WEBSITE_BOOK_CATEGORIES=new Set(['headshot','editorial','runway','commercial','portfolio','polaroid','book']);
+function websiteEligible(category,mediaType){
+  const c=String(category||'').trim().toLowerCase();
+  if(!c)return false;
+  if(String(mediaType||'').trim().toLowerCase()==='video')return true;
+  if(c.includes('digital'))return true;
+  if(c.includes('motion'))return true;
+  return WEBSITE_BOOK_CATEGORIES.has(c);
+}
+
 export const handler=async(event)=>{
   if(!['GET','POST'].includes(event.httpMethod))return json(405,{error:'Method not allowed'});
   try{
@@ -22,7 +32,8 @@ export const handler=async(event)=>{
       if(action==='create_media'){
         const admin=await requirePermission(user.id,organization.id,'media.write');
         const url=String(body.url||'').trim();if(!url)return json(400,{error:'url is required'});
-        const payload={organization_id:organization.id,model_id:modelId,media_type:body.media_type||'image',category:body.category||'Portfolio',provider:body.provider||'external',url,public_id:body.public_id||null,caption:body.caption||null,photographer:body.photographer||null,usage_permission:body.usage_permission||null,sort_order:Number(body.sort_order||0),is_public:body.is_public!==false,metadata:body.metadata||{}};
+        const createCategory=body.category||'Portfolio';
+        const payload={organization_id:organization.id,model_id:modelId,media_type:body.media_type||'image',category:createCategory,provider:body.provider||'external',url,public_id:body.public_id||null,caption:body.caption||null,photographer:body.photographer||null,usage_permission:body.usage_permission||null,sort_order:Number(body.sort_order||0),is_public:body.is_public!==false&&websiteEligible(createCategory,body.media_type),metadata:body.metadata||{}};
         const {data,error}=await admin.from('model_media').insert(payload).select('*').single();if(error)throw error;if(!data?.id)throw new Error('Media save was not verified.');return json(200,{ok:true,verified:true,media:data,persisted_at:new Date().toISOString()});
       }
       if(action==='delete_media'){
@@ -62,12 +73,17 @@ export const handler=async(event)=>{
       }
       if(action==='update_media'){
         const admin=await requirePermission(user.id,organization.id,'media.write');
-        const existing=await one(admin.from('model_media').select('id,is_primary,is_public,category').eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.media_id));
+        const existing=await one(admin.from('model_media').select('id,is_primary,is_public,category,media_type').eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.media_id));
         if(!existing)return json(404,{error:'Media item not found'});
         if(existing.is_primary&&body.is_public===false)return json(409,{error:'The current profile photo cannot be hidden without a replacement. Choose another Headshot and use Set New Primary + Hide This Image.'});
         if(existing.is_primary&&body.category!==undefined&&String(body.category).toLowerCase()!=='headshot')return json(409,{error:'The current profile photo cannot leave the Headshot category without a replacement. Choose another Headshot first.'});
         const allowed={}; for(const k of ['category','caption','photographer','usage_permission','sort_order','is_public']) if(body[k]!==undefined) allowed[k]=body[k];
         if(existing.is_primary){allowed.is_public=true;allowed.category='Headshot';}
+        else if(allowed.is_public===true){
+          const nextCategory=allowed.category!==undefined?allowed.category:existing.category;
+          const nextType=allowed.media_type!==undefined?allowed.media_type:existing.media_type;
+          if(!websiteEligible(nextCategory,nextType))return json(409,{error:'Only Main Book, Digital and Motion media can be made public. Change the category first.'});
+        }
         const {data,error}=await admin.from('model_media').update(allowed).eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.media_id).select('*').single();if(error)throw error;if(!data?.id)throw new Error('Media update was not verified.');return json(200,{ok:true,verified:true,media:data,persisted_at:new Date().toISOString()});
       }
       if(action==='create_media_version'){
@@ -79,6 +95,11 @@ export const handler=async(event)=>{
       if(action==='publish_profile'){
         const admin=await requirePermission(user.id,organization.id,'public_profiles.manage');
         const allowed={organization_id:organization.id,model_id:modelId};for(const k of ['published','headline','bio','template_key','show_measurements','show_market','show_agent_contact','show_socials','contact_name','contact_email','contact_phone','seo_title','seo_description'])if(body[k]!==undefined)allowed[k]=body[k];if(body.published===true)allowed.published_at=new Date().toISOString();
+        if(body.social_links&&typeof body.social_links==='object'){
+          const existing=await one(admin.from('model_public_profiles').select('metadata').eq('organization_id',organization.id).eq('model_id',modelId));
+          const cleanLinks={};for(const k of ['tiktok','website'])if(typeof body.social_links[k]==='string'&&body.social_links[k].trim())cleanLinks[k]=body.social_links[k].trim();
+          allowed.metadata={...(existing?.metadata||{}),social_links:cleanLinks};
+        }
         const {data,error}=await admin.from('model_public_profiles').upsert(allowed,{onConflict:'model_id'}).select('*').single();if(error)throw error;return json(200,{ok:true,public_profile:data});
       }
       return json(400,{error:'Unsupported model portfolio action'});
