@@ -2267,7 +2267,7 @@ verify();setTimeout(verify,500);setTimeout(verify,1500);window.CAVYRE_CRM_RUNTIM
 (function(){
 'use strict';
 function text(n){return String(n&&n.textContent||'').replace(/\s+/g,' ').trim().toLowerCase()}
-function rowId(n){var r=n&&n.closest&&n.closest('[data-id]');return r&&r.getAttribute('data-id')||''}
+function rowId(n){if(!n)return'';var own=n.getAttribute&&(n.getAttribute('data-cc49-contact')||n.getAttribute('data-cc49-company')||n.getAttribute('data-cc49-edit'));if(own)return own;var r=n.closest&&n.closest('[data-id]');return r&&r.getAttribute('data-id')||''}
 document.addEventListener('click',function(e){
   var b=e.target&&e.target.closest&&e.target.closest('button,a,[role="button"]');
   if(!b||!window.CavyreCRM)return;
