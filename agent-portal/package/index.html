@@ -262,18 +262,18 @@ async function compCardBack(m,ctx,W,H){
  var bfsz=W*0.095;ctx.font='500 '+bfsz+'px "Cormorant Garamond", serif';ctx.textBaseline='alphabetic';
  var bmaxW=W-pad*2;while(ctx.measureText(full).width>bmaxW&&bfsz>W*0.04){bfsz-=W*0.003;ctx.font='500 '+bfsz+'px "Cormorant Garamond", serif';}
  const nameY=H*0.115;ctx.fillText(full,pad,nameY);
- const gridTop=H*0.155,gridBottom=H*0.805,gridLeft=pad,gridRight=W*0.66,gap=W*0.012;
+ const gridTop=H*0.155,gridBottom=H*0.805,gridLeft=pad,gridRight=W*0.78,gap=W*0.012;
  const pics=(m.media||[]).filter(x=>!isVideo(x)&&x.url).slice(0,4);
  const cellW=(gridRight-gridLeft-gap)/2,cellH=(gridBottom-gridTop-gap)/2;
  const cells=[[gridLeft,gridTop],[gridLeft+cellW+gap,gridTop],[gridLeft,gridTop+cellH+gap],[gridLeft+cellW+gap,gridTop+cellH+gap]];
  for(let i=0;i<4;i++){const src=pics.length?pics[i%pics.length]:null;const im=await loadImg(src&&src.url);const [cx,cy]=cells[i];ccCover(ctx,im,cx,cy,cellW,cellH)}
  const mm=m.measurements||{},rows=[['HEIGHT',mm.height_display],['BUST',mm.bust_display],['CHEST',mm.chest_display],['WAIST',mm.waist_display],['HIPS',mm.hips_display],['SHOE',mm.shoe],['EYES',mm.eyes],['HAIR',mm.hair]].filter(x=>x[1]);
- let ry=gridTop+H*0.03;const rx=gridRight+W*0.05;
+ let ry=gridTop+H*0.03;const rx=gridRight+W*0.035;
  ctx.textBaseline='alphabetic';
  for(const [label,val] of rows){
   ctx.fillStyle='#8a8074';ctx.font='600 '+(W*0.015)+'px Inter, sans-serif';
   (function letterSpaced(text,size,spacing,x,y){ctx.font=size+'px Inter, sans-serif';let cx=x;for(const ch of text){ctx.fillText(ch,cx,y);cx+=ctx.measureText(ch).width+spacing}})(label,W*0.014,W*0.003,rx,ry);
-  ctx.fillStyle='#171512';ctx.font='500 '+(W*0.028)+'px "Cormorant Garamond", serif';ctx.fillText(String(val),rx,ry+H*0.038);
+  ctx.fillStyle='#171512';let vsz=W*0.028;ctx.font='500 '+vsz+'px "Cormorant Garamond", serif';const valStr=String(val),valMaxW=W-pad-rx;while(ctx.measureText(valStr).width>valMaxW&&vsz>W*0.014){vsz-=W*0.001;ctx.font='500 '+vsz+'px "Cormorant Garamond", serif';}ctx.fillText(valStr,rx,ry+H*0.038);
   ry+=H*0.083;
  }
  const footY=H*0.855;

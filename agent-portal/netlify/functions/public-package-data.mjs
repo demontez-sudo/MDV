@@ -18,14 +18,33 @@ export const handler = async event => {
     if(consumed?.verified!==true||consumed?.available!==true||!consumed?.link) return json(404,{error:'Package link is invalid, expired, or inactive'},cacheHeaders);
     const link=consumed.link,recipientState=consumed.recipient||null;
 
-    const [{data:pkg,error:pkgErr},{data:org,error:orgErr},{data:recipient,error:recipientErr},{data:orgSettings,error:orgSettingsErr}]=await Promise.all([
+    const [{data:pkg,error:pkgErr},{data:org,error:orgErr},{data:recipient,error:recipientErr},{data:orgSettings,error:orgSettingsErr},{data:shareLink,error:shareLinkErr}]=await Promise.all([
       admin.from('packages').select('id,organization_id,title,status,intro_message,layout_key,expires_at,metadata,created_at,updated_at').eq('id',link.package_id).eq('organization_id',link.organization_id).maybeSingle(),
       admin.from('organizations').select('id,name,slug,status').eq('id',link.organization_id).maybeSingle(),
       link.recipient_id?admin.from('package_recipients').select('id,display_name').eq('id',link.recipient_id).eq('organization_id',link.organization_id).maybeSingle():Promise.resolve({data:recipientState,error:null}),
-      admin.from('organization_settings').select('sender_name,sender_email,settings').eq('organization_id',link.organization_id).maybeSingle()
+      admin.from('organization_settings').select('sender_name,sender_email,settings').eq('organization_id',link.organization_id).maybeSingle(),
+      admin.from('package_share_links').select('created_by').eq('token_hash',hashToken(raw)).eq('organization_id',link.organization_id).maybeSingle()
     ]);
-    if(pkgErr)throw pkgErr;if(orgErr)throw orgErr;if(recipientErr)throw recipientErr;if(orgSettingsErr)throw orgSettingsErr;
-    const orgAgentFallback={name:orgSettings?.sender_name||org?.name||'Maison de Veux',email:orgSettings?.sender_email||null,phone:orgSettings?.settings?.agency_phone||null,address:orgSettings?.settings?.agency_address||null};
+    if(pkgErr)throw pkgErr;if(orgErr)throw orgErr;if(recipientErr)throw recipientErr;if(orgSettingsErr)throw orgSettingsErr;if(shareLinkErr)throw shareLinkErr;
+
+    // Agent shown on the comp card / package = whoever actually sent this link, falling back to the agency default.
+    let sender=null;
+    const senderId=shareLink?.created_by;
+    if(senderId){
+      const [{data:senderProfile},senderAuth]=await Promise.all([
+        admin.from('profiles').select('display_name,phone').eq('user_id',senderId).maybeSingle(),
+        admin.auth.admin.getUserById(senderId).catch(()=>null)
+      ]);
+      if(senderProfile?.display_name){
+        sender={name:senderProfile.display_name,email:senderAuth?.data?.user?.email||null,phone:senderProfile.phone||null};
+      }
+    }
+    const orgAgentFallback={
+      name:sender?.name||orgSettings?.sender_name||org?.name||'Maison de Veux',
+      email:sender?.email||orgSettings?.sender_email||null,
+      phone:sender?.phone||orgSettings?.settings?.agency_phone||null,
+      address:orgSettings?.settings?.agency_address||null
+    };
     if(!pkg || !org || org.status!=='active' || ['revoked','archived','expired'].includes(String(pkg.status||''))) return json(404,{error:'Package link is unavailable'},cacheHeaders);
 
     const packageModels=await rows(admin.from('package_models').select('id,model_id,sort_order,headline,note,visible').eq('organization_id',link.organization_id).eq('package_id',pkg.id).eq('visible',true).order('sort_order'));

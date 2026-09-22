@@ -51,17 +51,17 @@ async function compCardBack(model,ctx,W,H,pics){
   var bmaxW=W-pad*2;while(ctx.measureText(full).width>bmaxW&&bfsz>W*0.04){bfsz-=W*0.003;ctx.font='500 '+bfsz+'px "Cormorant Garamond", serif';}
   ctx.fillStyle='#171512';
   ctx.fillText(full,pad,H*0.115);
-  var gridTop=H*0.155,gridBottom=H*0.805,gridLeft=pad,gridRight=W*0.66,gap=W*0.012;
+  var gridTop=H*0.155,gridBottom=H*0.805,gridLeft=pad,gridRight=W*0.78,gap=W*0.012;
   var cellW=(gridRight-gridLeft-gap)/2,cellH=(gridBottom-gridTop-gap)/2;
   var cells=[[gridLeft,gridTop],[gridLeft+cellW+gap,gridTop],[gridLeft,gridTop+cellH+gap],[gridLeft+cellW+gap,gridTop+cellH+gap]];
   for(var i=0;i<4;i++){var src=pics.length?pics[i%pics.length]:null;var im=await loadImg(src&&src.url);ccCover(ctx,im,cells[i][0],cells[i][1],cellW,cellH);}
   var mm=model.measurements||{};
   var rows=[['HEIGHT',mm.height_display],['BUST',mm.bust_display],['CHEST',mm.chest_display],['WAIST',mm.waist_display],['HIPS',mm.hips_display],['SHOE',mm.shoe],['EYES',mm.eyes],['HAIR',mm.hair]].filter(function(x){return x[1];});
-  var ry=gridTop+H*0.03,rx=gridRight+W*0.05;
+  var ry=gridTop+H*0.03,rx=gridRight+W*0.035;
   ctx.textBaseline='alphabetic';
   rows.forEach(function(pair){
     ctx.fillStyle='#8a8074';letterSpaced(ctx,pair[0],W*0.014,W*0.003,rx,ry);
-    ctx.fillStyle='#171512';ctx.font='500 '+(W*0.028)+'px "Cormorant Garamond", serif';ctx.fillText(String(pair[1]),rx,ry+H*0.038);
+    ctx.fillStyle='#171512';var vsz=W*0.028;ctx.font='500 '+vsz+'px "Cormorant Garamond", serif';var valStr=String(pair[1]),valMaxW=W-pad-rx;while(ctx.measureText(valStr).width>valMaxW&&vsz>W*0.014){vsz-=W*0.001;ctx.font='500 '+vsz+'px "Cormorant Garamond", serif';}ctx.fillText(valStr,rx,ry+H*0.038);
     ry+=H*0.083;
   });
   var footY=H*0.855;
