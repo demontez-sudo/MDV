@@ -232,6 +232,75 @@ function token(){try{const q=new URL(location.href).searchParams.get('token');if
 function mediaOf(m){const arr=Array.isArray(m&&m.media)?m.media:[];return arr.find(x=>String(x.media_type||'').toLowerCase()!=='video')||arr[0]||null}
 function isVideo(x){return String(x&&x.media_type||'').toLowerCase()==='video'||/\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(String(x&&x.url||''))}
 function mediaTag(x,cls){if(!x||!x.url)return '<div class="empty">Image pending.</div>';return isVideo(x)?'<video class="'+(cls||'')+'" src="'+esc(x.url)+'" muted playsinline preload="metadata"></video>':'<img class="'+(cls||'')+'" src="'+esc(x.url)+'" alt="" loading="lazy">'}
+let jspdfReady=null;
+function loadJsPDF(){if(window.jspdf&&window.jspdf.jsPDF)return Promise.resolve();if(jspdfReady)return jspdfReady;jspdfReady=new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';s.onload=()=>resolve();s.onerror=()=>reject(new Error('Could not load the PDF library. Check your connection and try again.'));document.head.appendChild(s)});return jspdfReady}
+function loadImg(url){return new Promise(resolve=>{if(!url)return resolve(null);const im=new Image();im.crossOrigin='anonymous';im.onload=()=>resolve(im);im.onerror=()=>resolve(null);im.src=url})}
+function ccCover(ctx,im,x,y,w,h){if(!im){ctx.fillStyle='#e4dccd';ctx.fillRect(x,y,w,h);return}const ir=im.width/im.height,r=w/h;let sw=im.width,sh=im.height,sx=0,sy=0;if(ir>r){sw=im.height*r;sx=(im.width-sw)/2}else{sh=im.width/r;sy=(im.height-sh)/2}ctx.drawImage(im,sx,sy,sw,sh,x,y,w,h)}
+async function compCardFront(m,ctx,W,H){
+ const front=await loadImg((mediaOf(m)||{}).url);
+ ccCover(ctx,front,0,0,W,H);
+ let g=ctx.createLinearGradient(0,0,0,H*0.26);g.addColorStop(0,'rgba(10,9,7,.58)');g.addColorStop(1,'rgba(10,9,7,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H*0.26);
+ g=ctx.createLinearGradient(0,H*0.68,0,H);g.addColorStop(0,'rgba(10,9,7,0)');g.addColorStop(1,'rgba(10,9,7,.72)');ctx.fillStyle=g;ctx.fillRect(0,H*0.68,W,H*0.32);
+ const pad=W*0.065;
+ ctx.fillStyle='#f7f2e8';ctx.textBaseline='alphabetic';
+ (function wordmark(x0,y0,size,spacing){let cx=x0;for(const ch of 'MAISON '){ctx.font='600 '+size+'px Inter, sans-serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing}for(const ch of 'de'){ctx.font='500 italic '+(size*1.05)+'px "Cormorant Garamond", serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing*.6}cx+=spacing*.4;for(const ch of ' VEUX'){if(ch===' '){cx+=spacing*1.4;continue}ctx.font='600 '+size+'px Inter, sans-serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing}})(pad,H*0.085,W*0.032,W*0.006);
+ ctx.fillStyle='#f7f2e8';ctx.globalAlpha=.82;
+ (function letterSpaced(text,size,spacing,x0,y0){ctx.font=size+'px Inter, sans-serif';let cx=x0;for(const ch of text){ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing}})('NEW YORK · PARIS',W*0.018,W*0.008,pad,H*0.085+W*0.05);
+ ctx.globalAlpha=1;
+ const first=(m.display_name||'Model').trim().split(/\s+/)[0].toUpperCase();
+ ctx.font='500 italic '+(W*0.135)+'px "Cormorant Garamond", serif';
+ const ny=H*0.9;ctx.fillText(first,pad,ny);
+ const tw=ctx.measureText(first).width;
+ ctx.fillRect(pad,ny+H*0.014,Math.min(tw,W*0.5),H*0.0016);
+}
+async function compCardBack(m,ctx,W,H){
+ ctx.fillStyle='#f5f0e7';ctx.fillRect(0,0,W,H);
+ const pad=W*0.065;
+ ctx.fillStyle='#171512';
+ const first=(m.display_name||'Model').trim().split(/\s+/)[0].toUpperCase();
+ ctx.font='500 '+(W*0.095)+'px "Cormorant Garamond", serif';ctx.textBaseline='alphabetic';
+ const nameY=H*0.115;ctx.fillText(first,pad,nameY);
+ const gridTop=H*0.155,gridBottom=H*0.78,gridLeft=pad,gridRight=W*0.66,gap=W*0.012;
+ const pics=(m.media||[]).filter(x=>!isVideo(x)&&x.url).slice(0,4);
+ const cellW=(gridRight-gridLeft-gap)/2,cellH=(gridBottom-gridTop-gap)/2;
+ const cells=[[gridLeft,gridTop],[gridLeft+cellW+gap,gridTop],[gridLeft,gridTop+cellH+gap],[gridLeft+cellW+gap,gridTop+cellH+gap]];
+ for(let i=0;i<4;i++){const src=pics.length?pics[i%pics.length]:null;const im=await loadImg(src&&src.url);const [cx,cy]=cells[i];ccCover(ctx,im,cx,cy,cellW,cellH)}
+ const mm=m.measurements||{},rows=[['HEIGHT',mm.height_display],['BUST',mm.bust_display],['CHEST',mm.chest_display],['WAIST',mm.waist_display],['HIPS',mm.hips_display],['SHOE',mm.shoe],['EYES',mm.eyes],['HAIR',mm.hair]].filter(x=>x[1]);
+ let ry=gridTop+H*0.03;const rx=gridRight+W*0.05;
+ ctx.textBaseline='alphabetic';
+ for(const [label,val] of rows){
+  ctx.fillStyle='#8a8074';ctx.font='600 '+(W*0.015)+'px Inter, sans-serif';
+  (function letterSpaced(text,size,spacing,x,y){ctx.font=size+'px Inter, sans-serif';let cx=x;for(const ch of text){ctx.fillText(ch,cx,y);cx+=ctx.measureText(ch).width+spacing}})(label,W*0.014,W*0.003,rx,ry);
+  ctx.fillStyle='#171512';ctx.font='500 '+(W*0.028)+'px "Cormorant Garamond", serif';ctx.fillText(String(val),rx,ry+H*0.038);
+  ry+=H*0.083;
+ }
+ const footY=H*0.88;
+ ctx.strokeStyle='#d8cdbd';ctx.lineWidth=Math.max(1,W*0.0015);ctx.beginPath();ctx.moveTo(pad,footY);ctx.lineTo(W-pad,footY);ctx.stroke();
+ ctx.fillStyle='#171512';(function wordmark(x0,y0,size,spacing){ctx.textBaseline='alphabetic';let cx=x0;for(const ch of 'MAISON '){ctx.font='600 '+size+'px Inter, sans-serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing}for(const ch of 'de'){ctx.font='500 italic '+(size*1.05)+'px "Cormorant Garamond", serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing*.6}cx+=spacing*.4;for(const ch of ' VEUX'){if(ch===' '){cx+=spacing*1.4;continue}ctx.font='600 '+size+'px Inter, sans-serif';ctx.fillText(ch,cx,y0);cx+=ctx.measureText(ch).width+spacing}})(pad,footY+H*0.05,W*0.016,W*0.003);
+ ctx.fillStyle='#8a8074';ctx.font='500 '+(W*0.013)+'px Inter, sans-serif';
+ (function letterSpaced(text,size,spacing,x,y){ctx.font=size+'px Inter, sans-serif';let cx=x;for(const ch of text){ctx.fillText(ch,cx,y);cx+=ctx.measureText(ch).width+spacing}})('NEW YORK · PARIS',W*0.012,W*0.005,pad,footY+H*0.075);
+ const agent=m.agent||{},info=[agent.name&&('Agent  '+agent.name),agent.email&&('Email  '+agent.email),agent.phone&&('Contact  '+agent.phone)].filter(Boolean);
+ ctx.font='500 '+(W*0.014)+'px Inter, sans-serif';ctx.fillStyle='#43403a';
+ info.forEach((line,i)=>ctx.fillText(line,W*0.44,footY+H*0.05+i*H*0.028));
+}
+async function generateCompCard(m,btn){
+ if(!(m.media||[]).some(x=>!isVideo(x)&&x.url)){showToast('No photo available yet for a comp card');return}
+ const original=btn&&btn.textContent;
+ try{
+  if(btn){btn.disabled=true;btn.textContent='Preparing…'}
+  await loadJsPDF();
+  if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+  const W=1650,H=2550;
+  const c1=document.createElement('canvas');c1.width=W;c1.height=H;await compCardFront(m,c1.getContext('2d'),W,H);
+  const c2=document.createElement('canvas');c2.width=W;c2.height=H;await compCardBack(m,c2.getContext('2d'),W,H);
+  const {jsPDF}=window.jspdf;const doc=new jsPDF({unit:'in',format:[5.5,8.5],orientation:'portrait'});
+  doc.addImage(c1.toDataURL('image/jpeg',0.93),'JPEG',0,0,5.5,8.5);
+  doc.addPage([5.5,8.5],'portrait');
+  doc.addImage(c2.toDataURL('image/jpeg',0.93),'JPEG',0,0,5.5,8.5);
+  doc.save((m.display_name||'Model').replace(/[^\w\- ]+/g,'').trim()+' Comp Card.pdf');
+ }catch(e){showToast(e.message||'Could not build the comp card')}
+ finally{if(btn){btn.disabled=false;btn.textContent=original||'Request Comp Card'}}
+}
 function market(){const ms=(data&&data.models)||[];return (ms.find(x=>x.market)&&ms.find(x=>x.market).market)||''}
 function tags(m){const all=[m.gender,m.stage,m.headline,m.bio,m.note].filter(Boolean).join(' ').toLowerCase();return all}
 function matches(m){
@@ -310,7 +379,7 @@ function renderDetail(id){
  app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{detailTab=b.dataset.tab;renderMaterials(m)});
  document.querySelector('[data-profile-open]')?.addEventListener('click',()=>track('profile_opened',m.id));
  document.getElementById('requestThisModel').onclick=()=>openRequest([String(m.id)]);
- document.getElementById('requestComp').onclick=async()=>{try{await post('/api/public/package/feedback',{token:token(),model_id:m.id,feedback_type:'request_more_info',note:'Comp card requested from private package.'});showToast('Comp card request sent')}catch(e){showToast(e.message)}};
+ document.getElementById('requestComp').onclick=async(e)=>{post('/api/public/package/feedback',{token:token(),model_id:m.id,feedback_type:'request_more_info',note:'Comp card downloaded from private package.'}).catch(()=>{});await generateCompCard(m,e.currentTarget)};
  document.getElementById('dockRequest').onclick=()=>openRequest();
  renderMaterials(m);renderDock();
 }
