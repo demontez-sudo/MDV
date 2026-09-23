@@ -1,0 +1,22 @@
+.cvygp-card{margin-top:18px}
+.cvygp-subhead{font:12px/1.4 var(--fM,monospace);text-transform:uppercase;letter-spacing:.06em;color:var(--gold,#c89f58);margin:22px 0 10px;padding-top:14px;border-top:1px solid var(--line,#393126)}
+.cvygp-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+.cvygp-note{font-size:12px;color:var(--mute,#8f816f);margin-top:8px}
+.cvygp-filters{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.cvygp-chip{font:inherit;font-size:12px;background:transparent;color:var(--ink2,#c9bba6);border:1px solid var(--line,#393126);border-radius:40px;padding:6px 13px;cursor:pointer}
+.cvygp-chip.on{background:var(--gold,#c89f58);color:#171310;border-color:var(--gold,#c89f58)}
+.cvygp-tbl-wrap{overflow-x:auto;border:1px solid var(--line,#393126)}
+.cvygp-tbl-wrap table{width:100%;border-collapse:collapse;font-size:13px;min-width:640px}
+.cvygp-tbl-wrap th{text-align:left;font-weight:400;font-size:11px;color:var(--mute,#8f816f);padding:10px 12px;border-bottom:1px solid var(--line,#393126);background:rgba(255,255,255,.02);letter-spacing:.03em;text-transform:uppercase}
+.cvygp-tbl-wrap td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:top}
+.cvygp-tbl-wrap tr.cvygp-hard td{background:rgba(200,159,88,.07)}
+.cvygp-date{white-space:nowrap;color:var(--mute,#8f816f)}
+.cvygp-badge-hard{display:inline-block;margin-left:8px;font-size:10px;color:#171310;background:var(--gold,#c89f58);padding:2px 8px;border-radius:20px;white-space:nowrap;vertical-align:1px}
+.cvygp-type-chip{display:inline-block;font-size:11px;border:1px solid var(--gold,#c89f58);color:var(--ink2,#c9bba6);border-radius:20px;padding:2px 10px;white-space:nowrap}
+.cvygp-tbl-wrap td small{display:block;color:var(--mute,#8f816f);font-size:12px;margin-top:3px}
+.cvygp-reschedule-flag{margin-top:6px;font-size:12px;color:var(--gold,#c89f58);background:rgba(200,159,88,.1);border-left:2px solid var(--gold,#c89f58);padding:6px 10px}
+.cvygp-row-actions{white-space:nowrap;text-align:right}
+.cvygp-edit-row td{background:rgba(255,255,255,.03)}
+.cvygp-list{list-style:none;margin:0;padding:0}
+.cvygp-list li{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;color:var(--ink2,#c9bba6)}
+.cvygp-list li:first-child{border-top:1px solid rgba(255,255,255,.06)}

@@ -448,6 +448,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/gameplan/v1"
+to = "/.netlify/functions/agent-gameplan-desk-v1"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/season/vera"
 to = "/.netlify/functions/agent-season-vera"
 status = 200

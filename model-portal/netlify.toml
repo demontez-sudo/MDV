@@ -102,6 +102,18 @@
   force = true
 
 [[redirects]]
+  from = "/api/portal/task-reschedule"
+  to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/portal/task-reschedule"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/api/model/gameplan"
+  to = "/.netlify/functions/model-portal-gameplan"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/portal/message"
   to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/portal/message"
   status = 200

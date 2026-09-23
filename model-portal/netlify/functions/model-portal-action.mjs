@@ -86,11 +86,24 @@ export const handler=async event=>{
     if(action==='task_update'){
       const taskId=text(body.task_id||body.id,120);if(!taskId){const e=new Error('Task is required.');e.statusCode=400;throw e;}
       const status=allowed(body.status,taskStatuses,'task status');
-      const data=await one(admin.from('tasks').update({status}).eq('organization_id',organization.id).eq('model_id',modelId).eq('id',taskId).select('*').maybeSingle());
+      const patch=status==='completed'?{status,completed_at:now()}:{status};
+      const data=await one(admin.from('tasks').update(patch).eq('organization_id',organization.id).eq('model_id',modelId).eq('id',taskId).select('*').maybeSingle());
       if(!data){const e=new Error('Task was not found.');e.statusCode=404;throw e;}
       const note=text(body.note,1800);
       if(note)await modelNote(admin,{organizationId:organization.id,modelId,userId:user.id,body:note,title:'Task Response',noteType:'task_response',metadata:{task_id:taskId,status}});
       return json(200,{ok:true,verified:true,action,status,record:data});
+    }
+
+    if(action==='task_reschedule_request'){
+      const taskId=text(body.task_id||body.id,120);if(!taskId){const e=new Error('Task is required.');e.statusCode=400;throw e;}
+      const requestedDate=text(body.requested_date,40);if(!/^\d{4}-\d{2}-\d{2}/.test(requestedDate)){const e=new Error('A valid requested date is required.');e.statusCode=400;throw e;}
+      const note=text(body.note,1800);
+      const existing=await one(admin.from('tasks').select('id,metadata').eq('organization_id',organization.id).eq('model_id',modelId).eq('id',taskId).maybeSingle());
+      if(!existing){const e=new Error('Task was not found.');e.statusCode=404;throw e;}
+      const nextMeta={...(existing.metadata||{}),reschedule_status:'pending',reschedule_requested_date:requestedDate,reschedule_note:note||null,reschedule_requested_at:now()};
+      const data=await one(admin.from('tasks').update({metadata:nextMeta}).eq('organization_id',organization.id).eq('model_id',modelId).eq('id',taskId).select('*').single());
+      if(note)await modelNote(admin,{organizationId:organization.id,modelId,userId:user.id,body:note,title:'Reschedule Requested',noteType:'task_reschedule_request',metadata:{task_id:taskId,requested_date:requestedDate}});
+      return json(200,{ok:true,verified:true,action,record:data});
     }
 
     if(action==='send_message'){

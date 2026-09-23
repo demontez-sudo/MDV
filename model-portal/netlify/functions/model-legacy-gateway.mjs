@@ -65,6 +65,10 @@ export default async (req)=>{
     const raw=await req.json().catch(()=>({}));
     return fromLegacyResponse(await invoke(actionHandler,req,{...raw,action:'task_update'}));
   }
+  if(path==='/api/portal/task-reschedule'&&method==='POST'){
+    const raw=await req.json().catch(()=>({}));
+    return fromLegacyResponse(await invoke(actionHandler,req,{...raw,action:'task_reschedule_request'}));
+  }
   if(path==='/api/portal/message'&&method==='POST'){
     const raw=await req.json().catch(()=>({}));
     return fromLegacyResponse(await invoke(actionHandler,req,{...raw,action:'send_message',message:raw.body||raw.message,thread:raw.conversation_id||raw.thread}));

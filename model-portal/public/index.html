@@ -81,7 +81,7 @@
 <link rel="stylesheet" href="assets/cavyre-model-mobile-command-16.9.61.css">\n<link rel="stylesheet" href="assets/cavyre-model-compcard-profile-16.9.62.css">
 <link rel="stylesheet" href="assets/cavyre-model-upload-persistence-16.9.63.css">\n<link rel="stylesheet" href="assets/cavyre-portal-exchange-16.9.64.css">
 <link rel="stylesheet" href="assets/cavyre-smart-mobility-model-16.9.65.css">
-<link rel="stylesheet" href="assets/cavyre-model-compcard-center-16.9.66.css?v=16966"><meta name="cavyre-model-release" content="16.9.66"><link rel="stylesheet" href="assets/cavyre-model-auth-recovery-16.9.67.css?v=16967"><meta name="cavyre-model-auth-release" content="16.9.67"><link rel="stylesheet" href="assets/cavyre-model-calendar-visibility-16.9.68.css?v=16968"><meta name="cavyre-model-calendar-release" content="16.9.68"></head>
+<link rel="stylesheet" href="assets/cavyre-model-compcard-center-16.9.66.css?v=16966"><meta name="cavyre-model-release" content="16.9.66"><link rel="stylesheet" href="assets/cavyre-model-auth-recovery-16.9.67.css?v=16967"><meta name="cavyre-model-auth-release" content="16.9.67"><link rel="stylesheet" href="assets/cavyre-model-calendar-visibility-16.9.68.css?v=16968"><meta name="cavyre-model-calendar-release" content="16.9.68"><link rel="stylesheet" href="assets/cavyre-model-gameplan-16.9.69.css?v=16969"></head>
 <body>
 <div id="login">
   <div class="lg-card">
@@ -151,6 +151,7 @@
     try{
       await loadSupabase();
       await loadScript(asset('veux-model-v15-core.js'));
+      await loadScript(asset('cavyre-model-gameplan-16.9.69.js?v=16969'));
       await loadScript(asset('mdv-compcard.js'));
       await loadScript(asset('veux-model-staging-16.9.73.js?v=16973'));
     }catch(e){
