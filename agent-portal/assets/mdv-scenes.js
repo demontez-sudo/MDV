@@ -166,7 +166,7 @@ var SNOW=COMMON+'\n'+[
 var FRAG={galaxy:GALAXY,earth:EARTH,waterfall:WATERFALL,christmas:CHRISTMAS,snow:SNOW};
 var VERT='attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
 var BASE=(window.__VEUX_AGENT_MOUNT__||'')+'/assets/backdrops/';
-var CACHE_V='3';function assetURL(name){return BASE+name+'?v='+CACHE_V;}
+var CACHE_V='4';function assetURL(name){return BASE+name+'?v='+CACHE_V;}
 /* Real footage (public domain / CC0) for Earth, Waterfall and Christmas; procedural GPU render for Galaxy. */
 var CFG={
  galaxy:{gl:'galaxy'},
