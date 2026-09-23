@@ -42,3 +42,7 @@
 .vx16910-check input[type="checkbox"]:checked{background:linear-gradient(135deg,#dfbd7d,#c89f58)!important;border-color:transparent!important}
 .vx16910-check input[type="checkbox"]:checked::after{left:18px!important;background:#17130b!important}
 .vx16910-check input[type="checkbox"]:disabled{opacity:.5!important;cursor:not-allowed!important}
+.v156-doc-upload{display:flex!important;align-items:center!important;gap:10px!important;flex-wrap:wrap!important}
+.v156-doc-upload select{background:#0b0c0a;border:1px solid #463a2b;border-radius:2px;color:#e7dccb;min-height:32px;font-size:11px;padding:0 8px}
+.v156-doc-upload .vx16910-check{font-size:11px!important}
+.v156-doc-upload-status{font-size:11px;color:var(--mute)}

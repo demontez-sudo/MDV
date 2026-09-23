@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import { requireUser, assertPermission, adminClient, parseBody, json, errorResponse } from './_lib/auth.mjs';
 
 function cleanName(name){return String(name||'file').normalize('NFKD').replace(/[^a-zA-Z0-9._-]+/g,'-').replace(/-+/g,'-').slice(-120)||'file'}
-const ALLOWED_MIME=/^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm)|application\/pdf|text\/plain)$/i;
+const ALLOWED_MIME=/^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm)|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain)$/i;
 const VISIBILITIES=new Set(['private','staff','model_shared','partner_shared','public']);
 function visibility(value){const v=String(value||'staff').trim().toLowerCase();return VISIBILITIES.has(v)?v:'staff';}
 
