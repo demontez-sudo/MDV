@@ -238,7 +238,7 @@ function applyWave(theme,persist){
   });
   var s=document.querySelector('.vx-wave-status');
   if(s){
-    var labels={burntOrange:'Burnt Orange',blueNude:'Blue Nude',greenNude:'Green Nude',purple:'Purple',turquoise:'Turquoise',classic:'Classic',green:'Green',blue:'Blue',red:'Red',white:'White',galaxy:'Galaxy',christmas:'Christmas',earth:'Earth',waterfall:'Waterfall'};
+    var labels={burntOrange:'Burnt Orange',blueNude:'Blue Nude',greenNude:'Green Nude',purple:'Purple',turquoise:'Turquoise',classic:'Classic',green:'Green',blue:'Blue',red:'Red',white:'White',galaxy:'Galaxy',christmas:'Winter Forest',earth:'Earth',waterfall:'Waterfall'};
     s.innerHTML='Active wave: <strong>'+(labels[theme]||theme)+'</strong> · applied across the live portal';
   }
   window.dispatchEvent(new CustomEvent('veux:smart-wave-applied',{detail:{theme:theme}}));
