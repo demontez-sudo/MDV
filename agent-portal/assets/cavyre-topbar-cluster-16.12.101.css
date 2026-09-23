@@ -4,7 +4,14 @@
    qualified as .vx73-topbar .tb-user / .vx77-single-nav .tb-right (two classes deep) —
    which live in the real DOM. A plain "html body .tb-user" override loses to those on
    specificity alone regardless of file order, so every selector below repeats its own
-   class once (.tb-user.tb-user) to outrank any two-class-deep rule outright. */
+   class once (.tb-user.tb-user) to outrank any two-class-deep rule outright.
+
+   Typography: 'Space Mono' for every data/label element (clocks, role, sign out) so the
+   cluster reads as one consistent "readout" system, with italic Cormorant Garamond
+   reserved for the human name as the one editorial accent. --fM in this app resolves to
+   Inter, not an actual monospace, so the font is named explicitly rather than via the
+   token. Bell icon now renders as a Tabler webfont glyph (already loaded site-wide) in
+   place of the old hand-drawn inline SVG. */
 
 html body .vx73-clocks.vx73-clocks{
   display:flex!important;
@@ -25,23 +32,26 @@ html body .vx73-clocks.vx73-clocks>div+div{
 }
 html body .vx73-clocks.vx73-clocks small{
   display:block!important;
-  font:9.5px var(--fM,monospace)!important;
-  letter-spacing:.18em!important;
+  font:9px 'Space Mono',monospace!important;
+  letter-spacing:.14em!important;
   color:rgba(163,151,132,.75)!important;
   text-transform:uppercase!important;
-  margin-bottom:3px!important;
+  margin-bottom:4px!important;
+  white-space:nowrap!important;
 }
 html body .vx73-clocks.vx73-clocks b{
   display:block!important;
-  font:600 18px var(--fM,monospace)!important;
-  letter-spacing:.02em!important;
+  font:700 18px 'Space Mono',monospace!important;
+  font-variant-numeric:tabular-nums!important;
+  letter-spacing:0!important;
   color:var(--vx73-ink,#f1e4d4)!important;
-  margin:0 0 2px!important;
+  margin:0 0 3px!important;
+  white-space:nowrap!important;
 }
 html body .vx73-clocks.vx73-clocks span{
   display:block!important;
-  font:10px var(--fM,monospace)!important;
-  letter-spacing:.04em!important;
+  font:9.5px 'Space Mono',monospace!important;
+  letter-spacing:.02em!important;
   color:#c9a66b!important;
   white-space:nowrap!important;
 }
@@ -66,12 +76,19 @@ html body #_notif-btn#_notif-btn{
   border-radius:50%!important;
   background:transparent!important;
   color:rgba(238,229,212,.72)!important;
-  font-size:16px!important;
   transition:background .15s,color .15s!important;
 }
 html body #_notif-btn#_notif-btn:hover{
   background:rgba(201,166,107,.12)!important;
   color:#e9d3a0!important;
+}
+html body #_notif-btn#_notif-btn .ti-bell{
+  font-size:18px!important;
+  line-height:1!important;
+}
+html body #_notif-btn#_notif-btn svg{
+  width:17px!important;
+  height:17px!important;
 }
 
 html body .tb-user.tb-user{
@@ -100,11 +117,13 @@ html body .tb-av.tb-av{
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
+  font:600 12px 'Space Mono',monospace!important;
   color:#d7be91!important;
 }
 html body .tb-name.tb-name{
   font-family:'Cormorant Garamond',Georgia,serif!important;
-  font-size:15px!important;
+  font-style:italic!important;
+  font-size:16px!important;
   font-weight:500!important;
   color:#f1e4d4!important;
   line-height:1.25!important;
@@ -114,17 +133,18 @@ html body .tb-name.tb-name{
   max-width:180px!important;
 }
 html body .tb-role.tb-role{
-  font:10px 'Inter',sans-serif!important;
-  letter-spacing:.14em!important;
+  font:9px 'Space Mono',monospace!important;
+  letter-spacing:.16em!important;
   text-transform:uppercase!important;
   color:#a3917d!important;
-  margin-top:1px!important;
+  margin-top:2px!important;
   white-space:nowrap!important;
 }
 
 html body .tb-signout.tb-signout{
-  font:11px 'Inter',sans-serif!important;
-  letter-spacing:.03em!important;
+  font:10px 'Space Mono',monospace!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
   color:rgba(238,229,212,.55)!important;
   background:transparent!important;
   border:1px solid rgba(201,166,107,.22)!important;
