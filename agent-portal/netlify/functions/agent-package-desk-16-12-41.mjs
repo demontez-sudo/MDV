@@ -459,6 +459,15 @@ export const handler=async(event)=>{
         return json(200,{ok:true,verified:true,persisted_at:built.persisted_at,package:built.pkg,recipient:built.recipient,model_count:built.model_count,media_count:built.media_count});
       }
 
+      if(action==='rename'){
+        const packageId=String(body.package_id||'');if(!packageId)return json(400,{error:'package_id is required'});
+        const title=String(body.title||'').trim();if(!title)return json(400,{error:'Package title is required'});
+        await getPackage(admin,organization.id,packageId);
+        const {data,error}=await admin.from('packages').update({title,updated_at:new Date().toISOString()}).eq('organization_id',organization.id).eq('id',packageId).select('*').single();
+        if(error)throw error;
+        return json(200,{ok:true,verified:true,package:data,persisted_at:data.updated_at});
+      }
+
       if(action==='send'){
         const packageId=String(body.package_id||'');if(!packageId)return json(400,{error:'package_id is required'});
         const pkg=await getPackage(admin,organization.id,packageId);
@@ -483,7 +492,7 @@ export const handler=async(event)=>{
       if(action==='duplicate'){
         const packageId=String(body.package_id||'');if(!packageId)return json(400,{error:'package_id is required'});
         const source=await getPackage(admin,organization.id,packageId);
-        const title=String(body.title||`${source.title} Copy`).trim()||`${source.title} Copy`;
+        const title=String(body.title||source.title).trim()||source.title;
         const uniqueSlug=`${slugify(title)}-${Date.now().toString(36)}`;
         const {data:saved,error}=await admin.rpc('duplicate_package_v1',{target_org:organization.id,target_source:source.id,target_title:title,target_slug:uniqueSlug,target_user:user.id});
         if(error)throw error;if(!saved?.verified||!saved?.package){const e=new Error('Package duplicate could not be verified.');e.statusCode=500;throw e;}
