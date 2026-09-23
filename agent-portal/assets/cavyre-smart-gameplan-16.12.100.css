@@ -1,3 +1,9 @@
+/* The Model 360 tab bar (.v156-tabs) is a CSS grid elsewhere (repeat(auto-fit,minmax(112px,1fr))) that wraps to a
+   second row once there are enough tabs, and squeezes any tab narrower than its text needs — clipping the longest
+   label. Force it back to a single scrollable line with no-shrink, no-wrap tabs, regardless of tab count. */
+html body #p-modelpage .v156-tabs{display:flex!important;flex-wrap:nowrap!important;grid-template-columns:none!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
+html body #p-modelpage .v156-tabs::-webkit-scrollbar{display:none!important}
+html body #p-modelpage .v156-tab{flex:0 0 auto!important;white-space:nowrap!important;min-width:0!important}
 .cvygp-card{margin-top:18px}
 .cvygp-subhead{font:12px/1.4 var(--fM,monospace);text-transform:uppercase;letter-spacing:.06em;color:var(--gold,#c89f58);margin:22px 0 10px;padding-top:14px;border-top:1px solid var(--line,#393126)}
 .cvygp-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
