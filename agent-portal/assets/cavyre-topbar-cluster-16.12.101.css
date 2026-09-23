@@ -1,0 +1,140 @@
+/* CAVYRE 16.12.101 — Cleaner topbar cluster (world clocks / notifications / user).
+   The existing rules for .vx73-clocks/.tb-right/.tb-user etc. are scattered across many
+   layered patch files with !important on nearly every property. Rather than untangle that,
+   this is a single decisive override, loaded last, that wins outright. */
+
+html body .vx73-clocks{
+  display:flex!important;
+  align-items:center!important;
+  gap:0!important;
+  border:0!important;
+  background:transparent!important;
+  padding:0 18px!important;
+  margin-right:4px!important;
+}
+html body .vx73-clocks>div{
+  padding:2px 16px!important;
+  min-width:0!important;
+  text-align:left!important;
+}
+html body .vx73-clocks>div+div{
+  border-left:1px solid rgba(201,166,107,.18)!important;
+}
+html body .vx73-clocks small{
+  display:block!important;
+  font:9.5px var(--fM,monospace)!important;
+  letter-spacing:.18em!important;
+  color:rgba(163,151,132,.75)!important;
+  text-transform:uppercase!important;
+  margin-bottom:3px!important;
+}
+html body .vx73-clocks b{
+  display:block!important;
+  font:600 18px var(--fM,monospace)!important;
+  letter-spacing:.02em!important;
+  color:var(--vx73-ink,#f1e4d4)!important;
+  margin:0 0 2px!important;
+}
+html body .vx73-clocks span{
+  display:block!important;
+  font:10px var(--fM,monospace)!important;
+  letter-spacing:.04em!important;
+  color:#c9a66b!important;
+  white-space:nowrap!important;
+}
+
+html body .tb-right{
+  display:flex!important;
+  align-items:center!important;
+  gap:6px!important;
+  margin-left:auto!important;
+  padding-left:14px!important;
+  border-left:1px solid rgba(201,166,107,.18)!important;
+}
+
+html body #_notif-btn{
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:36px!important;
+  height:36px!important;
+  padding:0!important;
+  margin:0 2px!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  color:rgba(238,229,212,.72)!important;
+  font-size:16px!important;
+  transition:background .15s,color .15s!important;
+}
+html body #_notif-btn:hover{
+  background:rgba(201,166,107,.12)!important;
+  color:#e9d3a0!important;
+}
+
+html body .tb-user{
+  display:flex!important;
+  align-items:center!important;
+  gap:10px!important;
+  min-height:0!important;
+  padding:6px 12px 6px 6px!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:999px!important;
+  transition:background .15s!important;
+}
+html body .tb-user:hover{
+  background:rgba(255,255,255,.03)!important;
+}
+html body .tb-av{
+  width:34px!important;
+  height:34px!important;
+  min-width:34px!important;
+  border-radius:50%!important;
+  border:1px solid rgba(201,166,107,.4)!important;
+  background-color:#171310!important;
+  background-size:cover!important;
+  background-position:center!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  color:#d7be91!important;
+}
+html body .tb-name{
+  font-family:'Cormorant Garamond',Georgia,serif!important;
+  font-size:15px!important;
+  font-weight:500!important;
+  color:#f1e4d4!important;
+  line-height:1.25!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  max-width:180px!important;
+}
+html body .tb-role{
+  font:10px 'Inter',sans-serif!important;
+  letter-spacing:.14em!important;
+  text-transform:uppercase!important;
+  color:#a3917d!important;
+  margin-top:1px!important;
+  white-space:nowrap!important;
+}
+
+html body .tb-signout{
+  font:11px 'Inter',sans-serif!important;
+  letter-spacing:.03em!important;
+  color:rgba(238,229,212,.55)!important;
+  background:transparent!important;
+  border:1px solid rgba(201,166,107,.22)!important;
+  border-radius:20px!important;
+  padding:7px 14px!important;
+  margin-left:8px!important;
+  transition:border-color .15s,color .15s!important;
+}
+html body .tb-signout:hover{
+  color:#f1e4d4!important;
+  border-color:rgba(201,166,107,.5)!important;
+}
+
+@media(max-width:900px){
+  html body .vx73-clocks{display:none!important}
+}
