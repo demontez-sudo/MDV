@@ -69,8 +69,8 @@ html body #_notif-btn#_notif-btn{
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
-  width:36px!important;
-  height:36px!important;
+  width:42px!important;
+  height:42px!important;
   padding:0!important;
   margin:0 2px!important;
   border-radius:50%!important;
@@ -83,7 +83,7 @@ html body #_notif-btn#_notif-btn:hover{
   color:#e9d3a0!important;
 }
 html body #_notif-btn#_notif-btn .ti-bell{
-  font-size:18px!important;
+  font-size:24px!important;
   line-height:1!important;
 }
 html body #_notif-btn#_notif-btn svg{
