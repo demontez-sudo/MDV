@@ -1,9 +1,12 @@
 /* CAVYRE 16.12.101 — Cleaner topbar cluster (world clocks / notifications / user).
    The existing rules for .vx73-clocks/.tb-right/.tb-user etc. are scattered across many
-   layered patch files with !important on nearly every property. Rather than untangle that,
-   this is a single decisive override, loaded last, that wins outright. */
+   layered patch files with !important on nearly every property, and several of them are
+   qualified as .vx73-topbar .tb-user / .vx77-single-nav .tb-right (two classes deep) —
+   which live in the real DOM. A plain "html body .tb-user" override loses to those on
+   specificity alone regardless of file order, so every selector below repeats its own
+   class once (.tb-user.tb-user) to outrank any two-class-deep rule outright. */
 
-html body .vx73-clocks{
+html body .vx73-clocks.vx73-clocks{
   display:flex!important;
   align-items:center!important;
   gap:0!important;
@@ -12,15 +15,15 @@ html body .vx73-clocks{
   padding:0 18px!important;
   margin-right:4px!important;
 }
-html body .vx73-clocks>div{
+html body .vx73-clocks.vx73-clocks>div{
   padding:2px 16px!important;
   min-width:0!important;
   text-align:left!important;
 }
-html body .vx73-clocks>div+div{
+html body .vx73-clocks.vx73-clocks>div+div{
   border-left:1px solid rgba(201,166,107,.18)!important;
 }
-html body .vx73-clocks small{
+html body .vx73-clocks.vx73-clocks small{
   display:block!important;
   font:9.5px var(--fM,monospace)!important;
   letter-spacing:.18em!important;
@@ -28,14 +31,14 @@ html body .vx73-clocks small{
   text-transform:uppercase!important;
   margin-bottom:3px!important;
 }
-html body .vx73-clocks b{
+html body .vx73-clocks.vx73-clocks b{
   display:block!important;
   font:600 18px var(--fM,monospace)!important;
   letter-spacing:.02em!important;
   color:var(--vx73-ink,#f1e4d4)!important;
   margin:0 0 2px!important;
 }
-html body .vx73-clocks span{
+html body .vx73-clocks.vx73-clocks span{
   display:block!important;
   font:10px var(--fM,monospace)!important;
   letter-spacing:.04em!important;
@@ -43,7 +46,7 @@ html body .vx73-clocks span{
   white-space:nowrap!important;
 }
 
-html body .tb-right{
+html body .tb-right.tb-right{
   display:flex!important;
   align-items:center!important;
   gap:6px!important;
@@ -52,7 +55,7 @@ html body .tb-right{
   border-left:1px solid rgba(201,166,107,.18)!important;
 }
 
-html body #_notif-btn{
+html body #_notif-btn#_notif-btn{
   display:inline-flex!important;
   align-items:center!important;
   justify-content:center!important;
@@ -66,12 +69,12 @@ html body #_notif-btn{
   font-size:16px!important;
   transition:background .15s,color .15s!important;
 }
-html body #_notif-btn:hover{
+html body #_notif-btn#_notif-btn:hover{
   background:rgba(201,166,107,.12)!important;
   color:#e9d3a0!important;
 }
 
-html body .tb-user{
+html body .tb-user.tb-user{
   display:flex!important;
   align-items:center!important;
   gap:10px!important;
@@ -82,10 +85,10 @@ html body .tb-user{
   border-radius:999px!important;
   transition:background .15s!important;
 }
-html body .tb-user:hover{
+html body .tb-user.tb-user:hover{
   background:rgba(255,255,255,.03)!important;
 }
-html body .tb-av{
+html body .tb-av.tb-av{
   width:34px!important;
   height:34px!important;
   min-width:34px!important;
@@ -99,7 +102,7 @@ html body .tb-av{
   justify-content:center!important;
   color:#d7be91!important;
 }
-html body .tb-name{
+html body .tb-name.tb-name{
   font-family:'Cormorant Garamond',Georgia,serif!important;
   font-size:15px!important;
   font-weight:500!important;
@@ -110,7 +113,7 @@ html body .tb-name{
   text-overflow:ellipsis!important;
   max-width:180px!important;
 }
-html body .tb-role{
+html body .tb-role.tb-role{
   font:10px 'Inter',sans-serif!important;
   letter-spacing:.14em!important;
   text-transform:uppercase!important;
@@ -119,7 +122,7 @@ html body .tb-role{
   white-space:nowrap!important;
 }
 
-html body .tb-signout{
+html body .tb-signout.tb-signout{
   font:11px 'Inter',sans-serif!important;
   letter-spacing:.03em!important;
   color:rgba(238,229,212,.55)!important;
@@ -130,11 +133,11 @@ html body .tb-signout{
   margin-left:8px!important;
   transition:border-color .15s,color .15s!important;
 }
-html body .tb-signout:hover{
+html body .tb-signout.tb-signout:hover{
   color:#f1e4d4!important;
   border-color:rgba(201,166,107,.5)!important;
 }
 
 @media(max-width:900px){
-  html body .vx73-clocks{display:none!important}
+  html body .vx73-clocks.vx73-clocks{display:none!important}
 }
