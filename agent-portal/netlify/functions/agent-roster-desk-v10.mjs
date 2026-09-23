@@ -21,7 +21,7 @@ function groupBy(rows,key){
 }
 async function fallbackRoster(admin,organizationId,filter){
   let q=admin.from('models').select('*').eq('organization_id',organizationId).order('display_name').limit(Math.min(Number(filter.limit||250),500));
-  if(filter.status)q=q.eq('status',filter.status);else q=q.not('status','in','(archived,released)');
+  if(filter.status)q=q.eq('status',filter.status);else q=q.not('status','ilike','archiv%').not('status','ilike','releas%');
   if(filter.stage)q=q.eq('stage',filter.stage);
   if(filter.active!==undefined)q=q.eq('active',!!filter.active);
   if(filter.q){
@@ -144,7 +144,7 @@ export const handler=async(event)=>{
       if(!rpcUnavailable(rpcResult.error)) throw rpcResult.error;
       roster=await fallbackRoster(admin,organization.id,{...filter,tag_ids:tags,skill_ids:skills});
     }else roster=rpcResult.data||[];
-    if(!filter.status)roster=(roster||[]).filter(x=>!['archived','released'].includes(String(x?.status||'').toLowerCase()));
+    if(!filter.status)roster=(roster||[]).filter(x=>!/^(archiv|releas)/i.test(String(x?.status||'').trim()));
     const [tagRows,skillRows,markets,divisions,boards,saved]=await Promise.all([
       rows(admin.from('model_tags').select('*').eq('organization_id',organization.id).eq('active',true).order('name')),
       rows(admin.from('model_skills').select('*').eq('organization_id',organization.id).eq('active',true).order('name')),
