@@ -10,6 +10,17 @@
 publish = "."
 functions = "netlify/functions"
 
+# Netlify's post-processing (Asset Optimization) was silently rewriting every
+# absolute "/admin/assets/..." href/src in admin/index.html into a bare
+# relative "assets/..." path in the deployed HTML. Because /admin (no
+# trailing slash) is served via a rewrite that keeps the address bar at
+# /admin, the browser then resolves that relative path against /admin as if
+# it were a file, landing on the site root (/assets/...) instead of
+# /admin/assets/... — a 404 for every such asset. Disabling processing keeps
+# the HTML exactly as committed.
+[build.processing]
+skip_processing = true
+
 [[headers]]
 for = "/"
 
