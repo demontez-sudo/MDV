@@ -171,7 +171,7 @@ var CACHE_V='5';function assetURL(name){return BASE+name+'?v='+CACHE_V;}
 var CFG={
  galaxy:{gl:'galaxy'},
  earth:{video:['earth-1.mp4','earth-2.mp4'],poster:'earth.jpg',fallback:'earth'},
- waterfall:{video:['waterfall.mp4'],poster:'waterfall.jpg',fallback:'waterfall'},
+ waterfall:{gl:'waterfall'},
  christmas:{video:['christmas.mp4'],poster:'christmas.jpg',fallback:'christmas',filter:'brightness(.58) saturate(.92) contrast(1.05)'}
 };
 function reduced(){try{return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}}
