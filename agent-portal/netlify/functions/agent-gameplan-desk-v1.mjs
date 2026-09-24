@@ -108,12 +108,20 @@ export const handler=async(event)=>{
     const admin=await requirePermission(user.id,organization.id,'development.read');
     const modelId=p.model_id;if(!modelId)return json(400,{error:'model_id is required'});
     const gameplan=await one(admin.from('model_gameplans').select('*').eq('organization_id',organization.id).eq('model_id',modelId).maybeSingle());
-    const [tasks,travel,visa,plan]=await Promise.all([
+    const [tasks,travelRaw,visa,plan]=await Promise.all([
       gameplan?loadGameplanTasks(admin,organization.id,gameplan.id):Promise.resolve([]),
       rows(admin.from('travel_records').select('id,purpose,origin,destination,starts_at,ends_at,status').eq('organization_id',organization.id).eq('model_id',modelId).order('starts_at',{ascending:true}).limit(50)),
       rows(admin.from('visa_cases').select('id,country_code,visa_type,case_type,status,appointment_at,hard_deadline,consulate').eq('organization_id',organization.id).eq('model_id',modelId).order('hard_deadline',{ascending:true}).limit(50)),
       gameplan?.development_plan_id?one(admin.from('development_plans').select('*').eq('organization_id',organization.id).eq('id',gameplan.development_plan_id).maybeSingle()):Promise.resolve(null)
     ]);
+    const travelIds=travelRaw.map(t=>t.id);
+    const [segRows,houseRows]=await Promise.all([
+      travelIds.length?rows(admin.from('travel_segments').select('id,travel_record_id,segment_type,provider,segment_number,origin,destination,departs_at,arrives_at').eq('organization_id',organization.id).in('travel_record_id',travelIds).order('departs_at',{ascending:true})):Promise.resolve([]),
+      travelIds.length?rows(admin.from('housing_bookings').select('id,travel_record_id,property_name,city,check_in_at,check_out_at,status').eq('organization_id',organization.id).in('travel_record_id',travelIds).order('check_in_at',{ascending:true})):Promise.resolve([])
+    ]);
+    const segByTravel=new Map();for(const s of segRows){const k=String(s.travel_record_id);if(!segByTravel.has(k))segByTravel.set(k,[]);segByTravel.get(k).push(s);}
+    const houseByTravel=new Map();for(const h of houseRows){const k=String(h.travel_record_id);if(!houseByTravel.has(k))houseByTravel.set(k,[]);houseByTravel.get(k).push(h);}
+    const travel=travelRaw.map(t=>({...t,travel_segments:segByTravel.get(String(t.id))||[],housing_bookings:houseByTravel.get(String(t.id))||[]}));
     return json(200,{environment:'veux-saas-gameplan-v1',organization,model_id:modelId,gameplan,tasks,travel,visa,development_plan:plan});
   }catch(error){return errorResponse(error);}
 };

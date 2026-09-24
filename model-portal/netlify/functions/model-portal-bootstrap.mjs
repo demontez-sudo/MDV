@@ -49,6 +49,17 @@ export const handler=async event=>{
       safe('notifications',admin.from('notifications').select('id,notification_type,title,body,status,source_type,source_id,action_url,metadata,created_at').eq('organization_id',organization.id).eq('user_id',user.id).order('created_at',{ascending:false}).limit(100),warnings)
     ]);
 
+    const travelIds=uniq(travel.map(x=>x.id));
+    const [travelSegments,housingBookings]=await Promise.all([
+      travelIds.length?safe('travel_segments',admin.from('travel_segments').select('*').eq('organization_id',organization.id).in('travel_record_id',travelIds).order('departs_at',{ascending:true}),warnings):[],
+      travelIds.length?safe('housing_bookings',admin.from('housing_bookings').select('*').eq('organization_id',organization.id).in('travel_record_id',travelIds).order('check_in_at',{ascending:true}),warnings):[]
+    ]);
+    const segmentsByTravel=new Map();
+    for(const seg of travelSegments){const k=String(seg.travel_record_id);if(!segmentsByTravel.has(k))segmentsByTravel.set(k,[]);segmentsByTravel.get(k).push(seg);}
+    const housingByTravel=new Map();
+    for(const h of housingBookings){const k=String(h.travel_record_id);if(!housingByTravel.has(k))housingByTravel.set(k,[]);housingByTravel.get(k).push(h);}
+    const travelView=travel.map(t=>({...t,travel_segments:segmentsByTravel.get(String(t.id))||[],housing_bookings:housingByTravel.get(String(t.id))||[]}));
+
     const bookingIds=uniq(bookingLinks.map(x=>x.booking_id));
     const castingIds=uniq(castingLinks.map(x=>x.casting_id));
     const [bookings,castings,rates,usage]=await Promise.all([
@@ -91,7 +102,7 @@ export const handler=async event=>{
       measurements:model.measurement||null,
       media:{all:media,digitals,portfolio,videos},
       commercial:{bookings:bookingView,castings:castingView},
-      mobility:{travel,visa_cases:visa},
+      mobility:{travel:travelView,visa_cases:visa},
       availability:{blocks:availability},
       requests:notifications,
       tasks,

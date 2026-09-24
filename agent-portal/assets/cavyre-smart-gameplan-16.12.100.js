@@ -114,7 +114,7 @@ function render(model,gp){
   if(travel.length||visa.length){
     h+='<div class="v155-card"><header><div><small>VISA & TRAVEL</small><h2>Key dates</h2></div></header>'
      +(visa.length?'<ul class="cvygp-list">'+visa.map(function(v){return '<li><b>'+esc(v.visa_type||v.case_type||'Visa case')+'</b> · '+esc(v.status||'')+(v.hard_deadline?' · hard deadline '+fmtDate(v.hard_deadline):'')+(v.appointment_at?' · appointment '+fmtDateTime(v.appointment_at):'')+'</li>';}).join('')+'</ul>':'')
-     +(travel.length?'<ul class="cvygp-list">'+travel.map(function(tr){return '<li><b>'+esc([tr.origin,tr.destination].filter(Boolean).join(' → ')||tr.purpose||'Travel')+'</b> · '+fmtDate(tr.starts_at?String(tr.starts_at).slice(0,10):null)+' → '+fmtDate(tr.ends_at?String(tr.ends_at).slice(0,10):null)+' · '+esc(tr.status||'')+'</li>';}).join('')+'</ul>':'')
+     +(travel.length?'<ul class="cvygp-list">'+travel.map(function(tr){var segs=arr(tr.travel_segments),stays=arr(tr.housing_bookings),flight=segs[0];return '<li><b>'+esc([tr.origin,tr.destination].filter(Boolean).join(' → ')||tr.purpose||'Travel')+'</b> · '+fmtDate(tr.starts_at?String(tr.starts_at).slice(0,10):null)+' → '+fmtDate(tr.ends_at?String(tr.ends_at).slice(0,10):null)+' · '+esc(tr.status||'')+(flight?' · '+esc([flight.provider,flight.segment_number].filter(Boolean).join(' '))+(segs.length>1?' +'+(segs.length-1)+' more leg'+(segs.length>2?'s':''):''):'')+(stays.length?' · '+esc(stays[0].property_name||stays[0].city||'Stay')+(stays.length>1?' +'+(stays.length-1)+' more':''):'')+'</li>';}).join('')+'</ul>':'')
      +'</div>';
   }
   return h;
