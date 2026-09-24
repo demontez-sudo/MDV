@@ -224,6 +224,11 @@ export const handler=async(event)=>{
       rows(admin.from('model_notes').select('*').eq('organization_id',organization.id).eq('model_id',modelId).order('pinned',{ascending:false}).order('created_at',{ascending:false}).limit(250))
     ]);
 
+    const noteAuthorIds=[...new Set(notes.map(x=>x.created_by).filter(Boolean))];
+    const noteAuthors=noteAuthorIds.length?await rows(admin.from('profiles').select('user_id,display_name').in('user_id',noteAuthorIds)):[];
+    const noteAuthorMap=new Map(noteAuthors.map(x=>[String(x.user_id),x.display_name]));
+    for(const note of notes)note.author_name=noteAuthorMap.get(String(note.created_by))||null;
+
     const bookingIds=[...new Set(bookingLinks.map(x=>x.booking_id).filter(Boolean))];
     const castingIds=[...new Set(castingLinks.map(x=>x.casting_id).filter(Boolean))];
     const packageIds=[...new Set(packageLinks.map(x=>x.package_id).filter(Boolean))];
