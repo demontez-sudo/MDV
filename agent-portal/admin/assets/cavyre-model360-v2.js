@@ -116,7 +116,7 @@ function tOverview(){
    +card('Needs attention',signals().length+' item'+(signals().length===1?'':'s'),link('View all',"CAVYRE_M360.tab('record')"),attention(3))
    +card('Market plan','Upcoming focus markets and key periods.',link('View plan',"CAVYRE_M360.tab('development')"),mp)
    +'</div><div class="m360-grid g3">'
-   +card('Selected digitals','Current digitals on file.',link('View all photos',"CAVYRE_M360.tab('materials')"),digs.length?'<div class="m360-thumbs">'+digs.map(function(x){return '<button type="button" class="m360-thumb" onclick="VEUX_V156.openMedia(\''+esc(x.id)+'\')"><img loading="lazy" src="'+esc(x.url||'')+'" alt=""></button>';}).join('')+'</div>':empty('No photos yet.'))
+   +card('Selected digitals','Current digitals on file.',link('View all photos',"CAVYRE_M360.tab('materials')"),digs.length?'<div class="m360-thumbs">'+digs.map(function(x){return '<button type="button" class="m360-thumb" onclick="CAVYRE_M360.viewer(\''+esc(x.id)+'\')"><img loading="lazy" src="'+esc(x.url||'')+'" alt=""></button>';}).join('')+'</div>':empty('No photos yet.'))
    +card('Development','Key goals and progress.',link('View all',"CAVYRE_M360.tab('development')"),dev)
    +card('Recent activity','Latest updates across castings, bookings and materials.',link('View all',"CAVYRE_M360.tab('record')"),recent)
    +'</div>';
@@ -173,7 +173,7 @@ function tMaterials(){
     body=docs.length?'<ul class="m360-docs">'+docs.map(function(d){return '<li>'+ic('ti-file-text')+'<div><b>'+esc(d.name||d.title||'Document')+'</b><p>'+esc(d.category||'general')+' · '+esc(fmtDate(d.created_at))+'</p></div>'+(d.visible_to_model?chip('Model can see','ok'):chip('Internal',''))+'</li>';}).join('')+'</ul>':empty('No documents uploaded.');
   }else{
     var items=matItems();
-    body=items.length?'<div class="m360-media '+M.mat.view+'">'+items.map(function(x){var vid=String(x.media_type||'').toLowerCase()==='video',id=esc(x.id);return '<article class="m360-mcard'+(x.is_primary?' primary':'')+'"><button type="button" class="m360-mimg" onclick="VEUX_V156.openMedia(\''+id+'\')">'+(vid?'<span class="m360-play">'+ic('ti-player-play')+'</span>':'<img loading="lazy" src="'+esc(x.url||'')+'" alt="">')+(x.is_primary?'<span class="m360-badge">Profile</span>':'')+'</button><div class="m360-mmeta"><div><b>'+esc(x.caption||catOf(x))+'</b><small>'+esc(catOf(x))+' · '+esc(fmtDate(x.created_at,{month:'short',year:'numeric'}))+'</small></div><button type="button" class="m360-dots" aria-label="Actions" onclick="VEUX_V156.toggleMediaActions(\''+id+'\',event)">'+ic('ti-dots')+'</button></div><div class="v16933-media-menu" id="v16933-menu-'+id+'"><button type="button" onclick="VEUX_V156.openMedia(\''+id+'\')">View Full</button>'+(!x.is_primary&&!vid?'<button type="button" onclick="VEUX_V156.primaryMedia(\''+id+'\')">Use as Main Image</button>':'')+'<button type="button" onclick="VEUX_V156.editMedia(\''+id+'\')">Edit Details</button>'+(!x.is_primary?'<button type="button" class="danger" onclick="VEUX_V156.deleteMedia(\''+id+'\')">Delete</button>':'')+'</div></article>';}).join('')+'</div>':empty('No media in this category.');
+    body=items.length?'<div class="m360-media '+M.mat.view+'">'+items.map(function(x){var vid=String(x.media_type||'').toLowerCase()==='video',id=esc(x.id);return '<article class="m360-mcard'+(x.is_primary?' primary':'')+'"><button type="button" class="m360-mimg" onclick="CAVYRE_M360.viewer(\''+id+'\')">'+(vid?'<span class="m360-play">'+ic('ti-player-play')+'</span>':'<img loading="lazy" src="'+esc(x.url||'')+'" alt="">')+(x.is_primary?'<span class="m360-badge">Profile</span>':'')+'</button><div class="m360-mmeta"><div><b>'+esc(x.caption||catOf(x))+'</b><small>'+esc(catOf(x))+' · '+esc(fmtDate(x.created_at,{month:'short',year:'numeric'}))+'</small></div><button type="button" class="m360-dots" aria-label="Actions" onclick="VEUX_V156.toggleMediaActions(\''+id+'\',event)">'+ic('ti-dots')+'</button></div><div class="v16933-media-menu" id="v16933-menu-'+id+'"><button type="button" onclick="CAVYRE_M360.viewer(\''+id+'\')">View Full</button>'+(!x.is_primary&&!vid?'<button type="button" onclick="CAVYRE_M360.setMain(\''+id+'\')">Use as Main Image</button>':'')+'<button type="button" onclick="CAVYRE_M360.viewer(\''+id+'\')">Edit Details</button>'+(!x.is_primary?'<button type="button" class="danger" onclick="CAVYRE_M360.delMedia(\''+id+'\')">Delete</button>':'')+'</div></article>';}).join('')+'</div>':empty('No media in this category.');
   }
   var main=card('Materials','Official digitals, portfolio, runway, video and documents for '+(model().display_name||'the model')+'.','<button type="button" class="m360-btn" onclick="CAVYRE_M360.manageMedia()">'+ic('ti-photo-plus')+'Manage media</button>',chips+body);
 
@@ -273,6 +273,63 @@ function render(el){
 }
 function setTab(t){t=LEGACY[t]||t;if(!BUILD[t])return;M.tab=t;M.menu=false;paint();try{window.scrollTo({top:0});}catch(e){}}
 
+/* ---------- in-portal photo viewer ---------- */
+var LB={on:false,i:0,ids:[]};
+var PHOTO_CATS=['Headshot','Digital','Polaroid','Editorial','Runway','Motion','Commercial','Portfolio','Test','Other'];
+function lbItems(){return LB.ids.map(function(id){return media().find(function(x){return String(x.id)===String(id);});}).filter(Boolean);}
+function lbCur(){var it=lbItems();return it[Math.max(0,Math.min(LB.i,it.length-1))]||null;}
+function lbEl(){var e=document.getElementById('m360-lb');if(!e){e=document.createElement('div');e.id='m360-lb';e.className='m360-lb';document.body.appendChild(e);}return e;}
+function lbKey(ev){if(!LB.on)return;var t=ev.target&&ev.target.tagName;if(ev.key==='Escape'){lbClose();}else if(/INPUT|TEXTAREA|SELECT/.test(t||'')){return;}else if(ev.key==='ArrowRight'){lbNav(1);}else if(ev.key==='ArrowLeft'){lbNav(-1);}}
+function lbClose(){LB.on=false;var e=document.getElementById('m360-lb');if(e)e.remove();document.removeEventListener('keydown',lbKey);document.documentElement.classList.remove('m360-lb-open');}
+function lbNav(d){var n=LB.ids.length;if(!n)return;LB.i=(LB.i+d+n)%n;lbRender();}
+function lbRender(){
+  var items=lbItems(),it=lbCur();if(!it){lbClose();return;}
+  var vid=String(it.media_type||'').toLowerCase()==='video',n=items.length,id=esc(it.id);
+  var stage=vid?'<video src="'+esc(it.url||'')+'" controls playsinline autoplay></video>':'<img src="'+esc(it.url||'')+'" alt="'+esc(it.caption||'')+'">';
+  var strip=items.map(function(x,i){var v=String(x.media_type||'').toLowerCase()==='video';return '<button type="button" class="m360-lb-th'+(i===LB.i?' on':'')+'" onclick="CAVYRE_M360.lbGo('+i+')">'+(v?'<span>'+ic('ti-player-play')+'</span>':'<img loading="lazy" src="'+esc(x.url||'')+'" alt="">')+'</button>';}).join('');
+  var side='<aside class="m360-lb-side"><div class="m360-lb-sh"><div><span class="m360-kicker">PHOTO SETTINGS</span><h3>'+esc(it.caption||catOf(it))+'</h3></div></div>'
+   +(it.is_primary?'<div class="m360-lb-main on">'+ic('ti-star-filled')+' This is the main photo</div>':(vid?'':'<button type="button" class="m360-btn primary m360-lb-wide" onclick="CAVYRE_M360.lbMain()">'+ic('ti-star')+' Set as main photo</button>'))
+   +'<label>Category<select id="m360-lb-cat">'+PHOTO_CATS.map(function(c){var cur=String(it.category||'').toLowerCase()===c.toLowerCase()||(c==='Digital'&&/^digitals?$/i.test(it.category||''));return '<option'+(cur?' selected':'')+'>'+c+'</option>';}).join('')+'</select></label>'
+   +'<label>Label<input id="m360-lb-cap" value="'+esc(it.caption||'')+'" placeholder="e.g. Front portrait"></label>'
+   +'<label>Photographer<input id="m360-lb-ph" value="'+esc(it.photographer||'')+'" placeholder="Photographer / credit"></label>'
+   +'<label>Usage<input id="m360-lb-use" value="'+esc(it.usage_permission||'')+'" placeholder="Usage permission"></label>'
+   +'<label class="m360-lb-check"><input type="checkbox" id="m360-lb-pub"'+(it.is_public?' checked':'')+(it.is_primary?' disabled':'')+'> Show on website'+(it.is_primary?' (main photo is always public)':'')+'</label>'
+   +'<div class="m360-lb-meta"><small>Added '+esc(fmtDate(it.created_at))+'</small><small>'+esc(catOf(it))+' · '+(vid?'Video':'Image')+'</small></div>'
+   +'<button type="button" class="m360-btn primary m360-lb-wide" onclick="CAVYRE_M360.lbSave()">'+ic('ti-device-floppy')+' Save settings</button>'
+   +'<div class="m360-lb-row"><a class="m360-btn" href="'+esc(it.url||'#')+'" target="_blank" rel="noopener">'+ic('ti-external-link')+' Open original</a><button type="button" class="m360-btn" onclick="CAVYRE_M360.lbCopy()">'+ic('ti-link')+' Copy link</button></div>'
+   +(it.is_primary?'':'<button type="button" class="m360-btn danger m360-lb-wide" onclick="CAVYRE_M360.delMedia(\''+id+'\')">'+ic('ti-trash')+' Delete photo</button>')+'</aside>';
+  lbEl().innerHTML='<div class="m360-lb-back" onclick="CAVYRE_M360.lbClose()"></div><div class="m360-lb-win"><div class="m360-lb-stagewrap"><div class="m360-lb-stage">'+stage
+   +(n>1?'<button type="button" class="m360-lb-nav prev" aria-label="Previous" onclick="CAVYRE_M360.lbNav(-1)">'+ic('ti-chevron-left')+'</button><button type="button" class="m360-lb-nav next" aria-label="Next" onclick="CAVYRE_M360.lbNav(1)">'+ic('ti-chevron-right')+'</button>':'')
+   +'<div class="m360-lb-count">'+(LB.i+1)+' / '+n+'</div>'+(it.is_primary?'<span class="m360-badge lb">Main photo</span>':'')+'</div>'+(n>1?'<div class="m360-lb-strip">'+strip+'</div>':'')+'</div>'+side+'<button type="button" class="m360-lb-x" aria-label="Close" onclick="CAVYRE_M360.lbClose()">'+ic('ti-x')+'</button></div>';
+  var a=lbEl().querySelector('.m360-lb-th.on');if(a&&a.scrollIntoView)a.scrollIntoView({block:'nearest',inline:'center'});
+}
+function openViewer(id){
+  var ids=(M.tab==='materials'?matItems():media()).map(function(x){return x.id;});
+  if(ids.indexOf(id)<0)ids=media().map(function(x){return x.id;});
+  LB.ids=ids;LB.i=Math.max(0,ids.indexOf(id));LB.on=true;
+  document.documentElement.classList.add('m360-lb-open');document.addEventListener('keydown',lbKey);lbRender();
+}
+function mediaApi(body){return post('/api/agent/model-portfolio/v10',Object.assign({model_id:M.id},body));}
+function afterMediaChange(keepId){return load(true).then(function(){var ids=LB.ids.filter(function(i){return media().some(function(x){return String(x.id)===String(i);});});if(keepId&&ids.indexOf(keepId)<0&&media().some(function(x){return String(x.id)===String(keepId);}))ids.push(keepId);LB.ids=ids;LB.i=Math.min(LB.i,Math.max(0,ids.length-1));paint();if(LB.on)lbRender();});}
+function setMain(id){
+  var x=media().find(function(m){return String(m.id)===String(id);});if(!x)return;
+  var p=Promise.resolve(id);
+  if(String(x.category||'').toLowerCase()!=='headshot'){
+    p=mediaApi({action:'create_media',url:x.url,media_type:x.media_type||'image',provider:x.provider||'external',public_id:x.public_id||null,category:'Headshot',caption:x.caption||null,photographer:x.photographer||null,usage_permission:x.usage_permission||null,is_public:true}).then(function(r){var t=r&&r.media&&r.media.id;if(!t)throw new Error('Could not create the main-photo copy.');return t;});
+  }
+  return p.then(function(target){return mediaApi({action:'set_primary_media',media_id:target}).then(function(){return target;});}).then(function(target){toast('✓ Main photo updated');return afterMediaChange(target).then(function(){if(LB.on){var i=LB.ids.indexOf(target);if(i>=0){LB.i=i;lbRender();}}});}).catch(function(e){alert(e.message||e);});
+}
+function delMedia(id){
+  if(!confirm('Delete this photo permanently?'))return;
+  mediaApi({action:'delete_media',media_id:id}).then(function(){toast('Photo deleted');LB.ids=LB.ids.filter(function(i){return String(i)!==String(id);});return afterMediaChange();}).catch(function(e){alert(e.message||e);});
+}
+function lbSave(){
+  var it=lbCur();if(!it)return;
+  var pub=document.getElementById('m360-lb-pub'),body={action:'update_media',media_id:it.id,category:document.getElementById('m360-lb-cat').value,caption:document.getElementById('m360-lb-cap').value.trim()||null,photographer:document.getElementById('m360-lb-ph').value.trim()||null,usage_permission:document.getElementById('m360-lb-use').value.trim()||null};
+  if(pub&&!pub.disabled)body.is_public=pub.checked;
+  mediaApi(body).then(function(){toast('✓ Photo settings saved');return afterMediaChange(it.id);}).catch(function(e){alert(e.message||e);});
+}
+
 /* ---------- actions ---------- */
 function notesApi(body){return post('/api/agent/model-360',Object.assign({model_id:M.id},body));}
 function reload(){return load(true).then(function(){paint();});}
@@ -289,6 +346,7 @@ window.CAVYRE_M360={
   createAction:function(){var A=window.CAVYRE_CREATE_ACTION_AUTHORITY;try{if(A&&A.openTask)A.openTask();else if(window.VEUX_V10&&VEUX_V10.newTask)VEUX_V10.newTask();}catch(e){}var n=0,t=setInterval(function(){var s=document.getElementById('vx161275-model');if(s){s.value=M.id;s.dispatchEvent(new Event('change',{bubbles:true}));clearInterval(t);}else if(++n>15)clearInterval(t);},120);},
   sharePackage:function(){var b=document.createElement('button');b.textContent='Add to Package';b.style.display='none';(M.el||document.body).appendChild(b);b.click();setTimeout(function(){b.remove();},50);},
   openDesk:openDesk,
+  viewer:openViewer,lbClose:lbClose,lbNav:lbNav,lbGo:function(i){LB.i=i;lbRender();},lbSave:lbSave,lbMain:function(){var it=lbCur();if(it)setMain(it.id);},lbCopy:function(){var it=lbCur();if(!it)return;try{navigator.clipboard.writeText(it.url).then(function(){toast('✓ Link copied');});}catch(e){toast(it.url);}},setMain:setMain,delMedia:delMedia,
   pickDay:function(k){M.day=k;paint();},weekNav:function(n){if(n===0){M.week=0;M.day=new Date().toDateString();}else{M.week+=n;M.day=null;}paint();},
   matCat:function(c){M.mat.cat=c;paint();},matSort:function(v){M.mat.sort=v;paint();},matView:function(v){M.mat.view=v;paint();},
   recSet:function(k,v){M.rec[k]=v;var pos=document.activeElement&&document.activeElement.selectionStart;paint();if(k==='q'){var i=document.querySelector('.m360-search input');if(i){i.focus();try{i.setSelectionRange(pos,pos);}catch(e){}}}},
