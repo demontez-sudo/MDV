@@ -92,7 +92,7 @@ html body .mdv2-dup .mdv2-dup-list label span{letter-spacing:0!important;text-tr
 html body .mdv2-dup button,html body .mdv2-dup input,html body .mdv2-dup select{letter-spacing:.01em!important}
 
 /* Full booking builder */
-.mdv2-fullbk{margin-left:8px}
+.mdv2-fullbk{margin-right:8px;background:linear-gradient(135deg,#d8b96a,#b8923c)!important;color:#1a1408!important;border-color:transparent!important;font-weight:600!important}
 .mdv2-dup.mdv2-bk{width:min(1120px,calc(100vw - 24px))}
 .mdv2-bk .mdv2-dup-body{gap:18px}
 .mdv2-bk-sec{border:1px solid rgba(150,120,255,.2);border-radius:14px;padding:16px 18px;background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:12px}
