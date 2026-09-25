@@ -12,13 +12,13 @@
 
 [[redirects]]
   from = "/admin/*"
-  to = "https://maison-agent.netlify.app/:splat"
+  to = "https://main--maison-agent.netlify.app/:splat"
   status = 200
   force = true
 
 [[redirects]]
   from = "/admin"
-  to = "https://maison-agent.netlify.app/"
+  to = "https://main--maison-agent.netlify.app/"
   status = 200
   force = true
 

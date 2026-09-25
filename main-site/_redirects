@@ -1,7 +1,7 @@
 /api/public/forms/get-scouted https://maison-agent.netlify.app/api/public/forms/get-scouted 200!
 # VEUX DESK 16.9.24 — branded Agent Portal reverse proxy.
-/admin/* https://maison-agent.netlify.app/:splat 200!
-/admin https://maison-agent.netlify.app/ 200!
+/admin/* https://main--maison-agent.netlify.app/:splat 200!
+/admin https://main--maison-agent.netlify.app/ 200!
 /team https://maison-agent.netlify.app/ 302!
 /api/* https://maison-agent.netlify.app/api/:splat 200!
 /health https://maison-agent.netlify.app/health 200!
