@@ -125,7 +125,8 @@ if(action==='move'&&String(type(x)).toLowerCase()==='travel'&&(travelMeta.travel
 if(action==='move'){closeModal();return moveModal(x);}if(action==='edit'){closeModal();return openRecord(x.kind,x.id);}if(action==='delete'&&x.kind==='show'){if(!confirm('Delete “'+x.title+'”? This cannot be undone.'))return;await window.VEUX_AGENT_V4.api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({organization_slug:org(),action:'delete_show',show_id:x.id})});closeModal();S.data=null;S.seasonAt=0;return render();}if(action==='delete'){if(!confirm('Delete “'+x.title+'”? This cannot be undone.'))return;var ep=x.kind==='event'?'/api/agent/calendar/v9':'/api/agent/bookings/v9',body={organization_slug:org(),action:'delete_'+x.kind};body[x.kind+'_id']=x.id;await window.VEUX_AGENT_V4.api(ep,{method:'POST',body:JSON.stringify(body)});closeModal();S.data=null;return render();}if(action==='duplicate'){return duplicateModal(x);}}
 
 function showNotes(notes,endIso){var n=String(notes||'');if(!endIso)return n||null;return /ends=/.test(n)?n.replace(/ends=[^;]+/,'ends='+endIso):n+(n?';':'')+'ends='+endIso;}
-function showEditModal(x){
+function showEditModal(x){try{return showEditModalRun(x);}catch(e){console.error('[calendar] show editor',e);try{toast('Editor error: '+(e&&e.message||e));}catch(_){}}}
+function showEditModalRun(x){
 var h=modalHost(),r=x.raw||{};
 var sd=new Date(x.starts_at),ed=x.ends_at?new Date(x.ends_at):new Date(sd.getTime()+36e5);
 function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -252,7 +253,8 @@ var stt=String(r.status||'option').toLowerCase();if(['inquiry','option','hold','
 var us=r.usage_rights||(r.booking_usage&&r.booking_usage[0]&&r.booking_usage[0].notes)||m.usage_rights||'';
 return {booking_id:r.id||x.id,title:x.title,date:ymd(sd),date2:ed&&ymd(ed)!==ymd(sd)?ymd(ed):'',start:hm(sd),end:hm(ed),call:r.call_time?hm(new Date(r.call_time)):'',wrap:r.wrap_time?hm(new Date(r.wrap_time)):'',location:x.location||r.location||'',company_id:r.company_id,contact_id:r.primary_contact_id,market_id:r.market_id,member_id:r.assigned_member_id,status:stt,type:m.calendar_event_type||'',currency:currencyOf(x),payment:m.payment_status||'',notes:r.notes||'',usage:typeof us==='string'?us:'',travel:!!r.travel_required,visa:!!r.visa_required,model_ids:ids,
 rates:arr(r.booking_rates).map(function(b){var u=(b.metadata&&b.metadata.rate_unit)||'day';return {model_id:b.model_id,unit:u,qty:b.quantity||1,amount:b.unit_amount,cur:b.currency,comm:b.agency_fee_rate==null?null:Math.round(Number(b.agency_fee_rate)*1000)/10};})};}
-function bookingBuilder(seed){seed=seed||{};
+function bookingBuilder(seed){try{return bookingBuilderRun(seed);}catch(e){console.error('[calendar] booking builder',e);try{toast('Booking form error: '+(e&&e.message||e));}catch(_){}}}
+function bookingBuilderRun(seed){seed=seed||{};
 var h=modalHost(),LK=(S.data&&S.data.lookups)||{};
 var allModels=arr(LK.models).filter(function(m){return m&&m.id;}).map(function(m){return {id:m.id,name:m.display_name||m.name||[m.first_name,m.last_name].filter(Boolean).join(' ')||'Model'};}).sort(function(a,b){return a.name.localeCompare(b.name);});
 var companies=arr(LK.companies),contacts=arr(LK.contacts),markets=arr(LK.markets),members=arr(LK.members);
