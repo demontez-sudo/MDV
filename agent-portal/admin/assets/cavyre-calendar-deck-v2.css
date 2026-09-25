@@ -146,3 +146,42 @@ html body .mdv2-bk input[type=checkbox]{-webkit-appearance:checkbox!important;ap
 .mdv2-top .mdv2-pipe{padding:9px 14px!important;flex:0 0 auto}
 .mdv2-top .mdv2-fullbk{margin-right:0!important}
 @media(max-width:1500px){.mdv2-top .mdv2-stats.mdv2-stats{flex-wrap:wrap!important}}
+/* ===== polish pass: clean type, smooth pills, soft glass ===== */
+html body .mdv2-deck.mdv2-deck{background:linear-gradient(180deg,rgba(28,22,48,.72),rgba(14,12,26,.82))!important;border:1px solid rgba(160,130,255,.2)!important;border-radius:22px!important;backdrop-filter:blur(14px);box-shadow:0 18px 50px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.05)!important}
+html body .mdv2-deck.mdv2-deck :is(button,input,label,span,small,b,em,i){font-family:Inter,system-ui,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+html body .mdv2-deck.mdv2-deck :is(.mdv2-stat b,.mdv2-mkt b,.mdv2-title h3){font-family:"Cormorant Garamond",Georgia,serif!important}
+html body .mdv2-deck.mdv2-deck .mdv2-title small,html body .mdv2-deck.mdv2-deck .mdv2-label{text-transform:uppercase!important;letter-spacing:.18em!important;font-size:10px!important;font-weight:600!important;color:#a99fd0!important}
+html body .mdv2-deck.mdv2-deck .mdv2-title h3{font-size:31px!important;font-weight:500!important}
+/* stat tiles */
+html body .mdv2-deck .mdv2-stat.mdv2-stat,html body .mdv2-deck .mdv2-mkt.mdv2-mkt{border-radius:16px!important;border:1px solid rgba(255,255,255,.07)!important;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.05);transition:transform .2s,border-color .2s}
+html body .mdv2-deck .mdv2-stat.mdv2-stat:hover{transform:translateY(-1px);border-color:rgba(185,161,255,.4)!important}
+html body .mdv2-deck .mdv2-stat b{font-size:24px!important;color:#f3efff}
+html body .mdv2-deck .mdv2-stat small{font-size:12px!important;color:#a8a2c4!important}
+html body .mdv2-deck .mdv2-mkt small{text-transform:uppercase!important;letter-spacing:.16em!important;font-size:10px!important}
+html body .mdv2-deck .mdv2-stat .mdv-deck-ico{width:34px;height:34px;border-radius:11px;background:rgba(185,161,255,.12);border:1px solid rgba(185,161,255,.22)!important;color:#cbb8ff}
+/* buttons */
+html body .mdv2-deck .mdv2-pipe.mdv2-pipe{border-radius:999px!important;height:40px;padding:0 20px!important;font:600 13px Inter,sans-serif!important;border:1px solid rgba(185,161,255,.45)!important;background:rgba(185,161,255,.08)!important;color:#efeaff!important;transition:all .2s}
+html body .mdv2-deck .mdv2-pipe.mdv2-pipe:hover{background:rgba(185,161,255,.22)!important;transform:translateY(-1px)}
+html body .mdv2-deck .mdv2-pipe.mdv2-fullbk{background:linear-gradient(135deg,#f0d78f,#c99a3c)!important;color:#1d1608!important;border-color:transparent!important;box-shadow:0 6px 20px rgba(201,154,60,.3)}
+html body .mdv2-deck .mdv2-pipe.mdv2-fullbk:hover{box-shadow:0 8px 26px rgba(201,154,60,.45)}
+/* season segmented */
+html body .mdv2-deck .mdv2-seg.mdv2-seg{border-radius:999px!important;padding:4px!important;border:1px solid rgba(255,255,255,.08)!important;background:rgba(0,0,0,.25)!important;gap:2px!important}
+html body .mdv2-deck .mdv2-seg.mdv2-seg button{border-radius:999px!important;padding:8px 16px!important;font:500 13px Inter,sans-serif!important;color:#b9b3d3!important;background:transparent!important;border:0!important;box-shadow:none!important;transition:all .2s}
+html body .mdv2-deck .mdv2-seg.mdv2-seg button:hover{color:#fff!important;background:rgba(255,255,255,.06)!important}
+html body .mdv2-deck .mdv2-seg.mdv2-seg button.on{background:linear-gradient(135deg,#e6dbff,#b59bff)!important;color:#1a1233!important;font-weight:600!important;box-shadow:0 4px 14px rgba(150,120,255,.35)!important}
+/* search */
+html body .mdv2-deck .mdv2-search.mdv2-search{height:38px;border-radius:999px!important;border:1px solid rgba(255,255,255,.1)!important;background:rgba(0,0,0,.25)!important;padding:0 14px!important;min-width:190px;transition:border-color .2s}
+html body .mdv2-deck .mdv2-search.mdv2-search:focus-within{border-color:#b9a1ff!important}
+html body .mdv2-deck .mdv2-search.mdv2-search input{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;height:auto!important;padding:0!important;margin:0!important;font-size:13px!important;color:#ece8f7!important;width:140px!important}
+/* model pills */
+html body .mdv2-deck .mdv2-all.mdv2-all,html body .mdv2-deck .mdv2-more.mdv2-more,html body .mdv2-deck .mdv2-model.mdv2-model{border-radius:999px!important;height:38px;font:500 13px Inter,sans-serif!important;border:1px solid rgba(255,255,255,.09)!important;background:rgba(255,255,255,.04)!important;color:#ece8f7!important;transition:all .2s}
+html body .mdv2-deck .mdv2-model.mdv2-model{padding:0 16px 0 4px!important}
+html body .mdv2-deck .mdv2-model.mdv2-model:hover{border-color:rgba(185,161,255,.6)!important;transform:translateY(-1px)}
+html body .mdv2-deck .mdv2-model.mdv2-model.on,html body .mdv2-deck .mdv2-all.mdv2-all.on{background:linear-gradient(135deg,#e6dbff,#b59bff)!important;color:#1a1233!important;border-color:transparent!important;box-shadow:0 4px 14px rgba(150,120,255,.35)}
+html body .mdv2-deck .mdv2-more.mdv2-more{border-style:dashed!important;color:#cbb8ff!important;background:transparent!important}
+/* category chips */
+html body .mdv2-deck .mdv2-cat.mdv2-cat{border-radius:999px!important;height:38px;padding:0 16px!important;font:500 13px Inter,sans-serif!important;color:#ddd8f0!important;border:1px solid rgba(255,255,255,.09)!important;background:rgba(255,255,255,.04)!important;transition:all .2s}
+html body .mdv2-deck .mdv2-cat.mdv2-cat:hover{transform:translateY(-1px);border-color:var(--c)!important;background:color-mix(in srgb,var(--c) 12%,transparent)!important}
+html body .mdv2-deck .mdv2-cat.mdv2-cat b{color:#fff;background:rgba(255,255,255,.1);border-radius:999px;padding:1px 8px;font-size:12px}
+html body .mdv2-deck .mdv2-reset{font-size:13px!important;color:#cbb8ff!important;text-decoration:none!important;opacity:.85}
+html body .mdv2-deck .mdv2-reset:hover{opacity:1;text-decoration:underline!important}
