@@ -90,3 +90,52 @@ html body .mdv2-dup input[type=checkbox]{-webkit-appearance:checkbox!important;a
 html body .mdv2-dup .mdv2-dup-list label{display:flex!important;flex-direction:row!important;align-items:center!important;gap:10px!important;letter-spacing:0!important;min-height:0!important;padding:7px 0!important}
 html body .mdv2-dup .mdv2-dup-list label span{letter-spacing:0!important;text-transform:none!important;font-size:13.5px!important}
 html body .mdv2-dup button,html body .mdv2-dup input,html body .mdv2-dup select{letter-spacing:.01em!important}
+
+/* Full booking builder */
+.mdv2-fullbk{margin-left:8px}
+.mdv2-dup.mdv2-bk{width:min(1120px,calc(100vw - 24px))}
+.mdv2-bk .mdv2-dup-body{gap:18px}
+.mdv2-bk-sec{border:1px solid rgba(150,120,255,.2);border-radius:14px;padding:16px 18px;background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:12px}
+.mdv2-bk-sec h4{margin:0;font:500 22px "Cormorant Garamond",Georgia,serif;color:#ece8f7}
+.mdv2-bk .mdv2-dup-row.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mdv2-bk .mdv2-dup-row.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.mdv2-bk .mdv2-dup-row.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+.mdv2-bk .mdv2-dup-row .wide{grid-column:1/-1}
+.mdv2-bk-add{position:relative;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mdv2-bk-add .mdv2-search{flex:1 1 260px}
+.mdv2-bk-btn{border:1px solid rgba(150,120,255,.32);background:rgba(255,255,255,.03);color:#ece8f7;border-radius:999px;padding:8px 16px;font:500 13px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+.mdv2-bk-btn:hover{border-color:#b9a1ff;background:rgba(185,161,255,.16)}
+.mdv2-bk-btn b{margin-left:6px;color:#b9a1ff}
+.mdv2-bk-btn.go{background:linear-gradient(135deg,#dccdff,#b59bff);color:#1a1233;border-color:transparent}
+.mdv2-bk-suggest{position:absolute;left:0;top:calc(100% + 6px);z-index:20;min-width:280px;max-height:260px;overflow:auto;background:#120e2a;border:1px solid rgba(150,120,255,.4);border-radius:12px;padding:6px;display:none;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+.mdv2-bk-suggest.open{display:block}
+.mdv2-bk-suggest button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:8px;padding:9px 12px;color:#ece8f7;font:13.5px Inter,sans-serif;cursor:pointer}
+.mdv2-bk-suggest button:hover{background:rgba(185,161,255,.18)}
+.mdv2-bk-suggest em{display:block;padding:9px 12px;color:#9d97b8;font-size:13px}
+.mdv2-bk-same{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:10px 12px;border:1px dashed rgba(150,120,255,.35);border-radius:12px}
+.mdv2-bk-same>span{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#b9a1ff;margin-right:4px}
+.mdv2-bk-same input,.mdv2-bk-same select,.mdv2-bk-tbl input,.mdv2-bk-tbl select{background:rgba(255,255,255,.05);border:1px solid rgba(150,120,255,.32);border-radius:8px;padding:8px 10px;color:#ece8f7;font:13.5px Inter,sans-serif;outline:0;min-width:0}
+.mdv2-bk-same input[type=number]{width:96px}
+.mdv2-bk-tblwrap{overflow-x:auto;border:1px solid rgba(150,120,255,.22);border-radius:12px}
+.mdv2-bk-tbl{width:100%;border-collapse:collapse;min-width:820px}
+.mdv2-bk-tbl th{text-align:left;font-weight:500;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#9d97b8;padding:10px 10px;border-bottom:1px solid rgba(150,120,255,.2);background:rgba(255,255,255,.03)}
+.mdv2-bk-tbl td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle;font-size:13.5px}
+.mdv2-bk-tbl td.nm{font-weight:500;white-space:nowrap}
+.mdv2-bk-tbl td.g{white-space:nowrap;color:#d6c6ff;font-variant-numeric:tabular-nums}
+.mdv2-bk-tbl td.empty{text-align:center;color:#9d97b8;padding:22px}
+.mdv2-bk-tbl input[type=number]{width:88px}.mdv2-bk-tbl select{max-width:120px}
+.mdv2-bk-tbl input:disabled{opacity:.4}
+.mdv2-bk-tbl .rm{background:none;border:0;color:#9d97b8;font-size:18px;cursor:pointer;padding:2px 8px}.mdv2-bk-tbl .rm:hover{color:#f26b7c}
+.mdv2-bk-tot{display:flex;gap:18px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.mdv2-bk-tot span small{display:block;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#9d97b8}
+.mdv2-bk-tot span b{font:500 22px "Cormorant Garamond",Georgia,serif;color:#ece8f7}
+.mdv2-bk-tot i{width:1px;height:30px;background:rgba(150,120,255,.3)}
+.mdv2-bk-tot .muted{color:#9d97b8;font-size:13px}
+.mdv2-bk-flags{display:flex;gap:22px;flex-wrap:wrap}
+.mdv2-bk-flags label{flex-direction:row;align-items:center;gap:8px;font-size:13px;color:#ece8f7;text-transform:none;letter-spacing:0;cursor:pointer}
+html body .mdv2-bk input[type=checkbox]{-webkit-appearance:checkbox!important;appearance:auto!important;width:18px!important;height:18px!important;min-width:18px!important;padding:0!important;margin:0!important;background:none!important;border:0!important;accent-color:#b59bff}
+@media(max-width:860px){.mdv2-bk .mdv2-dup-row.four,.mdv2-bk .mdv2-dup-row.three,.mdv2-bk .mdv2-dup-row.two{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.mdv2-bk .mdv2-dup-row.four,.mdv2-bk .mdv2-dup-row.three,.mdv2-bk .mdv2-dup-row.two{grid-template-columns:1fr}}
+.mdv2-bk-add .mdv2-search.mdv2-search{display:flex!important;flex-direction:row!important;align-items:center!important;height:40px;padding:0 14px!important;border-radius:999px!important}
+.mdv2-bk-add .mdv2-search.mdv2-search input{flex:1!important;width:100%!important;height:auto!important;background:none!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}
+.mdv2-bk-add .mdv2-search.mdv2-search i{position:static!important;margin:0!important}

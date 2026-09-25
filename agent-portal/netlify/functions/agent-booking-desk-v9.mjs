@@ -169,6 +169,14 @@ export const handler=async(event)=>{
         }else saved=rpcResult.data;
         if(!saved?.verified||!saved?.booking){const e=new Error('Booking save could not be verified.');e.statusCode=500;e.publicMessage='Booking was not confirmed as saved. Please retry.';throw e;}
         let booking=saved.booking;
+        // Per-model rates: replace whatever single rate the RPC wrote with one row per model.
+        let savedRates=saved.rates;
+        if(Array.isArray(body.model_rates)&&body.model_rates.length){
+          const allowed=new Set(cleanIds(body.model_ids).map(String));
+          const rateRows=body.model_rates.filter(r=>r&&allowed.has(String(r.model_id))&&n(r.unit_amount)!=null&&n(r.unit_amount)>=0).map(r=>({organization_id:organization.id,booking_id:booking.id,model_id:r.model_id,rate_type:'flat',quantity:n(r.quantity)||1,unit_amount:n(r.unit_amount),currency:String(r.currency||body.currency||'USD').slice(0,3).toUpperCase(),agency_fee_rate:n(r.agency_commission_pct)==null?null:Math.min(1,Math.max(0,n(r.agency_commission_pct)/100)),notes:r.notes||null,metadata:{rate_unit:String(r.rate_unit||'day')}}));
+          const {error:rateDelError}=await admin.from('booking_rates').delete().eq('organization_id',organization.id).eq('booking_id',booking.id);if(rateDelError)throw rateDelError;
+          if(rateRows.length){const {data:rateData,error:rateError}=await admin.from('booking_rates').insert(rateRows).select('*');if(rateError)throw rateError;savedRates=rateData||[];}else savedRates=[];
+        }
         // New model assignments are requests until the model answers. Existing accepted/declined/hold responses are preserved by save_booking_full_v1.
         if(body.model_response_required!==false){
           const ids=cleanIds(body.model_ids);
@@ -189,7 +197,7 @@ export const handler=async(event)=>{
         }
         let notification_warning=null;try{await notifyBookingState(admin,organization.id,booking,body.model_ids,action==='create_booking'?'created':'updated',changedFields);}catch(e){notification_warning='Booking saved, but one or more portal notifications could not be delivered.';}
         const warnings=[notification_warning,invoice_warning].filter(Boolean);
-        return json(action==='create_booking'?201:200,{ok:true,verified:true,persisted_at:saved.persisted_at,booking,model_ids:saved.model_ids,rates:saved.rates,usage:saved.usage,auto_invoice,warnings,warning:warnings[0]||null});
+        return json(action==='create_booking'?201:200,{ok:true,verified:true,persisted_at:saved.persisted_at,booking,model_ids:saved.model_ids,rates:savedRates,usage:saved.usage,auto_invoice,warnings,warning:warnings[0]||null});
       }
       if(action==='delete_booking'){const result=await safeDeleteBooking(admin,organization.id,body.booking_id);return json(200,{ok:true,verified:result?.verified===true,deleted:'booking',booking_id:body.booking_id,persisted_at:new Date().toISOString()});}
       if(action==='create_casting'||action==='update_casting'){
