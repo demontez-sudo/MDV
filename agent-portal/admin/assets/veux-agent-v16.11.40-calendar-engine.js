@@ -122,8 +122,61 @@ async function eventAction(action,x){
 var travelMeta=x&&x.raw&&x.raw.metadata||{};
 if(action==='edit'&&String(type(x)).toLowerCase()==='travel'&&(travelMeta.travel_record_id||travelMeta.mobility_travel_id)){closeModal();try{sessionStorage.setItem('cavyre.mobility.focus.travel',String(travelMeta.travel_record_id||travelMeta.mobility_travel_id));}catch(_e){}if(typeof window.navTo==='function')return window.navTo('mobility');location.hash='mobility';return;}
 if(action==='move'&&String(type(x)).toLowerCase()==='travel'&&(travelMeta.travel_record_id||travelMeta.mobility_travel_id)){throw new Error('Move Travel from Travel & Visa so itinerary, housing and arrival intelligence stay synchronized.');}
-if(action==='move'){closeModal();return moveModal(x);}if(action==='edit'){closeModal();return openRecord(x.kind,x.id);}if(action==='delete'){if(!confirm('Delete “'+x.title+'”? This cannot be undone.'))return;var ep=x.kind==='event'?'/api/agent/calendar/v9':'/api/agent/bookings/v9',body={organization_slug:org(),action:'delete_'+x.kind};body[x.kind+'_id']=x.id;await window.VEUX_AGENT_V4.api(ep,{method:'POST',body:JSON.stringify(body)});closeModal();S.data=null;return render();}if(action==='duplicate'){var r=x.raw||{},ids=models(x).map(function(m){var row=arr(x.models).find(function(a){var q=a.models||a;return (q.display_name||q.name)===m.name;});return row&&(row.model_id||(row.models||row).id);}).filter(Boolean),ep2=x.kind==='event'?'/api/agent/calendar/v9':'/api/agent/bookings/v9',body2={organization_slug:org(),action:'create_'+x.kind,title:x.title+' · Copy',starts_at:x.starts_at,ends_at:x.ends_at,status:'draft',location:x.location||null,model_ids:ids,notes:x.notes||null,timezone:r.timezone||null,visibility:r.visibility||'organization',market_id:r.market_id||null,company_id:r.company_id||null,contact_id:r.contact_id||r.primary_contact_id||null,event_type:r.event_type||'meeting',calendar_event_type:type(x)};if(x.kind==='booking'){body2.paid=false;body2.booking_type=r.booking_type||'other';}if(x.kind==='casting')body2.casting_type=r.casting_type||'in_person';await window.VEUX_AGENT_V4.api(ep2,{method:'POST',body:JSON.stringify(body2)});closeModal();S.data=null;return render();}}
+if(action==='move'){closeModal();return moveModal(x);}if(action==='edit'){closeModal();return openRecord(x.kind,x.id);}if(action==='delete'){if(!confirm('Delete “'+x.title+'”? This cannot be undone.'))return;var ep=x.kind==='event'?'/api/agent/calendar/v9':'/api/agent/bookings/v9',body={organization_slug:org(),action:'delete_'+x.kind};body[x.kind+'_id']=x.id;await window.VEUX_AGENT_V4.api(ep,{method:'POST',body:JSON.stringify(body)});closeModal();S.data=null;return render();}if(action==='duplicate'){return duplicateModal(x);}}
 
+function duplicateModal(x){
+var h=modalHost(),r=x.raw||{};
+var sameIds=models(x).map(function(m){var row=arr(x.models).find(function(a){var q=a.models||a;return (q.display_name||q.name)===m.name;});return row&&(row.model_id||(row.models||row).id);}).filter(Boolean);
+var sd=new Date(x.starts_at),ed=x.ends_at?new Date(x.ends_at):new Date(sd.getTime()+36e5);
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function hm(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+var st={mode:'same',roster:null,loading:false,picked:{},q:''};sameIds.forEach(function(id){st.picked[id]=1;});
+var $=function(sel){return h.querySelector(sel);};
+h.innerHTML='<div class="vx82-modal-back"><section class="mdv2-dup" role="dialog" aria-modal="true" aria-label="Duplicate event"><header><div><small>Duplicate '+esc(type(x).toLowerCase())+'</small><h2>Copy “'+esc(x.title)+'”</h2></div><button type="button" data-modal-close aria-label="Close">×</button></header>'
++'<div class="mdv2-dup-body">'
++'<label class="wide"><span>Title</span><input id="dup-title" value="'+esc(x.title)+'"></label>'
++'<div class="mdv2-dup-row"><label><span>New date</span><input id="dup-date" type="date" value="'+ymd(sd)+'"></label><label><span>Start</span><input id="dup-start" type="time" value="'+hm(sd)+'"></label><label><span>End</span><input id="dup-end" type="time" value="'+hm(ed)+'"></label></div>'
++'<div class="mdv2-dup-chips" role="group" aria-label="Quick dates">'+[['Same day',0],['+1 day',1],['+1 week',7],['+2 weeks',14],['+1 month',30]].map(function(q){return '<button type="button" data-dup-plus="'+q[1]+'">'+q[0]+'</button>';}).join('')+'</div>'
++'<div class="mdv2-dup-row two"><label><span>Repeat</span><select id="dup-rep"><option value="once">Just once</option><option value="d5">Every day × 5</option><option value="w4">Every week × 4</option><option value="w8">Every week × 8</option></select></label><label><span>Status</span><select id="dup-status"><option value="draft">Draft</option><option value="same"'+(x.status?'':' disabled')+'>Same as original'+(x.status?' ('+esc(x.status)+')':'')+'</option></select></label></div>'
++'<div class="mdv2-dup-models"><span class="mdv2-dup-lbl">Models</span><div class="mdv2-dup-seg" role="group"><button type="button" class="on" data-dup-mode="same">Same models <b>'+sameIds.length+'</b></button><button type="button" data-dup-mode="all">All models</button><button type="button" data-dup-mode="pick">Choose…</button></div><div id="dup-models"></div></div>'
++'</div><footer><span class="mdv2-dup-sum" id="dup-sum"></span><button type="button" class="ghost" data-modal-close>Cancel</button><button type="button" class="go" id="dup-go">Create duplicate</button></footer></section></div>';
+function ids(){if(st.mode==='same')return sameIds.slice();if(st.mode==='all')return arr(st.roster).map(function(m){return m.id;});return Object.keys(st.picked);}
+function dates(){var v=($('#dup-date')||{}).value;if(!v)return [];var rep=($('#dup-rep')||{}).value,base=new Date(v+'T12:00:00'),n=rep==='d5'?5:rep==='w4'?4:rep==='w8'?8:1,step=rep==='d5'?1:7,out=[];for(var i=0;i<n;i++){var d=new Date(base);d.setDate(base.getDate()+i*step);out.push(ymd(d));}return out;}
+function sum(){var n=ids().length,d=dates().length;var el=$('#dup-sum');if(el)el.textContent=d+' event'+(d===1?'':'s')+' · '+n+' model'+(n===1?'':'s');var go=$('#dup-go');if(go)go.disabled=!d||(!n&&st.mode!=='same');}
+function loadRoster(){if(st.roster||st.loading)return Promise.resolve();st.loading=true;drawModels();return window.VEUX_AGENT_V4.api('/api/agent/roster/v10?organization='+encodeURIComponent(org())+'&limit=500',{method:'GET',headers:{}}).then(function(d){var rows=arr(d&&d.roster).length?arr(d.roster):arr(d&&d.models);st.roster=rows.filter(function(m){return m&&m.id;}).map(function(m){return {id:m.id,name:m.display_name||m.name||[m.first_name,m.last_name].filter(Boolean).join(' ')||'Model'};}).sort(function(a,b){return a.name.localeCompare(b.name);});},function(e){toast(e&&e.message||'Could not load the roster','risk');st.roster=[];}).then(function(){st.loading=false;drawModels();});}
+function drawModels(){var box=$('#dup-models');if(!box)return;var html='';
+ if(st.mode==='same'){html='<p class="mdv2-dup-note">'+(sameIds.length?'The '+sameIds.length+' model'+(sameIds.length===1?'':'s')+' on the original event: '+esc(models(x).map(function(m){return m.name;}).slice(0,6).join(', '))+(sameIds.length>6?' +'+(sameIds.length-6)+' more':''):'The original has no models attached.')+'</p>';}
+ else if(st.loading||!st.roster){html='<p class="mdv2-dup-note">Loading the roster…</p>';}
+ else if(st.mode==='all'){html='<p class="mdv2-dup-note"><b>All '+st.roster.length+' active models</b> will be added to each copy.</p>';}
+ else{var q=st.q.toLowerCase(),list=st.roster.filter(function(m){return !q||m.name.toLowerCase().indexOf(q)>=0;});html='<div class="mdv2-dup-pickbar"><input id="dup-q" placeholder="Search models…" value="'+esc(st.q)+'" autocomplete="off"><button type="button" data-dup-pickall>Select all'+(q?' shown':'')+'</button><button type="button" data-dup-pickclear>Clear</button></div><div class="mdv2-dup-list">'+list.map(function(m){return '<label><input type="checkbox" data-dup-pick="'+esc(m.id)+'"'+(st.picked[m.id]?' checked':'')+'><span>'+esc(m.name)+'</span></label>';}).join('')+(list.length?'':'<em>No models match.</em>')+'</div>';}
+ box.innerHTML=html;sum();
+ var qi=box.querySelector('#dup-q');if(qi){qi.oninput=function(){st.q=qi.value;var pos=qi.selectionStart;drawModels();var n=$('#dup-q');if(n){n.focus();try{n.setSelectionRange(pos,pos);}catch(e){}}};}
+ box.querySelectorAll('[data-dup-pick]').forEach(function(c){c.onchange=function(){if(c.checked)st.picked[c.dataset.dupPick]=1;else delete st.picked[c.dataset.dupPick];sum();};});
+ var pa=box.querySelector('[data-dup-pickall]');if(pa)pa.onclick=function(){var q=st.q.toLowerCase();arr(st.roster).forEach(function(m){if(!q||m.name.toLowerCase().indexOf(q)>=0)st.picked[m.id]=1;});drawModels();};
+ var pc=box.querySelector('[data-dup-pickclear]');if(pc)pc.onclick=function(){st.picked={};drawModels();};}
+h.querySelectorAll('[data-modal-close]').forEach(function(b){b.onclick=closeModal;});
+$('.vx82-modal-back').onclick=function(e){if(e.target===this)closeModal();};
+h.querySelectorAll('[data-dup-mode]').forEach(function(b){b.onclick=function(){st.mode=b.dataset.dupMode;h.querySelectorAll('[data-dup-mode]').forEach(function(o){o.classList.toggle('on',o===b);});if(st.mode!=='same')loadRoster();drawModels();};});
+h.querySelectorAll('[data-dup-plus]').forEach(function(b){b.onclick=function(){var d=new Date(sd);d.setHours(12,0,0,0);d.setDate(d.getDate()+Number(b.dataset.dupPlus));$('#dup-date').value=ymd(d);sum();};});
+['#dup-date','#dup-rep'].forEach(function(q){var el=$(q);if(el)el.onchange=sum;});
+$('#dup-go').onclick=async function(){
+ var go=this,list=dates(),mids=ids();if(!list.length){toast('Choose a date','risk');return;}
+ var t=($('#dup-title').value||x.title).trim()||x.title,s0=$('#dup-start').value||hm(sd),e0=$('#dup-end').value||hm(ed),status=$('#dup-status').value==='same'?(x.status||'draft'):'draft';
+ var ep=x.kind==='event'?'/api/agent/calendar/v9':'/api/agent/bookings/v9';
+ go.disabled=true;var made=0;
+ try{
+  for(var i=0;i<list.length;i++){
+   go.textContent='Creating '+(i+1)+' of '+list.length+'…';
+   var starts=new Date(list[i]+'T'+s0+':00'),ends=new Date(list[i]+'T'+e0+':00');if(ends<=starts)ends=new Date(ends.getTime()+864e5);
+   var body={organization_slug:org(),action:'create_'+x.kind,title:t,starts_at:starts.toISOString(),ends_at:ends.toISOString(),status:status,location:x.location||null,model_ids:mids,notes:x.notes||null,timezone:r.timezone||null,visibility:r.visibility||'organization',market_id:r.market_id||null,company_id:r.company_id||null,contact_id:r.contact_id||r.primary_contact_id||null,event_type:r.event_type||'meeting',calendar_event_type:type(x)};
+   if(x.kind==='booking'){body.paid=false;body.booking_type=r.booking_type||'other';}
+   if(x.kind==='casting')body.casting_type=r.casting_type||'in_person';
+   await window.VEUX_AGENT_V4.api(ep,{method:'POST',body:JSON.stringify(body)});made++;
+  }
+  closeModal();S.data=null;toast(made+' event'+(made===1?'':'s')+' created · '+mids.length+' model'+(mids.length===1?'':'s'));return render();
+ }catch(e){toast((made?made+' created, then failed: ':'')+(e&&e.message||String(e)),'risk');go.disabled=false;go.textContent='Create duplicate';if(made){S.data=null;render();}}
+};
+drawModels();sum();var f=$('#dup-title');if(f)f.focus();}
 var DECK_FILTERS=[['travel','Travel / Movement','✈'],['visa','Visa / Immigration','▣'],['casting','Casting','☆'],['fitting','Fitting','⌒'],['booking','Booking','▤'],['other','Training / Other','↔'],['risk','Conflicts / Risks','!']];
 var DECK_ICONS={movements:'<path d="M10.5 13.5 3 11l1.5-2 8 .8L17 5.5a2 2 0 0 1 3 3l-4.3 4.5.8 8-2 1.5-2.5-7.5L8 18l.5-3.2z"/>',events:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',people:'<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.9-3.6 3.8-5.4 7.5-5.4s6.6 1.8 7.5 5.4"/>',risk:'<path d="M12 3.5 21 19.5H3z"/><path d="M12 10v4.5M12 17.2v.1"/>'};
 function deckIcon(k){return '<i class="mdv-deck-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+DECK_ICONS[k]+'</svg></i>';}

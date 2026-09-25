@@ -50,3 +50,37 @@ html body .mdv-deck.mdv2-deck{display:flex!important;flex-direction:column!impor
 .mdv2-top{padding:14px}.mdv2-stats{justify-content:flex-start}.mdv2-controls,.mdv2-cats{padding-left:14px;padding-right:14px}
 .mdv2-cats{overflow-x:auto;flex-wrap:nowrap}.mdv2-reset{margin-left:8px}
 }
+
+/* Duplicate event dialog */
+.mdv2-dup{width:min(640px,calc(100vw - 24px));max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:#0f0b26;border:1px solid rgba(150,120,255,.38);border-radius:18px;box-shadow:0 30px 90px rgba(0,0,0,.6);color:#ece8f7;font-family:Inter,system-ui,sans-serif;overflow:hidden;margin:auto}
+.mdv2-dup>header{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding:20px 22px 12px}
+.mdv2-dup>header small{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#b9a1ff}
+.mdv2-dup>header h2{margin:4px 0 0;font:500 28px/1.1 "Cormorant Garamond",Georgia,serif;color:#ece8f7}
+.mdv2-dup>header button{width:34px;height:34px;border-radius:50%;border:1px solid rgba(150,120,255,.4);background:transparent;color:#ece8f7;font-size:18px;cursor:pointer}
+.mdv2-dup-body{padding:6px 22px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px}
+.mdv2-dup label{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mdv2-dup label>span,.mdv2-dup-lbl{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#9d97b8}
+.mdv2-dup input:not([type=checkbox]),.mdv2-dup select{background:rgba(255,255,255,.05);border:1px solid rgba(150,120,255,.34);border-radius:10px;padding:10px 12px;color:#ece8f7;font:14px Inter,sans-serif;outline:0;min-width:0}
+.mdv2-dup input:focus,.mdv2-dup select:focus{border-color:#b9a1ff}
+.mdv2-dup option{background:#120e2a}
+.mdv2-dup-row{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:12px}.mdv2-dup-row.two{grid-template-columns:1fr 1fr}
+.mdv2-dup-chips{display:flex;gap:8px;flex-wrap:wrap}
+.mdv2-dup-chips button,.mdv2-dup-pickbar button{border:1px solid rgba(150,120,255,.3);background:rgba(255,255,255,.03);color:#ece8f7;border-radius:999px;padding:6px 13px;font:12.5px Inter,sans-serif;cursor:pointer}
+.mdv2-dup-chips button:hover,.mdv2-dup-pickbar button:hover{border-color:#b9a1ff;background:rgba(185,161,255,.16)}
+.mdv2-dup-models{display:flex;flex-direction:column;gap:8px}
+.mdv2-dup-seg{display:inline-flex;align-self:flex-start;gap:2px;padding:3px;border-radius:999px;border:1px solid rgba(150,120,255,.28);background:rgba(255,255,255,.03);flex-wrap:wrap}
+.mdv2-dup-seg button{border:0;background:transparent;color:#c9c3e0;padding:7px 15px;border-radius:999px;font:500 13px Inter,sans-serif;cursor:pointer}
+.mdv2-dup-seg button b{margin-left:6px;color:#b9a1ff}
+.mdv2-dup-seg button.on{background:linear-gradient(135deg,#dccdff,#b59bff);color:#1a1233}.mdv2-dup-seg button.on b{color:#1a1233}
+.mdv2-dup-note{margin:0;padding:12px 14px;border:1px dashed rgba(150,120,255,.3);border-radius:12px;color:#c9c3e0;font-size:13px}
+.mdv2-dup-pickbar{display:flex;gap:8px;flex-wrap:wrap}.mdv2-dup-pickbar input{flex:1 1 180px}
+.mdv2-dup-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 14px;max-height:230px;overflow-y:auto;border:1px solid rgba(150,120,255,.22);border-radius:12px;padding:8px 12px;margin-top:8px}
+.mdv2-dup-list label{flex-direction:row;align-items:center;gap:9px;padding:6px 0;font-size:13.5px;cursor:pointer}
+.mdv2-dup-list label span{text-transform:none;letter-spacing:0;color:#ece8f7;font-size:13.5px}
+.mdv2-dup-list input{accent-color:#b59bff}.mdv2-dup-list em{grid-column:1/-1;color:#9d97b8;font-size:13px;padding:8px 0}
+.mdv2-dup>footer{display:flex;align-items:center;gap:10px;padding:14px 22px;border-top:1px solid rgba(150,120,255,.2)}
+.mdv2-dup-sum{margin-right:auto;font-size:12.5px;color:#9d97b8}
+.mdv2-dup>footer button{padding:10px 20px;border-radius:999px;font:500 13.5px Inter,sans-serif;cursor:pointer;border:1px solid rgba(150,120,255,.4);background:transparent;color:#ece8f7}
+.mdv2-dup>footer .go{background:linear-gradient(135deg,#dccdff,#b59bff);color:#1a1233;border-color:transparent}
+.mdv2-dup>footer .go:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:560px){.mdv2-dup-row,.mdv2-dup-row.two{grid-template-columns:1fr}.mdv2-dup-list{grid-template-columns:1fr}}
