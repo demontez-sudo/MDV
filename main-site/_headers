@@ -17,3 +17,12 @@
 
 /
   Cache-Control: no-cache, no-store, must-revalidate
+
+# /admin is a reverse proxy to the Agent Portal (see netlify.toml). Netlify's
+# edge has been observed caching this proxied response for a long TTL
+# regardless of the upstream's own no-cache headers, serving a stale Agent
+# build indefinitely. Force it explicitly on this project's own edge.
+/admin
+  Cache-Control: no-cache, no-store, must-revalidate
+/admin/*
+  Cache-Control: no-cache, no-store, must-revalidate
