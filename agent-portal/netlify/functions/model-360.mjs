@@ -1,6 +1,7 @@
 import { requireUser, assertPermission, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 import { loadModels } from './_lib/portal-bridge.mjs';
+import { websiteProfileStatus } from './_lib/website-profile.mjs';
 
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 async function one(q){const {data,error}=await q;if(error)throw error;return data||null;}
@@ -9,33 +10,6 @@ const clean=(obj,keys)=>Object.fromEntries(keys.filter(k=>Object.prototype.hasOw
 function stagedError(stage,error){const e=new Error(`${stage}: ${error?.message||'write failed'}`);e.statusCode=409;e.publicMessage=`Could not save ${stage}.`+(error?.code?` Database code: ${error.code}.`:'')+' The previous model ID was preserved.';return e;}
 async function saveOne(stage,q){try{return await one(q);}catch(error){throw stagedError(stage,error);}}
 async function saveRows(stage,q){try{return await rows(q);}catch(error){throw stagedError(stage,error);}}
-
-function websiteProfileStatus(model,publicProfile){
-  const media=Array.isArray(model?.media)?model.media:[];
-  const headshot=media.find(x=>x?.is_primary===true&&x?.is_public===true&&String(x?.media_type||'').toLowerCase()==='image'&&String(x?.category||'').toLowerCase()==='headshot')||null;
-  const publicMedia=media.filter(x=>x?.is_public===true);
-  const wm=publicProfile?.metadata?.website_profile||{};
-  const routeKey=String(model?.legacy_key||wm.route_key||'').trim().toLowerCase();
-  const siteName=routeKey?'maison-'+routeKey:null;
-  const siteOrigin=String(wm.site_origin||((siteName&&('https://'+siteName+'.netlify.app'))||'')).trim()||null;
-  const profileUrl=String(wm.profile_url||((routeKey&&('https://www.maisondeveux.com/'+routeKey))||'')).trim()||null;
-  return {
-    created:!!publicProfile,
-    published:!!publicProfile?.published,
-    route_key:routeKey||null,
-    public_slug:model?.public_slug||null,
-    profile_url:profileUrl,
-    site_name:siteName,
-    site_origin:siteOrigin,
-    deployment_status:String(wm.deployment_status||(publicProfile?(publicProfile?.metadata?.publication_source?'existing_site_needs_sync':'build_required'):'not_created')),
-    existing_site:!!(publicProfile?.metadata?.publication_source),
-    headshot:headshot?{id:headshot.id,url:headshot.url,category:headshot.category}:null,
-    has_headshot:!!headshot,
-    public_media_count:publicMedia.length,
-    ready_to_publish:!!(publicProfile&&routeKey&&model?.public_slug&&headshot),
-    build_filename:siteName?siteName+'.zip':null
-  };
-}
 
 export const handler=async(event)=>{
   if(!['GET','POST'].includes(event.httpMethod))return json(405,{error:'Method not allowed'});

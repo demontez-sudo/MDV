@@ -1,6 +1,8 @@
-import { requireUser, json, errorResponse } from './_lib/auth.mjs';
+import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 import { loadModels } from './_lib/portal-bridge.mjs';
+import { websiteProfileStatus } from './_lib/website-profile.mjs';
+import { ensureSite, uploadZipDeploy, getDeployState } from './_lib/netlify-api.mjs';
 
 const SUPABASE_URL='https://mogyngdhmzbjmcdqeoxu.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_6fTsGxRRIDzjXaoUrT0XOg_yZWu21ql';
@@ -44,26 +46,87 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 </script></body></html>`;
 }
 
+function fail(statusCode,message){const e=new Error(message);e.statusCode=statusCode;return e;}
+
+async function prepare(event,body){
+  const q=event.queryStringParameters||{};
+  const {user,client}=await requireUser(event);
+  const slug=body.organization_slug||q.organization||'maison-de-veux';
+  const {organization}=await requireStaffOrganization({user,client,organizationSlug:slug});
+  const admin=await requirePermission(user.id,organization.id,'public_profiles.manage');
+  const modelId=String(body.model_id||q.model_id||'').trim();
+  if(!modelId)throw fail(400,'model_id is required');
+  const model=(await loadModels(admin,organization.id,[modelId]))[0];
+  if(!model)throw fail(404,'Model not found');
+  const {data:profile,error}=await admin.from('model_public_profiles').select('*').eq('organization_id',organization.id).eq('model_id',modelId).maybeSingle();if(error)throw error;
+  if(!profile)throw fail(409,'Create the Website Profile in Model 360 before generating a site build.');
+  if(profile?.metadata?.publication_source)throw fail(409,'This model already has an existing Maison profile site. Use the existing-site sync merge workflow so the current design is preserved.');
+  const routeKey=String(model.legacy_key||profile.metadata?.website_profile?.route_key||'').trim().toLowerCase();
+  if(!routeKey)throw fail(409,'Website route is not configured.');
+  const siteName='maison-'+routeKey,siteOrigin='https://'+siteName+'.netlify.app',profileUrl='https://www.maisondeveux.com/'+routeKey;
+  return {organization,admin,modelId,model,profile,routeKey,siteName,siteOrigin,profileUrl};
+}
+
+function buildZip(ctx){
+  const {model,profile,routeKey,siteName,siteOrigin,profileUrl}=ctx;
+  const manifest={checkpoint:'16.9.17',model_id:model.id,display_name:model.display_name,route_key:routeKey,public_slug:model.public_slug||null,site_name:siteName,site_origin:siteOrigin,profile_url:profileUrl,published:!!profile.published,generated_at:new Date().toISOString(),architecture:'individual-model-netlify-site + MOGY Model 360 public source',instructions:'Deploy this ZIP to the individual Netlify site named '+siteName+'. After Main Site 16.9.17 is live, the branded '+profileUrl+' route resolves through the published-profile fallback without adding another explicit redirect.'};
+  const netlify=`[build]\n  publish = "."\n\n[[headers]]\n  for = "/*"\n  [headers.values]\n    X-Content-Type-Options = "nosniff"\n    Referrer-Policy = "strict-origin-when-cross-origin"\n`;
+  return zipStore([{name:'index.html',data:canonicalProfileHtml(routeKey,model.display_name)},{name:'netlify.toml',data:netlify},{name:'PROFILE_BUILD.json',data:JSON.stringify(manifest,null,2)+'\n'}]);
+}
+
+async function saveWebsiteMeta(ctx,patch){
+  const current=ctx.profile.metadata?.website_profile||{};
+  const websiteMeta={...current,route_key:ctx.routeKey,profile_url:ctx.profileUrl,site_origin:ctx.siteOrigin,...patch,updated_at:new Date().toISOString()};
+  const metadata={...(ctx.profile.metadata||{}),website_profile:websiteMeta};
+  const {data,error}=await ctx.admin.from('model_public_profiles').update({metadata,updated_at:new Date().toISOString()}).eq('organization_id',ctx.organization.id).eq('model_id',ctx.modelId).select('*').single();
+  if(error)throw error;
+  ctx.profile=data;
+  return data;
+}
+
+function deployPayload(ctx,extra){
+  const w=ctx.profile.metadata?.website_profile||{};
+  return {ok:true,status:w.deployment_status||'build_required',site_id:w.site_id||null,deploy_id:w.netlify_deploy_id||null,site_origin:ctx.siteOrigin,profile_url:ctx.profileUrl,...extra};
+}
+
+async function deployWebsite(ctx){
+  const status=websiteProfileStatus(ctx.model,ctx.profile);
+  if(!status.ready_to_publish)throw fail(409,'Add a public slug and a public primary Headshot before deploying the website.');
+  const w=ctx.profile.metadata?.website_profile||{};
+  if(w.deployment_status==='deploying'&&w.netlify_deploy_id)return json(202,deployPayload(ctx,{resumed:true}));
+  const site=await ensureSite(ctx.siteName,w.site_id);
+  if(site.id!==w.site_id)await saveWebsiteMeta(ctx,{site_id:site.id,site_name:ctx.siteName});
+  const deploy=await uploadZipDeploy(site.id,buildZip(ctx));
+  await saveWebsiteMeta(ctx,{site_id:site.id,netlify_deploy_id:deploy.id,deployment_status:'deploying',deploy_started_at:new Date().toISOString(),deploy_error:null});
+  return json(202,deployPayload(ctx));
+}
+
+async function deployStatus(ctx){
+  const w=ctx.profile.metadata?.website_profile||{};
+  if(!w.netlify_deploy_id)throw fail(409,'No website deploy is in progress.');
+  const {state,error}=await getDeployState(w.netlify_deploy_id);
+  if(state==='ready'){
+    await saveWebsiteMeta(ctx,{deployment_status:'deployed',deployed_at:new Date().toISOString(),deploy_error:null});
+    return json(200,deployPayload(ctx));
+  }
+  if(state==='error'){
+    await saveWebsiteMeta(ctx,{deployment_status:'deploy_failed',deploy_error:error||'Netlify reported a deploy error.'});
+    return json(200,deployPayload(ctx,{ok:false,error:error||'Netlify reported a deploy error.'}));
+  }
+  return json(200,deployPayload(ctx,{status:'deploying',netlify_state:state}));
+}
+
 export const handler=async(event)=>{
-  if(event.httpMethod!=='GET')return json(405,{error:'Method not allowed'});
+  if(!['GET','POST'].includes(event.httpMethod))return json(405,{error:'Method not allowed'});
   try{
-    const {user,client}=await requireUser(event);
-    const slug=event.queryStringParameters?.organization||'maison-de-veux';
-    const {organization}=await requireStaffOrganization({user,client,organizationSlug:slug});
-    const admin=await requirePermission(user.id,organization.id,'public_profiles.manage');
-    const modelId=String(event.queryStringParameters?.model_id||'').trim();
-    if(!modelId){const e=new Error('model_id is required');e.statusCode=400;throw e;}
-    const model=(await loadModels(admin,organization.id,[modelId]))[0];
-    if(!model){const e=new Error('Model not found');e.statusCode=404;throw e;}
-    const {data:profile,error}=await admin.from('model_public_profiles').select('*').eq('organization_id',organization.id).eq('model_id',modelId).maybeSingle();if(error)throw error;
-    if(!profile){const e=new Error('Create the Website Profile in Model 360 before generating a site build.');e.statusCode=409;throw e;}
-    if(profile?.metadata?.publication_source){const e=new Error('This model already has an existing Maison profile site. Use the existing-site sync merge workflow so the current design is preserved.');e.statusCode=409;throw e;}
-    const routeKey=String(model.legacy_key||profile.metadata?.website_profile?.route_key||'').trim().toLowerCase();
-    if(!routeKey){const e=new Error('Website route is not configured.');e.statusCode=409;throw e;}
-    const siteName='maison-'+routeKey,siteOrigin='https://'+siteName+'.netlify.app',profileUrl='https://www.maisondeveux.com/'+routeKey;
-    const manifest={checkpoint:'16.9.17',model_id:model.id,display_name:model.display_name,route_key:routeKey,public_slug:model.public_slug||null,site_name:siteName,site_origin:siteOrigin,profile_url:profileUrl,published:!!profile.published,generated_at:new Date().toISOString(),architecture:'individual-model-netlify-site + MOGY Model 360 public source',instructions:'Deploy this ZIP to the individual Netlify site named '+siteName+'. After Main Site 16.9.17 is live, the branded '+profileUrl+' route resolves through the published-profile fallback without adding another explicit redirect.'};
-    const netlify=`[build]\n  publish = "."\n\n[[headers]]\n  for = "/*"\n  [headers.values]\n    X-Content-Type-Options = "nosniff"\n    Referrer-Policy = "strict-origin-when-cross-origin"\n`;
-    const zip=zipStore([{name:'index.html',data:canonicalProfileHtml(routeKey,model.display_name)},{name:'netlify.toml',data:netlify},{name:'PROFILE_BUILD.json',data:JSON.stringify(manifest,null,2)+'\n'}]);
-    return {statusCode:200,isBase64Encoded:true,headers:{'Content-Type':'application/zip','Content-Disposition':`attachment; filename="${siteName}.zip"`,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'},body:zip.toString('base64')};
+    if(event.httpMethod==='GET'){
+      const ctx=await prepare(event,{});
+      const zip=buildZip(ctx);
+      return {statusCode:200,isBase64Encoded:true,headers:{'Content-Type':'application/zip','Content-Disposition':`attachment; filename="${ctx.siteName}.zip"`,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'},body:zip.toString('base64')};
+    }
+    const body=parseBody(event),action=String(body.action||'');
+    if(action!=='deploy_website'&&action!=='deploy_status')return json(400,{error:'Unsupported website build action'});
+    const ctx=await prepare(event,body);
+    return action==='deploy_website'?await deployWebsite(ctx):await deployStatus(ctx);
   }catch(error){return errorResponse(error);}
 };
