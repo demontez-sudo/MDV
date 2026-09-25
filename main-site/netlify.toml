@@ -22,6 +22,17 @@
   status = 200
   force = true
 
+# The Agent Portal's root page is what /admin proxies to, and it references its
+# static assets with relative paths (assets/...), which resolve to
+# maisondeveux.com/assets/... when the page is viewed at /admin. Not forced, so
+# the main site's own files in /assets still win; anything else falls through
+# to the Agent origin.
+[[redirects]]
+  from = "/assets/*"
+  to = "https://main--maison-agent.netlify.app/assets/:splat"
+  status = 200
+  force = false
+
 # Keep /team as a transition-safe handoff. Once Agent 16.9.24 is live,
 # the Agent origin immediately moves the browser to branded /admin.
 [[redirects]]
