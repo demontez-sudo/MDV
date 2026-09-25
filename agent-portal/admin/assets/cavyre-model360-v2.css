@@ -318,3 +318,18 @@ html body .m360 .m360-crumb .m360-crumb-link{color:#b9a1ff!important;cursor:poin
 html body .m360 .m360-crumb .m360-crumb-link:hover{color:#d6c6ff!important}
 html body .m360 .m360-crumb i{font-style:normal!important;opacity:.5}
 html body .m360 .m360-crumb b{font-weight:600!important;color:#ece8f7!important}
+
+/* Smart Gameplan host: card / form spacing (its legacy classes have no padding of their own here) */
+.m360-gpwrap .cvygp-card,.m360-gpwrap .v155-card{background:var(--bg,rgba(16,13,34,.74));border:1px solid var(--line,rgba(150,120,255,.2));border-radius:16px;padding:22px 26px;margin:16px 0}
+.m360-gpwrap .cvygp-card>header,.m360-gpwrap .v155-card>header{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:16px}
+.m360-gpwrap .cvygp-card>header small,.m360-gpwrap .v155-card>header small{display:block;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:#b9a1ff;margin-bottom:4px}
+.m360-gpwrap .cvygp-card>header h2,.m360-gpwrap .v155-card>header h2{font:500 30px/1.1 "Cormorant Garamond",Georgia,serif;margin:0;color:#ece8f7}
+.m360-gpwrap .v155-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 18px}
+.m360-gpwrap .v155-form-grid label{display:flex;flex-direction:column;gap:6px;min-width:0}
+.m360-gpwrap .v155-form-grid label.wide{grid-column:1/-1}
+.m360-gpwrap .v155-form-grid label>span{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#9d97b8}
+.m360-gpwrap .v155-form-grid input:not([type=checkbox]),.m360-gpwrap .v155-form-grid textarea,.m360-gpwrap .v155-form-grid select{background:rgba(255,255,255,.05)!important;border:1px solid rgba(150,120,255,.34)!important;border-radius:10px!important;padding:11px 14px!important;color:#ece8f7!important;font:14px Inter,sans-serif!important;outline:0;width:100%}
+.m360-gpwrap .v155-form-grid input:focus,.m360-gpwrap .v155-form-grid textarea:focus{border-color:#b9a1ff!important}
+.m360-gpwrap .cvygp-subhead{margin:24px 0 12px;padding-top:16px;border-top:1px solid var(--line,rgba(150,120,255,.2))}
+.m360-gpwrap .cvygp-actions{margin-top:20px}
+@media(max-width:820px){.m360-gpwrap .v155-form-grid{grid-template-columns:1fr}.m360-gpwrap .cvygp-card,.m360-gpwrap .v155-card{padding:18px}}

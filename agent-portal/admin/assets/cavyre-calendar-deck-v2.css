@@ -84,3 +84,9 @@ html body .mdv-deck.mdv2-deck{display:flex!important;flex-direction:column!impor
 .mdv2-dup>footer .go{background:linear-gradient(135deg,#dccdff,#b59bff);color:#1a1233;border-color:transparent}
 .mdv2-dup>footer .go:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:560px){.mdv2-dup-row,.mdv2-dup-row.two{grid-template-columns:1fr}.mdv2-dup-list{grid-template-columns:1fr}}
+
+/* checkboxes inside the dialog: undo the app's global custom-checkbox styling */
+html body .mdv2-dup input[type=checkbox]{-webkit-appearance:checkbox!important;appearance:auto!important;width:18px!important;height:18px!important;min-width:18px!important;padding:0!important;margin:0!important;background:none!important;border:0!important;box-shadow:none!important;accent-color:#b59bff;flex:0 0 18px}
+html body .mdv2-dup .mdv2-dup-list label{display:flex!important;flex-direction:row!important;align-items:center!important;gap:10px!important;letter-spacing:0!important;min-height:0!important;padding:7px 0!important}
+html body .mdv2-dup .mdv2-dup-list label span{letter-spacing:0!important;text-transform:none!important;font-size:13.5px!important}
+html body .mdv2-dup button,html body .mdv2-dup input,html body .mdv2-dup select{letter-spacing:.01em!important}
