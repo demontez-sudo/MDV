@@ -310,3 +310,11 @@ html.m360-lb-open{overflow:hidden}
 .m360-lb .m360-btn.primary{background:linear-gradient(135deg,#dccdff,#b59bff);border-color:transparent;color:#1a1233}
 .m360-lb .m360-kicker{display:block;font-size:10px;letter-spacing:.18em;color:var(--acc)}
 .m360-lb .m360-badge{background:linear-gradient(135deg,#dccdff,#b59bff);color:#1a1233;border-radius:99px;padding:2px 10px;font-size:10px;font-weight:600}
+
+/* breadcrumb: identical type on every part, immune to global button/heading rules */
+html body .m360 .m360-crumb{display:flex!important;align-items:center!important;gap:10px!important;margin:0 0 14px!important;padding:0!important;font:500 11px/1 Inter,system-ui,sans-serif!important;letter-spacing:.16em!important;text-transform:uppercase!important;color:#9d97b8!important}
+html body .m360 .m360-crumb>*{display:inline-block!important;margin:0!important;padding:0!important;border:0!important;background:none!important;font:inherit!important;letter-spacing:inherit!important;text-transform:inherit!important;line-height:1!important;vertical-align:baseline!important}
+html body .m360 .m360-crumb .m360-crumb-link{color:#b9a1ff!important;cursor:pointer}
+html body .m360 .m360-crumb .m360-crumb-link:hover{color:#d6c6ff!important}
+html body .m360 .m360-crumb i{font-style:normal!important;opacity:.5}
+html body .m360 .m360-crumb b{font-weight:600!important;color:#ece8f7!important}

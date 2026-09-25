@@ -70,7 +70,7 @@ function goalPct(g){var s=String(g.status||'').toLowerCase();return /complete|do
 function header(){
   var m=model(),h=heroUrl(),line=[primaryMarket(),boardName(),m.status||'active'].filter(Boolean).join(' · ');
   var dot=/active/i.test(m.status||'active')?'<span class="m360-live"></span>':'';
-  return '<header class="m360-head"><div class="m360-crumb"><button type="button" onclick="navTo(\'roster\')">Roster</button><span>/</span><b>Model 360</b></div>'
+  return '<header class="m360-head"><div class="m360-crumb"><span class="m360-crumb-link" role="link" tabindex="0" onclick="navTo(\'roster\')" onkeydown="if(event.key===\'Enter\')navTo(\'roster\')">Roster</span><i>/</i><b>Model 360</b></div>'
    +'<div class="m360-headrow"><div class="m360-ph">'+(h?'<img src="'+esc(h)+'" alt="">':'<span>'+esc(initials(m.display_name))+'</span>')+'</div>'
    +'<div class="m360-title"><h1>'+esc(m.display_name||'Model')+'</h1><p>'+esc(line.toUpperCase())+dot+'</p></div>'
    +'<div class="m360-actions"><button type="button" class="m360-btn primary" onclick="CAVYRE_M360.createAction()">'+ic('ti-circle-plus')+'Create action</button><button type="button" class="m360-btn" onclick="CAVYRE_M360.sharePackage()">'+ic('ti-upload')+'Share package</button>'
