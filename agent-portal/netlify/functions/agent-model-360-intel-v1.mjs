@@ -124,8 +124,11 @@ export const handler=async event=>{
       seasonIds.length?safe(admin.from('seasons').select('*').eq('organization_id',org).in('id',seasonIds)):[]
     ]);
     const travelIds=travelRows.map(t=>t.id);
-    const housing=travelIds.length?await safe(admin.from('housing_bookings').select('id,travel_record_id,check_in_at,check_out_at').eq('organization_id',org).in('travel_record_id',travelIds)):[];
-    const travel=travelRows.map(t=>({...t,housing:housing.filter(h=>String(h.travel_record_id)===String(t.id))}));
+    const [housing,segments]=await Promise.all([
+      travelIds.length?safe(admin.from('housing_bookings').select('id,travel_record_id,check_in_at,check_out_at').eq('organization_id',org).in('travel_record_id',travelIds)):[],
+      travelIds.length?safe(admin.from('travel_segments').select('id,travel_record_id').eq('organization_id',org).in('travel_record_id',travelIds)):[]
+    ]);
+    const travel=travelRows.map(t=>({...t,housing:housing.filter(h=>String(h.travel_record_id)===String(t.id)),segments:segments.filter(x=>String(x.travel_record_id)===String(t.id))}));
 
     const bStatus=new Map(bookingLinks.map(x=>[String(x.booking_id),x.status])),cStatus=new Map(castingLinks.map(x=>[String(x.casting_id),x.status]));
     const commitments=[
@@ -160,6 +163,16 @@ export const handler=async event=>{
     const readiness=Math.max(0,100-signals.reduce((n,s)=>n+(penalty[s.severity]||0),0));
     const recommendation=buildRecommendation(model,signals,ctx);
 
+    const nextTrip=travel.filter(t=>!['cancelled','completed'].includes(String(t.status||'').toLowerCase())&&ts(t.ends_at||t.starts_at)>=now).sort((a,b)=>ts(a.starts_at)-ts(b.starts_at))[0]||null;
+    const dest=nextTrip?.destination||'the destination';
+    const livePassport=passports.filter(p=>!['lost','cancelled','expired'].includes(String(p.status||'').toLowerCase())&&ts(p.expires_on)!=null&&ts(p.expires_on)>now).sort((a,b)=>ts(b.expires_on)-ts(a.expires_on))[0]||null;
+    const readiness_items=[
+      {key:'passport',title:'Passport',detail:!livePassport?'Add a valid passport.':(ts(livePassport.expires_on)-now<183*DAY?`Expires ${new Date(livePassport.expires_on).toLocaleDateString()} — check validity for travel.`:`Valid until ${new Date(livePassport.expires_on).toLocaleDateString()}.`),status:!livePassport?'missing':(ts(livePassport.expires_on)-now<183*DAY?'attention':'ready')},
+      {key:'accommodation',title:'Accommodation',detail:!nextTrip?'No upcoming trip.':((nextTrip.housing||[]).length?`${nextTrip.housing.length} stay${nextTrip.housing.length===1?'':'s'} recorded.`:`Research and confirm stay in ${dest}.`),status:!nextTrip?'na':((nextTrip.housing||[]).length?'ready':'missing')},
+      {key:'flights',title:'Flights',detail:!nextTrip?'No upcoming trip.':((nextTrip.segments||[]).length?`${nextTrip.segments.length} leg${nextTrip.segments.length===1?'':'s'} recorded.`:'Book outbound and return flights.'),status:!nextTrip?'na':((nextTrip.segments||[]).length?'ready':'missing')},
+      {key:'confirmation',title:'Model confirmation',detail:!nextTrip?'No upcoming trip.':(['booked','confirmed','in_progress'].includes(String(nextTrip.status||'').toLowerCase())?'Trip is confirmed.':'Confirm travel dates, availability and terms.'),status:!nextTrip?'na':(['booked','confirmed','in_progress'].includes(String(nextTrip.status||'').toLowerCase())?'ready':'attention')}
+    ];
+
     const authorIds=uniq(notes.map(n=>n.created_by));
     const profiles=authorIds.length?await safe(admin.from('profiles').select('user_id,display_name').in('user_id',authorIds)):[];
     const nameOf=id=>profiles.find(p=>String(p.user_id)===String(id))?.display_name||null;
@@ -179,7 +192,7 @@ export const handler=async event=>{
 
     return json(200,{
       environment:'veux-model-360-intel-v1',model_id:modelId,generated_at:new Date(now).toISOString(),
-      readiness,signals,recommendation,conflicts,
+      readiness,signals,recommendation,conflicts,readiness_items,next_trip_id:nextTrip?.id||null,
       week:{items:weekItems.filter(x=>ts(x.starts_at)>=now-2*DAY&&ts(x.starts_at)<=now+30*DAY)},
       next_up,commitments,market_plan,
       package_activity:pkgActivity.slice(0,30),activity,

@@ -1,5 +1,6 @@
 import { requireUser, parseBody, json, errorResponse, assertPermission } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
+import { logModelActivity, actorFor } from './_lib/model-activity.mjs';
 
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 async function one(q){const {data,error}=await q.maybeSingle();if(error)throw error;return data||null;}
@@ -25,23 +26,23 @@ export const handler=async(event)=>{
     if(event.httpMethod==='POST'){
       const action=String(body.action||'');
       if(action==='set_primary_media'){
-        await requirePermission(user.id,organization.id,'media.write');
+        const admin=await requirePermission(user.id,organization.id,'media.write');
         if(!body.media_id)return json(400,{error:'media_id is required'});
-        const {data,error}=await client.rpc('set_model_primary_media',{target_org:organization.id,target_model:modelId,target_media:body.media_id});if(error)throw error;if(!data)throw new Error('Primary media change was not verified.');return json(200,{ok:true,verified:true,media:data,message:'Profile photo updated. It is now the public website Headshot.',persisted_at:new Date().toISOString()});
+        const {data,error}=await client.rpc('set_model_primary_media',{target_org:organization.id,target_model:modelId,target_media:body.media_id});if(error)throw error;if(!data)throw new Error('Primary media change was not verified.');await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'media',title:'Profile photo changed',detail:null,...(await actorFor(admin,user)),link_page:'materials',link_id:body.media_id});return json(200,{ok:true,verified:true,media:data,message:'Profile photo updated. It is now the public website Headshot.',persisted_at:new Date().toISOString()});
       }
       if(action==='create_media'){
         const admin=await requirePermission(user.id,organization.id,'media.write');
         const url=String(body.url||'').trim();if(!url)return json(400,{error:'url is required'});
         const createCategory=body.category||'Portfolio';
         const payload={organization_id:organization.id,model_id:modelId,media_type:body.media_type||'image',category:createCategory,provider:body.provider||'external',url,public_id:body.public_id||null,caption:body.caption||null,photographer:body.photographer||null,usage_permission:body.usage_permission||null,sort_order:Number(body.sort_order||0),is_public:body.is_public!==false&&websiteEligible(createCategory,body.media_type),metadata:body.metadata||{}};
-        const {data,error}=await admin.from('model_media').insert(payload).select('*').single();if(error)throw error;if(!data?.id)throw new Error('Media save was not verified.');return json(200,{ok:true,verified:true,media:data,persisted_at:new Date().toISOString()});
+        const {data,error}=await admin.from('model_media').insert(payload).select('*').single();if(error)throw error;if(!data?.id)throw new Error('Media save was not verified.');await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'media',title:'Media added'+(data.category?` (${data.category})`:''),detail:data.caption||null,...(await actorFor(admin,user)),link_page:'materials',link_id:data.id});return json(200,{ok:true,verified:true,media:data,persisted_at:new Date().toISOString()});
       }
       if(action==='delete_media'){
         const admin=await requirePermission(user.id,organization.id,'media.write');
         const media=await one(admin.from('model_media').select('id,is_primary,is_public,url').eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.media_id));
         if(!media)return json(404,{error:'Media item not found'});
         if(media.is_primary)return json(409,{error:'The model profile photo cannot be permanently deleted. Set another Headshot as the profile photo first.'});
-        const {data,error}=await admin.from('model_media').delete().eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.media_id).select('id').single();if(error)throw error;return json(200,{ok:true,verified:true,deleted_id:data.id,message:'Media permanently deleted',persisted_at:new Date().toISOString()});
+        const {data,error}=await admin.from('model_media').delete().eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.media_id).select('id').single();if(error)throw error;await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'media',title:'Media deleted',detail:null,...(await actorFor(admin,user)),link_page:'materials',link_id:data.id});return json(200,{ok:true,verified:true,deleted_id:data.id,message:'Media permanently deleted',persisted_at:new Date().toISOString()});
       }
       if(action==='reorder_media'){
         await requirePermission(user.id,organization.id,'media.write');
@@ -84,7 +85,7 @@ export const handler=async(event)=>{
           const nextType=allowed.media_type!==undefined?allowed.media_type:existing.media_type;
           if(!websiteEligible(nextCategory,nextType))return json(409,{error:'Only Main Book, Digital and Motion media can be made public. Change the category first.'});
         }
-        const {data,error}=await admin.from('model_media').update(allowed).eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.media_id).select('*').single();if(error)throw error;if(!data?.id)throw new Error('Media update was not verified.');return json(200,{ok:true,verified:true,media:data,persisted_at:new Date().toISOString()});
+        const {data,error}=await admin.from('model_media').update(allowed).eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.media_id).select('*').single();if(error)throw error;if(!data?.id)throw new Error('Media update was not verified.');await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'media',title:'Media details edited',detail:data.caption||null,...(await actorFor(admin,user)),link_page:'materials',link_id:data.id});return json(200,{ok:true,verified:true,media:data,persisted_at:new Date().toISOString()});
       }
       if(action==='create_media_version'){
         const admin=await requirePermission(user.id,organization.id,'media.write');
