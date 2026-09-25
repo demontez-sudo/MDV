@@ -1,9 +1,10 @@
-/* The Model 360 tab bar (.v156-tabs) is a CSS grid elsewhere (repeat(auto-fit,minmax(112px,1fr))) that wraps to a
-   second row once there are enough tabs, and squeezes any tab narrower than its text needs — clipping the longest
-   label. Force it back to a single scrollable line with no-shrink, no-wrap tabs, regardless of tab count. */
-html body #p-modelpage .v156-tabs{display:flex!important;flex-wrap:nowrap!important;grid-template-columns:none!important;overflow-x:auto!important;overflow-y:hidden!important;scrollbar-width:none!important;-ms-overflow-style:none!important}
-html body #p-modelpage .v156-tabs::-webkit-scrollbar{display:none!important}
-html body #p-modelpage .v156-tab{flex:0 0 auto!important;white-space:nowrap!important;min-width:0!important}
+/* Model 360 tab bar: 8 tabs laid out as a tidy 4 x 2 grid at every width (icon above label on phones). */
+html body #p-modelpage .v156-tabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-auto-flow:row!important;flex-direction:row!important;gap:6px!important;overflow:visible!important;padding:6px!important}
+html body #p-modelpage .v156-tab{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:center!important;gap:8px!important;width:auto!important;min-width:0!important;flex:none!important;white-space:nowrap!important;text-align:center!important;padding:12px 8px!important}
+@media(max-width:720px){
+html body #p-modelpage .v156-tab{flex-direction:column!important;gap:5px!important;padding:10px 3px!important;font-size:11px!important;line-height:1.15!important;white-space:normal!important}
+}
+html body #p-modelpage .v156-tab[data-model-tab="gameplan"]{--ic:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22black%22 stroke-width=%221.8%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%228.5%22/%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%224.5%22/%3E%3Ccircle cx=%2212%22 cy=%2212%22 r=%221%22/%3E%3C/svg%3E")}
 .cvygp-card{margin-top:18px}
 .cvygp-subhead{font:12px/1.4 var(--fM,monospace);text-transform:uppercase;letter-spacing:.06em;color:var(--gold,#c89f58);margin:22px 0 10px;padding-top:14px;border-top:1px solid var(--line,#393126)}
 .cvygp-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
@@ -26,3 +27,64 @@ html body #p-modelpage .v156-tab{flex:0 0 auto!important;white-space:nowrap!impo
 .cvygp-list{list-style:none;margin:0;padding:0}
 .cvygp-list li{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px;color:var(--ink2,#c9bba6)}
 .cvygp-list li:first-child{border-top:1px solid rgba(255,255,255,.06)}
+
+/* Editorial Smart Gameplan (agent view) */
+.cvygp-ed{--g:#B8955A;--g2:#D2B27A;--rule:rgba(184,149,90,.26);--soft:rgba(234,227,215,.06);--mu:#A39684;--ink:#EAE3D7;--disp:"Cormorant Garamond",Georgia,serif;color:var(--ink);font-weight:300}
+.cvygp-ed h2{font-family:var(--disp);font-weight:300;font-size:clamp(30px,4vw,48px);line-height:1.05;margin:0 0 .4em;letter-spacing:-.01em;color:var(--ink)}
+.cvygp-ed h3{font-family:var(--disp);font-weight:400;font-size:22px;line-height:1.2;margin:0 0 .4em;color:var(--g2)}
+.cvygp-ed p{margin:0 0 1em;max-width:68ch;line-height:1.6}
+.cvygp-muted{color:var(--mu)}
+.cvygp-lede{font-family:var(--disp);font-size:clamp(19px,1.9vw,23px);line-height:1.5;color:var(--ink)}
+.cvygp-label{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--g);margin:0 0 .7em}
+.cvygp-sec{padding:clamp(34px,5vw,64px) 0;border-top:1px solid var(--rule)}
+.cvygp-two{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,4vw,56px);margin-top:20px}
+.cvygp-headrow{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.cvygp-link{background:none;border:0;color:var(--g2);font:inherit;font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+.cvygp-hero{display:grid;grid-template-columns:1.05fr .95fr;min-height:520px;border:1px solid var(--rule);margin-top:6px}
+.cvygp-hero.noimg{grid-template-columns:1fr;min-height:0}
+.cvygp-hero-copy{padding:clamp(22px,3.4vw,44px);display:flex;flex-direction:column;justify-content:space-between;gap:30px}
+.cvygp-mark{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px;color:var(--mu);letter-spacing:.03em}
+.cvygp-name{font-family:var(--disp);font-weight:300;font-size:clamp(58px,8.5vw,120px);line-height:.86;letter-spacing:-.03em;margin:0;color:var(--ink)}
+.cvygp-name span{display:block;padding-left:.42em;color:var(--g2);font-style:italic}
+.cvygp-board{font-size:14px;color:var(--mu);margin:34px 0 0}
+.cvygp-hero .cvygp-lede{margin-top:18px}
+.cvygp-stats{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule)}
+.cvygp-stat{padding:14px 6px 12px;border-right:1px solid var(--rule);text-align:center}
+.cvygp-stat:last-child{border-right:0}
+.cvygp-stat .k{font-size:11px;color:var(--mu);letter-spacing:.04em;min-height:2.4em}
+.cvygp-stat .v{font-family:var(--disp);font-size:clamp(26px,2.8vw,38px);line-height:1.1}
+.cvygp-stat .m{font-size:11px;color:var(--g)}
+.cvygp-hero-img{margin:0;position:relative;overflow:hidden;background:#241E18}
+.cvygp-hero-img img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;display:block}
+.cvygp-rules{columns:2;column-gap:48px;margin:32px 0 0;padding:0;list-style:none}
+.cvygp-rules li{break-inside:avoid;padding:13px 0;border-bottom:1px solid var(--rule);font-size:14px}
+.cvygp-rules li strong{display:block;font-weight:500;color:var(--g2);font-size:13px}
+.cvygp-phases{display:grid;margin-top:36px;border-top:1px solid var(--g)}
+.cvygp-ph{padding:20px 16px 6px 0;position:relative}
+.cvygp-ph:before{content:"";position:absolute;top:-5px;left:0;width:9px;height:9px;border-radius:50%;background:var(--g)}
+.cvygp-ph .n{font-family:var(--disp);font-size:40px;line-height:1;color:var(--g);font-weight:300}
+.cvygp-ph .d{font-size:12px;color:var(--mu);margin:6px 0 8px}
+.cvygp-ph p{font-size:13px;margin:0}
+.cvygp-steps{list-style:none;padding:0;margin:0}
+.cvygp-steps li{display:grid;grid-template-columns:110px 1fr;gap:12px;padding:13px 0;border-bottom:1px solid var(--rule);font-size:14px}
+.cvygp-steps li:first-child{border-top:1px solid var(--rule)}
+.cvygp-steps .dt{color:var(--mu);font-size:13px}
+.cvygp-steps small{color:var(--mu)}
+.cvygp-cycle{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:22px;margin-top:26px}
+.cvygp-cy{border-top:2px solid var(--g);padding-top:14px}
+.cvygp-cy .k{font-family:var(--disp);font-size:28px;color:var(--g2);line-height:1}
+.cvygp-cy p{font-size:13px;color:var(--mu);margin:8px 0 0}
+.cvygp-risks{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin-top:24px}
+.cvygp-risk{background:#15110e;padding:22px 22px 8px}
+.cvygp-risk p{font-size:14px}
+.cvygp-month td{background:rgba(255,255,255,.03);font-family:"Cormorant Garamond",Georgia,serif;font-size:19px;color:#D2B27A;padding:9px 12px!important}
+@media(max-width:820px){
+.cvygp-hero{grid-template-columns:1fr}
+.cvygp-hero-img{order:-1;height:340px}
+.cvygp-two{grid-template-columns:1fr}
+.cvygp-rules{columns:1}
+.cvygp-stats{grid-template-columns:repeat(2,1fr)}
+.cvygp-stat{border-bottom:1px solid var(--rule)}
+.cvygp-phases{grid-template-columns:repeat(2,1fr)!important}
+.cvygp-steps li{grid-template-columns:86px 1fr}
+}

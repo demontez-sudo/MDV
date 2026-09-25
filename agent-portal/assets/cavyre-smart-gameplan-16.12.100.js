@@ -93,30 +93,86 @@ function render(model,gp){
     h+=settingsForm(model,doc);
     if(!doc)return h;
   }
-  h+='<div class="v155-card"><header><div><small>SMART GAMEPLAN</small><h2>'+esc(doc.title||model.display_name||'Gameplan')+'</h2>'+(doc.key_date?'<p>'+esc(doc.key_date_label||'Key date')+': '+fmtDate(doc.key_date)+'</p>':'')+'</div><div class="cvygp-actions"><button type="button" class="v152-btn" onclick="CAVYRE_SMART_GAMEPLAN.toggleSettings()">Edit Plan Details</button></div></header>'
-   +(gp.development_plan?'<p class="cvygp-note">Linked to Development Plan: <b>'+esc(gp.development_plan.title||'Development Plan')+'</b> · '+esc((gp.development_plan.status||'active'))+'</p>':'')
-   +'</div>';
-
-  var tasks=arr(gp.tasks),filtered=UI.typeFilter?tasks.filter(function(t){return (t.metadata&&t.metadata.task_type)===UI.typeFilter;}):tasks;
+  var tasks=arr(gp.tasks).slice().sort(function(x,y){return String(x.due_at||'9999').localeCompare(String(y.due_at||'9999'));});
+  var filtered=UI.typeFilter?tasks.filter(function(t){return (t.metadata&&t.metadata.task_type)===UI.typeFilter;}):tasks;
   var completed=tasks.filter(function(t){return t.status==='completed';}).length;
   var pct=tasks.length?Math.round(completed/tasks.length*100):0;
-  h+='<div class="v155-card"><header><div><small>TASK SCHEDULE</small><h2>'+pct+'% complete</h2><p>'+completed+' of '+tasks.length+' tasks done</p></div><div class="cvygp-actions">'+(UI.addOpen?'':'<button type="button" class="v152-btn primary" onclick="CAVYRE_SMART_GAMEPLAN.toggleAdd()">+ Add Task</button>')+'</div></header>'
+  var hardOpen=tasks.filter(function(t){return t.metadata&&t.metadata.is_hard_stop&&t.status!=='completed';}).length;
+  var pending=tasks.filter(function(t){return t.metadata&&t.metadata.reschedule_status==='pending';}).length;
+  var days=doc.key_date?Math.ceil((new Date(doc.key_date+'T12:00:00')-new Date())/864e5):null;
+  var parts=String(model.display_name||doc.title||'Model').trim().split(/\s+/),first=parts.shift()||'',last=parts.join(' ');
+  var media=arr(model.media),hp=media.find(function(x){return x&&x.is_primary;})||media[0]||{},img=hp.url||model.headshot_url||'';
+  var cad=doc.checkin_cadence||{},focus=Array.isArray(cad.focus_labels)&&cad.focus_labels.length?cad.focus_labels:[];
+  function lines(v){return String(v||'').split(/\n+/).map(function(x){return x.trim();}).filter(Boolean);}
+  function stat(k,v,m){return '<div class="cvygp-stat"><div class="k">'+esc(k)+'</div><div class="v">'+esc(v)+'</div><div class="m">'+esc(m||'')+'</div></div>';}
+
+  h+='<div class="cvygp-ed">';
+  h+='<section class="cvygp-hero'+(img?'':' noimg')+'"><div class="cvygp-hero-copy">'
+   +'<div class="cvygp-mark"><span>'+esc(doc.title||'Gameplan')+'</span><button type="button" class="cvygp-link" onclick="CAVYRE_SMART_GAMEPLAN.toggleSettings()">Edit plan details</button></div>'
+   +'<div><h1 class="cvygp-name">'+esc(first)+(last?'<span>'+esc(last)+'</span>':'')+'</h1>'
+   +(gp.development_plan?'<p class="cvygp-board">Linked to Development Plan · <b>'+esc(gp.development_plan.title||'Development Plan')+'</b> ('+esc(gp.development_plan.status||'active')+')</p>':'')
+   +(doc.welcome_message?'<p class="cvygp-lede">'+esc(doc.welcome_message)+'</p>':'')+'</div>'
+   +'<div class="cvygp-stats">'
+   +stat(doc.key_date_label||'Key date',days==null?'—':(days<0?'Passed':String(days)),doc.key_date?fmtDate(doc.key_date):'Set a key date')
+   +stat('Tasks',String(tasks.length),completed+' done')
+   +stat('Complete',pct+'%','of the plan')
+   +stat('Hard stops',String(hardOpen),'still open')
+   +stat('Reschedules',String(pending),pending?'need a decision':'none pending')
+   +'</div></div>'
+   +(img?'<figure class="cvygp-hero-img"><img src="'+esc(img)+'" alt="'+esc(model.display_name||'')+'"></figure>':'')
+   +'</section>';
+
+  var brandL=lines(doc.brand_positioning),marketL=lines(doc.market_focus),rules=lines(doc.image_rules);
+  if(brandL.length||marketL.length||rules.length){
+    h+='<section class="cvygp-sec"><div class="cvygp-label">Positioning</div>'
+     +'<div class="cvygp-two">'
+     +(brandL.length?'<div><h2>Brand</h2>'+brandL.map(function(x,i){return '<p class="'+(i===0?'cvygp-lede':'')+'">'+esc(x)+'</p>';}).join('')+'</div>':'')
+     +(marketL.length?'<div><h2>Market</h2>'+marketL.map(function(x){return '<p>'+esc(x)+'</p>';}).join('')+'</div>':'')
+     +'</div>'
+     +(rules.length?'<ul class="cvygp-rules">'+rules.map(function(x){var m=x.match(/^([^:—–-]{3,40})[:—–-]\s+(.*)$/);return '<li>'+(m?'<strong>'+esc(m[1].trim())+'</strong>'+esc(m[2]):esc(x))+'</li>';}).join('')+'</ul>':'')
+     +'</section>';
+  }
+
+  var byMonth={};tasks.forEach(function(t){var k=t.due_at?String(t.due_at).slice(0,7):'';if(k){(byMonth[k]=byMonth[k]||[]).push(t);}});
+  var months=Object.keys(byMonth).sort();
+  if(months.length){
+    h+='<section class="cvygp-sec"><div class="cvygp-label">Phases</div><h2>'+months.length+' month'+(months.length===1?'':'s')+', one landing date.</h2><div class="cvygp-phases" style="grid-template-columns:repeat('+Math.min(months.length,5)+',1fr)">'
+     +months.slice(0,5).map(function(k,i){var ts=byMonth[k],done=ts.filter(function(t){return t.status==='completed';}).length;return '<div class="cvygp-ph"><div class="n">'+String(i+1).padStart(2,'0')+'</div><div class="d">'+esc(new Date(k+'-01T12:00:00').toLocaleDateString([],{month:'long',year:'numeric'}))+'</div><h3>'+ts.length+' task'+(ts.length===1?'':'s')+'</h3><p>'+done+' complete'+(ts.some(function(t){return t.metadata&&t.metadata.is_hard_stop;})?' · includes a hard stop':'')+'</p></div>';}).join('')
+     +'</div></section>';
+  }
+
+  h+='<section class="cvygp-sec"><div class="cvygp-label">Task schedule</div><div class="cvygp-headrow"><h2>Who does what, and when.</h2>'+(UI.addOpen?'':'<button type="button" class="v152-btn primary" onclick="CAVYRE_SMART_GAMEPLAN.toggleAdd()">+ Add task</button>')+'</div>'
    +(UI.addOpen?addTaskForm(model,doc):'')
-   +'<div class="cvygp-filters">'
-   +'<button type="button" class="cvygp-chip '+(UI.typeFilter?'':'on')+'" onclick="CAVYRE_SMART_GAMEPLAN.setFilter(\'\')">All</button>'
-   +TASK_TYPES.map(function(t){return '<button type="button" class="cvygp-chip '+(UI.typeFilter===t[0]?'on':'')+'" onclick="CAVYRE_SMART_GAMEPLAN.setFilter(\''+t[0]+'\')">'+esc(t[1])+'</button>';}).join('')
-   +'</div>'
-   +'<div class="cvygp-tbl-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Task</th><th>Status</th><th></th></tr></thead><tbody>'
-   +(filtered.length?filtered.map(function(t){return taskRow(t,model,doc);}).join(''):'<tr><td colspan="5" class="v155-empty">No tasks yet.</td></tr>')
-   +'</tbody></table></div></div>';
+   +'<div class="cvygp-filters"><button type="button" class="cvygp-chip '+(UI.typeFilter?'':'on')+'" onclick="CAVYRE_SMART_GAMEPLAN.setFilter(\'\')"><span class="c">'+tasks.length+'</span>All</button>'
+   +TASK_TYPES.map(function(t){var n=tasks.filter(function(x){return (x.metadata&&x.metadata.task_type)===t[0];}).length;return n||UI.typeFilter===t[0]?'<button type="button" class="cvygp-chip '+(UI.typeFilter===t[0]?'on':'')+'" onclick="CAVYRE_SMART_GAMEPLAN.setFilter(\''+t[0]+'\')"><span class="c">'+n+'</span>'+esc(t[1])+'</button>':'';}).join('')
+   +'</div><div class="cvygp-tbl-wrap"><table><thead><tr><th>Date</th><th>Type</th><th>Task</th><th>Status</th><th></th></tr></thead><tbody>';
+  if(!filtered.length)h+='<tr><td colspan="5" class="v155-empty">No tasks yet.</td></tr>';
+  var lastMonth='';
+  filtered.forEach(function(t){var k=t.due_at?String(t.due_at).slice(0,7):'';if(k!==lastMonth){lastMonth=k;h+='<tr class="cvygp-month"><td colspan="5">'+(k?esc(new Date(k+'-01T12:00:00').toLocaleDateString([],{month:'long',year:'numeric'})):'Unscheduled')+'</td></tr>';}h+=taskRow(t,model,doc);});
+  h+='</tbody></table></div></section>';
 
   var travel=arr(gp.travel),visa=arr(gp.visa);
   if(travel.length||visa.length){
-    h+='<div class="v155-card"><header><div><small>VISA & TRAVEL</small><h2>Key dates</h2></div></header>'
-     +(visa.length?'<ul class="cvygp-list">'+visa.map(function(v){return '<li><b>'+esc(v.visa_type||v.case_type||'Visa case')+'</b> · '+esc(v.status||'')+(v.hard_deadline?' · hard deadline '+fmtDate(v.hard_deadline):'')+(v.appointment_at?' · appointment '+fmtDateTime(v.appointment_at):'')+'</li>';}).join('')+'</ul>':'')
-     +(travel.length?'<ul class="cvygp-list">'+travel.map(function(tr){var segs=arr(tr.travel_segments),stays=arr(tr.housing_bookings),flight=segs[0];return '<li><b>'+esc([tr.origin,tr.destination].filter(Boolean).join(' → ')||tr.purpose||'Travel')+'</b> · '+fmtDate(tr.starts_at?String(tr.starts_at).slice(0,10):null)+' → '+fmtDate(tr.ends_at?String(tr.ends_at).slice(0,10):null)+' · '+esc(tr.status||'')+(flight?' · '+esc([flight.provider,flight.segment_number].filter(Boolean).join(' '))+(segs.length>1?' +'+(segs.length-1)+' more leg'+(segs.length>2?'s':''):''):'')+(stays.length?' · '+esc(stays[0].property_name||stays[0].city||'Stay')+(stays.length>1?' +'+(stays.length-1)+' more':''):'')+'</li>';}).join('')+'</ul>':'')
-     +'</div>';
+    h+='<section class="cvygp-sec"><div class="cvygp-label">Visa &amp; travel</div><h2>The stay depends on the visa.</h2><div class="cvygp-two">'
+     +'<div>'+(visa.length?'<ol class="cvygp-steps">'+visa.map(function(v){return '<li><span class="dt">'+(v.hard_deadline?fmtDate(v.hard_deadline):'—')+'</span><span><b>'+esc(v.visa_type||v.case_type||'Visa case')+'</b> · '+esc(v.status||'')+(v.appointment_at?'<br><small>Appointment '+fmtDateTime(v.appointment_at)+'</small>':'')+'</span></li>';}).join('')+'</ol>':'<p class="cvygp-muted">No visa cases on file.</p>')+'</div>'
+     +'<div>'+(travel.length?'<ol class="cvygp-steps">'+travel.map(function(tr){var segs=arr(tr.travel_segments),stays=arr(tr.housing_bookings),f=segs[0];return '<li><span class="dt">'+fmtDate(tr.starts_at?String(tr.starts_at).slice(0,10):null)+'</span><span><b>'+esc([tr.origin,tr.destination].filter(Boolean).join(' → ')||tr.purpose||'Travel')+'</b> · '+esc(tr.status||'')+(f?'<br><small>'+esc([f.provider,f.segment_number].filter(Boolean).join(' '))+(segs.length>1?' +'+(segs.length-1)+' more leg'+(segs.length>2?'s':''):'')+'</small>':'')+(stays.length?'<br><small>'+esc(stays[0].property_name||stays[0].city||'Stay')+(stays.length>1?' +'+(stays.length-1)+' more':'')+'</small>':'')+'</span></li>';}).join('')+'</ol>':'<p class="cvygp-muted">No trips booked.</p>')+'</div>'
+     +'</div></section>';
   }
+
+  if(focus.length||cad.interval_days){
+    h+='<section class="cvygp-sec"><div class="cvygp-label">Check-ins</div><h2>Every '+esc(cad.interval_days||2)+' days'+(cad.time_local?', at '+esc(cad.time_local):'')+'.</h2>'
+     +'<p class="cvygp-muted">'+(cad.start_date?fmtDate(cad.start_date):'Start')+' → '+(cad.end_date?fmtDate(cad.end_date):'key date')+(cad.timezone?' · '+esc(cad.timezone):'')+'</p>'
+     +(focus.length?'<div class="cvygp-cycle">'+focus.map(function(f,i){return '<div class="cvygp-cy"><div class="k">'+esc(f)+'</div><p>Check-in '+(i+1)+' of the rotation</p></div>';}).join('')+'</div>':'')
+     +'</section>';
+  }
+
+  var risks=lines(doc.risks);
+  if(risks.length){
+    h+='<section class="cvygp-sec"><div class="cvygp-label">Staff only</div><h2>What can break this plan.</h2><div class="cvygp-risks">'
+     +risks.map(function(x){var m=x.match(/^([^:—–]{3,50})[:—–]\s+(.*)$/);return '<div class="cvygp-risk">'+(m?'<h3>'+esc(m[1].trim())+'</h3><p>'+esc(m[2])+'</p>':'<p>'+esc(x)+'</p>')+'</div>';}).join('')
+     +'</div></section>';
+  }
+  h+='</div>';
   return h;
 }
 function arr(v){return Array.isArray(v)?v:[];}
