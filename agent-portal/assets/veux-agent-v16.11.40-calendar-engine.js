@@ -130,16 +130,39 @@ var h=modalHost(),r=x.raw||{};
 var sd=new Date(x.starts_at),ed=x.ends_at?new Date(x.ends_at):new Date(sd.getTime()+36e5);
 function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function hm(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+var LK=(S.data&&S.data.lookups)||{};
+var pool=arr(LK.models).filter(function(m){return m&&m.id;}).map(function(m){return {id:String(m.id),name:m.display_name||m.name||[m.first_name,m.last_name].filter(Boolean).join(' ')||'Model'};}).sort(function(p,q){return p.name.localeCompare(q.name);});
+var nameOf={};pool.forEach(function(m){nameOf[m.id]=m.name;});
+var orig=arr(x.models).map(function(a){return String(a.model_id||(a.models&&a.models.id)||'');}).filter(function(v,i,l){return v&&l.indexOf(v)===i;});
+var sel=orig.slice();
 var st=String(x.status||'planned').toLowerCase(),$=function(q){return h.querySelector(q);};
 var opts=['planned','casting','option','confirmed','completed','cancelled'].map(function(v){return '<option value="'+v+'"'+(v===st?' selected':'')+'>'+v.charAt(0).toUpperCase()+v.slice(1)+'</option>';}).join('');
 h.innerHTML='<div class="vx82-modal-back"><section class="mdv2-dup" role="dialog" aria-modal="true" aria-label="Edit show"><header><div><small>Edit '+esc(type(x).toLowerCase())+(r.season_name?' · '+esc(r.season_name):'')+'</small><h2>'+esc(x.title)+'</h2></div><button type="button" data-modal-close aria-label="Close">×</button></header>'
 +'<div class="mdv2-dup-body"><label class="wide"><span>Title</span><input id="se-title" value="'+esc(x.title)+'"></label>'
 +'<div class="mdv2-dup-row"><label><span>Date</span><input id="se-date" type="date" value="'+ymd(sd)+'"></label><label><span>Start</span><input id="se-start" type="time" value="'+hm(sd)+'"></label><label><span>End</span><input id="se-end" type="time" value="'+hm(ed)+'"></label></div>'
 +'<div class="mdv2-dup-row two"><label><span>Location</span><input id="se-loc" value="'+esc(x.location||'')+'" placeholder="Venue / city"></label><label><span>Status</span><select id="se-status">'+opts+'</select></label></div>'
++'<div class="mdv2-se-models"><div class="mdv2-se-mh"><span>Models <b id="se-count"></b></span><div class="mdv2-bk-add"><label class="mdv2-search"><i>⌕</i><input id="se-q" placeholder="Search a model to add…" autocomplete="off"></label><button type="button" class="mdv2-bk-btn" id="se-all">Add all models</button><button type="button" class="mdv2-bk-btn" id="se-none">Clear</button><div class="mdv2-bk-suggest" id="se-suggest"></div></div></div><div class="mdv2-se-chips" id="se-chips"></div></div>'
 +'<p class="mdv2-dup-note" id="se-note">Saving updates this '+esc(type(x).toLowerCase())+'. It will not create a new event.</p></div>'
 +'<footer><span class="mdv2-dup-sum" id="se-msg"></span><button type="button" class="ghost" data-modal-close>Cancel</button><button type="button" class="go" id="se-go">Save changes</button></footer></section></div>';
 h.querySelectorAll('[data-modal-close]').forEach(function(b){b.onclick=closeModal;});
 $('.vx82-modal-back').onclick=function(e){if(e.target===this)closeModal();};
+function drawSe(){
+ $('#se-count').textContent=sel.length;
+ $('#se-chips').innerHTML=sel.length?sel.map(function(id){return '<span class="mdv2-se-chip">'+esc(nameOf[id]||'Model')+'<button type="button" data-rm="'+esc(id)+'" aria-label="Remove">×</button></span>';}).join(''):'<em>No models on this yet.</em>';
+ $('#se-chips').querySelectorAll('[data-rm]').forEach(function(b){b.onclick=function(){sel=sel.filter(function(v){return v!==b.getAttribute('data-rm');});drawSe();};});
+}
+function sugSe(){
+ var q=$('#se-q').value.trim().toLowerCase(),box=$('#se-suggest');
+ if(!q){box.classList.remove('open');return;}
+ var hits=pool.filter(function(m){return sel.indexOf(m.id)<0&&m.name.toLowerCase().indexOf(q)>=0;}).slice(0,12);
+ box.innerHTML=hits.length?hits.map(function(m){return '<button type="button" data-add="'+esc(m.id)+'">'+esc(m.name)+'</button>';}).join(''):'<em>No matching models</em>';
+ box.classList.add('open');
+ box.querySelectorAll('[data-add]').forEach(function(b){b.onclick=function(){sel.push(b.getAttribute('data-add'));$('#se-q').value='';box.classList.remove('open');drawSe();};});
+}
+$('#se-q').oninput=sugSe;
+$('#se-all').onclick=function(){sel=pool.map(function(m){return m.id;});drawSe();};
+$('#se-none').onclick=function(){sel=[];drawSe();};
+drawSe();
 $('#se-go').onclick=async function(){
  var go=this,msg=$('#se-msg');
  try{
@@ -149,6 +172,10 @@ $('#se-go').onclick=async function(){
   go.disabled=true;go.textContent='Saving…';
   var res=await window.VEUX_AGENT_V4.api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({organization_slug:org(),action:'update_show',show_id:x.id,title:title,starts_at:starts.toISOString(),location:$('#se-loc').value.trim(),status:$('#se-status').value,notes:showNotes(x.notes,ends.toISOString())})});
   if(!res||res.verified!==true)throw new Error('The change was not confirmed as saved.');
+  var add=sel.filter(function(v){return orig.indexOf(v)<0;}),drop=orig.filter(function(v){return sel.indexOf(v)<0;});
+  var api=window.VEUX_AGENT_V4.api,call=function(o){return api('/api/agent/season/v9',{method:'POST',body:JSON.stringify(Object.assign({organization_slug:org(),show_id:x.id},o))});};
+  if(add.length){var ra=await call({action:'assign_show_models',model_ids:add});if(!ra||ra.verified!==true)throw new Error('Models could not be added.');}
+  for(var k=0;k<drop.length;k++){var rr=await call({action:'remove_show_model',model_id:drop[k]});if(!rr||rr.verified!==true)throw new Error('A model could not be removed.');}
   closeModal();S.data=null;S.seasonAt=0;toast('✓ '+title+' updated');return render();
  }catch(e){msg.textContent=e&&e.message||String(e);msg.style.color='#f26b7c';go.disabled=false;go.textContent='Save changes';}
 };
