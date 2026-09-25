@@ -2,6 +2,9 @@ import { requireUser, assertPermission, parseBody, json, errorResponse } from '.
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 import { loadModels } from './_lib/portal-bridge.mjs';
 import { websiteProfileStatus } from './_lib/website-profile.mjs';
+import { logModelActivity, actorFor } from './_lib/model-activity.mjs';
+
+function isMissingColumn(err){const m=String(err?.message||'');return err?.code==='PGRST204'||err?.code==='42703'||/column .* (does not exist|of relation)|could not find the .* column/i.test(m);}
 
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 async function one(q){const {data,error}=await q;if(error)throw error;return data||null;}
@@ -71,6 +74,7 @@ export const handler=async(event)=>{
         const {data:saved,error:saveError}=await admin.rpc('update_model_identity_private_v1',{target_org:organization.id,target_model:modelId,profile_data:patch,private_data:priv});
         if(saveError)throw saveError;
         if(saved?.verified!==true){const e=new Error('Model profile save could not be verified');e.statusCode=409;throw e;}
+        await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'profile',title:'Profile edited',detail:Object.keys(patch).join(', '),...(await actorFor(admin,user)),link_page:'overview'});
         return json(200,{ok:true,verified:true,model:saved.model,private_profile:saved.private_profile||null,persisted_at:saved.persisted_at});
       }
 
@@ -146,22 +150,31 @@ export const handler=async(event)=>{
       if(action==='update_measurements'){
         const m=clean(body.measurements||{},['height_cm','height_display','bust_cm','bust_display','chest_cm','chest_display','waist_cm','waist_display','hips_cm','hips_display','dress','suit','shoe','hair','eyes','skin','notes']);
         const measurements=await one(admin.from('model_measurements').upsert({organization_id:organization.id,model_id:modelId,...m},{onConflict:'model_id'}).select('*').single());
+        await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'profile',title:'Measurements updated',detail:Object.keys(m).join(', '),...(await actorFor(admin,user)),link_page:'materials'});
         return json(200,{ok:true,verified:true,measurements,persisted_at:measurements?.updated_at||new Date().toISOString()});
       }
       if(action==='create_note'){
         const text=String(body.body||body.note||'').trim();if(!text){const e=new Error('body is required');e.statusCode=400;throw e;}
-        const note=await one(admin.from('model_notes').insert({organization_id:organization.id,model_id:modelId,body:text,pinned:body.pinned===true,created_by:user.id}).select('*').single());
+        const base={organization_id:organization.id,model_id:modelId,body:text,pinned:body.pinned===true,created_by:user.id};
+        let note;
+        try{note=await one(admin.from('model_notes').insert({...base,visible_to_model:body.visible_to_model===true}).select('*').single());}
+        catch(e){if(!isMissingColumn(e))throw e;note=await one(admin.from('model_notes').insert(base).select('*').single());}
+        await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'note',title:body.visible_to_model===true?'Note added (shareable)':'Note added',detail:text.slice(0,160),...(await actorFor(admin,user)),link_page:'record',link_id:note?.id});
         return json(201,{ok:true,verified:true,note,persisted_at:note?.created_at||new Date().toISOString()});
       }
       if(action==='update_note'){
         if(!body.note_id){const e=new Error('note_id is required');e.statusCode=400;throw e;}
         const patch={};if(body.body!==undefined)patch.body=String(body.body||'').trim();if(body.pinned!==undefined)patch.pinned=body.pinned===true;
-        const note=await one(admin.from('model_notes').update(patch).eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.note_id).select('*').single());
+        const withVis=body.visible_to_model!==undefined?{...patch,visible_to_model:body.visible_to_model===true}:patch;
+        const runUpdate=p=>one(admin.from('model_notes').update(p).eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.note_id).select('*').single());
+        let note;try{note=await runUpdate(withVis);}catch(e){if(!isMissingColumn(e)||withVis===patch)throw e;note=await runUpdate(patch);}
+        await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'note',title:body.visible_to_model!==undefined?(body.visible_to_model===true?'Note made shareable':'Note made internal'):'Note updated',detail:String(note?.body||'').slice(0,160),...(await actorFor(admin,user)),link_page:'record',link_id:body.note_id});
         return json(200,{ok:true,verified:true,note,persisted_at:note?.updated_at||new Date().toISOString()});
       }
       if(action==='delete_note'){
         if(!body.note_id){const e=new Error('note_id is required');e.statusCode=400;throw e;}
         const deleted=await one(admin.from('model_notes').delete().eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.note_id).select('id').single());
+        await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'note',title:'Note deleted',...(await actorFor(admin,user))});
         return json(200,{ok:true,verified:true,deleted_note_id:deleted.id,persisted_at:new Date().toISOString()});
       }
       return json(400,{error:'Unsupported model action'});

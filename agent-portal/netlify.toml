@@ -375,6 +375,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/model-360/intel"
+to = "/.netlify/functions/agent-model-360-intel-v1"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/bookings/risk"
 to = "/.netlify/functions/agent-booking-risk"
 status = 200
