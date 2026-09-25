@@ -158,6 +158,15 @@ async function syncVisaCalendar(admin,organizationId,userId,visa){
   return out.filter(Boolean);
 }
 
+function isMissingColumn(err){const m=String(err?.message||'');return err?.code==='PGRST204'||err?.code==='42703'||/column .* (does not exist|of relation)|could not find the .* column/i.test(m);}
+function legacySegmentPayload(p){const {segment_number,seat,cabin_class,baggage_notes,...rest}=p;const l=[];if(segment_number)l.push('Flight: '+segment_number);if(seat)l.push('Seat: '+seat);if(cabin_class)l.push('Cabin: '+cabin_class);if(baggage_notes)l.push('Baggage: '+baggage_notes);const head=l.join('\n');return {...rest,notes:[head,p.notes].filter(Boolean).join('\n\n')||null};}
+function legacyHousingPayload(p){const {city,...rest}=p;return rest;}
+async function writeWithFallback(admin,table,id,orgId,payload,legacy){
+  const run=p=>id?admin.from(table).update(p).eq('organization_id',orgId).eq('id',id).select('*').single():admin.from(table).insert(p).select('*').single();
+  let r=await run(payload);
+  if(r.error&&isMissingColumn(r.error)){console.warn('[mobility] '+table+' missing new columns, saving legacy layout:',r.error.message);r=await run(legacy(payload));}
+  return r;
+}
 export const handler=async(event)=>{
   if(!['GET','POST'].includes(event.httpMethod))return json(405,{error:'Method not allowed'});
   try{
@@ -369,7 +378,7 @@ export const handler=async(event)=>{
       if(!payload.travel_record_id)throw validationError('travel_record_id is required.');
       validateRange(payload.departs_at,payload.arrives_at,'Departure','Arrival');
       const {data:trip,error:te}=await admin.from('travel_records').select('id,model_id').eq('organization_id',organization.id).eq('id',payload.travel_record_id).maybeSingle();if(te)throw te;if(!trip)return json(404,{error:'Travel record not found'});
-      let q=body.id?admin.from('travel_segments').update(payload).eq('organization_id',organization.id).eq('id',body.id):admin.from('travel_segments').insert(payload);const {data,error}=await q.select('*').single();if(error)throw error;const {data:freshTrip,error:freshTripError}=await admin.from('travel_records').select('*').eq('organization_id',organization.id).eq('id',payload.travel_record_id).single();if(freshTripError)throw freshTripError;const calendar_event=await syncTravelCalendar(admin,organization.id,user.id,freshTrip);return json(200,{ok:true,verified:true,travel_segment:data,calendar_synced:!!calendar_event,calendar_event,persisted_at:data?.updated_at||data?.created_at||new Date().toISOString()});
+      const {data,error}=await writeWithFallback(admin,'travel_segments',body.id,organization.id,payload,legacySegmentPayload);if(error)throw error;const {data:freshTrip,error:freshTripError}=await admin.from('travel_records').select('*').eq('organization_id',organization.id).eq('id',payload.travel_record_id).single();if(freshTripError)throw freshTripError;const calendar_event=await syncTravelCalendar(admin,organization.id,user.id,freshTrip);return json(200,{ok:true,verified:true,travel_segment:data,calendar_synced:!!calendar_event,calendar_event,persisted_at:data?.updated_at||data?.created_at||new Date().toISOString()});
     }
     if(action==='attach_travel_documents'){
       const tripId=String(body.travel_record_id||'').trim(),docs=(Array.isArray(body.documents)?body.documents:[]).filter(d=>d&&d.id).slice(0,40);
@@ -415,7 +424,7 @@ export const handler=async(event)=>{
       if(!payload.model_id)throw validationError('model_id is required.');
       validateRange(payload.check_in_at,payload.check_out_at,'Check-in','Check-out');
       if(payload.travel_record_id){const {data:trip,error:te}=await admin.from('travel_records').select('id,model_id').eq('organization_id',organization.id).eq('id',payload.travel_record_id).maybeSingle();if(te)throw te;if(!trip)return json(404,{error:'Travel record not found'});if(trip.model_id!==payload.model_id)return json(400,{error:'Accommodation model must match linked travel record'});}
-      let q=body.id?admin.from('housing_bookings').update(payload).eq('organization_id',organization.id).eq('id',body.id):admin.from('housing_bookings').insert(payload);const {data,error}=await q.select('*').single();if(error)throw error;let calendar_event=null;if(data.travel_record_id){const {data:freshTrip,error:freshTripError}=await admin.from('travel_records').select('*').eq('organization_id',organization.id).eq('id',data.travel_record_id).maybeSingle();if(freshTripError)throw freshTripError;if(freshTrip)calendar_event=await syncTravelCalendar(admin,organization.id,user.id,freshTrip);}const notification_warning=await notifyMobilityStateSafe(admin,organization.id,data,'housing');return json(200,{ok:true,verified:true,housing:data,calendar_synced:!!calendar_event,calendar_event,notification_warning,persisted_at:data?.updated_at||data?.created_at||new Date().toISOString()});
+      const {data,error}=await writeWithFallback(admin,'housing_bookings',body.id,organization.id,payload,legacyHousingPayload);if(error)throw error;let calendar_event=null;if(data.travel_record_id){const {data:freshTrip,error:freshTripError}=await admin.from('travel_records').select('*').eq('organization_id',organization.id).eq('id',data.travel_record_id).maybeSingle();if(freshTripError)throw freshTripError;if(freshTrip)calendar_event=await syncTravelCalendar(admin,organization.id,user.id,freshTrip);}const notification_warning=await notifyMobilityStateSafe(admin,organization.id,data,'housing');return json(200,{ok:true,verified:true,housing:data,calendar_synced:!!calendar_event,calendar_event,notification_warning,persisted_at:data?.updated_at||data?.created_at||new Date().toISOString()});
     }
     if(action==='save_work_authorization'){
       const payload={organization_id:organization.id,model_id:body.model_id,country_code:countryCode(body.country_code),authorization_type:body.authorization_type||'work_permit',status:oneOf(body.status,['unknown','valid','pending','expired','not_eligible','restricted'],'unknown',{not_required:'valid',active:'valid',approved:'valid',refused:'not_eligible'}),valid_from:body.valid_from||null,expires_on:body.expires_on||null,restrictions:body.restrictions||null,visible_to_model:body.visible_to_model!==false,visible_to_partner:body.visible_to_partner!==false};
