@@ -199,3 +199,10 @@ html body .mdv2-dup .mdv2-bk-add .mdv2-search.mdv2-search{height:40px;border-rad
 html body .mdv2-dup .mdv2-bk-add .mdv2-search.mdv2-search input,html body .mdv2-dup .mdv2-bk-add .mdv2-search.mdv2-search input#se-q,html body .mdv2-dup .mdv2-bk-add .mdv2-search.mdv2-search input#bk-q{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0!important;height:auto!important;font:13px Inter,sans-serif!important}
 html body .mdv2-dup .mdv2-bk-btn.mdv2-bk-btn,html body .mdv2-dup footer button{font:500 13px Inter,sans-serif!important;letter-spacing:0!important;text-transform:none!important;border-radius:999px!important;height:40px;padding:0 18px!important}
 html body .mdv2-dup select{font-family:Inter,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+/* no dead scroll space below the calendar on desktop */
+@media(min-width:901px){
+html body #p-calendar.pg,html body #p-calendar{padding-bottom:0!important}
+html body #p-calendar .cnt,html body #p-calendar>.cnt{padding-bottom:16px!important}
+html body .vx75-calendar{min-height:0!important;padding-bottom:0!important}
+html body .vx75-runway>main{padding-bottom:16px!important}
+}
