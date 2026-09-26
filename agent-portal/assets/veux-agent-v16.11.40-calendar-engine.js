@@ -134,7 +134,7 @@ function hm(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinut
 var LK=(S.data&&S.data.lookups)||{};
 var pool=arr(LK.models).filter(function(m){return m&&m.id;}).map(function(m){return {id:String(m.id),name:m.display_name||m.name||[m.first_name,m.last_name].filter(Boolean).join(' ')||'Model'};}).sort(function(p,q){return p.name.localeCompare(q.name);});
 var nameOf={};pool.forEach(function(m){nameOf[m.id]=m.name;});
-var orig=arr(x.models).map(function(a){return String(a.model_id||(a.models&&a.models.id)||'');}).filter(function(v,i,l){return v&&l.indexOf(v)===i;});
+var orig=arr(x.models).filter(Boolean).map(function(a){return String(a.model_id||(a.models&&a.models.id)||'');}).filter(function(v,i,l){return v&&l.indexOf(v)===i;});
 var sel=orig.slice();
 var st=String(x.status||'planned').toLowerCase(),$=function(q){return h.querySelector(q);};
 var opts=['planned','casting','option','confirmed','completed','cancelled'].map(function(v){return '<option value="'+v+'"'+(v===st?' selected':'')+'>'+v.charAt(0).toUpperCase()+v.slice(1)+'</option>';}).join('');
@@ -184,7 +184,7 @@ $('#se-go').onclick=async function(){
 var f=$('#se-title');if(f)f.focus();}
 function duplicateModal(x){
 var h=modalHost(),r=x.raw||{};
-var sameIds=arr(x.models).map(function(a){return a.model_id||(a.models&&a.models.id)||null;}).filter(function(v,i,l){return v&&l.indexOf(v)===i;});
+var sameIds=arr(x.models).filter(Boolean).map(function(a){return a.model_id||(a.models&&a.models.id)||null;}).filter(function(v,i,l){return v&&l.indexOf(v)===i;});
 var sd=new Date(x.starts_at),ed=x.ends_at?new Date(x.ends_at):new Date(sd.getTime()+36e5);
 function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function hm(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
@@ -247,17 +247,17 @@ function bookingSeed(x){
 var r=x.raw||{},m=r.metadata||{},sd=new Date(x.starts_at),ed=x.ends_at?new Date(x.ends_at):null;
 function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 function hm(d){return d?String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'):'';}
-var ids=arr(x.models).map(function(a){return String(a.model_id||(a.models&&a.models.id)||'');}).filter(function(v,i,l){return v&&l.indexOf(v)===i;});
-arr(r.booking_rates).forEach(function(b){var id=String(b.model_id||'');if(id&&ids.indexOf(id)<0)ids.push(id);});
+var ids=arr(x.models).filter(Boolean).map(function(a){return String(a.model_id||(a.models&&a.models.id)||'');}).filter(function(v,i,l){return v&&l.indexOf(v)===i;});
+arr(r.booking_rates).filter(Boolean).forEach(function(b){var id=String(b.model_id||'');if(id&&ids.indexOf(id)<0)ids.push(id);});
 var stt=String(r.status||'option').toLowerCase();if(['inquiry','option','hold','confirmed','fitting','job'].indexOf(stt)<0)stt=stt==='completed'?'job':'option';
 var us=r.usage_rights||(r.booking_usage&&r.booking_usage[0]&&r.booking_usage[0].notes)||m.usage_rights||'';
 return {booking_id:r.id||x.id,title:x.title,date:ymd(sd),date2:ed&&ymd(ed)!==ymd(sd)?ymd(ed):'',start:hm(sd),end:hm(ed),call:r.call_time?hm(new Date(r.call_time)):'',wrap:r.wrap_time?hm(new Date(r.wrap_time)):'',location:x.location||r.location||'',company_id:r.company_id,contact_id:r.primary_contact_id,market_id:r.market_id,member_id:r.assigned_member_id,status:stt,type:m.calendar_event_type||'',currency:currencyOf(x),payment:m.payment_status||'',notes:r.notes||'',usage:typeof us==='string'?us:'',travel:!!r.travel_required,visa:!!r.visa_required,model_ids:ids,
-rates:arr(r.booking_rates).map(function(b){var u=(b.metadata&&b.metadata.rate_unit)||'day';return {model_id:b.model_id,unit:u,qty:b.quantity||1,amount:b.unit_amount,cur:b.currency,comm:b.agency_fee_rate==null?null:Math.round(Number(b.agency_fee_rate)*1000)/10};})};}
+rates:arr(r.booking_rates).filter(Boolean).map(function(b){var u=(b.metadata&&b.metadata.rate_unit)||'day';return {model_id:b.model_id,unit:u,qty:b.quantity||1,amount:b.unit_amount,cur:b.currency,comm:b.agency_fee_rate==null?null:Math.round(Number(b.agency_fee_rate)*1000)/10};})};}
 function bookingBuilder(seed){try{return bookingBuilderRun(seed);}catch(e){console.error('[calendar] booking builder',e);try{toast('Booking form error: '+(e&&e.message||e));}catch(_){}}}
 function bookingBuilderRun(seed){seed=seed||{};
 var h=modalHost(),LK=(S.data&&S.data.lookups)||{};
 var allModels=arr(LK.models).filter(function(m){return m&&m.id;}).map(function(m){return {id:m.id,name:m.display_name||m.name||[m.first_name,m.last_name].filter(Boolean).join(' ')||'Model'};}).sort(function(a,b){return a.name.localeCompare(b.name);});
-var companies=arr(LK.companies),contacts=arr(LK.contacts),markets=arr(LK.markets),members=arr(LK.members);
+var ok=function(l){return arr(l).filter(function(v){return v&&typeof v==='object';});};var companies=ok(LK.companies),contacts=ok(LK.contacts),markets=ok(LK.markets),members=ok(LK.members);
 var UNITS=[['day','Day rate','Days'],['half','Half day','Half days'],['hour','Hourly','Hours'],['flat','Flat fee',''],['usage','Usage fee','']],CURS=['USD','EUR','GBP','CAD','AUD','CHF','JPY'];
 var TYPES=['Editorial','Campaign','Commercial','E-commerce','Lookbook','Runway / Show','Fitting','Digitals / Test','Event','Other'];
 var STATUSES=[['inquiry','Inquiry'],['option','Option'],['hold','Hold'],['confirmed','Confirmed'],['fitting','Fitting'],['job','Job']];
