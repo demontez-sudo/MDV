@@ -175,7 +175,7 @@ $('#se-go').onclick=async function(){
   var res=await window.VEUX_AGENT_V4.api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({organization_slug:org(),action:'update_show',show_id:x.id,title:title,starts_at:starts.toISOString(),location:$('#se-loc').value.trim(),status:$('#se-status').value,notes:showNotes(x.notes,ends.toISOString())})});
   if(!res||res.verified!==true)throw new Error('The change was not confirmed as saved.');
   var add=sel.filter(function(v){return orig.indexOf(v)<0;}),drop=orig.filter(function(v){return sel.indexOf(v)<0;});
-  var api=window.VEUX_AGENT_V4.api,call=function(o){return api('/api/agent/season/v9',{method:'POST',body:JSON.stringify(Object.assign({organization_slug:org(),show_id:x.id},o))});};
+  var call=function(o){return window.VEUX_AGENT_V4.api('/api/agent/season/v9',{method:'POST',body:JSON.stringify(Object.assign({organization_slug:org(),show_id:x.id},o))});};
   if(add.length){var ra=await call({action:'assign_show_models',model_ids:add});if(!ra||ra.verified!==true)throw new Error('Models could not be added.');}
   for(var k=0;k<drop.length;k++){var rr=await call({action:'remove_show_model',model_id:drop[k]});if(!rr||rr.verified!==true)throw new Error('A model could not be removed.');}
   closeModal();S.data=null;S.seasonAt=0;toast('✓ '+title+' updated');return render();

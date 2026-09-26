@@ -194,3 +194,8 @@ html body .mdv2-deck .mdv2-reset:hover{opacity:1;text-decoration:underline!impor
 .vx95-runway-mini em{grid-column:3;font:400 10.5px Inter,sans-serif!important;font-style:normal!important;color:#9d97b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:-4px}
 .vx95-runway-mini em.nomodel{color:#c9a54e;opacity:.85}
 .vx95-runway-mini b{font-size:12.5px!important;overflow:hidden;text-overflow:ellipsis}
+/* dialog polish: model picker inside editors */
+html body .mdv2-dup .mdv2-bk-add .mdv2-search.mdv2-search{height:40px;border-radius:999px!important;border:1px solid rgba(255,255,255,.12)!important;background:rgba(0,0,0,.28)!important;padding:0 14px!important}
+html body .mdv2-dup .mdv2-bk-add .mdv2-search.mdv2-search input,html body .mdv2-dup .mdv2-bk-add .mdv2-search.mdv2-search input#se-q,html body .mdv2-dup .mdv2-bk-add .mdv2-search.mdv2-search input#bk-q{background:transparent!important;border:0!important;box-shadow:none!important;border-radius:0!important;padding:0!important;height:auto!important;font:13px Inter,sans-serif!important}
+html body .mdv2-dup .mdv2-bk-btn.mdv2-bk-btn,html body .mdv2-dup footer button{font:500 13px Inter,sans-serif!important;letter-spacing:0!important;text-transform:none!important;border-radius:999px!important;height:40px;padding:0 18px!important}
+html body .mdv2-dup select{font-family:Inter,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
