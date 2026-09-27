@@ -199,11 +199,9 @@
   status = 200
   force = true
 
-[[redirects]]
-  from = "/histria"
-  to = "https://maison-histria.netlify.app"
-  status = 200
-  force = true
+# Histria has no hand-built legacy site (maison-histria.netlify.app does not
+# exist) — removed the forced override so /histria falls through to the
+# catch-all /:profile rule below, which renders her page directly.
 
 [[redirects]]
   from = "/katalina"
@@ -356,11 +354,13 @@
   status = 200
   force = true
 
-# VEUX DESK 16.9.17 — new model profiles created in the Agency Portal.
-# Existing model routes above remain explicit. This non-forced one-segment
-# fallback validates the published MOGY profile before proxying its
-# individual maison-{route}.netlify.app site, so new routes do not require
-# another main-site deploy after their individual model site goes live.
+# VEUX DESK 16.9.69 — new model profiles created in the Agency Portal.
+# Existing legacy model routes above remain explicit (each proxies its own
+# hand-built maison-{name}.netlify.app site). This non-forced one-segment
+# fallback instead renders the profile page directly for everyone else: it
+# validates the route against the published Model 360 profile, then serves
+# the page inline. No per-model Netlify site, deploy step, or API token
+# needed — the page fetches its own data client-side.
 [[redirects]]
   from = "/:profile"
   to = "/.netlify/functions/model-profile-router?profile=:profile"
