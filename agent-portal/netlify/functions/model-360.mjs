@@ -81,16 +81,25 @@ export const handler=async(event)=>{
       if(action==='create_website_profile'){
         const canPublicManage=await assertPermission(admin,user.id,organization.id,'public_profiles.manage');
         if(!canPublicManage){const e=new Error('Public profile management permission is required');e.statusCode=403;throw e;}
-        const {data,error}=await admin.rpc('create_model_website_profile_v1',{
-          target_org:organization.id,
-          target_model:modelId,
-          requested_route_key:body.route_key||null,
-          requested_public_slug:body.public_slug||null,
-          profile_data:body.public_profile&&typeof body.public_profile==='object'?body.public_profile:{}
-        });
+        const slugify=(v,compact)=>{v=String(v||'').trim().toLowerCase();return compact?v.replace(/[^a-z0-9]+/g,''):v.replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');};
+        const model=await one(admin.from('models').select('id,display_name,first_name,legacy_key,public_slug').eq('organization_id',organization.id).eq('id',modelId).maybeSingle());
+        if(!model){const e=new Error('Model not found');e.statusCode=404;throw e;}
+        const routeKey=slugify(body.route_key||model.legacy_key||model.first_name||model.display_name,true);
+        if(!routeKey){const e=new Error('A website route is required');e.statusCode=400;throw e;}
+        const publicSlug=slugify(body.public_slug||model.public_slug||model.display_name,false)||routeKey;
+        if(model.legacy_key!==routeKey||model.public_slug!==publicSlug){
+          const {error:modelError}=await admin.from('models').update({legacy_key:routeKey,public_slug:publicSlug}).eq('organization_id',organization.id).eq('id',modelId);
+          if(modelError)throw stagedError('website profile',modelError);
+        }
+        const p=body.public_profile&&typeof body.public_profile==='object'?body.public_profile:{};
+        const allowed={organization_id:organization.id,model_id:modelId};
+        for(const k of ['published','headline','bio','template_key','show_measurements','show_market','show_agent_contact','show_socials','contact_name','contact_email','contact_phone','seo_title','seo_description'])if(p[k]!==undefined)allowed[k]=p[k];
+        if(p.published===true)allowed.published_at=new Date().toISOString();
+        const existing=await one(admin.from('model_public_profiles').select('metadata').eq('organization_id',organization.id).eq('model_id',modelId).maybeSingle());
+        allowed.metadata={...(existing?.metadata||{}),website_profile:{...(existing?.metadata?.website_profile||{}),route_key:routeKey,public_slug:publicSlug,profile_url:'https://www.maisondeveux.com/'+routeKey,site_origin:'https://maison-'+routeKey+'.netlify.app',updated_at:new Date().toISOString()}};
+        const {data,error}=await admin.from('model_public_profiles').upsert(allowed,{onConflict:'model_id'}).select('*').single();
         if(error)throw stagedError('website profile',error);
-        if(!data?.model&&!data?.website_profile){const e=new Error('Website profile save could not be verified');e.statusCode=409;throw e;}
-        return json(200,{ok:true,verified:true,...(data||{}),persisted_at:data?.public_profile?.updated_at||new Date().toISOString()});
+        return json(200,{ok:true,verified:true,model:{...model,legacy_key:routeKey,public_slug:publicSlug},public_profile:data,website_profile:websiteProfileStatus({...model,legacy_key:routeKey,public_slug:publicSlug,media:[]},data),persisted_at:data?.updated_at||new Date().toISOString()});
       }
       if(action==='mark_website_profile_deployed'){
         const canPublicManage=await assertPermission(admin,user.id,organization.id,'public_profiles.manage');
