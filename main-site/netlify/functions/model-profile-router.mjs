@@ -30,7 +30,9 @@ function profileHtml(route,profile){
   const parts=String(name).trim().split(/\s+/);
   const first=parts[0]||name,rest=parts.slice(1).join(' ');
   const gallery=Array.isArray(profile.gallery)?profile.gallery:[];
-  const hero=gallery.find(x=>x.is_primary)||gallery[0]||null;
+  // The top photo is the model's chosen website cover if set, otherwise falls
+  // back to the internal Headshot, then the first public photo.
+  const hero=gallery.find(x=>x.is_website_cover)||gallery.find(x=>x.is_primary)||gallery[0]||null;
   const rest_gallery=gallery.filter(x=>x!==hero);
   const isMen=String(m.gender||'').toLowerCase().startsWith('m');
   const digitalItems=rest_gallery.filter(x=>String(x.category||'').toLowerCase().startsWith('digital')||String(x.media_type||'').toLowerCase()==='video');
