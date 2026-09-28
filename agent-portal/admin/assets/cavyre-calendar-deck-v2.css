@@ -206,3 +206,7 @@ html body #p-calendar .cnt,html body #p-calendar>.cnt{padding-bottom:16px!import
 html body .vx75-calendar{min-height:0!important;padding-bottom:0!important}
 html body .vx75-runway>main{padding-bottom:16px!important}
 }
+/* Guard against the fixed topbar covering the deck header, regardless of which
+   page-level top padding class happens to be active (e.g. season view). */
+html body .mdv2-deck.mdv2-deck{margin-top:14px!important;scroll-margin-top:90px}
+@media(max-width:900px){html body .mdv2-deck.mdv2-deck{margin-top:10px!important}}
