@@ -607,7 +607,7 @@ window.__VEUX_RELEASE__="16.11.52-login-runtime-recovery";
   }
   var branded=/^(www\.)?maisondeveux\.com$/i.test(location.hostname)&&/^\/(?:admin|team)(?:\/|$)/.test(location.pathname);
   window.__VEUX_AGENT_MOUNT__=branded?'/admin':'';
-  var assetVersion='?v='+encodeURIComponent(window.__VEUX_RELEASE__||'16.9.71');
+  var assetVersion='?v='+encodeURIComponent(window.__VEUX_RELEASE__||'16.9.72');
   var css=document.createElement('link');css.rel='stylesheet';css.href=(window.__VEUX_AGENT_MOUNT__||'')+'/assets/veux-agent-v15-core-16.8.5.css'+assetVersion;document.head.appendChild(css);
   var mobileCss=document.createElement('link');mobileCss.rel='stylesheet';mobileCss.href=(window.__VEUX_AGENT_MOUNT__||'')+'/assets/veux-agent-v16.8.6-mobile-product.css'+assetVersion;document.head.appendChild(mobileCss);
   var stabilityCss=document.createElement('link');stabilityCss.rel='stylesheet';stabilityCss.href=(window.__VEUX_AGENT_MOUNT__||'')+'/assets/veux-agent-v16.9-stability.css'+assetVersion;document.head.appendChild(stabilityCss);
@@ -1591,7 +1591,7 @@ window.VEUX_TOPBAR_CONTEXT=function(){};
   window.__VEUX_SHELL_READY__=false;
   window.__VEUX_SHELL_FAILURES__=[];
   var base=window.__VEUX_AGENT_MOUNT__||'';
-  var releaseVersion=encodeURIComponent(window.__VEUX_RELEASE__||'16.9.71');
+  var releaseVersion=encodeURIComponent(window.__VEUX_RELEASE__||'16.9.72');
   function asset(name){return base+'/assets/'+name+'?v='+releaseVersion;}
   function loadScript(src,opts){
     opts=opts||{};
@@ -2073,7 +2073,7 @@ window.VEUX_TOPBAR_CONTEXT=function(){};
 <script data-cavyre-team-settings="16.12.05">(function(){function load(){if(document.querySelector('script[data-cvy-team-settings]'))return;var m=window.__VEUX_AGENT_MOUNT__;if(m==null)m=/^\/(?:admin|team)(?:\/|$)/.test(location.pathname)?'/admin':'';var s=document.createElement('script');s.dataset.cvyTeamSettings='1';s.src=m+'/assets/cavyre-team-settings-authority-16.12.05.js?v=161205';document.body.appendChild(s)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load()})();</script>
 <script data-cavyre-crm-add-edit="16.12.06">(function(){function load(){if(document.querySelector('script[data-cvy-crm-add-edit]'))return;var m=window.__VEUX_AGENT_MOUNT__;if(m==null)m=/^\/(?:admin|team)(?:\/|$)/.test(location.pathname)?'/admin':'';var s=document.createElement('script');s.dataset.cvyCrmAddEdit='1';s.src=m+'/assets/cavyre-crm-add-edit-repair-16.12.06.js?v=161206';document.body.appendChild(s)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load()})();</script>
 <script data-cavyre-connected-crm="16.12.08">(function(){function load(){if(document.querySelector('script[data-cvy-connected-crm]'))return;var s=document.createElement('script');s.dataset.cvyConnectedCrm='1';s.src='/admin/assets/cavyre-connected-crm-form-authority-16.12.08.js?v=161208';document.body.appendChild(s)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});else load()})();</script>
-<script src="https://www.maisondeveux.com/admin/assets/veux-agent-v15-extensions-16.12.11.js?v=161213"></script>
+<script src="https://www.maisondeveux.com/admin/assets/veux-agent-v15-extensions-16.12.11.js?v=161214"></script>
 
 <style id="cavyre-crm-inline-css-161213">
 /* CAVYRE 16.11.55 — Smart CRM Forms */
