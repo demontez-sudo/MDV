@@ -1,6 +1,8 @@
 import { requireUser, parseBody, json, errorResponse, assertPermission } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 
+// PostgREST returns at most 1000 rows per request, so page through with range() until exhausted.
+async function allRows(build,max=10000){const out=[];for(let from=0;from<max;from+=1000){const {data,error}=await build().range(from,from+999);if(error)throw error;const page=data||[];out.push(...page);if(page.length<1000)break;}return out;}
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 
 export const handler=async(event)=>{
@@ -108,8 +110,8 @@ export const handler=async(event)=>{
     }
     const admin=await requirePermission(user.id,organization.id,'tasks.read');
     const [tasks,assignments,comments,dependencies,taskHistory,approvals,approvalHistory,members,models]=await Promise.all([
-      rows(admin.from('tasks').select('*').eq('organization_id',organization.id).order('due_at',{ascending:true,nullsFirst:false}).limit(1000)),
-      rows(admin.from('task_assignments').select('*').eq('organization_id',organization.id).limit(2500)),
+      allRows(()=>admin.from('tasks').select('*').eq('organization_id',organization.id).order('due_at',{ascending:true,nullsFirst:false}).order('id'),8000),
+      allRows(()=>admin.from('task_assignments').select('*').eq('organization_id',organization.id).order('id'),20000),
       rows(admin.from('task_comments').select('*').eq('organization_id',organization.id).order('created_at',{ascending:false}).limit(1500)),
       rows(admin.from('task_dependencies').select('*').eq('organization_id',organization.id).limit(1500)),
       rows(admin.from('task_status_history').select('*').eq('organization_id',organization.id).order('created_at',{ascending:false}).limit(1500)),
