@@ -1,6 +1,6 @@
 const SUPABASE_URL='https://mogyngdhmzbjmcdqeoxu.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY='sb_publishable_6fTsGxRRIDzjXaoUrT0XOg_yZWu21ql';
-function shell(statusCode,title,message){return {statusCode,headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'},body:`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><style>html,body{margin:0;background:#050403;color:#eee7de;font:14px/1.6 Arial,sans-serif}main{width:min(680px,88vw);margin:16vh auto}.eyebrow{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:#a98958}h1{font:400 42px/1.05 Georgia,serif;margin:16px 0}.muted{color:#9c9184}</style></head><body><main><div class="eyebrow">Maison de Veux</div><h1>${title}</h1><div class="muted">${message}</div></main></body></html>`};}
+function shell(statusCode,title,message){return {statusCode,headers:{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'},body:`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png"><style>html,body{margin:0;background:#050403;color:#eee7de;font:14px/1.6 Arial,sans-serif}main{width:min(680px,88vw);margin:16vh auto}.eyebrow{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:#a98958}h1{font:400 42px/1.05 Georgia,serif;margin:16px 0}.muted{color:#9c9184}</style></head><body><main><div class="eyebrow">Maison de Veux</div><h1>${title}</h1><div class="muted">${message}</div></main></body></html>`};}
 function safeKey(v){v=String(v||'').trim().toLowerCase();return /^[a-z0-9]+$/.test(v)?v:'';}
 function escHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -65,7 +65,7 @@ function profileHtml(route,profile){
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="index,follow">
 <title>${title}</title>
-<meta name="description" content="${desc}">
+<meta name="description" content="${desc}"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
