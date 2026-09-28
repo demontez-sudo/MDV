@@ -76,8 +76,28 @@ function profileHtml(route,profile){
   body{ background:var(--paper); color:var(--ink); font-family:'Inter', sans-serif; font-weight:300; overflow-x:hidden; }
   ::selection{ background:var(--ink); color:var(--paper); }
   a{ color:inherit; text-decoration:none; }
-  .mark{ position:fixed; top:28px; right:5vw; z-index:200; font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; mix-blend-mode:difference; color:#fff; opacity:0; animation: fadeIn .8s ease .9s forwards; }
+  .topnav{ position:fixed; top:0; left:0; right:0; z-index:200; display:flex; align-items:center; justify-content:space-between; padding:28px 5vw; pointer-events:none; }
+  .topnav > *{ pointer-events:auto; }
+  .back,.mark,.menu-trigger{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; mix-blend-mode:difference; color:#fff; opacity:0; animation: fadeIn .8s ease .9s forwards; background:none; border:0; cursor:pointer; display:flex; align-items:center; gap:8px; }
+  .back svg{ transition:transform .3s ease; }
+  .back:hover svg{ transform:translateX(-4px); }
   @keyframes fadeIn{ to{ opacity:1; } }
+  .menu-overlay{ position:fixed; inset:0; z-index:300; background:var(--paper); color:var(--ink); opacity:0; visibility:hidden; transition:opacity .4s ease; overflow-y:auto; }
+  .menu-overlay.open{ opacity:1; visibility:visible; }
+  .menu-top{ display:flex; align-items:center; justify-content:space-between; padding:28px 5vw; }
+  .menu-top .mark{ position:static; opacity:1; mix-blend-mode:normal; color:var(--ink); animation:none; }
+  .menu-close{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink); background:none; border:0; cursor:pointer; }
+  .menu-close:hover{ color:var(--stone); }
+  .menu-body{ padding:2vh 5vw 10vh; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6vh; max-width:900px; margin:0 auto; }
+  .menu-city{ text-align:center; }
+  .menu-city-label{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--stone); margin-bottom:22px; }
+  .menu-links{ list-style:none; display:grid; gap:16px; }
+  .menu-links a{ font-family:'Bodoni Moda', serif; font-style:italic; font-size:clamp(1.4rem,3.4vw,2rem); color:var(--ink); transition:color .3s ease; }
+  .menu-links a:hover{ color:var(--stone); }
+  .menu-secondary{ grid-column:1/-1; list-style:none; display:flex; flex-wrap:wrap; justify-content:center; gap:12px 28px; padding-top:4vh; border-top:1px solid var(--line); }
+  .menu-secondary a{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--stone); }
+  .menu-secondary a:hover{ color:var(--ink); }
+  @media(max-width:760px){ .menu-body{ grid-template-columns:1fr; gap:7vh; } }
   .hero-video{ position:relative; width:100%; height:100vh; overflow:hidden; background:#000; }
   .video-wrap{ position:absolute; inset:0; }
   .video-wrap img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
@@ -156,7 +176,42 @@ function profileHtml(route,profile){
 </style>
 </head>
 <body>
-  <a href="/" class="mark">Maison de Veux</a>
+  <nav class="topnav">
+    <a href="#" class="back" id="backLink" onclick="if(document.referrer && document.referrer.indexOf(location.host)>=0){history.back();return false;}"><svg width="14" height="10" viewBox="0 0 14 10" fill="none"><path d="M13 5H1M1 5L5 1M1 5L5 9" stroke="currentColor" stroke-width="1"/></svg>Back</a>
+    <a href="/" class="mark">Maison de Veux</a>
+    <button type="button" class="menu-trigger" onclick="toggleMenu()">Menu</button>
+  </nav>
+
+  <div class="menu-overlay" id="menuOverlay">
+    <div class="menu-top">
+      <span class="mark">Maison de Veux</span>
+      <button type="button" class="menu-close" onclick="toggleMenu()">Close</button>
+    </div>
+    <div class="menu-body">
+      <div class="menu-city">
+        <div class="menu-city-label">New York</div>
+        <ul class="menu-links">
+          <li><a href="/women-nyc">Women</a></li>
+          <li><a href="/development-nyc">Development</a></li>
+          <li><a href="/men-newyork">Men</a></li>
+          <li><a href="/creators">Creator</a></li>
+        </ul>
+      </div>
+      <div class="menu-city">
+        <div class="menu-city-label">Paris</div>
+        <ul class="menu-links">
+          <li><a href="/women-paris">Women</a></li>
+          <li><a href="/development-paris">Development</a></li>
+          <li><a href="/men-paris">Men</a></li>
+        </ul>
+      </div>
+      <ul class="menu-secondary">
+        <li><a href="/get-scouted">Get Scouted</a></li>
+        <li><a href="/contact">Contact Us</a></li>
+        <li><a href="https://www.instagram.com/maisondeveux">Instagram</a></li>
+      </ul>
+    </div>
+  </div>
 
   ${hero?`<section class="hero-video">
     <div class="hero-fade-sides"></div>
@@ -212,6 +267,9 @@ function profileHtml(route,profile){
     render();
     if(!reduceMotion && total>1){ restart(); }
   }
+  function toggleMenu(){ document.getElementById('menuOverlay').classList.toggle('open'); }
+  window.toggleMenu = toggleMenu;
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape')document.getElementById('menuOverlay').classList.remove('open'); });
   initSlideshow(document.getElementById('slideshow-editorial'));
   initSlideshow(document.getElementById('slideshow-digitals'));
   document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
