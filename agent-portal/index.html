@@ -607,7 +607,7 @@ window.__VEUX_RELEASE__="16.11.52-login-runtime-recovery";
   }
   var branded=/^(www\.)?maisondeveux\.com$/i.test(location.hostname)&&/^\/(?:admin|team)(?:\/|$)/.test(location.pathname);
   window.__VEUX_AGENT_MOUNT__=branded?'/admin':'';
-  var assetVersion='?v='+encodeURIComponent(window.__VEUX_RELEASE__||'16.9.70');
+  var assetVersion='?v='+encodeURIComponent(window.__VEUX_RELEASE__||'16.9.71');
   var css=document.createElement('link');css.rel='stylesheet';css.href=(window.__VEUX_AGENT_MOUNT__||'')+'/assets/veux-agent-v15-core-16.8.5.css'+assetVersion;document.head.appendChild(css);
   var mobileCss=document.createElement('link');mobileCss.rel='stylesheet';mobileCss.href=(window.__VEUX_AGENT_MOUNT__||'')+'/assets/veux-agent-v16.8.6-mobile-product.css'+assetVersion;document.head.appendChild(mobileCss);
   var stabilityCss=document.createElement('link');stabilityCss.rel='stylesheet';stabilityCss.href=(window.__VEUX_AGENT_MOUNT__||'')+'/assets/veux-agent-v16.9-stability.css'+assetVersion;document.head.appendChild(stabilityCss);
@@ -1591,7 +1591,7 @@ window.VEUX_TOPBAR_CONTEXT=function(){};
   window.__VEUX_SHELL_READY__=false;
   window.__VEUX_SHELL_FAILURES__=[];
   var base=window.__VEUX_AGENT_MOUNT__||'';
-  var releaseVersion=encodeURIComponent(window.__VEUX_RELEASE__||'16.9.70');
+  var releaseVersion=encodeURIComponent(window.__VEUX_RELEASE__||'16.9.71');
   function asset(name){return base+'/assets/'+name+'?v='+releaseVersion;}
   function loadScript(src,opts){
     opts=opts||{};

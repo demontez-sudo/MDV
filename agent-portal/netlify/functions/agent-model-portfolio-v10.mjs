@@ -25,6 +25,25 @@ export const handler=async(event)=>{
 
     if(event.httpMethod==='POST'){
       const action=String(body.action||'');
+      if(action==='set_website_cover'){
+        const admin=await requirePermission(user.id,organization.id,'media.write');
+        if(!body.media_id)return json(400,{error:'media_id is required'});
+        const target=await one(admin.from('model_media').select('id,metadata,is_public').eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.media_id));
+        if(!target)return json(404,{error:'Media item not found'});
+        if(!target.is_public)return json(409,{error:'Show this photo on the website first, then set it as the cover.'});
+        const others=await rows(admin.from('model_media').select('id,metadata').eq('organization_id',organization.id).eq('model_id',modelId).contains('metadata',{website_cover:true}));
+        for(const o of others){if(String(o.id)===String(target.id))continue;const {website_cover,...restMeta}=o.metadata||{};const {error:ce}=await admin.from('model_media').update({metadata:restMeta}).eq('organization_id',organization.id).eq('id',o.id);if(ce)throw ce;}
+        const nextMeta={...(target.metadata||{}),website_cover:true};
+        const {data,error}=await admin.from('model_media').update({metadata:nextMeta}).eq('organization_id',organization.id).eq('model_id',modelId).eq('id',target.id).select('*').single();if(error)throw error;
+        await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'media',title:'Website cover photo changed',detail:null,...(await actorFor(admin,user)),link_page:'materials',link_id:target.id});
+        return json(200,{ok:true,verified:true,media:data,message:'Website cover photo updated. The public page’s top photo is now separate from the internal Headshot.',persisted_at:new Date().toISOString()});
+      }
+      if(action==='clear_website_cover'){
+        const admin=await requirePermission(user.id,organization.id,'media.write');
+        const others=await rows(admin.from('model_media').select('id,metadata').eq('organization_id',organization.id).eq('model_id',modelId).contains('metadata',{website_cover:true}));
+        for(const o of others){const {website_cover,...restMeta}=o.metadata||{};const {error:ce}=await admin.from('model_media').update({metadata:restMeta}).eq('organization_id',organization.id).eq('id',o.id);if(ce)throw ce;}
+        return json(200,{ok:true,verified:true,cleared:others.length,message:'Website cover cleared. The Headshot is the top photo again.',persisted_at:new Date().toISOString()});
+      }
       if(action==='set_primary_media'){
         const admin=await requirePermission(user.id,organization.id,'media.write');
         if(!body.media_id)return json(400,{error:'media_id is required'});
