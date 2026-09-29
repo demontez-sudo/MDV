@@ -11,6 +11,9 @@ const CASTING_STATUSES=new Set(['draft','open','submitted','callback','closed','
 function normKey(v){return String(v||'').trim().toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');}
 function normalizeBookingStatus(v,body={}){const k=normKey(v)||'inquiry';if(BOOKING_STATUSES.has(k))return k;const map={draft:'inquiry',tentative:'option',scheduled:body.confirmed?'confirmed':'option',open:'inquiry',active:'job',pending:'option',complete:'completed',canceled:'cancelled'};const out=map[k]||'inquiry';return BOOKING_STATUSES.has(out)?out:'inquiry';}
 function normalizeCastingStatus(v){const k=normKey(v)||'draft';if(CASTING_STATUSES.has(k))return k;const map={tentative:'draft',scheduled:'open',confirmed:'open',active:'open',pending:'draft',completed:'closed',complete:'closed',canceled:'cancelled'};const out=map[k]||'draft';return CASTING_STATUSES.has(out)?out:'draft';}
+// booking_rates.rate_type is DB-constrained (booking_rates_rate_type_check) to this exact set.
+const RATE_TYPES=new Set(['job','day','hour','fitting','usage','buyout','overtime','travel','cancellation','other']);
+function normalizeRateType(v){const k=normKey(v);if(RATE_TYPES.has(k))return k;const map={flat:'job',half:'day',half_day:'day',daily:'day','half-day':'day',hourly:'hour',usage_fee:'usage'};return RATE_TYPES.has(map[k])?map[k]:'other';}
 
 
 function rpcUnavailable(error){
@@ -39,7 +42,7 @@ async function fallbackSaveBooking(admin,organizationId,userId,action,bookingId,
   let rates=[],usageRows=[];
   if(rate){
     const {error:rd}=await admin.from('booking_rates').delete().eq('organization_id',organizationId).eq('booking_id',booking.id);if(rd)throw rd;
-    const row={organization_id:organizationId,booking_id:booking.id,model_id:cleanIds(modelIds)[0]||null,rate_type:'flat',quantity:rate.quantity||1,unit_amount:rate.unit_amount,currency:rate.currency||'USD',agency_fee_rate:rate.agency_fee_rate,notes:rate.notes||null,metadata:rate.metadata||{}};
+    const row={organization_id:organizationId,booking_id:booking.id,model_id:cleanIds(modelIds)[0]||null,rate_type:normalizeRateType(rate.rate_unit||'job'),quantity:rate.quantity||1,unit_amount:rate.unit_amount,currency:rate.currency||'USD',agency_fee_rate:rate.agency_fee_rate,notes:rate.notes||null,metadata:rate.metadata||{}};
     const {data,error}=await admin.from('booking_rates').insert(row).select('*');if(error)throw error;rates=data||[];
   }
   if(usage){
@@ -173,7 +176,7 @@ export const handler=async(event)=>{
         let savedRates=saved.rates;
         if(Array.isArray(body.model_rates)&&body.model_rates.length){
           const allowed=new Set(cleanIds(body.model_ids).map(String));
-          const rateRows=body.model_rates.filter(r=>r&&allowed.has(String(r.model_id))&&n(r.unit_amount)!=null&&n(r.unit_amount)>=0).map(r=>({organization_id:organization.id,booking_id:booking.id,model_id:r.model_id,rate_type:'flat',quantity:n(r.quantity)||1,unit_amount:n(r.unit_amount),currency:String(r.currency||body.currency||'USD').slice(0,3).toUpperCase(),agency_fee_rate:n(r.agency_commission_pct)==null?null:Math.min(1,Math.max(0,n(r.agency_commission_pct)/100)),notes:r.notes||null,metadata:{rate_unit:String(r.rate_unit||'day')}}));
+          const rateRows=body.model_rates.filter(r=>r&&allowed.has(String(r.model_id))&&n(r.unit_amount)!=null&&n(r.unit_amount)>=0).map(r=>({organization_id:organization.id,booking_id:booking.id,model_id:r.model_id,rate_type:normalizeRateType(r.rate_unit),quantity:n(r.quantity)||1,unit_amount:n(r.unit_amount),currency:String(r.currency||body.currency||'USD').slice(0,3).toUpperCase(),agency_fee_rate:n(r.agency_commission_pct)==null?null:Math.min(1,Math.max(0,n(r.agency_commission_pct)/100)),notes:r.notes||null,metadata:{rate_unit:String(r.rate_unit||'day')}}));
           const {error:rateDelError}=await admin.from('booking_rates').delete().eq('organization_id',organization.id).eq('booking_id',booking.id);if(rateDelError)throw rateDelError;
           if(rateRows.length){const {data:rateData,error:rateError}=await admin.from('booking_rates').insert(rateRows).select('*');if(rateError)throw rateError;savedRates=rateData||[];}else savedRates=[];
         }
