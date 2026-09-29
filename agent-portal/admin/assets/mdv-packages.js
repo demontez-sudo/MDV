@@ -108,7 +108,7 @@ function bind(el,pkgs){
     if(e.target.closest('[data-pk-back]')){S.detail=false;var l=el.querySelector('.pk-layout');if(l)l.classList.remove('detail-open');return;}
     if((b=e.target.closest('[data-pk-update]'))){openUpdateModal(b.dataset.pkUpdate);return;}
     if((b=e.target.closest('[data-pk-ask]'))){var pk=pkgs.find(function(x){return x.id===b.dataset.pkAsk;})||{};if(window.MDV_VERA_CHAT)MDV_VERA_CHAT.open('Review my package "'+(pk.title||'')+'" for '+((pk.companies&&pk.companies.name)||'the client')+'. It is '+stage(pk)+' with '+((pk.tracking&&pk.tracking.total_views)||0)+' views. Suggest the best follow-up and draft a short message.');return;}
-    if((b=e.target.closest('[data-pk]'))){S.detail=true;if(window.VEUX_V155&&VEUX_V155.selectPackage)VEUX_V155.selectPackage(b.dataset.pk);return;}
+    if((b=e.target.closest('[data-pk]'))){S.detail=true;b.classList.add('pk-busy');if(window.VEUX_V155&&VEUX_V155.selectPackage)VEUX_V155.selectPackage(b.dataset.pk);return;}
   };
 }
 

@@ -132,3 +132,4 @@ html body .mdv-pk .pk-stack{max-height:none;overflow:auto;flex:1 1 auto;min-heig
 .pk-upd>footer button{height:38px;padding:0 18px;border-radius:999px;border:1px solid var(--mdv-line,rgba(217,184,102,.3));background:rgba(255,255,255,.03);color:var(--mdv-ink,#efe5d4);font:500 13px 'Inter',sans-serif;cursor:pointer}
 .pk-upd>footer button.primary{background:var(--pk-h,#d9b866);border-color:transparent;color:#1a1508;font-weight:600}
 .pk-upd>footer button.primary:disabled{opacity:.6;cursor:default}
+.pk-card.pk-busy,.pk-signals article button.pk-busy{opacity:.55;pointer-events:none}
