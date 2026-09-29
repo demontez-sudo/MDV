@@ -52,7 +52,7 @@ async function uploadModelMedia(file,modelId,options){
   if(!modelId)throw new Error('Open a model before uploading media.');
   var mime=String(file.type||options.mime_type||'application/octet-stream');
   if(!/^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm))$/i.test(mime))throw new Error('Use JPG, PNG, WEBP, GIF, MP4, MOV or WEBM media.');
-  var max=50*1024*1024;if(Number(file.size||0)>max)throw new Error('Model media must be 50 MB or smaller.');
+  var max=150*1024*1024;if(Number(file.size||0)>max)throw new Error('Model media must be 150 MB or smaller.');
   var signPayload={organization_slug:(state.org&&state.org.slug)||orgSlug,model_id:modelId,name:file.name||'model-media',mime_type:mime,size_bytes:file.size||0,category:options.category||null};
   var sign;
   try{

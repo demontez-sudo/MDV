@@ -24,7 +24,7 @@ export const handler=async(event)=>{
   if(!body.model_id||!body.name)return response(event,400,{error:'model_id and name are required'});
   const model=await admin.from('models').select('id').eq('organization_id',organization.id).eq('id',body.model_id).maybeSingle();if(model.error)throw model.error;if(!model.data)return response(event,404,{error:'Model not found'});
   const mime=String(body.mime_type||'');if(!/^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm))$/i.test(mime))return response(event,400,{error:'Use JPG, PNG, WEBP, GIF, MP4, MOV or WEBM media.'});
-  const max=Number(process.env.VEUX_MODEL_MEDIA_MAX_BYTES||52428800),size=body.size_bytes==null?null:Number(body.size_bytes);if(size!=null&&(!Number.isFinite(size)||size<0||size>max))return response(event,400,{error:`Model media exceeds the ${Math.round(max/1048576)} MB limit`});
+  const max=Number(process.env.VEUX_MODEL_MEDIA_MAX_BYTES||157286400),size=body.size_bytes==null?null:Number(body.size_bytes);if(size!=null&&(!Number.isFinite(size)||size<0||size>max))return response(event,400,{error:`Model media exceeds the ${Math.round(max/1048576)} MB limit`});
   const bucket='veux-public',path=`${organization.id}/models/${body.model_id}/${crypto.randomUUID()}-${clean(body.name)}`;
   const {data,error}=await admin.storage.from(bucket).createSignedUploadUrl(path,{upsert:false});if(error)throw error;
   const pub=admin.storage.from(bucket).getPublicUrl(path).data.publicUrl;return response(event,201,{signed_url:data.signedUrl||data.signedURL,token:data.token||null,bucket,path,public_url:pub,media_type:/^video\//i.test(mime)?'video':'image'});
