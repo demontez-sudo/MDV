@@ -26,6 +26,8 @@ function score(x){
   return 0;
 }
 function tone(sc){return sc>=80?'hot':sc>=50?'warm':sc>=20?'cool':'cold';}
+function canUpdate(x){var s=stage(x);return s==='sent'||s==='viewed';}
+function sentAge(x){var t=track(x);return ago(t.last_sent_at||x.updated_at||x.created_at);}
 function signals(pkgs,openFeedback){
   var out=[],drafts=pkgs.filter(function(x){return stage(x)==='draft';});
   pkgs.forEach(function(x){
@@ -74,7 +76,7 @@ function detailHtml(d,ctx){
   var fb=feedback.slice(0,4).map(function(f){return '<li><b>'+esc(f.models&&f.models.display_name||f.feedback_type||'Feedback')+'</b><span>'+esc(f.note||f.feedback_type||'')+'</span></li>';}).join('');
   var ready=ctx.ready;
   return '<div class="pk-detail-in"><button type="button" class="pk-back" data-pk-back>← Packages</button><header class="pk-dh">'+ring(sc)+'<div><small>Package cockpit</small><h2>'+esc(p.title||'Package')+'</h2><span>'+esc((lp.companies&&lp.companies.name)||'Direct / unassigned')+' · updated '+esc(dt(p.updated_at))+'</span></div></header>'+stepper(lp)
-   +'<div class="pk-actions"><button type="button" class="primary" onclick="VEUX_V155.packageForm(\''+esc(p.id)+'\')">Edit</button><button type="button" '+(ready?'':'disabled title="Email delivery is offline"')+' onclick="VEUX_V155.sendPackage(\''+esc(p.id)+'\',this)">'+(ready?'Send':'Email offline')+'</button><button type="button" onclick="VEUX_V156.duplicatePackage(\''+esc(p.id)+'\')">Duplicate</button><button type="button" onclick="VEUX_V155.archivePackage(\''+esc(p.id)+'\')">Archive</button></div>'
+   +'<div class="pk-actions"><button type="button" class="primary" onclick="VEUX_V155.packageForm(\''+esc(p.id)+'\')">Edit</button><button type="button" '+(ready?'':'disabled title="Email delivery is offline"')+' onclick="VEUX_V155.sendPackage(\''+esc(p.id)+'\',this)">'+(ready?'Send':'Email offline')+'</button>'+(ready&&canUpdate(lp)?'<button type="button" class="pk-update-btn" data-pk-update="'+esc(p.id)+'">Send update</button>':'')+'<button type="button" onclick="VEUX_V156.duplicatePackage(\''+esc(p.id)+'\')">Duplicate</button><button type="button" onclick="VEUX_V155.archivePackage(\''+esc(p.id)+'\')">Archive</button></div>'
    +'<div class="pk-metrics"><span><b>'+models.length+'</b>Models</span><span><b>'+opened.length+'/'+recipients.length+'</b>Viewed</span><span><b>'+feedback.length+'</b>Replies</span><span><b>'+esc(dt(p.expires_at))+'</b>Expires</span></div>'
    +'<section class="pk-vera"><div><small>✦ Vera</small>'+advice.map(function(a){return '<p>'+esc(a)+'</p>';}).join('')+'</div><button type="button" data-pk-ask="'+esc(p.id)+'">Ask Vera</button></section>'
    +'<h4>Models</h4><div class="pk-models">'+mm+'</div><h4>Recipients</h4><ul class="pk-rec">'+rn+'</ul>'+(fb?'<h4>Client replies</h4><ul class="pk-fb">'+fb+'</ul>':'')+'</div>';
@@ -87,7 +89,7 @@ function paint(el,data){
     var h='<div class="mdv-pk">'
      +'<header class="pk-head"><div><small>Model tools · client submissions</small><h1>Smart Packages</h1></div><div class="pk-head-r"><span class="pk-mail '+(ready?'ok':'off')+'" title="'+esc(ready?dc.sender_email:'Email delivery is offline')+'"><i></i>'+(ready?'Email ready':'Email offline')+'</span><button type="button" data-pk-go="packageresponses">Responses'+(openFb?' <b>'+openFb+'</b>':'')+'</button><button type="button" class="primary" onclick="VEUX_V155.packageForm()">+ New package</button></div></header>'
      +'<div class="pk-stats"><span><b>'+total+'</b>Packages</span><span><b>'+live+'</b>Live with clients</span><span><b>'+pkgs.filter(function(x){return stage(x)==='viewed'}).length+'</b>Being viewed</span><span><b>'+openFb+'</b>Need review</span></div>'
-     +(sig.length?'<section class="pk-signals"><h3><i>✦</i> Vera signals</h3><div>'+sig.map(function(s){return '<article class="'+s.k+'"><b>'+esc(s.t)+'</b><p>'+esc(s.d)+'</p><button type="button" '+(s.page?'data-pk-go="'+esc(s.page)+'"':'data-pk="'+esc(s.id)+'"')+'>'+esc(s.a)+' →</button></article>';}).join('')+'</div></section>':'')
+     +(sig.length?'<section class="pk-signals"><h3><i>✦</i> Vera signals</h3><div>'+sig.map(function(s){return '<article class="'+s.k+'"><b>'+esc(s.t)+'</b><p>'+esc(s.d)+'</p><div class="pk-sig-acts"><button type="button" '+(s.page?'data-pk-go="'+esc(s.page)+'"':'data-pk="'+esc(s.id)+'"')+'>'+esc(s.a)+' →</button>'+((s.k==='cold'||s.k==='warm')?'<button type="button" class="ghost" data-pk-update="'+esc(s.id)+'">Send update</button>':'')+'</div></article>';}).join('')+'</div></section>':'')
      +'<div class="pk-bar"><label class="pk-search"><input data-pk-q placeholder="Search packages or clients…" value="'+esc(S.q)+'"><i>⌕</i></label><div class="pk-seg" role="group" aria-label="View"><button type="button" data-pk-view="board" class="'+(S.view==='board'?'on':'')+'">Board</button><button type="button" data-pk-view="list" class="'+(S.view==='list'?'on':'')+'">List</button></div></div>'
      +'<div class="pk-layout'+(S.detail&&p.id?' detail-open':'')+'"><main class="pk-main">'+boardHtml(pkgs,p.id)+'</main><aside class="pk-detail">'+detailHtml(d,{list:pkgs,ready:ready})+'</aside></div></div>';
     el.innerHTML=h;
@@ -104,9 +106,39 @@ function bind(el,pkgs){
     if((b=e.target.closest('[data-pk-view]'))){S.view=b.dataset.pkView;paint(el,S.data);return;}
     if((b=e.target.closest('[data-pk-go]'))){if(window.navTo)navTo(b.dataset.pkGo);return;}
     if(e.target.closest('[data-pk-back]')){S.detail=false;var l=el.querySelector('.pk-layout');if(l)l.classList.remove('detail-open');return;}
+    if((b=e.target.closest('[data-pk-update]'))){openUpdateModal(b.dataset.pkUpdate);return;}
     if((b=e.target.closest('[data-pk-ask]'))){var pk=pkgs.find(function(x){return x.id===b.dataset.pkAsk;})||{};if(window.MDV_VERA_CHAT)MDV_VERA_CHAT.open('Review my package "'+(pk.title||'')+'" for '+((pk.companies&&pk.companies.name)||'the client')+'. It is '+stage(pk)+' with '+((pk.tracking&&pk.tracking.total_views)||0)+' views. Suggest the best follow-up and draft a short message.');return;}
     if((b=e.target.closest('[data-pk]'))){S.detail=true;if(window.VEUX_V155&&VEUX_V155.selectPackage)VEUX_V155.selectPackage(b.dataset.pk);return;}
   };
 }
+
+/* ---------- Send update modal ---------- */
+function updateModalHtml(pkg){
+  var title=pkg.title||'this package',client=(pkg.companies&&pkg.companies.name)||'the client';
+  var subject='Following up — '+title;
+  var body='Hi,\n\nJust checking in on '+title+' — wanted to make sure it landed and see if you had any thoughts or need anything else from our side.\n\nHappy to share more looks, availability or answer any questions.\n\nBest,';
+  return '<div class="pk-upd-back" data-pk-upd-close><section class="pk-upd" role="dialog" aria-modal="true" aria-label="Send update"><header><div><small>Send update · '+esc(client)+'</small><h2>'+esc(title)+'</h2></div><button type="button" data-pk-upd-close aria-label="Close">×</button></header>'
+   +'<div class="pk-upd-body"><label><span>Subject</span><input id="pk-upd-subject" value="'+esc(subject)+'"></label><label><span>Message</span><textarea id="pk-upd-msg" rows="7">'+esc(body)+'</textarea></label>'
+   +'<p class="pk-upd-note">Sends to the same recipient as before, with a fresh link to the package. It will show up in their inbox as a new email.</p><div class="pk-upd-err" id="pk-upd-err"></div></div>'
+   +'<footer><button type="button" class="ghost" data-pk-upd-close>Cancel</button><button type="button" class="primary" id="pk-upd-send">Send update</button></footer></section></div>';
+}
+function openUpdateModal(id){
+  var pkgs=(S.data&&S.data.list&&arr(S.data.list.packages))||[],pkg=pkgs.find(function(x){return x.id===id;});
+  if(!pkg)return;
+  closeUpdateModal();
+  var host=document.createElement('div');host.id='pk-upd-host';host.innerHTML=updateModalHtml(pkg);document.body.appendChild(host);
+  host.querySelectorAll('[data-pk-upd-close]').forEach(function(b){b.onclick=function(e){if(e.target===b||b.hasAttribute('data-pk-upd-close'))closeUpdateModal();};});
+  host.querySelector('.pk-upd-back').onclick=function(e){if(e.target===this)closeUpdateModal();};
+  var sendBtn=host.querySelector('#pk-upd-send');
+  sendBtn.onclick=function(){
+    var subject=host.querySelector('#pk-upd-subject').value.trim(),msg=host.querySelector('#pk-upd-msg').value.trim(),err=host.querySelector('#pk-upd-err');
+    if(!subject||!msg){err.textContent='Subject and message are required.';return;}
+    err.textContent='';
+    if(!window.VEUX_V155||!VEUX_V155.sendPackageUpdate){err.textContent='Send is still loading. Try again in a moment.';return;}
+    VEUX_V155.sendPackageUpdate(id,subject,msg,sendBtn).then(function(){closeUpdateModal();}).catch(function(e){err.textContent=(e&&e.message)||'Could not send. Try again.';});
+  };
+  var f=host.querySelector('#pk-upd-subject');if(f)f.focus();
+}
+function closeUpdateModal(){var h=document.getElementById('pk-upd-host');if(h)h.remove();}
 window.MDV_PKG={paint:paint};
 })();
