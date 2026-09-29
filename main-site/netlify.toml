@@ -199,15 +199,10 @@
   status = 200
   force = true
 
-# Histria has no hand-built legacy site (maison-histria.netlify.app does not
-# exist) — removed the forced override so /histria falls through to the
-# catch-all /:profile rule below, which renders her page directly.
-
-[[redirects]]
-  from = "/katalina"
-  to = "https://maison-katalina.netlify.app"
-  status = 200
-  force = true
+# Histria and Katalina have no hand-built legacy site (those Netlify sites
+# don't exist) — removed their forced overrides so /histria and /katalina
+# fall through to the catch-all /:profile rule below, which renders their
+# pages directly.
 
 [[redirects]]
   from = "/krishita"
