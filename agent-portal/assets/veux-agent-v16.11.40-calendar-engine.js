@@ -122,7 +122,7 @@ async function eventAction(action,x){
 var travelMeta=x&&x.raw&&x.raw.metadata||{};
 if(action==='edit'&&String(type(x)).toLowerCase()==='travel'&&(travelMeta.travel_record_id||travelMeta.mobility_travel_id)){closeModal();try{sessionStorage.setItem('cavyre.mobility.focus.travel',String(travelMeta.travel_record_id||travelMeta.mobility_travel_id));}catch(_e){}if(typeof window.navTo==='function')return window.navTo('mobility');location.hash='mobility';return;}
 if(action==='move'&&String(type(x)).toLowerCase()==='travel'&&(travelMeta.travel_record_id||travelMeta.mobility_travel_id)){throw new Error('Move Travel from Travel & Visa so itinerary, housing and arrival intelligence stay synchronized.');}
-if(action==='move'){closeModal();return moveModal(x);}if(action==='edit'){closeModal();return openRecord(x.kind,x.id);}if(action==='delete'&&x.kind==='show'){if(!confirm('Delete “'+x.title+'”? This cannot be undone.'))return;await window.VEUX_AGENT_V4.api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({organization_slug:org(),action:'delete_show',show_id:x.id})});closeModal();S.data=null;S.seasonAt=0;return render();}if(action==='delete'){if(!confirm('Delete “'+x.title+'”? This cannot be undone.'))return;var ep=x.kind==='event'?'/api/agent/calendar/v9':'/api/agent/bookings/v9',body={organization_slug:org(),action:'delete_'+x.kind};body[x.kind+'_id']=x.id;await window.VEUX_AGENT_V4.api(ep,{method:'POST',body:JSON.stringify(body)});closeModal();S.data=null;return render();}if(action==='duplicate'){return duplicateModal(x);}}
+if(action==='move'){closeModal();return moveModal(x);}if(action==='edit'){closeModal();return openRecord(x.kind,x.id);}if(action==='delete'&&x.kind==='show'){if(!confirm('Delete “'+x.title+'”? This cannot be undone.'))return;await window.VEUX_AGENT_V4.api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({organization_slug:org(),action:'delete_show',show_id:x.id})});closeModal();S.data=null;S.seasonAt=0;try{return render();}catch(_e){console.error('[calendar] refresh after save',_e);}}if(action==='delete'){if(!confirm('Delete “'+x.title+'”? This cannot be undone.'))return;var ep=x.kind==='event'?'/api/agent/calendar/v9':'/api/agent/bookings/v9',body={organization_slug:org(),action:'delete_'+x.kind};body[x.kind+'_id']=x.id;await window.VEUX_AGENT_V4.api(ep,{method:'POST',body:JSON.stringify(body)});closeModal();S.data=null;try{return render();}catch(_e){console.error('[calendar] refresh after save',_e);}}if(action==='duplicate'){return duplicateModal(x);}}
 
 function showNotes(notes,endIso){var n=String(notes||'');if(!endIso)return n||null;return /ends=/.test(n)?n.replace(/ends=[^;]+/,'ends='+endIso):n+(n?';':'')+'ends='+endIso;}
 function showEditModal(x){try{return showEditModalRun(x);}catch(e){console.error('[calendar] show editor',e);try{toast('Editor error: '+(e&&e.message||e));}catch(_){}}}
@@ -178,7 +178,7 @@ $('#se-go').onclick=async function(){
   var call=function(o){return window.VEUX_AGENT_V4.api('/api/agent/season/v9',{method:'POST',body:JSON.stringify(Object.assign({organization_slug:org(),show_id:x.id},o))});};
   if(add.length){var ra=await call({action:'assign_show_models',model_ids:add});if(!ra||ra.verified!==true)throw new Error('Models could not be added.');}
   for(var k=0;k<drop.length;k++){var rr=await call({action:'remove_show_model',model_id:drop[k]});if(!rr||rr.verified!==true)throw new Error('A model could not be removed.');}
-  closeModal();S.data=null;S.seasonAt=0;toast('✓ '+title+' updated');return render();
+  closeModal();S.data=null;S.seasonAt=0;toast('✓ '+title+' updated');try{return render();}catch(_e){console.error('[calendar] refresh after save',_e);}
  }catch(e){msg.textContent=e&&e.message||String(e);msg.style.color='#f26b7c';go.disabled=false;go.textContent='Save changes';}
 };
 var f=$('#se-title');if(f)f.focus();}
@@ -239,7 +239,7 @@ $('#dup-go').onclick=async function(){
    if(x.kind==='casting')body.casting_type=r.casting_type||'in_person';
    await window.VEUX_AGENT_V4.api(ep,{method:'POST',body:JSON.stringify(body)});made++;
   }
-  closeModal();S.data=null;toast(made+' event'+(made===1?'':'s')+' created · '+mids.length+' model'+(mids.length===1?'':'s'));return render();
+  closeModal();S.data=null;toast(made+' event'+(made===1?'':'s')+' created · '+mids.length+' model'+(mids.length===1?'':'s'));try{return render();}catch(_e){console.error('[calendar] refresh after save',_e);}
  }catch(e){toast((made?made+' created, then failed: ':'')+(e&&e.message||String(e)),'risk');go.disabled=false;go.textContent='Create duplicate';if(made){S.data=null;render();}}
 };
 drawModels();sum();var f=$('#dup-title');if(f)f.focus();}
@@ -320,7 +320,7 @@ $('#bk-go').onclick=async function(){
   go.disabled=true;go.textContent=seed.booking_id?'Saving…':'Creating…';
   var res=await window.VEUX_AGENT_V4.api('/api/agent/bookings/v9',{method:'POST',body:JSON.stringify(body)});
   if(!res||res.verified!==true)throw new Error('The booking was not confirmed as saved.');
-  closeModal();S.data=null;toast('✓ Booking created · '+body.model_ids.length+' model'+(body.model_ids.length===1?'':'s')+(res.warning?' · '+res.warning:''));return render();
+  closeModal();S.data=null;toast('✓ Booking created · '+body.model_ids.length+' model'+(body.model_ids.length===1?'':'s')+(res.warning?' · '+res.warning:''));try{return render();}catch(_e){console.error('[calendar] refresh after save',_e);}
  }catch(e){msg.textContent=e&&e.message||String(e);msg.style.color='#f26b7c';go.disabled=false;go.textContent=seed.booking_id?'Save changes':'Create booking';}
 };
 if(seed.booking_id){var gb=h.querySelector('#bk-go');if(gb)gb.textContent='Save changes';}
@@ -369,7 +369,7 @@ async function load(host){var seq=S.seq=(S.seq||0)+1;S.loading=true;host.innerHT
 function enhanceMonth(){var grid=document.querySelector('.vx75-month-grid');if(!grid)return;grid.querySelectorAll('.vx75-ribbon').forEach(function(n){n.remove();});grid.querySelectorAll('[data-day]').forEach(function(cell){if(cell.querySelector('.vx84-live-ribbon'))return;var k=cell.dataset.day,d=new Date(k+'T12:00:00'),html=liveRibbons(scoped(S.items),d);if(html)cell.insertAdjacentHTML('afterbegin',html);});bind(grid);}
 function redrawMonth(){var h=document.getElementById('p-calendar'),c=h&&h.querySelector('.vx75-calendar');if(c){c.innerHTML=controls()+deck()+renderBody();var sb1=c.querySelector('.vx76-scopebar');if(sb1)sb1.remove();bind(h);}}
 function focusMonthIntelligence(k){if(S.view!=='month'||S.monthDay===k)return;S.monthDay=k;var d=new Date(k+'T12:00:00'),rows=monthVisible(scoped(S.items)).filter(function(x){return key(x.starts_at)===k;}),host=document.getElementById('p-calendar'),old=host&&host.querySelector('.vx85-day-intel');if(!old)return;host.querySelectorAll('[data-month-day]').forEach(function(cell){cell.classList.toggle('selected',cell.dataset.monthDay===k);});old.outerHTML=monthRight(rows,d);var fresh=host.querySelector('.vx85-day-intel');if(fresh)bind(fresh);}
-function render(host){host=host||document.getElementById('p-calendar');if(!host)return;return load(host).then(enhanceMonth);}
+function render(host){host=host||document.getElementById('p-calendar');if(!host)return;return load(host).then(enhanceMonth).catch(function(_e){console.error('[calendar] render',_e);});}
 function openEvent(kind,id){var x=S.items.find(function(i){return i.kind===kind&&String(i.id)===String(id);});if(!x)return;S.selected=x;eventModal(x);}
 function redrawCurrent(){var h=document.getElementById('p-calendar'),c=h&&h.querySelector('.vx75-calendar');if(c){c.innerHTML=controls()+deck()+renderBody();var sb1=c.querySelector('.vx76-scopebar');if(sb1)sb1.remove();bind(h);}}
 function selectEvent(kind,id){var x=S.items.find(function(i){return i.kind===kind&&String(i.id)===String(id);});if(!x)return;S.selected=x;redrawCurrent();}
