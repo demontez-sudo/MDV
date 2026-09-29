@@ -164,7 +164,7 @@ $('#se-q').oninput=sugSe;
 $('#se-all').onclick=function(){sel=pool.map(function(m){return m.id;});drawSe();};
 $('#se-none').onclick=function(){sel=[];drawSe();};
 drawSe();
-$('#se-fb').onclick=function(){var d=$('#se-date').value;closeModal();bookingBuilder({title:$('#se-title').value.trim(),date:d,start:$('#se-start').value,end:$('#se-end').value,location:$('#se-loc').value.trim(),company_id:r.company_id,model_ids:sel});};
+$('#se-fb').onclick=function(){var seed={title:$('#se-title').value.trim(),date:$('#se-date').value,start:$('#se-start').value,end:$('#se-end').value,location:$('#se-loc').value.trim(),company_id:r.company_id,model_ids:sel};closeModal();bookingBuilder(seed);};
 $('#se-go').onclick=async function(){
  var go=this,msg=$('#se-msg');
  try{
