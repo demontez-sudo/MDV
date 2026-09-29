@@ -3456,9 +3456,9 @@ input::placeholder,textarea::placeholder{color:#776c5d!important;opacity:1}
 .vx161016-day-kpis b,.vx161016-detail-kpis b{display:block;margin-top:5px;color:var(--ink);font:20px var(--fD)}
 .vx161016-detail-kpis b.money{color:var(--wave,var(--gold))}
 .vx161016-detail-kpis b.muted{color:var(--mute)}
-.vx161016-day-grid{display:grid;grid-template-columns:minmax(0,1fr) 310px;max-height:calc(88vh - 190px)}
-.vx161016-day-grid>main{padding:18px 20px;overflow:auto}
-.vx161016-day-grid>aside{padding:20px;border-left:1px solid var(--line);overflow:auto;background:var(--wave-faint)}
+.vx161016-day-grid{display:grid;grid-template-columns:minmax(0,1fr) 310px;grid-template-rows:minmax(0,1fr);max-height:calc(88vh - 190px);min-height:0}
+.vx161016-day-grid>main{padding:18px 20px;overflow:auto;min-height:0}
+.vx161016-day-grid>aside{padding:20px;border-left:1px solid var(--line);overflow:auto;background:var(--wave-faint);min-height:0}
 .vx161016-day-grid>aside h3{font:22px var(--fD);margin:0 0 18px}
 .vx161016-day-grid>aside section{padding:13px 0;border-bottom:1px solid var(--line)}
 .vx161016-day-grid>aside section small{font:8px var(--fM);letter-spacing:.14em;text-transform:uppercase;color:var(--wave,var(--gold))}
