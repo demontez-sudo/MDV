@@ -33,7 +33,7 @@ export const handler=async(event)=>{
    ]):[[],[],[]];
    let signers=[];const reqIds=signatures.map(x=>x.id);if(reqIds.length)signers=await rows(admin.from('signature_signers').select('*').eq('organization_id',organization.id).in('signature_request_id',reqIds).order('signing_order'));
    const signersBy=new Map();for(const s of signers){const k=String(s.signature_request_id);if(!signersBy.has(k))signersBy.set(k,[]);signersBy.get(k).push(s);}const signature_requests=signatures.map(x=>({...x,signature_signers:signersBy.get(String(x.id))||[]}));
-   return json(200,{environment:'veux-saas-v13.23-legal-resilient',organization,contracts,parties,signature_requests,contract_events:events,usage_rights:usage});
+   return json(200,{environment:'veux-saas-v13.23-legal-resilient',organization,contracts,parties,signature_requests,contract_events:events,usage_rights:usage,models,companies});
   }
   await requirePermission(user.id,organization.id,'contracts.write');
   const action=String(body.action||'');

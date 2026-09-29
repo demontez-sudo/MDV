@@ -50,7 +50,8 @@ export const handler=async(event)=>{
       let dashboard=null,rpc_warning=null;
       const rpc=await client.rpc('finance_dashboard',{target_org:organization.id});
       if(rpc.error){rpc_warning=rpc.error.message;dashboard=computeDashboard(hydratedInvoices,payments,hydratedPayouts);}else dashboard=rpc.data;
-      return json(200,{environment:'veux-saas-v13.23-finance-resilient',organization,dashboard,invoices:hydratedInvoices,payments,payouts:hydratedPayouts,reconciliation_sessions:recon,accounting_periods:periods,warnings:rpc_warning?[`finance_dashboard RPC fallback: ${rpc_warning}`]:[]});
+      const partnerAgenciesView=partnerAgencies.map(x=>({...x,name:companyMap.get(String(x.company_id))?.name||'Partner Agency'}));
+      return json(200,{environment:'veux-saas-v13.23-finance-resilient',organization,dashboard,invoices:hydratedInvoices,payments,payouts:hydratedPayouts,reconciliation_sessions:recon,accounting_periods:periods,models,companies,partner_agencies:partnerAgenciesView,warnings:rpc_warning?[`finance_dashboard RPC fallback: ${rpc_warning}`]:[]});
     }
 
     await requirePermission(user.id,organization.id,'finance.write');
@@ -77,26 +78,30 @@ export const handler=async(event)=>{
       }});
     }
     if(action==='update_invoice'){
-      const invoiceId=String(body.invoice_id||'');if(!invoiceId){const e=new Error('invoice_id is required');e.statusCode=400;throw e;}
-      const allowed={};
-      if(body.invoice_number!==undefined)allowed.invoice_number=String(body.invoice_number||'').trim();
-      if(body.issue_date!==undefined)allowed.issue_date=body.issue_date||null;
-      if(body.due_date!==undefined)allowed.due_date=body.due_date||null;
-      if(body.notes!==undefined)allowed.notes=body.notes==null?null:String(body.notes);
-      if(body.status!==undefined){const st=String(body.status||'').trim().toLowerCase();const safe=new Set(['draft','sent','overdue','void','cancelled']);if(!safe.has(st)){const e=new Error('Unsupported invoice status');e.statusCode=400;throw e;}allowed.status=st;}
-      if(!Object.keys(allowed).length){const e=new Error('No supported invoice fields supplied');e.statusCode=400;throw e;}
-      allowed.updated_at=new Date().toISOString();
-      const {data:invoice,error}=await admin.from('invoices').update(allowed).eq('organization_id',organization.id).eq('id',invoiceId).select('*').single();if(error)throw error;
-      return json(200,{ok:true,verified:true,invoice,persisted_at:invoice.updated_at||new Date().toISOString()});
+      return withIdempotency(admin,{event,body,organizationId:organization.id,userId:user.id,operation:'finance.update_invoice',execute:async()=>{
+        const invoiceId=String(body.invoice_id||'');if(!invoiceId){const e=new Error('invoice_id is required');e.statusCode=400;throw e;}
+        const allowed={};
+        if(body.invoice_number!==undefined)allowed.invoice_number=String(body.invoice_number||'').trim();
+        if(body.issue_date!==undefined)allowed.issue_date=body.issue_date||null;
+        if(body.due_date!==undefined)allowed.due_date=body.due_date||null;
+        if(body.notes!==undefined)allowed.notes=body.notes==null?null:String(body.notes);
+        if(body.status!==undefined){const st=String(body.status||'').trim().toLowerCase();const safe=new Set(['draft','sent','overdue','void','cancelled']);if(!safe.has(st)){const e=new Error('Unsupported invoice status');e.statusCode=400;throw e;}allowed.status=st;}
+        if(!Object.keys(allowed).length){const e=new Error('No supported invoice fields supplied');e.statusCode=400;throw e;}
+        allowed.updated_at=new Date().toISOString();
+        const {data:invoice,error}=await admin.from('invoices').update(allowed).eq('organization_id',organization.id).eq('id',invoiceId).select('*').single();if(error)throw error;
+        return json(200,{ok:true,verified:true,invoice,persisted_at:invoice.updated_at||new Date().toISOString()});
+      }});
     }
     if(action==='complete_invoice'){
-      const invoiceId=String(body.invoice_id||'');if(!invoiceId){const e=new Error('invoice_id is required');e.statusCode=400;throw e;}
-      const {data:current,error:readError}=await admin.from('invoices').select('*').eq('organization_id',organization.id).eq('id',invoiceId).single();if(readError)throw readError;
-      if(Number(current.amount_due||0)>0){const e=new Error('Invoice must be fully paid before it can be completed.');e.statusCode=409;throw e;}
-      const patch={status:'paid',updated_at:new Date().toISOString()};
-      const {data:invoice,error}=await admin.from('invoices').update(patch).eq('organization_id',organization.id).eq('id',invoiceId).select('*').single();if(error)throw error;
-      if(current.booking_id){const {error:bookingError}=await admin.from('bookings').update({status:'closed',updated_at:new Date().toISOString()}).eq('organization_id',organization.id).eq('id',current.booking_id);if(bookingError)throw bookingError;}
-      return json(200,{ok:true,verified:true,invoice,persisted_at:invoice.updated_at||new Date().toISOString()});
+      return withIdempotency(admin,{event,body,organizationId:organization.id,userId:user.id,operation:'finance.complete_invoice',execute:async()=>{
+        const invoiceId=String(body.invoice_id||'');if(!invoiceId){const e=new Error('invoice_id is required');e.statusCode=400;throw e;}
+        const {data:current,error:readError}=await admin.from('invoices').select('*').eq('organization_id',organization.id).eq('id',invoiceId).single();if(readError)throw readError;
+        if(Number(current.amount_due||0)>0){const e=new Error('Invoice must be fully paid before it can be completed.');e.statusCode=409;throw e;}
+        const patch={status:'paid',updated_at:new Date().toISOString()};
+        const {data:invoice,error}=await admin.from('invoices').update(patch).eq('organization_id',organization.id).eq('id',invoiceId).select('*').single();if(error)throw error;
+        if(current.booking_id){const {error:bookingError}=await admin.from('bookings').update({status:'closed',updated_at:new Date().toISOString()}).eq('organization_id',organization.id).eq('id',current.booking_id);if(bookingError)throw bookingError;}
+        return json(200,{ok:true,verified:true,invoice,persisted_at:invoice.updated_at||new Date().toISOString()});
+      }});
     }
     return json(400,{error:'Unsupported finance action'});
   }catch(error){return errorResponse(error);}
