@@ -210,3 +210,42 @@ html body .vx75-runway>main{padding-bottom:16px!important}
    page-level top padding class happens to be active (e.g. season view). */
 html body .mdv2-deck.mdv2-deck{margin-top:14px!important;scroll-margin-top:90px}
 @media(max-width:900px){html body .mdv2-deck.mdv2-deck{margin-top:10px!important}}
+
+/* ===== Booking & Finance Intelligence (vx1044) — restyled to match the deck
+   above it instead of the app's old tiny-caps editorial type, and its
+   redundant "Industry Intelligence" header removed so it reads as one
+   continuous panel instead of two stacked, clashing ones. ===== */
+html body #p-calendar .vx1044-agency-intel{margin:14px 0 0!important;border:1px solid rgba(150,120,255,.2)!important;border-radius:18px!important;background:linear-gradient(180deg,rgba(28,22,48,.55),rgba(14,12,26,.65))!important;backdrop-filter:blur(10px);overflow:hidden}
+html body .vx1044-head{padding:16px 20px!important;border-bottom:1px solid rgba(150,120,255,.16)!important}
+html body .vx1044-title small{font:600 11px Inter,sans-serif!important;letter-spacing:.14em!important;text-transform:uppercase!important;color:#b9a1ff!important}
+html body .vx1044-status{font:500 12px Inter,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:#9d97b8!important;gap:9px!important}
+html body .vx1044-status i{width:7px;height:7px;box-shadow:0 0 8px #6fd08a}
+html body .vx1044-sync{border-radius:999px!important;border:1px solid rgba(150,120,255,.4)!important;color:#ece8f7!important;font:600 12px Inter,sans-serif!important;letter-spacing:0!important;text-transform:none!important;padding:9px 18px!important}
+html body .vx1044-sync:hover{border-color:#b9a1ff!important;color:#d6c6ff!important;background:rgba(185,161,255,.12)!important}
+html body .vx1044-toast{color:#8fe0a6!important;font:500 11.5px Inter,sans-serif!important;letter-spacing:0!important;text-transform:none!important}
+html body .vx1044-kpis{border-bottom:1px solid rgba(150,120,255,.16)!important;gap:1px}
+html body .vx1044-kpi{padding:14px 18px!important;border-right:1px solid rgba(150,120,255,.14)!important}
+html body .vx1044-kpi small{font:600 10.5px Inter,sans-serif!important;letter-spacing:.12em!important;text-transform:uppercase!important;color:#9d97b8!important}
+html body .vx1044-kpi b{font:500 24px "Cormorant Garamond",serif!important;color:#ece8f7!important;margin-top:5px!important}
+html body .vx1044-kpi.warn b{color:#e0b95a!important}html body .vx1044-kpi.risk b{color:#f26b7c!important}
+html body .vx1044-pipeline{padding:16px 20px!important;border-bottom:1px solid rgba(150,120,255,.16)!important}
+html body .vx1044-pipeline-head b{font:600 11px Inter,sans-serif!important;letter-spacing:.1em!important;text-transform:uppercase!important;color:#ece8f7!important}
+html body .vx1044-pipeline-head span{font:500 11px Inter,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:#9d97b8!important}
+html body .vx1044-stage{border:1px solid rgba(150,120,255,.16)!important;border-radius:12px!important;background:rgba(255,255,255,.03)!important;padding:10px 11px 11px!important}
+html body .vx1044-stage small{font:600 9.5px Inter,sans-serif!important;letter-spacing:.08em!important;text-transform:uppercase!important;color:#9d97b8!important}
+html body .vx1044-stage b{font:500 18px "Cormorant Garamond",serif!important;color:#ece8f7!important}
+html body .vx1044-stage.hot{border-color:rgba(242,107,124,.45)!important;background:rgba(242,107,124,.07)!important}
+html body .vx1044-stage.live{border-color:rgba(185,161,255,.4)!important}
+html body .vx1044-bottom{grid-template-columns:minmax(0,1.6fr) minmax(240px,.9fr)}
+html body .vx1044-actions{padding:16px 20px!important;border-right:1px solid rgba(150,120,255,.16)!important}
+html body .vx1044-actions h4{font:600 11px Inter,sans-serif!important;letter-spacing:.1em!important;text-transform:uppercase!important;color:#ece8f7!important;margin-bottom:10px!important}
+html body .vx1044-action{border-top:1px solid rgba(150,120,255,.12)!important;padding:11px 0!important}
+html body .vx1044-action b{font:500 13px Inter,sans-serif!important;color:#ece8f7!important}
+html body .vx1044-action small{font:400 11.5px Inter,sans-serif!important;color:#9d97b8!important;margin-top:4px!important}
+html body .vx1044-action span{font:600 10px Inter,sans-serif!important;letter-spacing:.08em!important;text-transform:uppercase!important;color:#9d97b8!important}
+html body .vx1044-clear{color:#9d97b8!important;font:400 12.5px Inter,sans-serif!important}
+html body .vx1044-rules{padding:16px 20px!important}
+html body .vx1044-rules h4{font:600 11px Inter,sans-serif!important;letter-spacing:.1em!important;text-transform:uppercase!important;color:#ece8f7!important;margin-bottom:10px!important}
+html body .vx1044-rule{font:400 12px/1.6 Inter,sans-serif!important;letter-spacing:0!important;text-transform:none!important;color:#c9c3e0!important}
+html body .vx1044-rule i{background:#b9a1ff!important;box-shadow:0 0 6px rgba(185,161,255,.5)}
+@media(max-width:900px){html body .vx1044-bottom{grid-template-columns:1fr}html body .vx1044-actions{border-right:0!important;border-bottom:1px solid rgba(150,120,255,.16)!important}}
