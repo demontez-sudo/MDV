@@ -217,7 +217,7 @@ function invoiceModalHtml(){
    +'<footer><button type="button" class="ghost" data-fin-modal-close>Cancel</button><button type="button" class="primary" id="fin-inv-submit">Create Invoice</button></footer></section></div>';
 }
 function openInvoiceModal(){
-  closeModal();
+  closeModal();S.bookings=null;
   var host=document.createElement('div');host.id='fin-modal-host';host.innerHTML=invoiceModalHtml();document.body.appendChild(host);
   wireModalClose(host);
   var due=host.querySelector('#fin-inv-due');var d=new Date();d.setDate(d.getDate()+30);due.value=d.toISOString().slice(0,10);
