@@ -271,7 +271,7 @@ async function replacePackageContent(admin,organization,pkg,body,user){
   const mediaByModel=(body.media_by_model&&typeof body.media_by_model==='object')?body.media_by_model:{};
   const allMedia=await rows(admin.from('model_media').select('id,model_id,media_type,category,is_primary,is_public,sort_order').eq('organization_id',organization.id).in('model_id',modelIds).eq('is_public',true).order('sort_order'));
   const mediaLookup=new Map(allMedia.map(m=>[m.id,m]));
-  const categoryMatches=(m)=>{const hay=String((m.category||'')+' '+(m.media_type||'')).toLowerCase();if(m.is_primary&&assetTypes.includes('headshots'))return true;if(assetTypes.includes('digitals')&&/digital/.test(hay))return true;if(assetTypes.includes('polaroids')&&/polaroid/.test(hay))return true;if(assetTypes.includes('editorial')&&/editorial|campaign|beauty|fashion/.test(hay))return true;if(assetTypes.includes('runway')&&/runway|catwalk/.test(hay))return true;if(assetTypes.includes('video')&&/video|motion/.test(hay))return true;return false;};
+  const categoryMatches=(m)=>{const hay=String((m.category||'')+' '+(m.media_type||'')).toLowerCase();if(m.is_primary&&assetTypes.includes('headshots'))return true;if(assetTypes.includes('digitals')&&/digital/.test(hay))return true;if(assetTypes.includes('polaroids')&&/polaroid/.test(hay))return true;if(assetTypes.includes('editorial')&&/editorial|campaign|beauty|fashion|test|commercial|portfolio/.test(hay))return true;if(assetTypes.includes('runway')&&/runway|catwalk/.test(hay))return true;if(assetTypes.includes('video')&&/video|motion/.test(hay))return true;return false;};
   const selectedByModel={};
   for(const modelId of modelIds){
     const available=allMedia.filter(m=>m.model_id===modelId);
