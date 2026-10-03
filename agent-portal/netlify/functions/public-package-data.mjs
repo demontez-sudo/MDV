@@ -59,7 +59,7 @@ export const handler = async event => {
     ]);
     const modelMap=new Map(models.map(x=>[x.id,x])),profileMap=new Map(profiles.map(x=>[x.model_id,x])),measurementMap=new Map(measurements.map(x=>[x.model_id,x]));
     const selectedByPm=new Map();
-    for(const row of selectedMedia){if(!row.model_media?.is_public)continue;if(!selectedByPm.has(row.package_model_id))selectedByPm.set(row.package_model_id,[]);selectedByPm.get(row.package_model_id).push({...row.model_media,package_sort_order:row.sort_order});}
+    for(const row of selectedMedia){if(!row.model_media)continue;if(!selectedByPm.has(row.package_model_id))selectedByPm.set(row.package_model_id,[]);selectedByPm.get(row.package_model_id).push({...row.model_media,package_sort_order:row.sort_order});}
     const publicByModel=new Map();
     for(const media of publicMedia){if(!publicByModel.has(media.model_id))publicByModel.set(media.model_id,[]);publicByModel.get(media.model_id).push(media);}
     const profileFields=Array.isArray(pkg.metadata?.profile_fields)?pkg.metadata.profile_fields:[];

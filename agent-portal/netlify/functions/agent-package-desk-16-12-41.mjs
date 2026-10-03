@@ -28,7 +28,7 @@ async function packageEmailPreview(admin,organizationId,packageId){
   const profileMap=new Map(profiles.map(x=>[x.model_id,x]));
   const measurementMap=new Map(measurements.map(x=>[x.model_id,x]));
   const selectedMap=new Map();
-  selected.forEach(x=>{if(x.model_media?.is_public&&!selectedMap.has(x.package_model_id))selectedMap.set(x.package_model_id,x.model_media)});
+  selected.forEach(x=>{if(x.model_media&&!selectedMap.has(x.package_model_id))selectedMap.set(x.package_model_id,x.model_media)});
   const fallbackMap=new Map();
   fallback.forEach(x=>{const prev=fallbackMap.get(x.model_id);if(!prev||x.is_primary)fallbackMap.set(x.model_id,x)});
   return packageModels.map(pm=>{const m=modelMap.get(pm.model_id)||{},pp=profileMap.get(pm.model_id)||{},mm=measurementMap.get(pm.model_id)||{},wm=pp.metadata&&pp.metadata.website_profile||{},route=String(wm.route_key||m.legacy_key||m.public_slug||'').trim(),media=selectedMap.get(pm.id)||fallbackMap.get(pm.model_id)||{};return {...m,height_display:mm.height_display||null,bust_display:mm.bust_display||mm.chest_display||null,waist_display:mm.waist_display||null,hips_display:mm.hips_display||null,image_url:media.url||null,profile_url:pp.published&&route?'https://www.maisondeveux.com/'+encodeURIComponent(route):null}}).slice(0,20);
@@ -269,7 +269,7 @@ async function replacePackageContent(admin,organization,pkg,body,user){
   const status=['draft','ready'].includes(String(body.status||''))?String(body.status):(['draft','ready'].includes(pkg?.status)?pkg.status:'draft');
 
   const mediaByModel=(body.media_by_model&&typeof body.media_by_model==='object')?body.media_by_model:{};
-  const allMedia=await rows(admin.from('model_media').select('id,model_id,media_type,category,is_primary,is_public,sort_order').eq('organization_id',organization.id).in('model_id',modelIds).eq('is_public',true).order('sort_order'));
+  const allMedia=await rows(admin.from('model_media').select('id,model_id,media_type,category,is_primary,is_public,sort_order').eq('organization_id',organization.id).in('model_id',modelIds).or('media_type.is.null,media_type.neq.document').order('sort_order'));
   const mediaLookup=new Map(allMedia.map(m=>[m.id,m]));
   const categoryMatches=(m)=>{const hay=String((m.category||'')+' '+(m.media_type||'')).toLowerCase();if(m.is_primary&&assetTypes.includes('headshots'))return true;if(assetTypes.includes('digitals')&&/digital/.test(hay))return true;if(assetTypes.includes('polaroids')&&/polaroid/.test(hay))return true;if(assetTypes.includes('editorial')&&/editorial|campaign|beauty|fashion|test|commercial|portfolio/.test(hay))return true;if(assetTypes.includes('runway')&&/runway|catwalk/.test(hay))return true;if(assetTypes.includes('video')&&/video|motion/.test(hay))return true;return false;};
   const selectedByModel={};
@@ -551,9 +551,8 @@ export const handler=async(event)=>{
         const model=await admin.from('models').select('id,display_name').eq('organization_id',organization.id).eq('id',mediaModelId).maybeSingle();
         if(model.error)throw model.error;
         if(!model.data)return json(404,{error:'Model not found'});
-        const media=await rows(admin.from('model_media').select('id,model_id,media_type,category,url,caption,photographer,season,usage_permission,is_primary,is_public,sort_order,created_at').eq('organization_id',organization.id).eq('model_id',mediaModelId).eq('is_public',true).order('is_primary',{ascending:false}).order('sort_order').order('created_at'));
-        const hidden=await admin.from('model_media').select('id',{count:'exact',head:true}).eq('organization_id',organization.id).eq('model_id',mediaModelId).eq('is_public',false);
-        return json(200,{environment:'veux-saas-v16.9.61',organization,builder:true,media_picker:true,model:model.data,media,hidden_count:hidden.error?0:(hidden.count||0)});
+        const media=await rows(admin.from('model_media').select('id,model_id,media_type,category,url,caption,photographer,season,usage_permission,is_primary,is_public,sort_order,created_at').eq('organization_id',organization.id).eq('model_id',mediaModelId).or('media_type.is.null,media_type.neq.document').order('is_primary',{ascending:false}).order('sort_order').order('created_at'));
+        return json(200,{environment:'veux-saas-v16.9.61',organization,builder:true,media_picker:true,model:model.data,media});
       }
       stage='builder:data';
       const rosterPromise=client.rpc('search_roster',{target_org:organization.id,filter_data:{limit:250,active:true}});
