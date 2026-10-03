@@ -21,17 +21,26 @@ async function packageEmailPreview(admin,organizationId,packageId){
     rows(admin.from('models').select('id,display_name,primary_market_label,stage,legacy_key,public_slug').eq('organization_id',organizationId).in('id',modelIds)),
     rows(admin.from('model_public_profiles').select('model_id,published,metadata').eq('organization_id',organizationId).in('model_id',modelIds)),
     rows(admin.from('model_measurements').select('model_id,height_display,bust_display,chest_display,waist_display,hips_display').eq('organization_id',organizationId).in('model_id',modelIds)),
-    rows(admin.from('package_model_media').select('package_model_id,sort_order,model_media(id,model_id,url,is_primary,is_public)').in('package_model_id',packageModels.map(x=>x.id)).order('sort_order')),
+    rows(admin.from('package_model_media').select('package_model_id,sort_order,model_media(id,model_id,url,media_type,is_primary,is_public)').in('package_model_id',packageModels.map(x=>x.id)).order('sort_order')),
     rows(admin.from('model_media').select('id,model_id,url,is_primary,is_public,sort_order').eq('organization_id',organizationId).in('model_id',modelIds).eq('is_public',true).order('sort_order'))
   ]);
   const modelMap=new Map(models.map(x=>[x.id,x]));
   const profileMap=new Map(profiles.map(x=>[x.model_id,x]));
   const measurementMap=new Map(measurements.map(x=>[x.model_id,x]));
   const selectedMap=new Map();
-  selected.forEach(x=>{if(x.model_media&&!selectedMap.has(x.package_model_id))selectedMap.set(x.package_model_id,x.model_media)});
+  const isVid=u=>/\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(String(u||''));
+  selected.forEach(x=>{const mm=x.model_media;if(!mm||!mm.url||isVid(mm.url)||String(mm.media_type||'').toLowerCase()==='video')return;if(!selectedMap.has(x.package_model_id))selectedMap.set(x.package_model_id,mm)});
   const fallbackMap=new Map();
-  fallback.forEach(x=>{const prev=fallbackMap.get(x.model_id);if(!prev||x.is_primary)fallbackMap.set(x.model_id,x)});
-  return packageModels.map(pm=>{const m=modelMap.get(pm.model_id)||{},pp=profileMap.get(pm.model_id)||{},mm=measurementMap.get(pm.model_id)||{},wm=pp.metadata&&pp.metadata.website_profile||{},route=String(wm.route_key||m.legacy_key||m.public_slug||'').trim(),media=selectedMap.get(pm.id)||fallbackMap.get(pm.model_id)||{};return {...m,height_display:mm.height_display||null,bust_display:mm.bust_display||mm.chest_display||null,waist_display:mm.waist_display||null,hips_display:mm.hips_display||null,image_url:media.url||null,profile_url:pp.published&&route?'https://www.maisondeveux.com/'+encodeURIComponent(route):null}}).slice(0,20);
+  fallback.forEach(x=>{if(!x.url||isVid(x.url))return;const prev=fallbackMap.get(x.model_id);if(!prev||x.is_primary)fallbackMap.set(x.model_id,x)});
+  return packageModels.map(pm=>{const m=modelMap.get(pm.model_id)||{},pp=profileMap.get(pm.model_id)||{},mm=measurementMap.get(pm.model_id)||{},wm=pp.metadata&&pp.metadata.website_profile||{},route=String(wm.route_key||m.legacy_key||m.public_slug||'').trim(),media=selectedMap.get(pm.id)||fallbackMap.get(pm.model_id)||{};return {...m,height_display:mm.height_display||null,bust_display:mm.bust_display||mm.chest_display||null,waist_display:mm.waist_display||null,hips_display:mm.hips_display||null,image_url:emailImageUrl(media.url),profile_url:pp.published&&route?'https://www.maisondeveux.com/'+encodeURIComponent(route):null}}).slice(0,20);
+}
+
+/* Email clients can't render 10 MB originals (or videos). Serve a ~640px JPEG-class
+   rendition through Supabase's image endpoint; leave non-Supabase URLs untouched. */
+function emailImageUrl(u){
+  const url=String(u||'').trim();if(!url)return null;
+  const m=url.match(/^(https:\/\/[^/]+)\/storage\/v1\/object\/public\/(.+?)(\?.*)?$/);
+  return m?`${m[1]}/storage/v1/render/image/public/${m[2]}?width=640&quality=78&resize=contain`:url;
 }
 
 function buildPackageEmailHtml({organization,settings,user,recipient,pkg,intro,publicUrl,preview}){
@@ -287,7 +296,40 @@ async function replacePackageContent(admin,organization,pkg,body,user){
   const payload={title,slug:pkg?.slug||body.slug||`${slugify(title)}-${Date.now().toString(36)}`,company_id:company?.id||null,primary_contact_id:contact?.id||null,market_id:market?.id||null,status,intro_message:String(body.intro_message||'').trim()||null,private_note:String(body.private_note||'').trim()||null,layout_key:body.layout_key||pkg?.layout_key||'editorial-grid',expires_at:body.expires_at||null,metadata:nextMeta};
   const {data:saved,error}=await admin.rpc('save_package_draft_v1',{target_org:organization.id,target_package:pkg?.id||null,target_payload:payload,target_model_ids:modelIds,target_media_by_model:selectedByModel,target_recipient:recipient,target_user:user.id});
   if(error)throw error;if(!saved?.verified||!saved?.package){const e=new Error('Package save could not be verified.');e.statusCode=500;e.publicMessage='Package was not confirmed as saved. Please retry.';throw e;}
-  return {pkg:saved.package,recipient:saved.recipient||null,verified:true,persisted_at:saved.persisted_at,model_count:saved.model_count,media_count:saved.media_count};
+  const mediaCheck=await verifyPackageMedia(admin,organization.id,saved.package.id,selectedByModel);
+  return {pkg:saved.package,recipient:saved.recipient||null,verified:true,persisted_at:saved.persisted_at,model_count:saved.model_count,media_count:saved.media_count,media_check:mediaCheck};
+}
+
+/* The save RPC owns package_model_media, but it has silently dropped photos before
+   (everything not flagged public). Read back what was stored, repair any gap
+   directly, and report honestly if it still doesn't match. Never throws. */
+async function verifyPackageMedia(admin,organizationId,packageId,selectedByModel){
+  const result={expected:0,stored:0,repaired:false,ok:true,missing_models:[]};
+  try{
+    const pms=await rows(admin.from('package_models').select('id,model_id').eq('organization_id',organizationId).eq('package_id',packageId));
+    const pmByModel=new Map(pms.map(x=>[x.model_id,x.id]));
+    const stored=pms.length?await rows(admin.from('package_model_media').select('package_model_id,media_id,sort_order').in('package_model_id',pms.map(x=>x.id)).order('sort_order')):[];
+    const storedBy=new Map();stored.forEach(x=>{if(!storedBy.has(x.package_model_id))storedBy.set(x.package_model_id,[]);storedBy.get(x.package_model_id).push(String(x.media_id))});
+    const bad=[];
+    for(const [modelId,ids] of Object.entries(selectedByModel||{})){
+      const pmId=pmByModel.get(modelId);if(!pmId||!ids.length)continue;
+      result.expected+=ids.length;
+      const have=storedBy.get(pmId)||[];
+      if(have.length===ids.length&&ids.every((id,i)=>have[i]===String(id))){result.stored+=have.length;continue;}
+      bad.push({modelId,pmId,ids});
+    }
+    for(const b of bad){
+      const del=await admin.from('package_model_media').delete().eq('package_model_id',b.pmId);
+      if(del.error)throw del.error;
+      const mk=withOrg=>b.ids.map((id,i)=>({...(withOrg?{organization_id:organizationId}:{}),package_model_id:b.pmId,media_id:id,sort_order:i}));
+      let ins=await admin.from('package_model_media').insert(mk(true));
+      if(ins.error&&/organization_id/.test(ins.error.message||''))ins=await admin.from('package_model_media').insert(mk(false));
+      if(ins.error){result.ok=false;result.missing_models.push(b.modelId);result.error=ins.error.message;continue;}
+      result.stored+=b.ids.length;result.repaired=true;
+    }
+  }catch(e){result.ok=false;result.error=String(e&&e.message||e);}
+  result.ok=result.ok&&result.stored===result.expected;
+  return result;
 }
 
 async function preflightPackageDelivery({admin,organization,user}){
@@ -438,9 +480,9 @@ export const handler=async(event)=>{
           const sent=await sendExistingPackage({admin,organization,user,event,pkg:built.pkg,body,recipient:built.recipient,preflight:sendPreflight});
           if(sent.response)return sent.response;
           built.pkg.status='active';
-          return json(201,{ok:true,verified:true,persisted_at:sent.persisted_at||built.persisted_at,package:built.pkg,recipient:sent.recipient,share_path:sent.sharePath,email:sent.emailResult,public_url:sent.publicUrl,branded_url:sent.brandedUrl,direct_fallback_url:sent.directFallbackUrl});
+          return json(201,{ok:true,verified:true,persisted_at:sent.persisted_at||built.persisted_at,package:built.pkg,media_check:built.media_check,recipient:sent.recipient,share_path:sent.sharePath,email:sent.emailResult,public_url:sent.publicUrl,branded_url:sent.brandedUrl,direct_fallback_url:sent.directFallbackUrl});
         }
-        return json(201,{ok:true,verified:true,persisted_at:built.persisted_at,package:built.pkg,recipient:built.recipient,model_count:built.model_count,media_count:built.media_count});
+        return json(201,{ok:true,verified:true,persisted_at:built.persisted_at,package:built.pkg,media_check:built.media_check,recipient:built.recipient,model_count:built.model_count,media_count:built.media_count});
       }
 
       if(action==='update_draft'){
@@ -454,9 +496,9 @@ export const handler=async(event)=>{
           const sent=await sendExistingPackage({admin,organization,user,event,pkg:built.pkg,body,recipient:built.recipient,preflight:sendPreflight});
           if(sent.response)return sent.response;
           built.pkg.status='active';
-          return json(200,{ok:true,verified:true,persisted_at:sent.persisted_at||built.persisted_at,package:built.pkg,recipient:sent.recipient,share_path:sent.sharePath,email:sent.emailResult,public_url:sent.publicUrl,branded_url:sent.brandedUrl,direct_fallback_url:sent.directFallbackUrl});
+          return json(200,{ok:true,verified:true,persisted_at:sent.persisted_at||built.persisted_at,package:built.pkg,media_check:built.media_check,recipient:sent.recipient,share_path:sent.sharePath,email:sent.emailResult,public_url:sent.publicUrl,branded_url:sent.brandedUrl,direct_fallback_url:sent.directFallbackUrl});
         }
-        return json(200,{ok:true,verified:true,persisted_at:built.persisted_at,package:built.pkg,recipient:built.recipient,model_count:built.model_count,media_count:built.media_count});
+        return json(200,{ok:true,verified:true,persisted_at:built.persisted_at,package:built.pkg,media_check:built.media_check,recipient:built.recipient,model_count:built.model_count,media_count:built.media_count});
       }
 
       if(action==='rename'){

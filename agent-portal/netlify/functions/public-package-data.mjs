@@ -7,6 +7,17 @@ const cacheHeaders = { 'Cache-Control': 'no-store, private', 'X-Robots-Tag': 'no
 function validToken(v){return /^[A-Za-z0-9_-]{32,160}$/.test(String(v||''));}
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 
+
+/* One taxonomy for every package surface (client page, email, builder):
+   Model 360 categories -> package section. Anything not recognised is Book,
+   so no category can silently disappear. */
+function mediaBucket(x){
+  const hay=String((x?.category||'')+' '+(x?.media_type||'')).toLowerCase(),url=String(x?.url||'');
+  if(String(x?.media_type||'').toLowerCase()==='video'||/video|motion|reel/.test(hay)||/\.(mp4|mov|webm|m4v)(\?|#|$)/i.test(url))return 'motion';
+  if(/digital|polaroid|snapshot/.test(hay))return 'digitals';
+  if(/runway|catwalk/.test(hay))return 'runway';
+  return 'book';
+}
 export const handler = async event => {
   if(event.httpMethod !== 'GET') return json(405,{error:'Method not allowed'}, { ...cacheHeaders, Allow:'GET' });
   try{
@@ -68,7 +79,7 @@ export const handler = async event => {
       const packageChosen=selectedByPm.get(pm.id)||[],hasPackageSelection=packageChosen.length>0;
       const chosen=hasPackageSelection?packageChosen:(publicByModel.get(pm.model_id)||[]);
       const wm=pp.metadata&&pp.metadata.website_profile||{},route=String(wm.route_key||m.legacy_key||m.public_slug||'').trim(),profileUrl=pp.published&&route?'https://www.maisondeveux.com/'+encodeURIComponent(route):null;
-      const media=chosen.slice().sort((a,b)=>hasPackageSelection?Number(a.package_sort_order??0)-Number(b.package_sort_order??0):Number(b.is_primary)-Number(a.is_primary)||Number(a.sort_order??0)-Number(b.sort_order??0)).map(x=>({id:x.id,media_type:x.media_type,category:x.category,url:x.url,caption:x.caption,photographer:x.photographer,season:x.season,usage_permission:x.usage_permission,is_primary:x.is_primary}));
+      const media=chosen.slice().sort((a,b)=>hasPackageSelection?Number(a.package_sort_order??0)-Number(b.package_sort_order??0):Number(b.is_primary)-Number(a.is_primary)||Number(a.sort_order??0)-Number(b.sort_order??0)).map(x=>({id:x.id,media_type:x.media_type,category:x.category,url:x.url,caption:x.caption,photographer:x.photographer,season:x.season,usage_permission:x.usage_permission,is_primary:x.is_primary,bucket:mediaBucket(x)}));
       return {id:m.id,display_name:m.display_name,public_slug:m.public_slug,gender:m.gender||null,profile_url:profileUrl,headline:pm.headline||pp.headline||null,note:pm.note||null,market:profileFields.includes('market')||profileFields.length===0?(m.primary_market_label||m.location||null):null,stage:m.stage||null,bio:profileFields.includes('bio')?pp.bio||null:null,measurements:profileFields.includes('measurements')&&pp.show_measurements!==false?mm:null,agent:pp.show_agent_contact!==false?{name:pp.contact_name||orgAgentFallback.name,email:pp.contact_email||orgAgentFallback.email,phone:pp.contact_phone||orgAgentFallback.phone,address:orgAgentFallback.address}:null,media};
     });
 
@@ -80,6 +91,7 @@ export const handler = async event => {
     }
 
     const approvedSections=Array.isArray(pkg.metadata?.approved_sections)?pkg.metadata.approved_sections:['book','digitals','motion'];
+    if(approvedSections.includes('book')&&!approvedSections.includes('runway'))approvedSections.push('runway');
     return json(200,{ok:true,verified:true,organization:{name:org.name,slug:org.slug},package:{id:pkg.id,title:pkg.title,intro_message:pkg.intro_message,layout_key:pkg.layout_key,expires_at:link.expires_at||pkg.expires_at||null,allow_downloads:link.allow_downloads,profile_fields:profileFields,asset_types:Array.isArray(pkg.metadata?.asset_types)?pkg.metadata.asset_types:[],approved_sections:approvedSections},recipient:{display_name:recipient?.display_name||null},models:modelsOut,feedback_state:{shortlisted_model_ids:[...shortlistState]}},cacheHeaders);
   }catch(error){const r=errorResponse(error);r.headers={...r.headers,...cacheHeaders};return r;}
 };
