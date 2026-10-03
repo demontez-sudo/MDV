@@ -552,7 +552,8 @@ export const handler=async(event)=>{
         if(model.error)throw model.error;
         if(!model.data)return json(404,{error:'Model not found'});
         const media=await rows(admin.from('model_media').select('id,model_id,media_type,category,url,caption,photographer,season,usage_permission,is_primary,is_public,sort_order,created_at').eq('organization_id',organization.id).eq('model_id',mediaModelId).eq('is_public',true).order('is_primary',{ascending:false}).order('sort_order').order('created_at'));
-        return json(200,{environment:'veux-saas-v16.9.61',organization,builder:true,media_picker:true,model:model.data,media});
+        const hidden=await admin.from('model_media').select('id',{count:'exact',head:true}).eq('organization_id',organization.id).eq('model_id',mediaModelId).eq('is_public',false);
+        return json(200,{environment:'veux-saas-v16.9.61',organization,builder:true,media_picker:true,model:model.data,media,hidden_count:hidden.error?0:(hidden.count||0)});
       }
       stage='builder:data';
       const rosterPromise=client.rpc('search_roster',{target_org:organization.id,filter_data:{limit:250,active:true}});
