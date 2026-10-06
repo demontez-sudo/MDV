@@ -153,23 +153,29 @@ function tWork(){
 }
 
 /* ---------- MATERIALS ---------- */
-var MAT_CATS=['All','Digitals','Portfolio','Runway','Video','Documents'];
+var MAT_CATS=['All','Digitals','Portfolio','Runway','Video','Call Sheets','Documents'];
+/* Same grouping the client packages use: anything that isn't digital/runway/video is book (portfolio) work. */
+function isRunwayM(x){return /runway|catwalk/i.test(catOf(x));}
+function isVideoM(x){return String(x.media_type||'').toLowerCase()==='video';}
+function isPortfolio(x){return !isDigital(x)&&!isRunwayM(x)&&!isVideoM(x);}
 function matItems(){
   var m=media(),c=M.mat.cat;
-  if(c==='Documents')return [];
-  var out=m.filter(function(x){if(c==='All')return true;if(c==='Digitals')return isDigital(x);if(c==='Video')return String(x.media_type||'').toLowerCase()==='video';return catOf(x).toLowerCase().indexOf(c.toLowerCase())===0;});
+  if(c==='Documents'||c==='Call Sheets')return [];
+  var out=m.filter(function(x){if(c==='All')return true;if(c==='Digitals')return isDigital(x);if(c==='Video')return isVideoM(x);if(c==='Portfolio')return isPortfolio(x);if(c==='Runway')return isRunwayM(x);return catOf(x).toLowerCase().indexOf(c.toLowerCase())===0;});
   if(M.mat.sort==='recent')out=out.slice().sort(function(a,b){return (ts(b.created_at)||0)-(ts(a.created_at)||0);});
   else out=out.slice().sort(function(a,b){return catOf(a).localeCompare(catOf(b));});
   return out;
 }
 function tMaterials(){
   var m=media(),mm=(M.p&&M.p.measurements)||{},docs=arr(M.docs&&M.docs.documents);
-  var counts={All:m.length,Digitals:m.filter(isDigital).length,Portfolio:m.filter(function(x){return /portfolio/i.test(catOf(x));}).length,Runway:m.filter(function(x){return /runway/i.test(catOf(x));}).length,Video:m.filter(function(x){return String(x.media_type||'').toLowerCase()==='video';}).length,Documents:docs.length};
+  var counts={All:m.length,Digitals:m.filter(isDigital).length,Portfolio:m.filter(isPortfolio).length,Runway:m.filter(isRunwayM).length,Video:m.filter(function(x){return String(x.media_type||'').toLowerCase()==='video';}).length,Documents:docs.length};
   var chips='<div class="m360-filters">'+MAT_CATS.map(function(c){return '<button type="button" class="m360-fchip'+(M.mat.cat===c?' on':'')+'" onclick="CAVYRE_M360.matCat(\''+c+'\')">'+c+(counts[c]?' <em>'+counts[c]+'</em>':'')+'</button>';}).join('')
    +'<span class="m360-spacer"></span><label class="m360-sort">Sort by <select onchange="CAVYRE_M360.matSort(this.value)"><option value="recent"'+(M.mat.sort==='recent'?' selected':'')+'>Most recent</option><option value="category"'+(M.mat.sort==='category'?' selected':'')+'>Category</option></select></label>'
    +'<div class="m360-viewt"><button type="button" class="'+(M.mat.view==='grid'?'on':'')+'" onclick="CAVYRE_M360.matView(\'grid\')" aria-label="Grid">'+ic('ti-layout-grid')+'</button><button type="button" class="'+(M.mat.view==='list'?'on':'')+'" onclick="CAVYRE_M360.matView(\'list\')" aria-label="List">'+ic('ti-list')+'</button></div></div>';
   var body;
-  if(M.mat.cat==='Documents'){
+  if(M.mat.cat==='Call Sheets'){
+    body='<div data-mdv-callsheets data-model-id="'+esc(model().id||M.id||'')+'" data-model-name="'+esc(model().display_name||'this model')+'"></div>';
+  }else if(M.mat.cat==='Documents'){
     body=docs.length?'<ul class="m360-docs">'+docs.map(function(d){return '<li>'+ic('ti-file-text')+'<div><b>'+esc(d.name||d.title||'Document')+'</b><p>'+esc(d.category||'general')+' · '+esc(fmtDate(d.created_at))+'</p></div>'+(d.visible_to_model?chip('Model can see','ok'):chip('Internal',''))+'</li>';}).join('')+'</ul>':empty('No documents uploaded.');
   }else{
     var items=matItems();

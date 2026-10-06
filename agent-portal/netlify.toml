@@ -119,6 +119,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/attachments"
+to = "/.netlify/functions/agent-attachments"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/documents/v13.12"
 to = "/.netlify/functions/agent-documents-v13-12"
 status = 200
