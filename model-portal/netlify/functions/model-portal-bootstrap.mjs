@@ -44,7 +44,7 @@ export const handler=async event=>{
       safe('statements',admin.from('statements').select('*').eq('organization_id',organization.id).eq('model_id',modelId).eq('statement_type','model').order('period_end',{ascending:false}),warnings),
       safe('model_evaluations',admin.from('model_evaluations').select('*').eq('organization_id',organization.id).eq('model_id',modelId).order('evaluated_on',{ascending:false}),warnings),
       safe('development_plans',admin.from('development_plans').select('*').eq('organization_id',organization.id).eq('model_id',modelId).order('created_at',{ascending:false}),warnings),
-      safe('model_notes',admin.from('model_notes').select('*').eq('organization_id',organization.id).eq('model_id',modelId).eq('visible_to_model',true).order('created_at',{ascending:false}).limit(100),warnings),
+      safe('model_notes',admin.from('model_notes').select('*').eq('organization_id',organization.id).eq('model_id',modelId).order('created_at',{ascending:false}).limit(300),warnings),
       safe('availability_blocks',admin.from('availability_blocks').select('*').eq('organization_id',organization.id).eq('model_id',modelId).neq('status','cancelled').order('starts_at',{ascending:false}).limit(200),warnings),
       safe('document_links',admin.from('document_links').select('id,document_id,relationship,visible_to_model,created_at,documents(id,name,category,mime_type,size_bytes,status,created_at)').eq('organization_id',organization.id).eq('resource_type','model').eq('resource_id',modelId).eq('visible_to_model',true).order('created_at',{ascending:false}).limit(250),warnings),
       safe('notifications',admin.from('notifications').select('id,notification_type,title,body,status,source_type,source_id,action_url,metadata,created_at').eq('organization_id',organization.id).eq('user_id',user.id).order('created_at',{ascending:false}).limit(100),warnings)
@@ -58,6 +58,8 @@ export const handler=async event=>{
     // Documents attached to a specific booking / casting / event and shared with this model.
     const scopedDocs=await safe('scoped_document_links',admin.from('document_links').select('id,document_id,resource_type,resource_id,relationship,visible_to_model,created_at,documents(id,name,category,mime_type,size_bytes,status,created_at)').eq('organization_id',organization.id).in('resource_type',['booking','casting','event']).eq('visible_to_model',true).order('created_at',{ascending:false}).limit(500),warnings);
 
+    /* Notes shared with the model: visible_to_model column, or metadata.visible_to_model on databases without it. */
+    const sharedNotes=notes.filter(n=>n.visible_to_model===true||n.metadata?.visible_to_model===true).slice(0,100);
     const passports=await safe('passports',admin.from('passports').select('id,model_id,country_code,status,expires_on,visible_to_model').eq('organization_id',organization.id).eq('model_id',modelId),warnings);
 
     const travelIds=uniq(travel.map(x=>x.id));
@@ -120,7 +122,7 @@ export const handler=async event=>{
       development:{evaluations,plans},
       documents:{contracts,links:documentLinks},
       finance:{ledger,statements},
-      notes,
+      notes:sharedNotes,
       conversations,
       messages,
       scoped_documents:scopedDocs,

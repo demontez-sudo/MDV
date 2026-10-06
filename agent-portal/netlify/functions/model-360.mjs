@@ -7,6 +7,8 @@ import { logModelActivity, actorFor } from './_lib/model-activity.mjs';
 function isMissingColumn(err){const m=String(err?.message||'');return err?.code==='PGRST204'||err?.code==='42703'||/column .* (does not exist|of relation)|could not find the .* column/i.test(m);}
 
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
+/* Note visibility lives in model_notes.visible_to_model when that column exists, otherwise in metadata.visible_to_model. */
+const noteVisible=n=>n?.visible_to_model===true||n?.metadata?.visible_to_model===true;
 async function one(q){const {data,error}=await q;if(error)throw error;return data||null;}
 const clean=(obj,keys)=>Object.fromEntries(keys.filter(k=>Object.prototype.hasOwnProperty.call(obj,k)).map(k=>[k,obj[k]===''?null:obj[k]]));
 
@@ -165,18 +167,36 @@ export const handler=async(event)=>{
       if(action==='create_note'){
         const text=String(body.body||body.note||'').trim();if(!text){const e=new Error('body is required');e.statusCode=400;throw e;}
         const base={organization_id:organization.id,model_id:modelId,body:text,pinned:body.pinned===true,created_by:user.id};
-        let note;
-        try{note=await one(admin.from('model_notes').insert({...base,visible_to_model:body.visible_to_model===true}).select('*').single());}
-        catch(e){if(!isMissingColumn(e))throw e;note=await one(admin.from('model_notes').insert(base).select('*').single());}
+        const shareable=body.visible_to_model===true;let note;
+        try{note=await one(admin.from('model_notes').insert({...base,visible_to_model:shareable}).select('*').single());}
+        catch(e){
+          if(!isMissingColumn(e))throw e;
+          try{note=await one(admin.from('model_notes').insert({...base,metadata:{visible_to_model:shareable}}).select('*').single());}
+          catch(e2){if(!isMissingColumn(e2))throw e2;note=await one(admin.from('model_notes').insert(base).select('*').single());}
+        }
+        if(note)note.visible_to_model=noteVisible(note);
         await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'note',title:body.visible_to_model===true?'Note added (shareable)':'Note added',detail:text.slice(0,160),...(await actorFor(admin,user)),link_page:'record',link_id:note?.id});
         return json(201,{ok:true,verified:true,note,persisted_at:note?.created_at||new Date().toISOString()});
       }
       if(action==='update_note'){
         if(!body.note_id){const e=new Error('note_id is required');e.statusCode=400;throw e;}
-        const patch={};if(body.body!==undefined)patch.body=String(body.body||'').trim();if(body.pinned!==undefined)patch.pinned=body.pinned===true;
-        const withVis=body.visible_to_model!==undefined?{...patch,visible_to_model:body.visible_to_model===true}:patch;
-        const runUpdate=p=>one(admin.from('model_notes').update(p).eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.note_id).select('*').single());
-        let note;try{note=await runUpdate(withVis);}catch(e){if(!isMissingColumn(e)||withVis===patch)throw e;note=await runUpdate(patch);}
+        const {data:cur,error:curErr}=await admin.from('model_notes').select('*').eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.note_id).maybeSingle();
+        if(curErr)throw curErr;
+        if(!cur){const e=new Error('Note not found');e.statusCode=404;e.publicMessage='That note no longer exists. Refresh the page.';throw e;}
+        const cols=new Set(Object.keys(cur)),patch={};
+        if(body.body!==undefined)patch.body=String(body.body||'').trim();
+        if(body.pinned!==undefined&&cols.has('pinned'))patch.pinned=body.pinned===true;
+        if(body.visible_to_model!==undefined){
+          const share=body.visible_to_model===true;
+          if(cols.has('visible_to_model'))patch.visible_to_model=share;
+          else if(cols.has('metadata'))patch.metadata={...(cur.metadata&&typeof cur.metadata==='object'?cur.metadata:{}),visible_to_model:share};
+          else{const e=new Error('model_notes has no visibility column');e.statusCode=409;e.publicMessage='Note visibility cannot be saved yet: the database is missing the model_notes.visible_to_model column. Run the migration in agent-portal/docs/sql/2026-10-06-model-notes-visibility.sql in Supabase, then try again.';throw e;}
+        }
+        if(!Object.keys(patch).length){const e=new Error('Nothing to update');e.statusCode=400;e.publicMessage='Nothing to update.';throw e;}
+        const {data:rowsOut,error:upErr}=await admin.from('model_notes').update(patch).eq('organization_id',organization.id).eq('model_id',modelId).eq('id',body.note_id).select('*');
+        if(upErr){const e=new Error(upErr.message);e.statusCode=409;e.publicMessage='The note could not be updated: '+String(upErr.message||'database error').slice(0,200);throw e;}
+        const note=(rowsOut&&rowsOut[0])||{...cur,...patch};
+        note.visible_to_model=noteVisible(note);
         await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'note',title:body.visible_to_model!==undefined?(body.visible_to_model===true?'Note made shareable':'Note made internal'):'Note updated',detail:String(note?.body||'').slice(0,160),...(await actorFor(admin,user)),link_page:'record',link_id:body.note_id});
         return json(200,{ok:true,verified:true,note,persisted_at:note?.updated_at||new Date().toISOString()});
       }
@@ -223,7 +243,7 @@ export const handler=async(event)=>{
     const noteAuthorIds=[...new Set(notes.map(x=>x.created_by).filter(Boolean))];
     const noteAuthors=noteAuthorIds.length?await rows(admin.from('profiles').select('user_id,display_name').in('user_id',noteAuthorIds)):[];
     const noteAuthorMap=new Map(noteAuthors.map(x=>[String(x.user_id),x.display_name]));
-    for(const note of notes)note.author_name=noteAuthorMap.get(String(note.created_by))||null;
+    for(const note of notes){note.author_name=noteAuthorMap.get(String(note.created_by))||null;note.visible_to_model=noteVisible(note);}
 
     const bookingIds=[...new Set(bookingLinks.map(x=>x.booking_id).filter(Boolean))];
     const castingIds=[...new Set(castingLinks.map(x=>x.casting_id).filter(Boolean))];
