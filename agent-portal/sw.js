@@ -1,4 +1,4 @@
-const VEUX_CACHE='cavyre-agent-shell-16.11.50';
+const VEUX_CACHE='cavyre-agent-shell-16.12.79-symbol';
 const OFFLINE='./offline.html';
 self.addEventListener('install',event=>event.waitUntil(caches.open(VEUX_CACHE).then(cache=>cache.addAll([OFFLINE,'./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png'])).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>(key.startsWith('veux-agent-shell-')||key.startsWith('cavyre-agent-shell-'))&&key!==VEUX_CACHE).map(key=>caches.delete(key)))).then(()=>self.clients.claim())));
