@@ -1,0 +1,9 @@
+/* Maison de Veux symbol beside the wordmark in the top bar and the open menu.
+   The symbol is a mask, so it takes the text colour (ivory on dark, brass on hover). */
+.nav-mark{ display:inline-flex; align-items:center; gap:.55em; }
+.nav-mark .nav-symbol{
+  display:inline-block; flex:none; width:34px; height:27px; background:currentColor;
+  -webkit-mask:url(/assets/mdv-symbol.svg) center / contain no-repeat;
+          mask:url(/assets/mdv-symbol.svg) center / contain no-repeat;
+}
+@media (max-width:640px){ .nav-mark .nav-symbol{ width:28px; height:22px; } }
