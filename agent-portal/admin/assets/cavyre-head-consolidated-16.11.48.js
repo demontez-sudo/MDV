@@ -741,7 +741,7 @@ async function load(){
  if(loading)return cache.rows;
  loading=true;
  try{
-  var now=new Date(),s=new Date(now);s.setFullYear(s.getFullYear()-1);var e=new Date(now);e.setFullYear(e.getFullYear()+1),o=encodeURIComponent(org());
+  var now=new Date(),s=new Date(now);s.setFullYear(s.getFullYear()-1);var e=new Date(now);e.setFullYear(e.getFullYear()+1);var o=encodeURIComponent(org());
   var paths=[
    '/api/agent/calendar/v9?organization='+o+'&start='+encodeURIComponent(s.toISOString())+'&end='+encodeURIComponent(e.toISOString()),
    '/api/agent/finance?organization='+o,

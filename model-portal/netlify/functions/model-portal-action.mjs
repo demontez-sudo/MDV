@@ -41,6 +41,12 @@ async function sendToAgency({admin,client,user,organization,modelId,conversation
   }
   if(conv&&conv.status==='closed'){const e=new Error('This conversation is closed. Start a new message instead.');e.statusCode=409;throw e;}
   if(!conv){
+    /* Reuse the open conversation for the same subject so repeated replies on one booking stay in one thread. */
+    const subj=text(subject,160)||'Message from model';
+    const {data:same}=await admin.from('conversations').select('id,model_id,status,subject').eq('organization_id',organization.id).eq('model_id',modelId).eq('subject',subj).neq('status','closed').neq('status','archived').order('updated_at',{ascending:false}).limit(1);
+    if(same&&same[0])conv=same[0];
+  }
+  if(!conv){
     const base={organization_id:organization.id,model_id:modelId,subject:text(subject,160)||'Message from model'};
     let ins=await admin.from('conversations').insert({...base,status:'active'}).select('id,model_id,status,subject').single();
     if(ins.error)ins=await admin.from('conversations').insert(base).select('id,model_id,status,subject').single();

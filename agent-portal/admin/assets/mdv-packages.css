@@ -133,3 +133,10 @@ html body .mdv-pk .pk-stack{max-height:none;overflow:auto;flex:1 1 auto;min-heig
 .pk-upd>footer button.primary{background:var(--pk-h,#d9b866);border-color:transparent;color:#1a1508;font-weight:600}
 .pk-upd>footer button.primary:disabled{opacity:.6;cursor:default}
 .pk-card.pk-busy,.pk-signals article button.pk-busy{opacity:.55;pointer-events:none}
+
+/* Sent packages are editable: live-edit banner (also in cavyre-consolidated for admin/index.html) */
+.v1684-live-note{margin:0 0 16px;border:1px solid color-mix(in srgb,var(--gold,#d3a54f) 55%,transparent);border-left:3px solid var(--gold,#d3a54f);background:rgba(211,165,79,.07);padding:13px 16px}
+.v1684-live-note small{display:block;font-size:10px;letter-spacing:.18em;color:var(--gold,#d3a54f)}
+.v1684-live-note b{display:block;margin:4px 0 3px;font-weight:500;font-size:15px}
+.v1684-live-note span{display:block;font-size:12px;line-height:1.55;color:var(--muted,#a89f92)}
+.v16860-media-note{margin-top:8px;max-width:760px;padding:7px 10px;border-left:2px solid var(--gold,#d3a54f);background:rgba(211,165,79,.07);color:var(--ink,#f3efe8);font:10px/1.5 var(--fM,monospace);letter-spacing:.04em}

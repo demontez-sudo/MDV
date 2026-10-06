@@ -44,6 +44,8 @@ async function ownDocument(admin,organizationId,id){
   if(error)throw error;if(!data)throw bad('Document not found.',404);return data;
 }
 const clean=(v,n)=>String(v==null?'':v).trim().slice(0,n);
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const needId=(v,label)=>{const x=clean(v,80);if(!UUID.test(x))throw bad(`${label} is not a valid id.`);return x;};
 
 export const handler=async(event)=>{
   if(!['GET','POST'].includes(event.httpMethod))return json(405,{error:'Method not allowed'});
@@ -55,7 +57,7 @@ export const handler=async(event)=>{
 
     /* ---------------- reads ---------------- */
     if(event.httpMethod==='GET'){
-      if(p.model_id&&p.call_sheets){
+      if(p.model_id&&p.call_sheets){needId(p.model_id,'model_id');
         const links=await rows(admin.from('document_links').select('id,document_id,relationship,visible_to_model,visible_to_partner,created_at,documents(*)').eq('organization_id',organization.id).eq('resource_type','model').eq('resource_id',p.model_id).order('created_at',{ascending:false}).limit(300));
         const sheets=links.filter(l=>l.documents&&l.documents.status!=='archived'&&(l.relationship==='call_sheet'||String(l.documents.category||'').toLowerCase()==='call-sheet'));
         const ids=sheets.map(l=>l.document_id);
@@ -65,7 +67,7 @@ export const handler=async(event)=>{
         const bMap=new Map(bookings.map(b=>[b.id,b]));
         return json(200,{ok:true,organization:{id:organization.id},call_sheets:sheets.map(l=>{const d=l.documents,m=(d.metadata&&typeof d.metadata==='object')?d.metadata:{},bl=bookingLinks.find(x=>x.document_id===l.document_id);return {link_id:l.id,document_id:d.id,name:d.name,mime_type:d.mime_type,size_bytes:d.size_bytes,created_at:d.created_at,visible_to_model:!!l.visible_to_model,title:m.title||null,shoot_date:m.shoot_date||null,call_time:m.call_time||null,location:m.location||null,notes:m.notes||null,booking:bl?(bMap.get(bl.resource_id)||{id:bl.resource_id}):null};})});
       }
-      const res=resourceOf(p.resource_type),id=clean(p.resource_id,80);if(!id)throw bad('resource_id is required.');
+      const res=resourceOf(p.resource_type),id=needId(p.resource_id,'resource_id');
       const links=await rows(admin.from('document_links').select('id,document_id,visible_to_model,created_at,documents(*)').eq('organization_id',organization.id).eq('resource_type',p.resource_type).eq('resource_id',id).order('created_at',{ascending:false}).limit(100));
       const out=links.filter(l=>l.documents&&l.documents.status!=='archived').map(l=>({link_id:l.id,document_id:l.documents.id,name:l.documents.name,mime_type:l.documents.mime_type,size_bytes:l.documents.size_bytes,category:l.documents.category,created_at:l.documents.created_at,shared_with_models:!!l.visible_to_model,source:'link'}));
       try{
@@ -81,9 +83,9 @@ export const handler=async(event)=>{
     const action=String(body.action||'');
 
     if(action==='link'){
-      const res=resourceOf(body.resource_type),id=clean(body.resource_id,80);
-      const docs=(Array.isArray(body.documents)?body.documents:[]).filter(d=>d&&d.id).slice(0,20);
-      if(!id||!docs.length)throw bad('resource_id and documents are required.');
+      const res=resourceOf(body.resource_type),id=needId(body.resource_id,'resource_id');
+      const docs=(Array.isArray(body.documents)?body.documents:[]).filter(d=>d&&UUID.test(String(d.id))).slice(0,20);
+      if(!docs.length)throw bad('At least one valid document is required.');
       const {data:rec,error:re}=await admin.from(res.table).select('id,title,metadata').eq('organization_id',organization.id).eq('id',id).maybeSingle();if(re)throw re;if(!rec)throw bad('That calendar record was not found.',404);
       const share=body.share_with_models===true,modelIds=await assignedModels(admin,organization.id,res,id);
       let useMetadata=false;
@@ -106,8 +108,7 @@ export const handler=async(event)=>{
     }
 
     if(action==='unlink'){
-      const res=resourceOf(body.resource_type),id=clean(body.resource_id,80),docId=clean(body.document_id,80);
-      if(!id||!docId)throw bad('resource_id and document_id are required.');
+      const res=resourceOf(body.resource_type),id=needId(body.resource_id,'resource_id'),docId=needId(body.document_id,'document_id');
       await admin.from('document_links').delete().eq('organization_id',organization.id).eq('resource_type',body.resource_type).eq('resource_id',id).eq('document_id',docId);
       const {data:rec}=await admin.from(res.table).select('metadata').eq('organization_id',organization.id).eq('id',id).maybeSingle();
       if(rec&&Array.isArray(rec.metadata?.documents)&&rec.metadata.documents.some(x=>String(x.id)===docId)){
@@ -117,7 +118,7 @@ export const handler=async(event)=>{
     }
 
     if(action==='share'){
-      const res=resourceOf(body.resource_type),id=clean(body.resource_id,80),docId=clean(body.document_id,80),share=body.share!==false;
+      const res=resourceOf(body.resource_type),id=needId(body.resource_id,'resource_id'),docId=needId(body.document_id,'document_id'),share=body.share!==false;
       const doc=await ownDocument(admin,organization.id,docId),modelIds=await assignedModels(admin,organization.id,res,id);
       await admin.from('document_links').update({visible_to_model:share}).eq('organization_id',organization.id).eq('resource_type',body.resource_type).eq('resource_id',id).eq('document_id',docId);
       if(share)for(const m of modelIds)await shareToModel(admin,organization.id,m,doc);
@@ -126,8 +127,7 @@ export const handler=async(event)=>{
     }
 
     if(action==='call_sheet'){
-      const docId=clean(body.document_id,80),modelIds=[...new Set((Array.isArray(body.model_ids)?body.model_ids:[]).map(String).filter(Boolean))].slice(0,60);
-      if(!docId)throw bad('document_id is required.');if(!modelIds.length)throw bad('Choose at least one model for this call sheet.');
+      const docId=needId(body.document_id,'document_id'),modelIds=[...new Set((Array.isArray(body.model_ids)?body.model_ids:[]).map(String).filter(x=>UUID.test(x)))].slice(0,60);if(!modelIds.length)throw bad('Choose at least one model for this call sheet.');
       const doc=await ownDocument(admin,organization.id,docId);
       const title=clean(body.title,160)||doc.name||'Call sheet',shootDate=clean(body.shoot_date,10)||null,callTime=clean(body.call_time,40)||null,location=clean(body.location,240)||null,notes=clean(body.notes,1500)||null,share=body.share!==false;
       const meta={...(doc.metadata&&typeof doc.metadata==='object'?doc.metadata:{}),kind:'call_sheet',title,shoot_date:shootDate,call_time:callTime,location,notes,booking_id:clean(body.booking_id,80)||null};
@@ -151,7 +151,7 @@ export const handler=async(event)=>{
           if(ins.error)throw ins.error;
         }
       }
-      const bookingId=clean(body.booking_id,80);
+      const bookingId=UUID.test(clean(body.booking_id,80))?clean(body.booking_id,80):'';
       if(bookingId){
         const {data:b}=await admin.from('bookings').select('id').eq('organization_id',organization.id).eq('id',bookingId).maybeSingle();
         if(b){const ex=await admin.from('document_links').select('id').eq('organization_id',organization.id).eq('resource_type','booking').eq('resource_id',bookingId).eq('document_id',docId).maybeSingle();

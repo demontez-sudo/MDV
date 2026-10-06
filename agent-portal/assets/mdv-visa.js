@@ -11,7 +11,7 @@ if(window.__MDV_VISA__)return;window.__MDV_VISA__=true;
 var STEPS=['not_started','gathering_documents','appointment_pending','submitted','processing','approved'];
 var LABEL={not_started:'Not started',gathering_documents:'Documents',appointment_pending:'Appointment',submitted:'Submitted',processing:'Processing',approved:'Approved',issued:'Issued',refused:'Refused',expired:'Expired',cancelled:'Cancelled'};
 var NEXT={not_started:'gathering_documents',gathering_documents:'appointment_pending',appointment_pending:'submitted',submitted:'processing',processing:'approved'};
-var S={d:null,loading:false,err:'',filter:'all',q:'',host:null,seq:0};
+var S={d:null,loading:false,err:'',filter:'all',q:'',host:null,seq:0,scope:null};
 
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function arr(v){return Array.isArray(v)?v:[];}
@@ -41,7 +41,9 @@ function passportFor(passports,modelId,ref){
 }
 function build(d){
   var models=arr(d.lookups&&d.lookups.models),mName={};models.forEach(function(m){mName[m.id]=m.display_name||'Model';});
-  var visas=arr(d.visa_cases),passports=arr(d.passports),travel=arr(d.travel);
+  var sc=function(x){return !S.scope||String(x.model_id)===String(S.scope);};
+  if(S.scope)models=models.filter(function(m){return String(m.id)===String(S.scope);});
+  var visas=arr(d.visa_cases).filter(sc),passports=arr(d.passports).filter(sc),travel=arr(d.travel).filter(sc);
   var open=travel.filter(function(t){return !/^(completed|cancelled)$/.test(String(t.status||''));}).sort(function(a,b){return String(a.starts_at||'').localeCompare(String(b.starts_at||''));});
   var upcoming=open.filter(function(t){var n=days(t.ends_at||t.starts_at);return n==null||n>=-1;});
   var committed=function(t){return /^(booked|confirmed|in_progress)$/.test(String(t.status||''));};
@@ -153,7 +155,8 @@ function paint(){
   var rows=b.rows.filter(function(r){return (S.filter==='all'?r.state!=='idle'||r.visas.length:r.state===S.filter)&&(!q||r.name.toLowerCase().indexOf(q)>=0);}).sort(function(a,c){var o={risk:0,action:1,progress:2,clear:3,idle:4};return o[a.state]-o[c.state]||a.name.localeCompare(c.name);});
   var counts={all:b.rows.filter(function(r){return r.state!=='idle'||r.visas.length;}).length};['risk','action','progress','clear'].forEach(function(k){counts[k]=b.rows.filter(function(r){return r.state===k;}).length;});
   var chips=[['all','All'],['risk','At risk'],['action','Needs clearance'],['progress','In progress'],['clear','Cleared']].map(function(c){return '<button type="button" class="'+(S.filter===c[0]?'on':'')+'" data-act="filter" data-a="'+c[0]+'">'+c[1]+' <em>'+counts[c[0]]+'</em></button>';}).join('');
-  host.innerHTML='<div class="vsd"><header class="vsd-head"><div><small>GLOBAL MOBILITY · VISA DESK</small><h1>Travel Clearance</h1><p>A model can only travel once their visa and passport are clear. Everything here is connected to Travel and the Calendar.</p></div><div class="vsd-head-act"><button type="button" class="vsd-btn" data-act="travel-desk">Travel Desk →</button><button type="button" class="vsd-btn gold" data-act="new-visa">+ Start visa case</button></div></header>'
+  var scopeBar=S.scope?'<div class="vsd-scope">Viewing <b>'+esc(b.mName[S.scope]||'one model')+'</b> only<button type="button" data-act="unscope">Show all models</button></div>':'';
+  host.innerHTML='<div class="vsd"><header class="vsd-head"><div><small>GLOBAL MOBILITY · VISA DESK</small><h1>Travel Clearance</h1><p>A model can only travel once their visa and passport are clear. Everything here is connected to Travel and the Calendar.</p></div><div class="vsd-head-act"><button type="button" class="vsd-btn" data-act="travel-desk">Travel Desk →</button><button type="button" class="vsd-btn gold" data-act="new-visa" data-a="'+esc(S.scope||'')+'">+ Start visa case</button></div></header>'+scopeBar
    +kpiHtml(b.kpi)+signalsHtml(b.sig)+lockBoardHtml(b)
    +'<section class="vsd-card"><header><div><small>MODEL CLEARANCE</small><h3>Who can travel</h3></div><div class="vsd-tools"><input type="search" placeholder="Search models…" value="'+esc(S.q)+'" data-q></div></header><div class="vsd-chips">'+chips+'</div>'+(rows.length?'<div class="vsd-models">'+rows.map(modelCardHtml).join('')+'</div>':'<p class="vsd-empty">No models match this filter.</p>')+'</section>'
    +pipelineHtml(b)+timelineHtml(b)+'</div>';
@@ -165,6 +168,7 @@ async function act(a,x,y,btn){
   var M=mob();
   try{
     if(a==='filter'){S.filter=x||'all';paint();return;}
+    if(a==='unscope'){S.scope=null;if(M&&M.clearScope)M.clearScope();paint();return;}
     if(a==='reload'){await load(true);return;}
     if(a==='calendar'){if(typeof window.navTo==='function')window.navTo('calendar');else location.hash='calendar';return;}
     if(a==='travel-desk'){if(M&&M.desk)M.desk('travel');if(typeof window.navTo==='function')window.navTo('globalmobility');return;}
@@ -205,7 +209,7 @@ async function load(force){
   S.loading=false;paint();
 }
 function render(host){
-  S.host=host;S.filter=S.filter||'all';
+  S.host=host;S.filter=S.filter||'all';S.scope=(mob()&&mob().consumeScope)?mob().consumeScope():null;
   host.innerHTML='<div class="vsd"><p class="vsd-empty">Loading Visa Desk…</p></div>';
   return load(true);
 }

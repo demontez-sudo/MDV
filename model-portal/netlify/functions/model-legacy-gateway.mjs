@@ -18,18 +18,18 @@ function legacyBootstrap(b,s){
     ...x, castings:x.casting||x.castings||null
   }));
   const scheduleBookings=(s.bookings||[]).map(x=>({
-    id:x.booking_model_id||x.id, booking_id:x.id, model_id:s.model_id, status:x.model_status||x.status||'pending', response_at:null,
+    id:x.booking_model_id||x.id, booking_id:x.id, model_id:s.model_id, status:x.model_status||'pending', response_at:null,
     bookings:{...x,id:x.id,starts_at:x.starts_at,ends_at:x.ends_at,call_time:x.starts_at,wrap_time:x.ends_at}
   }));
   const scheduleCastings=(s.castings||[]).map(x=>({
-    id:x.casting_model_id||x.id, casting_id:x.id, model_id:s.model_id, status:x.model_status||x.status||'invited', slot_at:x.starts_at, response_at:null,
+    id:x.casting_model_id||x.id, casting_id:x.id, model_id:s.model_id, status:x.model_status||'invited', slot_at:x.starts_at, response_at:null,
     castings:{...x,id:x.id,starts_at:x.starts_at,ends_at:x.ends_at}
   }));
-  const events=(s.events||[]).map(x=>({id:x.id,event_id:x.id,model_id:s.model_id,attendance_status:x.model_status||x.status||'pending',events:{...x,id:x.id}}));
+  const events=(s.events||[]).map(x=>({id:x.id,event_id:x.id,model_id:s.model_id,attendance_status:x.model_status||'pending',events:{...x,id:x.id}}));
   const model={...(b.model||{}),measurement:b.measurements||b.model?.measurement||null,media:b.media?.all||b.model?.media||[]};
   const notifications=b.requests||[];
   return {
-    ok:true,verified:true,release:'18.1.0',organization:b.organization,current_user:b.account,model,
+    ok:true,verified:true,release:'18.1.0',organization:b.organization,current_user:b.account?{...b.account,id:b.account.id||b.account.user_id}:b.account,model,
     schedule:{events,bookings:scheduleBookings.length?scheduleBookings:bookingLinks,castings:scheduleCastings.length?scheduleCastings:castingLinks,availability_blocks:b.availability?.blocks||[],availability_requests:[]},
     booking_rates:(b.commercial?.bookings||[]).map(x=>x.rate).filter(Boolean),
     booking_usage_terms:(b.commercial?.bookings||[]).map(x=>x.usage).filter(Boolean),
