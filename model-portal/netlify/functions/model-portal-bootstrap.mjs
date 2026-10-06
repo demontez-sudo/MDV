@@ -1,5 +1,6 @@
 import { requireUser, json, errorResponse } from './_lib/auth.mjs';
 import { requireModelPortal, loadModels } from './_lib/portal-bridge.mjs';
+import { visaGateFor } from './_lib/visa-gate.mjs';
 
 async function safe(label, q, warnings){
   try { const {data,error}=await q; if(error) throw error; return data||[]; }
@@ -57,6 +58,8 @@ export const handler=async event=>{
     // Documents attached to a specific booking / casting / event and shared with this model.
     const scopedDocs=await safe('scoped_document_links',admin.from('document_links').select('id,document_id,resource_type,resource_id,relationship,visible_to_model,created_at,documents(id,name,category,mime_type,size_bytes,status,created_at)').eq('organization_id',organization.id).in('resource_type',['booking','casting','event']).eq('visible_to_model',true).order('created_at',{ascending:false}).limit(500),warnings);
 
+    const passports=await safe('passports',admin.from('passports').select('id,model_id,country_code,status,expires_on,visible_to_model').eq('organization_id',organization.id).eq('model_id',modelId),warnings);
+
     const travelIds=uniq(travel.map(x=>x.id));
     const [travelSegments,housingBookings]=await Promise.all([
       travelIds.length?safe('travel_segments',admin.from('travel_segments').select('*').eq('organization_id',organization.id).in('travel_record_id',travelIds).order('departs_at',{ascending:true}),warnings):[],
@@ -66,7 +69,7 @@ export const handler=async event=>{
     for(const seg of travelSegments){const k=String(seg.travel_record_id);if(!segmentsByTravel.has(k))segmentsByTravel.set(k,[]);segmentsByTravel.get(k).push(seg);}
     const housingByTravel=new Map();
     for(const h of housingBookings){const k=String(h.travel_record_id);if(!housingByTravel.has(k))housingByTravel.set(k,[]);housingByTravel.get(k).push(h);}
-    const travelView=travel.map(t=>({...t,travel_segments:segmentsByTravel.get(String(t.id))||[],housing_bookings:housingByTravel.get(String(t.id))||[]}));
+    const travelView=travel.map(t=>({...t,visa_gate:(()=>{try{return visaGateFor(t,visa,passports);}catch(_e){return null;}})(),travel_segments:segmentsByTravel.get(String(t.id))||[],housing_bookings:housingByTravel.get(String(t.id))||[]}));
 
     const bookingIds=uniq(bookingLinks.map(x=>x.booking_id));
     const castingIds=uniq(castingLinks.map(x=>x.casting_id));
@@ -110,7 +113,7 @@ export const handler=async event=>{
       measurements:model.measurement||null,
       media:{all:media,digitals,portfolio,videos},
       commercial:{bookings:bookingView,castings:castingView},
-      mobility:{travel:travelView,visa_cases:visa},
+      mobility:{travel:travelView,visa_cases:visa,passports:passports.filter(x=>x.visible_to_model!==false)},
       availability:{blocks:availability},
       requests:notifications,
       tasks,

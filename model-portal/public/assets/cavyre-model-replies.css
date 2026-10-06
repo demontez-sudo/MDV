@@ -10,3 +10,4 @@
 .v15m-attach-file i{font-style:normal;font-size:10px;letter-spacing:.1em;padding:3px 6px;background:var(--v15-gold);color:#15110c}
 .v15m-attach-file span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
 .v15m-attach-file em{font-style:normal;font-size:11px;color:var(--v15-gold)}
+.v15m-gate b{margin-right:4px}

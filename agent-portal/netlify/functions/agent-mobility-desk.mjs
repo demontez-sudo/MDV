@@ -31,17 +31,39 @@ function countryCode(value){const code=String(value||'').trim().toUpperCase();if
 const PLACE_CODES=[['FR',/\b(france|paris|lyon|nice|marseille)\b/i],['IT',/\b(italy|milan|milano|rome|roma|florence)\b/i],['GB',/\b(united kingdom|uk|england|london|manchester)\b/i],['US',/\b(united states|usa|new york|nyc|los angeles|miami|atlanta|chicago)\b/i],['DE',/\b(germany|berlin|munich|hamburg)\b/i],['ES',/\b(spain|madrid|barcelona)\b/i],['NL',/\b(netherlands|amsterdam)\b/i],['PT',/\b(portugal|lisbon|porto)\b/i],['BE',/\b(belgium|brussels)\b/i],['CH',/\b(switzerland|zurich|geneva)\b/i],['DK',/\b(denmark|copenhagen)\b/i],['SE',/\b(sweden|stockholm)\b/i],['JP',/\b(japan|tokyo)\b/i],['CN',/\b(china|shanghai|beijing)\b/i],['CA',/\b(canada|toronto|vancouver|montreal)\b/i],['AU',/\b(australia|sydney|melbourne)\b/i],['AE',/\b(uae|dubai|abu dhabi)\b/i],['ZA',/\b(south africa|cape town|johannesburg)\b/i],['NG',/\b(nigeria|lagos)\b/i],['BR',/\b(brazil|sao paulo|são paulo|rio)\b/i]];
 const SCHENGEN=new Set(['FR','IT','DE','ES','NL','PT','BE','CH','DK','SE','AT','GR','FI','NO','PL','CZ','HU','LU','MT','IS','EE','LV','LT','SK','SI','LI','HR']);
 function placeCountry(text){const t=String(text||'').trim();if(!t)return null;const tail=t.match(/[,\s]([A-Za-z]{2})$/);if(tail&&/,\s*[A-Za-z]{2}$/.test(t))return tail[1].toUpperCase();for(const [code,re] of PLACE_CODES)if(re.test(t))return code;return null;}
-function visaGateFor(trip,visas){
-  const code=placeCountry(trip.destination);if(!code)return {state:'unknown',country_code:null,message:'Destination country not recognised — add the country to check visa clearance.'};
+/* Passport check for a trip start date: ok / expiring (<6 months of validity left, the usual entry rule) / expired / missing. */
+function passportStateFor(passports,start){
+  const act=(passports||[]).filter(p=>!/^(lost|cancelled)$/.test(String(p.status||'')));
+  if(!act.length)return {state:'missing',expires_on:null};
+  const ref=start||new Date().toISOString().slice(0,10);
+  const best=act.slice().sort((a,b)=>String(b.expires_on||'9999-12-31').localeCompare(String(a.expires_on||'9999-12-31')))[0];
+  const exp=best.expires_on?String(best.expires_on).slice(0,10):null;
+  if(exp&&exp<ref)return {state:'expired',expires_on:exp};
+  if(exp){const six=new Date(ref+'T12:00:00');six.setMonth(six.getMonth()+6);if(exp<six.toISOString().slice(0,10))return {state:'expiring',expires_on:exp};}
+  return {state:'ok',expires_on:exp};
+}
+/* The travel gate. `blocking` is what actually stops a trip from being booked/confirmed:
+   an unapproved or lapsed visa, an expired passport, or no visa/waiver at all on a trip that is
+   certainly international. Domestic trips and trips to a country the model holds a passport for are clear. */
+function visaGateFor(trip,visas,passports=[]){
+  const code=placeCountry(trip.destination);
   const start=trip.starts_at?String(trip.starts_at).slice(0,10):null;
+  const mineP=(passports||[]).filter(p=>p.model_id===trip.model_id);
+  const passport=passportStateFor(mineP,start);
+  const withPassport=g=>({...g,passport,blocking:!!g.blocking||passport.state==='expired',message:passport.state==='expired'?`Passport expires ${passport.expires_on} — before this trip starts. ${g.message||''}`.trim():g.message});
+  if(!code)return withPassport({state:'unknown',country_code:null,blocking:false,message:'Destination country not recognised — add the country to check visa clearance.'});
+  const origin=placeCountry(trip.origin);
+  if(origin&&origin===code)return withPassport({state:'domestic',country_code:code,blocking:false,message:'Domestic travel — no visa needed.'});
+  if(mineP.some(p=>p.country_code===code&&!/^(lost|cancelled)$/.test(String(p.status||''))))return withPassport({state:'domestic',country_code:code,blocking:false,message:`Model holds a ${code} passport — no visa needed.`});
   const mine=visas.filter(v=>v.model_id===trip.model_id&&(v.country_code===code||(/schengen/i.test(String(v.visa_type||''))&&SCHENGEN.has(code)&&SCHENGEN.has(v.country_code))));
-  if(!mine.length)return {state:'none',country_code:code,message:`No visa case on file for ${code}. Confirm the model does not need one.`};
+  const international=!!origin||mineP.length>0;
+  if(!mine.length)return withPassport({state:'none',country_code:code,blocking:international,message:international?`No visa case or waiver on file for ${code}. Start a visa case, or mark "visa not required" if the model can enter without one.`:`No visa case on file for ${code}. Confirm the model does not need one.`});
   const good=mine.filter(v=>/^(approved|issued)$/.test(String(v.status||'')));
   const valid=good.find(v=>!v.expires_on||!start||String(v.expires_on).slice(0,10)>=start);
-  if(valid)return {state:'clear',country_code:code,visa_case_id:valid.id,message:`Visa ${valid.status}${valid.expires_on?` · valid to ${String(valid.expires_on).slice(0,10)}`:''}.`};
-  if(good.length)return {state:'expired',country_code:code,visa_case_id:good[0].id,message:`Visa expires before this trip starts (${String(good[0].expires_on).slice(0,10)}).`};
+  if(valid)return withPassport({state:'clear',country_code:code,blocking:false,visa_case_id:valid.id,waiver:!!valid.metadata?.waiver,message:valid.metadata?.waiver?`Visa not required for ${code} (recorded).`:`Visa ${valid.status}${valid.expires_on?` · valid to ${String(valid.expires_on).slice(0,10)}`:''}.`});
+  if(good.length)return withPassport({state:'expired',country_code:code,blocking:true,visa_case_id:good[0].id,message:`Visa expires before this trip starts (${String(good[0].expires_on).slice(0,10)}).`});
   const open=mine.find(v=>!/^(refused|cancelled|expired)$/.test(String(v.status||'')))||mine[0];
-  return {state:'pending',country_code:code,visa_case_id:open.id,message:`Visa ${String(open.status||'not started').replace(/_/g,' ')} — must be approved before travel is confirmed.`};
+  return withPassport({state:'pending',country_code:code,blocking:true,visa_case_id:open.id,message:`Visa ${String(open.status||'not started').replace(/_/g,' ')} — must be approved before travel is confirmed.`});
 }
 const VISA_AUTO_DATES={submitted:'submitted_on',processing:'submitted_on',approved:'approved_on',issued:'issued_on'};
 function currencyCode(value){const code=String(value||'USD').trim().toUpperCase();if(!/^[A-Z]{3}$/.test(code))throw validationError('Enter a valid 3-letter currency code.','MOBILITY_CURRENCY_INVALID');return code;}
@@ -117,6 +139,14 @@ async function syncTravelCalendar(admin,organizationId,userId,travel){
   const end=lastSeg?.arrives_at||travel.ends_at||firstSeg?.arrives_at||travel.starts_at;
   const route=[travel.origin||firstSeg?.origin,travel.destination||lastSeg?.destination].filter(Boolean).join(' → ');
   const confirmedHousing=housing.find(h=>['booked','confirmed'].includes(String(h.status||'').toLowerCase()))||null;
+  let gate=null;
+  try{
+    const [vs,ps]=await Promise.all([
+      safeRows(admin.from('visa_cases').select('id,model_id,country_code,visa_type,status,expires_on,metadata').eq('organization_id',organizationId).eq('model_id',travel.model_id),'visa_gate_sync',warnings),
+      safeRows(admin.from('passports').select('model_id,country_code,status,expires_on').eq('organization_id',organizationId).eq('model_id',travel.model_id),'passport_gate_sync',warnings)
+    ]);
+    gate=visaGateFor({...travel,starts_at:start},vs,ps);
+  }catch(_e){gate=null;}
   return upsertMobilityEvent(admin,organizationId,userId,{
     key:'mobility_travel_id',value:travel.id,modelId:travel.model_id,title:`✈ ${route||travel.purpose||'Model Travel'}`,
     eventType:'travel',status:travelCalendarStatus(travel.status),startsAt:start,endsAt:end,
@@ -126,8 +156,21 @@ async function syncTravelCalendar(admin,organizationId,userId,travel){
       origin:travel.origin||firstSeg?.origin||null,destination:travel.destination||lastSeg?.destination||null,
       travel_status:travel.status||null,segment_count:segments.length,housing_count:housing.length,
       housing_status:confirmedHousing?.status||null,housing_name:confirmedHousing?.property_name||confirmedHousing?.provider||null,
-      travel_required:true,visa_required:false,paid_by:travel.paid_by||null,cost_amount:travel.cost_amount||null,currency:travel.currency||'USD'}
+      travel_required:true,visa_required:gate?!['domestic','unknown'].includes(gate.state):false,visa_gate:gate?gate.state:null,visa_gate_message:gate?gate.message:null,visa_blocking:gate?!!gate.blocking:false,passport_state:gate?.passport?.state||null,paid_by:travel.paid_by||null,cost_amount:travel.cost_amount||null,currency:travel.currency||'USD'}
   });
+}
+/* A visa or passport changed: re-evaluate every open trip for that model so calendar events show the right lock state. */
+async function refreshTripGates(admin,organizationId,userId,modelId){
+  if(!modelId)return {refreshed:0,blocked:0};
+  let refreshed=0,blocked=0;
+  try{
+    const today=new Date(Date.now()-864e5).toISOString();
+    const trips=await rows(admin.from('travel_records').select('*').eq('organization_id',organizationId).eq('model_id',modelId).not('status','in','(completed,cancelled)').gte('starts_at',today).limit(100));
+    for(const t of trips){
+      try{const ev=await syncTravelCalendar(admin,organizationId,userId,t);refreshed++;if(ev?.metadata?.visa_blocking&&['booked','confirmed','in_progress'].includes(String(t.status||'').toLowerCase()))blocked++;}catch(_e){}
+    }
+  }catch(_e){}
+  return {refreshed,blocked};
 }
 async function completedTravelLocation(admin,organizationId,modelId){
   if(!modelId)return null;
@@ -229,7 +272,7 @@ export const handler=async(event)=>{
       const tDocMap=new Map();
       for(const d of tDocs){if(String(d.status||'')==='archived')continue;let url=d.external_url||null;if(d.storage_provider==='supabase'&&d.storage_bucket&&d.storage_path){try{const sg=await admin.storage.from(d.storage_bucket).createSignedUrl(d.storage_path,900);if(!sg.error)url=sg.data?.signedUrl||null;}catch(_e){}}tDocMap.set(d.id,{id:d.id,name:d.name,mime_type:d.mime_type,url,category:d.category});}
       const travelFilesFor=id=>{const seen=new Set(),out=[];const push=(docId,type)=>{if(!docId||seen.has(docId))return;const d=tDocMap.get(docId);if(!d)return;seen.add(docId);out.push({id:docId,name:d.name,mime_type:d.mime_type,url:d.url,doc_type:type||String(d.category||'').replace(/^travel-/,'')||'other'});};travelLinkRows.filter(l=>l.resource_id===id).forEach(l=>push(l.document_id));travelMetaDocs.filter(d=>d.trip===id).forEach(d=>push(d.id,d.doc_type));return out;};
-      const hydratedTravel=travel.map(r=>({...hydrateModel(r),visa_gate:visaGateFor(r,visaCases),files:travelFilesFor(r.id),segments:scopedSegments.filter(s=>s.travel_record_id===r.id),housing:housing.filter(h=>h.travel_record_id===r.id).map(hydrateModel)}));
+      const hydratedTravel=travel.map(r=>({...hydrateModel(r),visa_gate:visaGateFor(r,visaCases,passports),files:travelFilesFor(r.id),segments:scopedSegments.filter(s=>s.travel_record_id===r.id),housing:housing.filter(h=>h.travel_record_id===r.id).map(hydrateModel)}));
       const modelTravelCards=hydratedTravel.filter(r=>r.visible_to_model!==false&&String(r.status||'').toLowerCase()!=='cancelled').map(r=>({
         id:r.id,model_id:r.model_id,status:r.status,purpose:r.purpose||null,origin:r.origin||null,destination:r.destination||null,starts_at:r.starts_at||null,ends_at:r.ends_at||null,booking_id:r.booking_id||null,
         segments:(Array.isArray(r.segments)?r.segments:[]).map(s=>({id:s.id,segment_type:s.segment_type,provider:s.provider||null,confirmation_number:s.confirmation_number||null,origin:s.origin||null,destination:s.destination||null,departs_at:s.departs_at||null,arrives_at:s.arrives_at||null})),
@@ -331,7 +374,20 @@ export const handler=async(event)=>{
       for(const [value,label] of [[payload.appointment_at,'Appointment'],[payload.submitted_on,'Submitted date'],[payload.approved_on,'Approved date'],[payload.issued_on,'Issued date'],[payload.valid_from,'Valid from'],[payload.expires_on,'Expiry date'],[payload.hard_deadline,'Hard deadline']])validateTemporal(value,label);
       validateRange(payload.valid_from,payload.expires_on,'Valid from','Expiry date');
       if(body.source_task_id){const {data:sourceTask,error:sourceError}=await admin.from('tasks').select('id,model_id,title').eq('organization_id',organization.id).eq('id',body.source_task_id).maybeSingle();if(sourceError)throw sourceError;if(!sourceTask)throw validationError('Source visa task was not found.','MOBILITY_VISA_SOURCE_TASK_MISSING');if(sourceTask.model_id!==payload.model_id)throw validationError('Source visa task belongs to a different model.','MOBILITY_VISA_SOURCE_TASK_MODEL_MISMATCH');payload.metadata={source:'visa_task_recovery',source_task_id:sourceTask.id,source_task_title:sourceTask.title,recovered_at:new Date().toISOString()};}
-      let q=body.id?admin.from('visa_cases').update(payload).eq('organization_id',organization.id).eq('id',body.id):admin.from('visa_cases').insert(payload);const {data,error}=await q.select('*').single();if(error)throw error;const calendar_events=await syncVisaCalendar(admin,organization.id,user.id,data);const notification_warning=await notifyMobilityStateSafe(admin,organization.id,data,'visa');return json(200,{ok:true,verified:true,visa_case:data,calendar_synced:calendar_events.length>0,calendar_events,notification_warning,persisted_at:data?.updated_at||data?.created_at||new Date().toISOString()});
+      let q=body.id?admin.from('visa_cases').update(payload).eq('organization_id',organization.id).eq('id',body.id):admin.from('visa_cases').insert(payload);const {data,error}=await q.select('*').single();if(error)throw error;const calendar_events=await syncVisaCalendar(admin,organization.id,user.id,data);const trip_gates=await refreshTripGates(admin,organization.id,user.id,data.model_id);const notification_warning=await notifyMobilityStateSafe(admin,organization.id,data,'visa');return json(200,{ok:true,verified:true,visa_case:data,calendar_synced:calendar_events.length>0,calendar_events,trip_gates,notification_warning,persisted_at:data?.updated_at||data?.created_at||new Date().toISOString()});
+    }
+    if(action==='waive_visa'){
+      const modelId=String(body.model_id||'').trim(),cc=countryCode(body.country_code);
+      if(!modelId)throw validationError('model_id is required.');
+      const today=new Date().toISOString().slice(0,10),note=String(body.reason||'').trim().slice(0,300);
+      const existing=await rows(admin.from('visa_cases').select('id,metadata,status').eq('organization_id',organization.id).eq('model_id',modelId).eq('country_code',cc));
+      const prior=existing.find(v=>v.metadata?.waiver);
+      const payload={organization_id:organization.id,model_id:modelId,country_code:cc,visa_type:'Not required',case_type:'visa',status:'approved',approved_on:today,visible_to_model:true,visible_to_partner:false,metadata:{waiver:true,waived_by:user.id,waived_at:new Date().toISOString(),reason:note||null}};
+      const q=prior?admin.from('visa_cases').update(payload).eq('organization_id',organization.id).eq('id',prior.id):admin.from('visa_cases').insert(payload);
+      const {data,error}=await q.select('*').single();if(error)throw error;
+      const trip_gates=await refreshTripGates(admin,organization.id,user.id,modelId);
+      await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'visa',title:'Visa marked not required',detail:`${cc}${note?' · '+note:''}`,...(await actorFor(admin,user)),link_page:'visa',link_id:data?.id});
+      return json(200,{ok:true,verified:true,visa_case:data,trip_gates,persisted_at:data?.updated_at||data?.created_at||new Date().toISOString()});
     }
     if(action==='set_visa_status'){
       const st=oneOf(body.status,['not_started','gathering_documents','appointment_pending','submitted','processing','approved','issued','refused','expired','cancelled'],null);
@@ -341,17 +397,20 @@ export const handler=async(event)=>{
       const auto=VISA_AUTO_DATES[st];if(auto&&!cur[auto])patch[auto]=today;
       if(st==='issued'&&!cur.approved_on)patch.approved_on=today;
       const {data,error}=await admin.from('visa_cases').update(patch).eq('organization_id',organization.id).eq('id',body.id).select('*').single();if(error)throw error;
-      const calendar_events=await syncVisaCalendar(admin,organization.id,user.id,data);const notification_warning=await notifyMobilityStateSafe(admin,organization.id,data,'visa');
-      return json(200,{ok:true,verified:true,visa_case:data,calendar_events,notification_warning,persisted_at:data?.updated_at||new Date().toISOString()});
+      const calendar_events=await syncVisaCalendar(admin,organization.id,user.id,data);const trip_gates=await refreshTripGates(admin,organization.id,user.id,data.model_id);const notification_warning=await notifyMobilityStateSafe(admin,organization.id,data,'visa');
+      return json(200,{ok:true,verified:true,visa_case:data,calendar_events,trip_gates,notification_warning,persisted_at:data?.updated_at||new Date().toISOString()});
     }
     if(action==='save_travel'){
       const payload={organization_id:organization.id,model_id:body.model_id,booking_id:body.booking_id||null,season_id:body.season_id||null,purpose:body.purpose||null,origin:body.origin||null,destination:String(body.destination||'').trim(),starts_at:body.starts_at||null,ends_at:body.ends_at||null,status:oneOf(body.status,['planning','requested','booked','confirmed','in_progress','completed','cancelled'],'planning'),assigned_member_id:body.assigned_member_id||null,cost_amount:moneyValue(body.cost_amount),currency:currencyCode(body.currency),paid_by:body.paid_by?oneOf(body.paid_by,['agency','model','mother_agency','client','split','other'],null):null,visible_to_model:body.visible_to_model!==false,visible_to_partner:body.visible_to_partner!==false,notes:body.notes||null};
       if(!payload.model_id||!payload.destination)throw validationError('model_id and destination are required.');
       if(!payload.starts_at)throw validationError('Travel start date/time is required.');
       if(['booked','confirmed','in_progress'].includes(payload.status)){
-        const visas=await rows(admin.from('visa_cases').select('id,model_id,country_code,visa_type,status,expires_on').eq('organization_id',organization.id).eq('model_id',payload.model_id));
-        const gate=visaGateFor(payload,visas);
-        if(gate.state==='pending'||gate.state==='expired')throw validationError(`Travel cannot be ${payload.status} yet. ${gate.message}`,'MOBILITY_VISA_NOT_APPROVED');
+        const [visas,pps]=await Promise.all([
+          rows(admin.from('visa_cases').select('id,model_id,country_code,visa_type,status,expires_on,metadata').eq('organization_id',organization.id).eq('model_id',payload.model_id)),
+          rows(admin.from('passports').select('model_id,country_code,status,expires_on').eq('organization_id',organization.id).eq('model_id',payload.model_id))
+        ]);
+        const gate=visaGateFor(payload,visas,pps);
+        if(gate.blocking)throw validationError(`Travel cannot be ${payload.status} yet. ${gate.message}`,'MOBILITY_VISA_NOT_APPROVED');
       }
       validateRange(payload.starts_at,payload.ends_at,'Start date/time','End date/time');
       if(payload.booking_id){
