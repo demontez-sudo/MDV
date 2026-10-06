@@ -12,6 +12,7 @@ var PRIMARY=[
  ['industrydirectory','♡','Relationships'],
  ['calendar','▣','Calendar'],
  ['tasksconsolidated','<b class="ti ti-circle-check"></b>','Tasks'],
+ ['inbox','✉','Messages'],
  ['multipackage','▱','Packages'],
  ['__operations__','⌘','Operations']
 ];
@@ -20,7 +21,6 @@ var OPS=[
  ['visa','◎','Visa & Compliance','Visas, passports and work authorization'],
  ['agentcommissions','◈','Finance','Commissions, payments and financial operations'],
  ['filesforms','▱','Documents','Files, forms and operational documents'],
- ['inbox','✉','Communication','Agency communications and follow-up'],
  ['systemsettings','⚙','Settings','Portal and agency settings']
 ];
 var busy=false,scheduled=false,observer=null;
@@ -35,7 +35,7 @@ function nav(page){
 }
 function current(){
  var p=String(window._currentPage||location.hash.replace(/^#/,'')||'overview').toLowerCase();
- if(['globalmobility','visa','agentcommissions','financelegal','filesforms','inbox','systemsettings','team'].indexOf(p)>-1)return'__operations__';
+ if(['globalmobility','visa','agentcommissions','financelegal','filesforms','systemsettings','team'].indexOf(p)>-1)return'__operations__';
  if(['industrydirectory','companies','contacts','allcontacts'].indexOf(p)>-1)return'industrydirectory';
  if(['season','seasonmanagement'].indexOf(p)>-1)return'seasonmanagement';
  return p;
@@ -56,7 +56,7 @@ function active(){
 }
 function build(){
  var r=rail();if(!r||busy)return;
- var expected='16.12.67';
+ var expected='16.12.68';
  if(signature(r)===expected && r.querySelectorAll('button[data-cavyre-primary]').length===PRIMARY.length){active();return}
  busy=true;
  try{
@@ -103,7 +103,7 @@ function install(){
  if(r&&!observer){
    observer=new MutationObserver(function(){
      if(busy)return;
-     if(signature(r)!=='16.12.67'||r.querySelectorAll('button[data-cavyre-primary]').length!==PRIMARY.length)schedule();
+     if(signature(r)!=='16.12.68'||r.querySelectorAll('button[data-cavyre-primary]').length!==PRIMARY.length)schedule();
    });
    observer.observe(r,{childList:true,subtree:false,attributes:true,attributeFilter:['data-cavyre-primary-nav']});
  }

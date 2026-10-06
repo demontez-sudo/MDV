@@ -19,10 +19,52 @@ async function modelNote(admin,{organizationId,modelId,userId,body,title='Model 
   return q.data;
 }
 
+
+const isUuid=v=>/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(v||''));
+const isCheckViolation=e=>String(e?.code||'')==='23514'||/check constraint|not allowed|violates/i.test(String(e?.message||''));
+/* Try each candidate value until the database's CHECK constraint accepts one. */
+async function updateWithFallback(build,field,candidates){
+  let last=null;
+  for(const value of candidates){
+    const {data,error}=await build({[field]:value}).select('*').maybeSingle();
+    if(!error)return {data,value};
+    last=error;if(!isCheckViolation(error))throw error;
+  }
+  throw last;
+}
+/* Post a model's message into the same conversation store the agency Messages inbox reads. */
+async function sendToAgency({admin,client,user,organization,modelId,conversationId,subject,message}){
+  let conv=null;
+  if(isUuid(conversationId)){
+    const {data,error}=await admin.from('conversations').select('id,model_id,status,subject').eq('organization_id',organization.id).eq('id',conversationId).eq('model_id',modelId).maybeSingle();
+    if(error)throw error;conv=data;
+  }
+  if(conv&&conv.status==='closed'){const e=new Error('This conversation is closed. Start a new message instead.');e.statusCode=409;throw e;}
+  if(!conv){
+    const base={organization_id:organization.id,model_id:modelId,subject:text(subject,160)||'Message from model'};
+    let ins=await admin.from('conversations').insert({...base,status:'active'}).select('id,model_id,status,subject').single();
+    if(ins.error)ins=await admin.from('conversations').insert(base).select('id,model_id,status,subject').single();
+    if(ins.error)throw ins.error;conv=ins.data;
+  }
+  const rpc=await client.rpc('send_portal_message',{target_conversation:conv.id,message_body:message});
+  if(rpc.error){
+    const {data:m}=await admin.from('models').select('display_name').eq('organization_id',organization.id).eq('id',modelId).maybeSingle();
+    const saved=await admin.from('messages').insert({organization_id:organization.id,conversation_id:conv.id,sender_user_id:user.id,sender_label:m?.display_name||'Model',body:message,visibility:'participants'}).select('id,conversation_id,sent_at').single();
+    if(saved.error)throw rpc.error;
+    await admin.from('conversations').update({updated_at:now()}).eq('id',conv.id);
+    return {conversation_id:conv.id,message:saved.data,fallback:true};
+  }
+  return {conversation_id:conv.id,result:rpc.data};
+}
+async function titleOf(admin,organization,table,id){
+  if(!id)return null;try{const {data}=await admin.from(table).select('title').eq('organization_id',organization.id).eq('id',id).maybeSingle();return data?.title||null;}catch(_e){return null;}
+}
+const RESPONSE_LABEL={accepted:'Accepted',confirmed:'Confirmed',declined:'Declined',need_to_discuss:'On hold / needs discussion',available:'Available',unavailable:'Unavailable',interested:'Interested',pass:'Passed'};
+
 export const handler=async event=>{
   if(event.httpMethod!=='POST')return json(405,{error:'Method not allowed'},{Allow:'POST'});
   try{
-    const {user}=await requireUser(event);
+    const {user,client}=await requireUser(event);
     const body=parseBody(event), slug=body.organization||body.organization_slug||'maison-de-veux';
     const {admin,organization,modelId}=await requireModelPortal({user,organizationSlug:slug});
     const action=String(body.action||'').trim();
@@ -64,23 +106,39 @@ export const handler=async event=>{
     if(action==='casting_response'){
       const id=text(body.link_id||body.id,120),castingId=text(body.casting_id,120);
       if(!id&&!castingId){const e=new Error('Casting response target is required.');e.statusCode=400;throw e;}
-      const status=allowed(body.status,responseStatuses,'casting response');
-      let q=admin.from('casting_models').update({status,response_at:now(),feedback:text(body.note,1800)}).eq('organization_id',organization.id).eq('model_id',modelId);
-      q=id?q.eq('id',id):q.eq('casting_id',castingId);
-      const data=await one(q.select('*').maybeSingle());
+      const status=allowed(body.status,responseStatuses,'casting response'),note=text(body.note,1800);
+      const build=v=>{let q=admin.from('casting_models').update({...v,response_at:now(),feedback:note||null}).eq('organization_id',organization.id).eq('model_id',modelId);return id?q.eq('id',id):q.eq('casting_id',castingId);};
+      const {data}=await updateWithFallback(build,'status',[status,...(status==='need_to_discuss'?['pending']:[])]);
       if(!data){const e=new Error('Casting assignment was not found.');e.statusCode=404;throw e;}
-      return json(200,{ok:true,verified:true,action,status,record:data});
+      const title=await titleOf(admin,organization,'castings',data.casting_id);
+      let message_warning=null;try{await sendToAgency({admin,client,user,organization,modelId,subject:`Casting: ${title||'Response'}`,message:`${RESPONSE_LABEL[status]||status} — ${title||'casting'}${note?'\n\n'+note:''}`});}catch(me){message_warning=me?.message||String(me);}
+      return json(200,{ok:true,verified:true,action,status,record:data,message_warning});
     }
 
     if(action==='booking_response'){
       const id=text(body.link_id||body.id,120),bookingId=text(body.booking_id,120);
       if(!id&&!bookingId){const e=new Error('Booking response target is required.');e.statusCode=400;throw e;}
-      const status=allowed(body.status,responseStatuses,'booking response');
-      let q=admin.from('booking_models').update({status,response_at:now(),notes:text(body.note,1800)}).eq('organization_id',organization.id).eq('model_id',modelId);
-      q=id?q.eq('id',id):q.eq('booking_id',bookingId);
-      const data=await one(q.select('*').maybeSingle());
+      const status=allowed(body.status,responseStatuses,'booking response'),note=text(body.note,1800);
+      const build=v=>{let q=admin.from('booking_models').update({...v,response_at:now(),...(note?{notes:note}:{})}).eq('organization_id',organization.id).eq('model_id',modelId);return id?q.eq('id',id):q.eq('booking_id',bookingId);};
+      const {data}=await updateWithFallback(build,'status',[status,...(status==='need_to_discuss'?['pending']:[])]);
       if(!data){const e=new Error('Booking assignment was not found.');e.statusCode=404;throw e;}
-      return json(200,{ok:true,verified:true,action,status,record:data});
+      const title=await titleOf(admin,organization,'bookings',data.booking_id);
+      let message_warning=null;try{await sendToAgency({admin,client,user,organization,modelId,subject:`Booking: ${title||'Response'}`,message:`${RESPONSE_LABEL[status]||status} — ${title||'booking'}${note?'\n\n'+note:''}`});}catch(me){message_warning=me?.message||String(me);}
+      return json(200,{ok:true,verified:true,action,status,record:data,message_warning});
+    }
+
+    if(action==='event_response'){
+      const eventId=text(body.event_id||body.id,120);
+      if(!eventId){const e=new Error('Event response target is required.');e.statusCode=400;throw e;}
+      const status=allowed(body.status,new Set(['accepted','declined','need_to_discuss','confirmed','available','unavailable']),'event response'),note=text(body.note,1800);
+      const candidates=status==='declined'||status==='unavailable'?['declined','unavailable']:status==='need_to_discuss'?['tentative','maybe','pending']:['accepted','confirmed','attending'];
+      const build=v=>admin.from('event_models').update(v).eq('organization_id',organization.id).eq('model_id',modelId).eq('event_id',eventId);
+      const {data}=await updateWithFallback(build,'attendance_status',candidates);
+      if(!data){const e=new Error('Event assignment was not found.');e.statusCode=404;throw e;}
+      const title=await titleOf(admin,organization,'events',eventId);
+      await modelNote(admin,{organizationId:organization.id,modelId,userId:user.id,body:note||`${RESPONSE_LABEL[status]||status}: ${title||'event'}`,title:'Event Response',noteType:'event_response',metadata:{event_id:eventId,response:status}});
+      let message_warning=null;try{await sendToAgency({admin,client,user,organization,modelId,subject:`Event: ${title||'Response'}`,message:`${RESPONSE_LABEL[status]||status} — ${title||'event'}${note?'\n\n'+note:''}`});}catch(me){message_warning=me?.message||String(me);}
+      return json(200,{ok:true,verified:true,action,status,record:data,message_warning});
     }
 
     if(action==='task_update'){
@@ -108,8 +166,8 @@ export const handler=async event=>{
 
     if(action==='send_message'){
       const message=text(body.message,4000);if(!message){const e=new Error('Message cannot be empty.');e.statusCode=400;throw e;}
-      const note=await modelNote(admin,{organizationId:organization.id,modelId,userId:user.id,body:message,title:text(body.subject,160)||'Model Message',noteType:'model_message',metadata:{thread:text(body.thread,120)||null}});
-      return json(200,{ok:true,verified:true,action,record:note});
+      const sent=await sendToAgency({admin,client,user,organization,modelId,conversationId:text(body.thread||body.conversation_id,120),subject:text(body.subject,160),message});
+      return json(200,{ok:true,verified:true,action,conversation_id:sent.conversation_id,record:sent.message||sent.result||null});
     }
 
     if(action==='development_submission'){

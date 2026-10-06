@@ -49,6 +49,14 @@ export const handler=async event=>{
       safe('notifications',admin.from('notifications').select('id,notification_type,title,body,status,source_type,source_id,action_url,metadata,created_at').eq('organization_id',organization.id).eq('user_id',user.id).order('created_at',{ascending:false}).limit(100),warnings)
     ]);
 
+    // Two-way messaging: the Model Portal inbox reads these. Internal-only staff messages stay hidden.
+    const conversations=await safe('conversations',admin.from('conversations').select('*').eq('organization_id',organization.id).eq('model_id',modelId).neq('status','archived').order('updated_at',{ascending:false}).limit(200),warnings);
+    const convIds=uniq(conversations.map(x=>x.id));
+    const messages=convIds.length?await safe('messages',admin.from('messages').select('*').eq('organization_id',organization.id).in('conversation_id',convIds).is('deleted_at',null).or('visibility.is.null,visibility.neq.internal').order('sent_at',{ascending:true}).limit(3000),warnings):[];
+
+    // Documents attached to a specific booking / casting / event and shared with this model.
+    const scopedDocs=await safe('scoped_document_links',admin.from('document_links').select('id,document_id,resource_type,resource_id,relationship,visible_to_model,created_at,documents(id,name,category,mime_type,size_bytes,status,created_at)').eq('organization_id',organization.id).in('resource_type',['booking','casting','event']).eq('visible_to_model',true).order('created_at',{ascending:false}).limit(500),warnings);
+
     const travelIds=uniq(travel.map(x=>x.id));
     const [travelSegments,housingBookings]=await Promise.all([
       travelIds.length?safe('travel_segments',admin.from('travel_segments').select('*').eq('organization_id',organization.id).in('travel_record_id',travelIds).order('departs_at',{ascending:true}),warnings):[],
@@ -110,6 +118,9 @@ export const handler=async event=>{
       documents:{contracts,links:documentLinks},
       finance:{ledger,statements},
       notes,
+      conversations,
+      messages,
+      scoped_documents:scopedDocs,
       warnings
     });
   }catch(error){return errorResponse(error);}

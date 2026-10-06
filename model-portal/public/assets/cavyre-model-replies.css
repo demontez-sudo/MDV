@@ -1,0 +1,12 @@
+/* Reply dialog, attachments and message compose for the Model Portal. */
+.pm .v15m-mini-btn.reply,.v15m-mini-btn.reply{background:transparent;border:1px solid var(--v15-line);color:var(--v15-ivory)}
+.pm .v15m-mini-btn.reply:hover{border-color:var(--v15-gold);color:var(--v15-gold)}
+.v15m-reply-hint{margin:0 0 10px;color:var(--v15-muted);font-size:12px;line-height:1.5}
+.v16m-form textarea{width:100%;min-height:110px;resize:vertical}
+.v15m-attach{margin-top:12px;border-top:1px solid var(--v15-line);padding-top:10px;display:grid;gap:6px}
+.v15m-attach>small{font-size:10px;letter-spacing:.16em;color:var(--v15-gold)}
+.v15m-attach-file{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;width:100%;padding:8px 10px;border:1px solid var(--v15-line);background:rgba(255,255,255,.02);color:var(--v15-ivory);text-align:left;cursor:pointer}
+.v15m-attach-file:hover{border-color:var(--v15-gold)}
+.v15m-attach-file i{font-style:normal;font-size:10px;letter-spacing:.1em;padding:3px 6px;background:var(--v15-gold);color:#15110c}
+.v15m-attach-file span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+.v15m-attach-file em{font-style:normal;font-size:11px;color:var(--v15-gold)}
