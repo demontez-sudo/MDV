@@ -116,3 +116,6 @@
 @media(max-width:700px){.mm-modal-back{padding-bottom:150px}}
 
 .mm-rr-cc b{min-width:auto}.mm-rr-to b{min-width:76px}
+
+.mm-copy{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mdv-mute,#a89f92);cursor:pointer;white-space:nowrap}.mm-copy input{accent-color:var(--mdv-gold,#d4b077)}.mm-modal>footer .mm-sp{flex:1}
+@media(max-width:700px){.mm-modal>footer{flex-wrap:wrap}.mm-modal>footer .mm-copy{width:100%}}
