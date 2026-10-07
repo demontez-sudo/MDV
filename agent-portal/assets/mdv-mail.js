@@ -29,6 +29,8 @@ async function boot(force){
     if(st.connected){await loadFolders();if(seq!==S.seq)return;await loadList(true);}
   }catch(e){S.err=msg(e);}
   S.loading=false;paint();startTimer();
+  if(S.pendingCompose){S.pendingCompose=false;if(S.status&&S.status.connected)compose({});}
+  if(S.pendingOpen&&S.status&&S.status.connected){var pid=S.pendingOpen;S.pendingOpen=null;openMessage(pid);}
 }
 async function loadFolders(){try{var d=await call('folders');S.folders=arr(d.folders);}catch(e){if(e&&/reconnect/i.test(msg(e))){S.status=Object.assign({},S.status,{connected:false,needs_reconnect:true});}else throw e;}}
 async function loadList(reset){
@@ -43,7 +45,7 @@ async function loadList(reset){
   S.listLoading=false;paintList();
 }
 async function openMessage(id){
-  S.sel=id;S.detail=null;S.detailLoading=true;S.showImages=false;S.readerOpen=true;
+  S.sel=id;S.reply=null;S.detail=null;S.detailLoading=true;S.showImages=false;S.readerOpen=true;
   var mmEl=S.host&&S.host.querySelector('.mm');if(mmEl)mmEl.classList.add('read-open');
   paintList();paintReader();
   try{
@@ -133,7 +135,7 @@ function paintReader(){
     +(hasRemote&&!S.showImages?'<div class="mm-imgs">Images are hidden to protect your privacy. <button class="mm-link" data-a="images">Show images</button></div>':'')+'</header>'
     +'<iframe class="mm-body" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Message body"></iframe>';
   el.querySelector('iframe').srcdoc=bodyDoc(m,S.showImages);
-  wire(el);
+  wire(el);paintReply();
 }
 
 /* ---------- interactions ---------- */
@@ -158,7 +160,7 @@ async function act(a,b){
     if(a==='disconnect'){if(!window.confirm('Disconnect your email from the portal? Your mailbox itself is not touched.'))return;await call('disconnect');S.status=Object.assign({},S.status,{connected:false});S.folders=[];S.messages=[];S.sel=null;S.detail=null;paint();toast('Email disconnected');return;}
     if(a==='download'){b.disabled=true;var f=await call('attachment',{id:m.id,attachment_id:b.dataset.id});b.disabled=false;var bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:f.content_type||'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=f.name||b.dataset.name||'attachment';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);return;}
     if(!m)return;
-    if(a==='reply'||a==='replyAll'||a==='forward'){compose({mode:a,m:m});return;}
+    if(a==='reply'||a==='replyAll'||a==='forward'){openReply(a,m);return;}
     if(a==='unread'){await call('mark_read',{id:m.id,read:false});var r=S.messages.filter(function(x){return x.id===m.id;})[0];if(r)r.is_read=false;var fo=S.folders.filter(function(x){return x.id===S.folder;})[0];if(fo)fo.unread++;paintList();paintSide();toast('Marked unread');return;}
     if(a==='archive'||a==='delete'){
       if(a==='delete'&&!window.confirm('Move this message to Deleted?'))return;
@@ -166,7 +168,45 @@ async function act(a,b){
   }catch(e){toast(msg(e),'bad');if(b)b.disabled=false;if(/reconnect/i.test(msg(e))){S.status=Object.assign({},S.status,{connected:false,needs_reconnect:true});paint();}}
 }
 
-/* ---------- compose / reply ---------- */
+/* ---------- inline reply (sits under the message; nothing pops over it) ---------- */
+function replyTo(mode,m){
+  if(mode==='forward')return '';
+  if(mode==='reply')return m.reply_to&&m.reply_to[0]?m.reply_to[0].address:(m.from&&m.from.address)||'';
+  var me=String(S.status.email||'').toLowerCase();
+  return [m.from&&m.from.address].concat(m.to.map(function(x){return x.address;})).concat(m.cc.map(function(x){return x.address;})).filter(function(x,i,a){return x&&x.toLowerCase()!==me&&a.indexOf(x)===i;}).join(', ');
+}
+function openReply(mode,m){
+  var keep=S.reply&&S.reply.id===m.id?S.reply.text:'';
+  S.reply={id:m.id,mode:mode,to:replyTo(mode,m),text:keep};
+  paintReply(true);
+}
+function paintReply(focus){
+  var el=document.getElementById('mm-reader'),old=document.getElementById('mm-reply');if(old)old.remove();
+  var r=S.reply,m=S.detail&&S.detail.m;if(!el||!r||!m||m.id!==r.id)return;
+  var label=r.mode==='replyAll'?'Reply all':r.mode==='forward'?'Forward':'Reply';
+  var d=document.createElement('div');d.id='mm-reply';d.className='mm-reply';
+  d.innerHTML='<div class="mm-rr-to"><b>'+label+'</b><input id="mm-rto" list="mm-sug" value="'+esc(r.to)+'" placeholder="name@example.com, …" autocomplete="off" aria-label="To"><button type="button" class="mm-rr-x" data-rx aria-label="Discard reply">×</button></div>'
+    +'<textarea id="mm-rtext" rows="5" placeholder="'+(r.mode==='forward'?'Add a note (optional) — the original message is included below automatically.':'Write your reply — the original message is quoted below automatically.')+'"></textarea>'
+    +'<datalist id="mm-sug">'+Object.keys(S.senders).slice(0,80).map(function(a){return '<option value="'+esc(a)+'">'+esc(S.senders[a]||'')+'</option>';}).join('')+'</datalist>'
+    +'<div class="mm-rr-foot"><span class="mm-err" id="mm-rerr"></span><button type="button" class="mm-btn" data-rx>Discard</button><button type="button" class="mm-btn gold" id="mm-rsend">Send</button></div>';
+  el.appendChild(d);
+  var ta=d.querySelector('#mm-rtext'),to=d.querySelector('#mm-rto');
+  ta.value=r.text||'';ta.oninput=function(){r.text=ta.value;};to.oninput=function(){r.to=to.value;};
+  d.querySelectorAll('[data-rx]').forEach(function(b){b.onclick=function(){if(ta.value.trim()&&!window.confirm('Discard this reply?'))return;S.reply=null;paintReply();};});
+  d.querySelector('#mm-rsend').onclick=async function(){
+    var btn=this,err=d.querySelector('#mm-rerr');err.textContent='';
+    try{
+      if(!to.value.trim())throw new Error('Add at least one recipient.');
+      if(r.mode!=='forward'&&!ta.value.trim())throw new Error('Write a message first.');
+      btn.disabled=true;btn.textContent='Sending…';
+      await call('reply',{id:m.id,mode:r.mode,to:to.value.trim(),text:ta.value});
+      S.reply=null;paintReply();toast('Sent');if(S.folder==='sentitems')loadList(true);
+    }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
+  };
+  if(focus)setTimeout(function(){(to.value?ta:to).focus();},30);
+}
+
+/* ---------- compose (new message) ---------- */
 function readFile(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res({name:f.name,content_type:f.type||'application/octet-stream',content_base64:String(r.result).split(',')[1]||''});};r.onerror=function(){rej(new Error('Could not read '+f.name));};r.readAsDataURL(f);});}
 function compose(o){
   var old=document.getElementById('mm-modal');if(old)old.remove();
@@ -229,7 +269,7 @@ function mountSettingsCard(panel){
       try{
         if(b.dataset.set==='open'){if(typeof window.navTo==='function')window.navTo('mail');return;}
         if(b.dataset.set==='connect'){b.disabled=true;b.textContent='Opening Microsoft…';var d=await call('connect_url');window.location.href=d.url;return;}
-        if(b.dataset.set==='disconnect'){if(!window.confirm('Disconnect your email from the portal? Your mailbox itself is not touched.'))return;b.disabled=true;await call('disconnect');S.status=null;S.folders=[];S.messages=[];S.sel=null;S.detail=null;toast('Email disconnected');load();}
+        if(b.dataset.set==='disconnect'){if(!window.confirm('Disconnect your email from the portal? Your mailbox itself is not touched.'))return;b.disabled=true;await call('disconnect');S.status=null;S.folders=[];S.messages=[];S.sel=null;S.detail=null;toast('Email disconnected');W.at=0;load();}
       }catch(e){toast(msg(e),'bad');b.disabled=false;}
     };});}
   function load(){status().then(function(st){draw(st);}).catch(function(e){draw(null,msg(e));});}
@@ -245,8 +285,60 @@ function mountSettingsCard(panel){
   },500);
 })();
 
+
+/* ---------- Home page widget (Agency Command → Mail) ---------- */
+var W={data:null,at:0,busy:false};
+function widgetHtml(){
+  var d=W.data;
+  if(!d)return '<p class="mm-wfine">Checking your inbox…</p>';
+  if(d.state==='setup')return '<p class="mm-wfine">Email isn\'t set up for the portal yet.</p>';
+  if(d.state==='off')return '<div class="mm-wempty"><b>'+(d.reconnect?'Reconnect your email':'Connect your email')+'</b><span>Read and reply to your Maison de Veux mail right here.</span><button type="button" class="mm-btn gold" data-w="open">'+(d.reconnect?'Reconnect':'Connect Mail')+'</button></div>';
+  if(d.state==='error')return '<p class="mm-wfine">Mail could not refresh. <button type="button" class="mm-link" data-w="retry">Try again</button></p>';
+  var rows=d.rows.map(function(m){return '<button type="button" class="mm-wrow'+(m.is_read?'':' unread')+'" data-w="msg" data-id="'+esc(m.id)+'"><span class="mm-av">'+esc(initials(who(m.from)))+'</span><span class="mm-wmain"><b>'+esc(who(m.from))+'</b><span>'+esc(m.subject||'(no subject)')+'</span></span><em>'+esc(when(m.received))+'</em></button>';}).join('');
+  return '<div class="mm-wtop"><span><b>'+d.unread+'</b> unread</span><button type="button" class="mm-btn" data-w="compose">+ New</button><button type="button" class="mm-btn" data-w="open">Open Mail</button></div>'
+    +(rows||'<p class="mm-wfine">Your inbox is empty.</p>');
+}
+function paintWidgets(){
+  document.querySelectorAll('[data-mdv-mail-widget]').forEach(function(el){
+    el.innerHTML=widgetHtml();
+    el.querySelectorAll('[data-w]').forEach(function(b){b.onclick=function(e){
+      e.stopPropagation();var a=b.dataset.w;
+      if(a==='retry'){W.at=0;refreshWidget();return;}
+      if(a==='compose'){S.pendingCompose=true;}
+      if(a==='msg'){S.pendingOpen=b.dataset.id;S.folder='inbox';}
+      if(typeof window.navTo==='function')window.navTo('mail');
+    };});
+  });
+}
+async function refreshWidget(){
+  if(W.busy)return;W.busy=true;
+  try{
+    var st=await status();
+    if(!st.configured||st.storage_ok===false)W.data={state:'setup'};
+    else if(!st.connected)W.data={state:'off',reconnect:!!st.needs_reconnect};
+    else{
+      var f=await call('folders'),inbox=arr(f.folders).filter(function(x){return x.id==='inbox';})[0];
+      var d=await call('messages',{folder:'inbox'});
+      W.data={state:'ok',unread:inbox?inbox.unread:0,rows:arr(d.messages).slice(0,6)};
+    }
+  }catch(e){W.data=/reconnect/i.test(msg(e))?{state:'off',reconnect:true}:{state:'error'};}
+  W.at=Date.now();W.busy=false;paintWidgets();
+}
+(function watchWidget(){
+  var pending=false;
+  function check(){
+    pending=false;
+    var els=document.querySelectorAll('[data-mdv-mail-widget]');if(!els.length)return;
+    var fresh=false;els.forEach(function(el){if(!el.dataset.mmw){el.dataset.mmw='1';fresh=true;}});
+    if(fresh&&W.data)paintWidgets();
+    if(fresh&&Date.now()-W.at>45000&&window.VEUX_AGENT_V4&&window.VEUX_AGENT_V4.api)refreshWidget();
+  }
+  new MutationObserver(function(){if(!pending){pending=true;setTimeout(check,250);}}).observe(document.documentElement,{childList:true,subtree:true});
+  setInterval(function(){if(document.visibilityState==='visible'&&document.querySelector('[data-mdv-mail-widget]')&&Date.now()-W.at>60000&&window.VEUX_AGENT_V4)refreshWidget();},30000);
+})();
+
 /* ---------- page entry + wiring into the portal ---------- */
-function render(host){S.host=host;S.status=null;S.err='';S.sel=null;S.detail=null;S.readerOpen=false;S.search='';S.unreadOnly=false;return boot();}
+function render(host){W.at=0;S.host=host;S.status=null;S.err='';S.sel=null;S.detail=null;S.readerOpen=false;S.search='';S.unreadOnly=false;return boot();}
 window.renderMail=render;
 window.MDV_MAIL={render:render,state:S};
 
