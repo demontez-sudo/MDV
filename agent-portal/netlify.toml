@@ -119,6 +119,18 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/mail/callback"
+to = "/.netlify/functions/agent-mail-oauth"
+status = 200
+force = true
+
+[[redirects]]
+from = "/api/agent/mail"
+to = "/.netlify/functions/agent-mail"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/attachments"
 to = "/.netlify/functions/agent-attachments"
 status = 200
