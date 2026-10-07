@@ -36,7 +36,7 @@ function nav(page){
 function current(){
  var p=String(window._currentPage||location.hash.replace(/^#/,'')||'overview').toLowerCase();
  if(['globalmobility','visa','agentcommissions','financelegal','filesforms','systemsettings','team'].indexOf(p)>-1)return'__operations__';
- if(['industrydirectory','companies','contacts','allcontacts'].indexOf(p)>-1)return'industrydirectory';
+ if(['industrydirectory','companies','contacts','allcontacts','clientbook'].indexOf(p)>-1)return'industrydirectory';
  if(['season','seasonmanagement'].indexOf(p)>-1)return'seasonmanagement';
  return p;
 }

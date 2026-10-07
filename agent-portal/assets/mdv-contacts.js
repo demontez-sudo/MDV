@@ -1,20 +1,17 @@
-/* Contacts — every company / client contact in one card layout, with one-click email from the portal mailbox.
-   Data: the same CRM payload the Companies & Clients page uses (/api/agent/crm/v9). Email: window.MDV_MAIL.emailTo (mdv-mail.js). */
+/* Company + contact profile pages. Reached from Companies & Clients (click a row, or "Open profile" in its side panel).
+   Data: the same CRM payload that page uses (/api/agent/crm/v9). Email: window.MDV_MAIL.emailTo (mdv-mail.js). */
 (function(){
 'use strict';
-var S={host:null,data:null,loading:false,err:'',q:'',type:'all',withEmail:false,view:'company',picked:{},limit:120,prof:null,det:{}};
+var S={host:null,data:null,loading:false,err:'',prof:null,det:{},pending:null};
 
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function arr(v){return Array.isArray(v)?v:[];}
 function bridge(){var b=window.VEUX_AGENT_V4;if(!b||!b.api)throw new Error('Secure session is not ready');return b;}
 function org(){try{return bridge().state.org.slug||'maison-de-veux';}catch(e){return 'maison-de-veux';}}
 function initials(n){return String(n||'?').replace(/[^A-Za-z0-9 ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(function(x){return x[0];}).join('').toUpperCase()||'?';}
-function place(v){if(v==null)return '';if(typeof v==='string'||typeof v==='number')return String(v);if(Array.isArray(v))return v.map(place).filter(Boolean).join(', ');if(typeof v==='object')return place(v.name||v.city||v.market||v.label||v.code||'');return '';}
+function place(v){if(v==null)return '';if(typeof v==='string'||typeof v==='number'){v=String(v);return v.indexOf('[object Object]')>=0?'':v;}if(Array.isArray(v))return v.map(place).filter(Boolean).join(', ');if(typeof v==='object')return place(v.name||v.city||v.market||v.label||v.code||'');return '';}
 var EMAIL=/^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[A-Za-z]{2,}$/;
 function email(c){var e=String(c.email||'').trim();return EMAIL.test(e)?e:'';}
-
-function typeKey(co){var t=String(co&&co.company_type||'other').toLowerCase();if(/designer|brand|fashion/.test(t))return 'fashion';if(/casting/.test(t))return 'casting';if(/agency|management|network|talent/.test(t))return 'agency';if(/photo/.test(t))return 'photographer';if(/media|publication|magazine|press/.test(t))return 'press';if(/stylist/.test(t))return 'stylist';return 'other';}
-var TYPES=[['all','All'],['fashion','Brands'],['agency','Agencies'],['casting','Casting'],['press','Press'],['photographer','Photo'],['stylist','Stylists'],['other','Other']];
 
 function companies(){return arr(S.data&&S.data.companies);}
 function contacts(){return arr(S.data&&S.data.contacts);}
@@ -24,91 +21,13 @@ function companyOf(c){
 }
 function market(c){var m=c.metadata||{};return place(c.market)||place(m.city)||place(m.market)||place(m.country);}
 
-function visible(){
-  var q=S.q.trim().toLowerCase();
-  return contacts().filter(function(c){
-    var co=companyOf(c);
-    if(S.type!=='all'&&typeKey(co)!==S.type)return false;
-    if(S.withEmail&&!email(c))return false;
-    if(!q)return true;
-    return [c.display_name,c.role,c.email,c.phone,c.instagram,market(c),co&&co.name].join(' ').toLowerCase().indexOf(q)>=0;
-  }).sort(function(a,b){return String(a.display_name||'').localeCompare(String(b.display_name||''));});
-}
-
-function card(c){
-  var e=email(c),ig=String(c.instagram||(c.metadata&&c.metadata.instagram)||'').replace(/^@/,'').trim(),co=companyOf(c),mk=market(c);
-  var inactive=String(c.status||'active').toLowerCase()!=='active';
-  return '<article class="ct-card'+(S.picked[c.id]?' picked':'')+(inactive?' off':'')+'">'
-    +(e?'<label class="ct-pick" title="Select to email several people at once"><input type="checkbox" data-pick="'+esc(c.id)+'"'+(S.picked[c.id]?' checked':'')+' aria-label="Select '+esc(c.display_name||'contact')+'"><span></span></label>':'')
-    +'<div class="ct-top"><span class="ct-av">'+esc(initials(c.display_name))+'</span><div><h3><button type="button" class="ct-link" data-profile="contact:'+esc(c.id)+'">'+esc(c.display_name||'Contact')+'</button></h3><p>'+esc(c.role||'Contact')+(S.view==='az'&&co?' · '+esc(co.name):'')+'</p></div></div>'
-    +'<ul class="ct-lines">'
-    +(e?'<li><i>✉</i><a class="ct-mail" href="mailto:'+esc(e)+'">'+esc(e)+'</a></li>':'<li class="none"><i>✉</i><span>No email on file</span></li>')
-    +(c.phone?'<li><i>☎</i><a href="tel:'+esc(String(c.phone).replace(/[^\d+]/g,''))+'">'+esc(c.phone)+'</a></li>':'')
-    +(ig?'<li><i>◎</i><a href="https://instagram.com/'+esc(encodeURIComponent(ig))+'" target="_blank" rel="noopener noreferrer">@'+esc(ig)+'</a></li>':'')
-    +(mk?'<li><i>⌖</i><span>'+esc(mk)+'</span></li>':'')
-    +'</ul>'
-    +'<div class="ct-act">'+(e?'<button type="button" class="ct-btn gold" data-email-to="'+esc(e)+'">✉ Email</button>':'<button type="button" class="ct-btn" disabled>No email</button>')+'</div>'
-    +'</article>';
-}
-
-function groups(list){
-  if(S.view==='az')return [{name:'',co:null,items:list}];
-  var map={},order=[];
-  list.forEach(function(c){var co=companyOf(c),k=co?co.id:'_none';if(!map[k]){map[k]={name:co?co.name:'Independent contacts',co:co,items:[]};order.push(k);}map[k].items.push(c);});
-  return order.map(function(k){return map[k];}).sort(function(a,b){if(!a.co!==!b.co)return a.co?-1:1;return String(a.name).localeCompare(String(b.name));});
-}
-
 function paint(){
   var el=S.host;if(!el)return;
   if(S.prof){paintProfile();return;}
-  var hadFocus=document.activeElement&&document.activeElement.id==='ct-q',caret=hadFocus?document.activeElement.selectionStart:0;
-  var all=contacts(),withMail=all.filter(email).length,list=visible(),shown=list.slice(0,S.limit);
-  var pickedIds=Object.keys(S.picked).filter(function(k){return S.picked[k];}),pickedMail=all.filter(function(c){return S.picked[c.id]&&email(c);}).map(email);
-  var body;
-  if(S.loading&&!S.data)body='<div class="ct-none"><p>Loading contacts…</p></div>';
-  else if(S.err)body='<div class="ct-none"><p class="ct-err">'+esc(S.err)+'</p><button type="button" class="ct-btn" data-a="retry">Try again</button></div>';
-  else if(!all.length)body='<div class="ct-none"><p>No contacts yet. Add people on the Companies &amp; Clients page and they will appear here.</p></div>';
-  else if(!list.length)body='<div class="ct-none"><p>No contacts match these filters.</p></div>';
-  else body=groups(shown).map(function(g){
-      var mails=g.items.map(email).filter(Boolean);
-      return '<section class="ct-group">'+(g.name?'<header><div><h2>'+(g.co?'<button type="button" class="ct-link" data-profile="company:'+esc(g.co.id)+'">'+esc(g.name)+'</button>':esc(g.name))+'</h2><span>'+esc(g.co?String(g.co.company_type||'').replace(/_/g,' '):'')+(g.co?' · ':'')+g.items.length+' contact'+(g.items.length===1?'':'s')+'</span></div>'+(mails.length?'<button type="button" class="ct-btn" data-email-to="'+esc(mails.join(','))+'">✉ Email all ('+mails.length+')</button>':'')+'</header>':'')
-        +'<div class="ct-grid">'+g.items.map(card).join('')+'</div></section>';
-    }).join('')+(list.length>shown.length?'<div class="ct-more"><button type="button" class="ct-btn" data-a="more">Show '+Math.min(120,list.length-shown.length)+' more · '+(list.length-shown.length)+' not shown</button></div>':'');
-  el.innerHTML='<div class="ct">'
-    +'<div class="ct-head"><div><span class="ct-eye">CLIENT BOOK</span><h1>Contacts</h1><p>Every company and client contact in one place. Click any email address to write to them from your own mailbox.</p></div>'
-    +'<div class="ct-stats"><span><b>'+all.length+'</b>contacts</span><span><b>'+withMail+'</b>with email</span><span><b>'+companies().length+'</b>companies</span></div></div>'
-    +'<div class="ct-bar"><label class="ct-search"><span>⌕</span><input id="ct-q" type="search" placeholder="Search name, company, role, email…" value="'+esc(S.q)+'" autocomplete="off"></label>'
-    +'<div class="ct-chips" role="tablist">'+TYPES.map(function(t){return '<button type="button" class="'+(S.type===t[0]?'on':'')+'" data-type="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div>'
-    +'<label class="ct-toggle"><input type="checkbox" data-with-email'+(S.withEmail?' checked':'')+'> With email only</label>'
-    +'<div class="ct-seg"><button type="button" class="'+(S.view==='company'?'on':'')+'" data-view="company">By company</button><button type="button" class="'+(S.view==='az'?'on':'')+'" data-view="az">A–Z</button></div></div>'
-    +body
-    +(pickedIds.length?'<div class="ct-dock" role="region" aria-label="Selected contacts"><span><b>'+pickedIds.length+'</b> selected'+(pickedMail.length!==pickedIds.length?' · '+pickedMail.length+' with email':'')+'</span><span class="ct-sp"></span><button type="button" class="ct-btn" data-a="clear">Clear</button><button type="button" class="ct-btn gold" data-a="emailpicked">✉ Email selected'+(pickedMail.length>1?' (Bcc)':'')+'</button></div>':'')
-    +'</div>';
-  wire(el);
-  if(hadFocus){var q=el.querySelector('#ct-q');if(q){q.focus();try{q.setSelectionRange(caret,caret);}catch(e){}}}
+  el.innerHTML='<div class="ct"><div class="ct-none">'+(S.err?'<p class="ct-err">'+esc(S.err)+'</p><button type="button" class="ct-btn" data-a="back">Back to Companies &amp; Clients</button>':'<p>Opening profile…</p>')+'</div></div>';
+  var b=el.querySelector('[data-a="back"]');if(b)b.onclick=closeProfile;
 }
-
-function wire(el){
-  var q=el.querySelector('#ct-q'),t;
-  if(q)q.oninput=function(){clearTimeout(t);t=setTimeout(function(){S.q=q.value;S.limit=120;paint();},200);};
-  el.querySelectorAll('[data-profile]').forEach(function(b){b.onclick=function(){openProfile(b.dataset.profile);};});
-  el.querySelectorAll('[data-type]').forEach(function(b){b.onclick=function(){S.type=b.dataset.type;S.limit=120;paint();};});
-  el.querySelectorAll('[data-view]').forEach(function(b){b.onclick=function(){S.view=b.dataset.view;paint();};});
-  var we=el.querySelector('[data-with-email]');if(we)we.onchange=function(){S.withEmail=we.checked;S.limit=120;paint();};
-  el.querySelectorAll('[data-pick]').forEach(function(b){b.onchange=function(){if(b.checked)S.picked[b.dataset.pick]=true;else delete S.picked[b.dataset.pick];paint();};});
-  el.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){
-    var a=b.dataset.a;
-    if(a==='retry'){load(true);return;}
-    if(a==='more'){S.limit+=120;paint();return;}
-    if(a==='clear'){S.picked={};paint();return;}
-    if(a==='emailpicked'){
-      var list=contacts().filter(function(c){return S.picked[c.id]&&email(c);}).map(email);
-      if(!list.length)return;
-      if(window.MDV_MAIL&&window.MDV_MAIL.emailTo)window.MDV_MAIL.emailTo(list);else window.location.href='mailto:?bcc='+encodeURIComponent(list.join(','));
-    }
-  };});
-}
-
+function goDirectory(){if(typeof window.navTo==='function')window.navTo('industrydirectory');}
 
 /* ---------- profile pages (company + contact) ---------- */
 function shortDate(v){if(!v)return '—';var d=new Date(v);if(isNaN(d))return '—';var days=Math.floor((Date.now()-d)/864e5);return days<=0?'Today':days===1?'1 day ago':days<14?days+' days ago':d.toLocaleDateString([],{month:'short',day:'numeric',year:d.getFullYear()===new Date().getFullYear()?undefined:'numeric'});}
@@ -116,7 +35,7 @@ function longDate(v){var d=v?new Date(v):null;return d&&!isNaN(d)?d.toLocaleDate
 function label(t){return String(t||'').replace(/_/g,' ').replace(/\b\w/g,function(x){return x.toUpperCase();});}
 function url(v){v=String(v||'').trim();if(!v)return '';if(!/^https?:\/\//i.test(v))v='https://'+v;try{var u=new URL(v);return /^https?:$/.test(u.protocol)?u.href:'';}catch(e){return '';}}
 function handle(v){return String(v||'').replace(/^@/,'').replace(/^https?:\/\/(www\.)?instagram\.com\//i,'').replace(/\/.*$/,'').trim();}
-function placeText(a,m){if(typeof a==='string'&&a)return a;a=a&&typeof a==='object'?a:{};return [place(a.street),place(a.city),place(a.country)].filter(Boolean).join(', ')||place(m&&m.markets)||place(m&&m.market)||'';}
+function placeText(a,m){if(typeof a==='string'&&a&&a.indexOf('[object Object]')<0)return a;a=a&&typeof a==='object'?a:{};return [place(a.street),place(a.city),place(a.country)].filter(Boolean).join(', ')||place(m&&m.markets)||place(m&&m.market)||'';}
 function dd(k,v,html){return v?'<div><dt>'+esc(k)+'</dt><dd>'+(html?v:esc(v))+'</dd></div>':'';}
 function mailLink(e){return '<a class="ct-mail" href="mailto:'+esc(e)+'">'+esc(e)+'</a>';}
 
@@ -126,7 +45,7 @@ function openProfile(ref){
   var co=S.prof.kind==='company'?S.prof.id:(companyOf(contacts().filter(function(c){return c.id===S.prof.id;})[0]||{})||{}).id;
   if(co)loadDetail(co);
 }
-function closeProfile(){S.prof=null;paint();}
+function closeProfile(){S.prof=null;goDirectory();}
 async function loadDetail(coId,force){
   if(!force&&S.det[coId]&&S.det[coId].d)return;
   S.det[coId]={loading:true};paint();
@@ -159,7 +78,7 @@ function companyProfile(co){
   var target=ce||mails[0]||'';
   var specs=arr(co.specialties);
   return '<div class="ct-prof">'
-   +'<button type="button" class="ct-back" data-a="back">← All contacts</button>'
+   +'<button type="button" class="ct-back" data-a="back">← Companies &amp; Clients</button>'
    +'<header class="ct-hero"><span class="ct-big sq">'+esc(initials(co.name))+'</span><div class="ct-hero-main"><span class="ct-eye">COMPANY PROFILE</span><h1>'+esc(co.name)+'</h1><p>'+esc(label(co.company_type||'company'))+(placeText(co.address,m)?' · '+esc(placeText(co.address,m)):'')+'</p>'
    +'<div class="ct-tags"><em>'+esc(label(co.status||'active'))+'</em>'+(co.tier?'<em class="gold">Tier '+esc(co.tier)+'</em>':'')+(m.priority&&m.priority!=='Normal'?'<em>'+esc(m.priority)+' priority</em>':'')+'</div></div>'
    +'<div class="ct-hero-act">'+(target?'<button type="button" class="ct-btn gold" data-email-to="'+esc(target)+'">✉ Email'+(ce?'':' '+esc((people.filter(function(c){return email(c)===target;})[0]||{}).display_name||'')) +'</button>':'')
@@ -188,7 +107,7 @@ function contactProfile(c){
   var mine=arr(d.activity).filter(function(a){return a.contact_id===c.id;}),act=mine.length?mine:arr(d.activity);
   var role=arr(c.company_links).filter(function(l){return co&&l.company_id===co.id;})[0];
   return '<div class="ct-prof">'
-   +'<button type="button" class="ct-back" data-a="back">← All contacts</button>'
+   +'<button type="button" class="ct-back" data-a="back">← Companies &amp; Clients</button>'
    +'<header class="ct-hero"><span class="ct-big">'+esc(initials(c.display_name))+'</span><div class="ct-hero-main"><span class="ct-eye">CONTACT PROFILE</span><h1>'+esc(c.display_name||'Contact')+'</h1><p>'+esc(c.role||(role&&role.relationship_role)||'Contact')+(co?' · <button type="button" class="ct-link" data-profile="company:'+esc(co.id)+'">'+esc(co.name)+'</button>':'')+'</p>'
    +'<div class="ct-tags"><em>'+esc(label(c.status||'active'))+'</em>'+(mk?'<em>'+esc(mk)+'</em>':'')+'</div></div>'
    +'<div class="ct-hero-act">'+(e?'<button type="button" class="ct-btn gold" data-email-to="'+esc(e)+'">✉ Email '+esc(String(c.display_name||'').split(' ')[0])+'</button>':'<button type="button" class="ct-btn" disabled>No email on file</button>')
@@ -209,7 +128,7 @@ function paintProfile(){
   var html;
   if(S.prof.kind==='company'){var co=companies().filter(function(x){return x.id===S.prof.id;})[0];html=co?companyProfile(co):null;}
   else{var c=contacts().filter(function(x){return x.id===S.prof.id;})[0];html=c?contactProfile(c):null;}
-  el.innerHTML='<div class="ct">'+(html||'<div class="ct-none"><p>That record could not be found.</p><button type="button" class="ct-btn" data-a="back">Back to contacts</button></div>')+'</div>';
+  el.innerHTML='<div class="ct">'+(html||'<div class="ct-none"><p>That record could not be found.</p><button type="button" class="ct-btn" data-a="back">Back to Companies &amp; Clients</button></div>')+'</div>';
   el.querySelectorAll('[data-profile]').forEach(function(b){b.onclick=function(){openProfile(b.dataset.profile);};});
   el.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){
     var a=b.dataset.a;
@@ -221,16 +140,21 @@ function paintProfile(){
 }
 
 async function load(force){
-  S.loading=true;S.err='';if(!S.data)paint();
+  S.loading=true;S.err='';
   try{
     S.data=window.MDV_MAIL&&window.MDV_MAIL.crm?await window.MDV_MAIL.crm(force):await bridge().api('/api/agent/crm/v9?organization='+encodeURIComponent(org())+'&_t='+Date.now(),{method:'GET',headers:{},__fresh:true});
-  }catch(e){S.err=(e&&e.message)||'Contacts could not be loaded.';}
-  S.loading=false;paint();
+  }catch(e){S.err=(e&&e.message)||'The record could not be loaded.';}
+  S.loading=false;
 }
-
-function render(host){S.host=host;S.q='';S.picked={};S.limit=120;S.prof=null;var pend=S.pending;S.pending=null;return load(true).then(function(){if(pend&&!S.err)openProfile(pend);});}
+function render(host){
+  S.host=host;var pend=S.pending;S.pending=null;
+  if(!pend){goDirectory();return;}
+  S.prof=null;paint();
+  return load(true).then(function(){if(S.err)paint();else openProfile(pend);});
+}
+function show(ref){S.pending=ref;if(typeof window.navTo==='function')window.navTo('clientbook');}
 window.renderClientBook=render;
-window.MDV_CONTACTS={render:render,state:S,open:function(ref){return openProfile(ref);}};
+window.MDV_CONTACTS={render:render,state:S,show:show};
 
 
 /* Companies & Clients page: add an "Open profile" shortcut to its side panel. */
@@ -244,7 +168,7 @@ window.MDV_CONTACTS={render:render,state:S,open:function(ref){return openProfile
       if(eb)ref='company:'+eb.getAttribute('data-cc49-edit');else if(cb)ref='contact:'+cb.getAttribute('data-cc49-contact');
       if(!ref||/:$/.test(ref))return;
       var b=document.createElement('button');b.type='button';b.setAttribute('data-open-profile',ref);b.className='ct-open';b.textContent='Open profile ↗';
-      b.onclick=function(e){e.stopPropagation();S.pending=ref;if(typeof window.navTo==='function')window.navTo('clientbook');};
+      b.onclick=function(e){e.stopPropagation();show(ref);};
       var d=h.querySelector('div');(d||h).appendChild(b);
     });
   }
