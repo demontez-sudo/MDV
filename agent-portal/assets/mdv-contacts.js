@@ -150,7 +150,9 @@ function render(host){
   S.host=host;var pend=S.pending;S.pending=null;
   if(!pend){goDirectory();return;}
   S.prof=null;paint();
-  return load(true).then(function(){if(S.err)paint();else openProfile(pend);});
+  var fresh=window.MDV_CRM_CACHE&&window.MDV_CRM_CACHE.data&&Date.now()-window.MDV_CRM_CACHE.at<300000;
+  if(fresh){S.data=window.MDV_CRM_CACHE.data;S.err='';openProfile(pend);return;}
+  return load(false).then(function(){if(S.err)paint();else openProfile(pend);});
 }
 function show(ref){S.pending=ref;if(typeof window.navTo==='function')window.navTo('clientbook');}
 window.renderClientBook=render;

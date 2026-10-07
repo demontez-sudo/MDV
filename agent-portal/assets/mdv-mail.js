@@ -293,6 +293,7 @@ function mountSettingsCard(panel){
 var DIR={map:{},at:0,busy:false,cbs:[]};
 function sugOptions(){var all=Object.assign({},DIR.map,S.senders);return Object.keys(all).slice(0,500).map(function(a){return '<option value="'+esc(a)+'">'+esc(all[a]||'')+'</option>';}).join('');}
 function crm(force){
+  var shared=window.MDV_CRM_CACHE;if(shared&&shared.data&&(!W_crm.data||shared.at>W_crm.at)){W_crm.data=shared.data;W_crm.at=shared.at;}
   if(!force&&W_crm.data&&Date.now()-W_crm.at<300000)return Promise.resolve(W_crm.data);
   if(W_crm.p)return W_crm.p;
   W_crm.p=bridge().api('/api/agent/crm/v9?organization='+encodeURIComponent(org())+'&_t='+Date.now(),{method:'GET',headers:{},__fresh:true}).then(function(d){W_crm.data=d||{};W_crm.at=Date.now();W_crm.p=null;return W_crm.data;},function(e){W_crm.p=null;throw e;});
