@@ -471,6 +471,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/scouting/vera"
+to = "/.netlify/functions/agent-scouting-vera"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/scouting/v9"
 to = "/.netlify/functions/agent-scouting-desk-v9"
 status = 200
