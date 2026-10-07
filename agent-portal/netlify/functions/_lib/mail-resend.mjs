@@ -25,10 +25,36 @@ export function quoteHtml(orig) {
   return `<br><div style="border-left:2px solid #c9c9c9;margin:6px 0 0;padding-left:12px;color:#555">On ${escHtml(stamp)}, ${escHtml(from.name || from.address || 'sender')} &lt;${escHtml(from.address || '')}&gt; wrote:<br><br>${inner}</div>`;
 }
 
-export async function sendViaResend({ conn, to, cc = [], bcc = [], subject, html, text, attachments = [], replyHeaders, copyMe = true }) {
+export const COPY_TARGETS = ['sentitems', 'junkemail', 'inbox', 'none'];
+export function copyTarget(body) {
+  const t = clean(body?.copy_to).toLowerCase();
+  if (COPY_TARGETS.includes(t)) return t;
+  return body?.copy_me === false ? 'none' : 'sentitems';
+}
+
+/* Resend does not touch the mailbox, so a record of the message can be written straight into a folder (no delivery).
+   isRead + message-flags 1 keep it from showing as an unsent draft. Best effort: a failure never blocks the send. */
+export async function saveCopy(G, conn, target, { to, cc, bcc, subject, html, attachments }) {
+  if (!target || target === 'none' || target === 'inbox') return { to: target || 'none', ok: true };
+  const now = new Date().toISOString();
+  const me = { emailAddress: { address: clean(conn.email), ...(clean(conn.display_name) ? { name: clean(conn.display_name) } : {}) } };
+  try {
+    await G(`/me/mailFolders/${target}/messages`, { method: 'POST', body: {
+      subject, body: { contentType: 'HTML', content: html }, from: me, sender: me,
+      toRecipients: to || [], ccRecipients: cc || [], bccRecipients: bcc || [], isRead: true,
+      ...(attachments?.length ? { attachments } : {}),
+      singleValueExtendedProperties: [
+        { id: 'Integer 0xE07', value: '1' }, { id: 'SystemTime 0xE06', value: now }, { id: 'SystemTime 0x39', value: now }
+      ]
+    } });
+    return { to: target, ok: true };
+  } catch (e) { console.warn('[mail] copy not saved', e?.code || '', e?.message || ''); return { to: target, ok: false }; }
+}
+
+export async function sendViaResend({ conn, to, cc = [], bcc = [], subject, html, text, attachments = [], replyHeaders, copyInbox = false }) {
   const own = clean(conn.email).toLowerCase();
   const bccList = addrs(bcc);
-  if (copyMe && own && ![...addrs(to), ...addrs(cc), ...bccList].map(x => x.toLowerCase()).includes(own)) bccList.push(own);
+  if (copyInbox && own && ![...addrs(to), ...addrs(cc), ...bccList].map(x => x.toLowerCase()).includes(own)) bccList.push(own);
   const base = {
     from_name: clean(conn.display_name) || undefined,
     to_emails: addrs(to), cc_emails: addrs(cc), bcc_emails: bccList,
@@ -44,6 +70,5 @@ export async function sendViaResend({ conn, to, cc = [], bcc = [], subject, html
     try { return await sendResendEmail({ ...base, ...a }); }
     catch (e) { lastErr = e; if (!(e?.providerStatus === 403 || e?.providerStatus === 422)) break; }
   }
-  const e = appError(502, `Resend could not send from ${own}${lastErr?.message ? ` (${String(lastErr.message).replace(/^Resend \d+: /, '').slice(0, 160)})` : ''}. Make sure ${domainOf(own)} is verified in Resend.`, 'MAIL_RESEND_FAILED');
-  throw e;
+  throw appError(502, `Resend could not send from ${own}${lastErr?.message ? ` (${String(lastErr.message).replace(/^Resend \d+: /, '').slice(0, 160)})` : ''}. Make sure ${domainOf(own)} is verified in Resend.`, 'MAIL_RESEND_FAILED');
 }

@@ -4,7 +4,7 @@ import {
   mailConfig, appError, signState, newNonce, authorizeUrl, getConnection, deleteConnection, graph, safeId,
   buildSendPayload, parseAddresses, textToHtml, mapSummary, mapMessage, FOLDERS, SUMMARY_SELECT, GRAPH, LIMITS
 } from './_lib/mail-graph.mjs';
-import { resendReady, shouldUseResend, sendViaResend, quoteHtml } from './_lib/mail-resend.mjs';
+import { resendReady, shouldUseResend, sendViaResend, quoteHtml, copyTarget, saveCopy } from './_lib/mail-resend.mjs';
 
 /* Team-member mailbox (Microsoft 365). Every call is scoped to the signed-in staff member's OWN
    connection — user id comes from the verified session, never from the request body. */
@@ -96,8 +96,10 @@ export const handler = async event => {
     if (action === 'send') {
       const payload = buildSendPayload(body), m = payload.message;
       if (shouldUseResend([m.toRecipients, m.ccRecipients || [], m.bccRecipients || []], conn.email)) {
-        const r = await sendViaResend({ conn, to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, text: String(body.text ?? body.body ?? ''), attachments: m.attachments || [], copyMe: body.copy_me !== false });
-        return json(200, { ok: true, verified: true, sent: true, via: 'resend', id: r?.providerMessageId || null });
+        const ct = copyTarget(body);
+        const r = await sendViaResend({ conn, to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, text: String(body.text ?? body.body ?? ''), attachments: m.attachments || [], copyInbox: ct === 'inbox' });
+        const copy = await saveCopy(G, conn, ct, { to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, attachments: m.attachments });
+        return json(200, { ok: true, verified: true, sent: true, via: 'resend', copy, id: r?.providerMessageId || null });
       }
       await G('/me/sendMail', { method: 'POST', body: payload });
       return json(200, { ok: true, verified: true, sent: true, via: 'microsoft' });
@@ -117,8 +119,10 @@ export const handler = async event => {
         const base = clean(orig?.subject).replace(/^((re|fwd?):\s*)+/i, '');
         const html = `${textToHtml(text)}${quoteHtml(orig)}`;
         const mid = clean(orig?.internetMessageId);
-        const r = await sendViaResend({ conn, to, cc, bcc: [], subject: `${mode === 'forward' ? 'Fwd' : 'Re'}: ${base || '(no subject)'}`, html, text, replyHeaders: mode !== 'forward' && mid ? { 'In-Reply-To': mid, References: mid } : undefined, copyMe: body.copy_me !== false });
-        return json(200, { ok: true, verified: true, sent: true, via: 'resend', id: r?.providerMessageId || null });
+        const ct = copyTarget(body), subj = `${mode === 'forward' ? 'Fwd' : 'Re'}: ${base || '(no subject)'}`;
+        const r = await sendViaResend({ conn, to, cc, bcc: [], subject: subj, html, text, replyHeaders: mode !== 'forward' && mid ? { 'In-Reply-To': mid, References: mid } : undefined, copyInbox: ct === 'inbox' });
+        const copy = await saveCopy(G, conn, ct, { to, cc, bcc: [], subject: subj, html });
+        return json(200, { ok: true, verified: true, sent: true, via: 'resend', copy, id: r?.providerMessageId || null });
       }
       const draft = await G(`/me/messages/${encodeURIComponent(id)}/${create}`, { method: 'POST', body: {} });
       const quoted = String(draft?.body?.content || '');

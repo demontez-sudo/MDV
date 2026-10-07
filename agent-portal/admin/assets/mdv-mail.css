@@ -119,3 +119,4 @@
 
 .mm-copy{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mdv-mute,#a89f92);cursor:pointer;white-space:nowrap}.mm-copy input{accent-color:var(--mdv-gold,#d4b077)}.mm-modal>footer .mm-sp{flex:1}
 @media(max-width:700px){.mm-modal>footer{flex-wrap:wrap}.mm-modal>footer .mm-copy{width:100%}}
+.mm-copy select{background:var(--mdv-field,#0b0a08);color:var(--mdv-ink,#f3efe8);border:1px solid var(--mdv-line-2,rgba(255,255,255,.14));padding:4px 6px;font:12px Inter,system-ui,sans-serif}

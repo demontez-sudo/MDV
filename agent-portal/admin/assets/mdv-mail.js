@@ -14,8 +14,11 @@ function org(){try{return bridge().state.org.slug||'maison-de-veux';}catch(e){re
 function status(){return bridge().api('/api/agent/mail?organization='+encodeURIComponent(org())+'&_t='+Date.now(),{method:'GET',headers:{},__fresh:true});}
 function call(action,body){return bridge().api('/api/agent/mail',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(Object.assign({organization_slug:org(),action:action},body||{})),__fresh:true});}
 function toast(m,t){var o=document.querySelector('.mm-toast');if(o)o.remove();var d=document.createElement('div');d.className='mm-toast '+(t||'');d.textContent=m;document.body.appendChild(d);setTimeout(function(){d.remove();},3800);}
-function copyPref(){try{return localStorage.getItem('mdv-mail-copy')!=='0';}catch(e){return true;}}
-function setCopyPref(v){try{localStorage.setItem('mdv-mail-copy',v?'1':'0');}catch(e){}}
+var COPY_OPTS=[['sentitems','Sent'],['junkemail','Junk'],['inbox','Inbox'],['none','Don\'t save']];
+function copyPref(){try{var v=localStorage.getItem('mdv-mail-copy-to');if(v&&COPY_OPTS.some(function(o){return o[0]===v;}))return v;return localStorage.getItem('mdv-mail-copy')==='0'?'none':'sentitems';}catch(e){return 'sentitems';}}
+function setCopyPref(v){try{localStorage.setItem('mdv-mail-copy-to',v);}catch(e){}}
+function copySelect(id){var c=copyPref();return '<label class="mm-copy" title="Mail to people outside your domain does not appear in Outlook Sent on its own, so Maison de Veux saves a copy where you choose">Save a copy to <select id="'+id+'">'+COPY_OPTS.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===c?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></label>';}
+function sentToast(r){if(!r||r.via!=='resend')return 'Sent';var c=r.copy||{};if(c.to==='none')return 'Sent';if(c.ok===false)return 'Sent — the copy could not be saved';var n=({sentitems:'Sent',junkemail:'Junk',inbox:'your inbox'})[c.to];return 'Sent — a copy is in '+n;}
 function msg(e){return (e&&e.message)||String(e||'Something went wrong');}
 function when(v){var d=v?new Date(v):null;if(!d||isNaN(d))return '';var n=new Date();if(d.toDateString()===n.toDateString())return d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});if(n-d<6*864e5)return d.toLocaleDateString([],{weekday:'short'});return d.toLocaleDateString([],{month:'short',day:'numeric',year:d.getFullYear()===n.getFullYear()?undefined:'numeric'});}
 function whenFull(v){var d=v?new Date(v):null;return d&&!isNaN(d)?d.toLocaleString([],{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}):'';}
@@ -196,7 +199,7 @@ function paintReply(focus){
     +'<div class="mm-rr-to mm-rr-cc"><b>Cc</b><input id="mm-rcc" list="mm-sug" value="'+esc(r.cc||'')+'" placeholder="Add people to copy (optional)" autocomplete="off" aria-label="Cc"></div>'
     +'<textarea id="mm-rtext" rows="5" placeholder="'+(r.mode==='forward'?'Add a note (optional) — the original message is included below automatically.':'Write your reply — the original message is quoted below automatically.')+'"></textarea>'
     +'<datalist id="mm-sug">'+sugOptions()+'</datalist>'
-    +'<div class="mm-rr-foot"><span class="mm-err" id="mm-rerr"></span><label class="mm-copy" title="Mail to people outside your domain is not saved in Outlook Sent, so a copy lands in your inbox"><input type="checkbox" id="mm-rcopy"'+(copyPref()?' checked':'')+'> Keep a copy in my inbox</label><button type="button" class="mm-btn" data-rx>Discard</button><button type="button" class="mm-btn gold" id="mm-rsend">Send</button></div>';
+    +'<div class="mm-rr-foot"><span class="mm-err" id="mm-rerr"></span>'+copySelect('mm-rcopy')+'<button type="button" class="mm-btn" data-rx>Discard</button><button type="button" class="mm-btn gold" id="mm-rsend">Send</button></div>';
   el.appendChild(d);
   var ta=d.querySelector('#mm-rtext'),to=d.querySelector('#mm-rto'),cc=d.querySelector('#mm-rcc');
   ta.value=r.text||'';ta.oninput=function(){r.text=ta.value;};to.oninput=function(){r.to=to.value;};cc.oninput=function(){r.cc=cc.value;};
@@ -207,8 +210,8 @@ function paintReply(focus){
       if(!to.value.trim())throw new Error('Add at least one recipient.');
       if(r.mode!=='forward'&&!ta.value.trim())throw new Error('Write a message first.');
       btn.disabled=true;btn.textContent='Sending…';
-      setCopyPref(d.querySelector('#mm-rcopy').checked);var sv=await call('reply',{id:m.id,mode:r.mode,to:to.value.trim(),cc:cc.value.trim(),text:ta.value,copy_me:d.querySelector('#mm-rcopy').checked});
-      S.reply=null;paintReply();toast(sv&&sv.via==='resend'?'Sent — a copy is in your inbox':'Sent');if(S.folder==='sentitems')loadList(true);
+      setCopyPref(d.querySelector('#mm-rcopy').value);var sv=await call('reply',{id:m.id,mode:r.mode,to:to.value.trim(),cc:cc.value.trim(),text:ta.value,copy_to:d.querySelector('#mm-rcopy').value});
+      S.reply=null;paintReply();toast(sentToast(sv));if(S.folder==='sentitems')loadList(true);
     }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
   };
   if(focus)setTimeout(function(){(to.value?ta:to).focus();},30);
@@ -230,7 +233,7 @@ function compose(o){
     +'<label><span>Message</span><textarea id="mm-text" rows="10" placeholder="'+(m?'Write your reply — the original message is quoted below automatically.':'Write your message…')+'"></textarea></label>'
     +(mode==='new'?'<div class="mm-attach"><button type="button" class="mm-btn" id="mm-addfile">📎 Attach files</button><input type="file" id="mm-file" multiple hidden><span id="mm-files" class="mm-fine">Up to 8 files, 3 MB total.</span></div>':'')
     +'<datalist id="mm-sug">'+sugOptions()+'</datalist></div>'
-    +'<p class="mm-err" id="mm-cerr"></p><footer><label class="mm-copy" title="Mail to people outside your domain is not saved in Outlook Sent, so a copy lands in your inbox"><input type="checkbox" id="mm-copy"'+(copyPref()?' checked':'')+'> Keep a copy in my inbox</label><span class="mm-sp"></span><button type="button" class="mm-btn" data-x>Cancel</button><button type="button" class="mm-btn gold" id="mm-send">Send</button></footer></section>';
+    +'<p class="mm-err" id="mm-cerr"></p><footer>'+copySelect('mm-copy')+'<span class="mm-sp"></span><button type="button" class="mm-btn" data-x>Cancel</button><button type="button" class="mm-btn gold" id="mm-send">Send</button></footer></section>';
   document.body.appendChild(back);
   var files=[],sentVia=null,$=function(q){return back.querySelector(q);};
   function close(){back.remove();}
@@ -245,15 +248,15 @@ function compose(o){
       var text=$('#mm-text').value,toV=$('#mm-to').value.trim();
       if(!toV)throw new Error('Add at least one recipient.');
       if(mode!=='new'&&!text.trim())throw new Error('Write a message first.');
-      setCopyPref($('#mm-copy').checked);btn.disabled=true;btn.textContent='Sending…';
+      setCopyPref($('#mm-copy').value);btn.disabled=true;btn.textContent='Sending…';
       if(mode==='new'){
         var tot=files.reduce(function(n,f){return n+f.size;},0);if(tot>3*1048576)throw new Error('Attachments are over 3 MB in total.');
         var atts=await Promise.all(files.map(readFile));
-        sentVia=await call('send',{to:toV,cc:$('#mm-cc').value,bcc:$('#mm-bcc').value,subject:$('#mm-subject').value,text:text,attachments:atts,copy_me:$('#mm-copy').checked});
+        sentVia=await call('send',{to:toV,cc:$('#mm-cc').value,bcc:$('#mm-bcc').value,subject:$('#mm-subject').value,text:text,attachments:atts,copy_to:$('#mm-copy').value});
       }else{
-        sentVia=await call('reply',{id:m.id,mode:mode==='replyAll'?'replyAll':mode,to:toV,text:text,copy_me:$('#mm-copy').checked});
+        sentVia=await call('reply',{id:m.id,mode:mode==='replyAll'?'replyAll':mode,to:toV,text:text,copy_to:$('#mm-copy').value});
       }
-      close();toast(sentVia&&sentVia.via==='resend'?'Sent — a copy is in your inbox':'Sent');if(S.folder==='sentitems')loadList(true);
+      close();toast(sentToast(sentVia));if(S.folder==='sentitems')loadList(true);
     }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
   };
 }
