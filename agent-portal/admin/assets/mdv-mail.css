@@ -77,3 +77,12 @@
   .mm.read-open .mm-list,.mm.read-open .mm-side{display:none}.mm.read-open .mm-reader{display:flex}
   .mm-only-mobile{display:inline-flex}.mm-ccrow{grid-template-columns:1fr}
 }
+
+/* Settings → Email card */
+.mm-setcard{--g:var(--mdv-gold,#d4b077);--ink:var(--mdv-ink,#f3efe8);--mute:var(--mdv-mute,#a89f92);--l2:var(--mdv-line-2,rgba(255,255,255,.09));--field:var(--mdv-field,#0b0a08);font-family:Inter,system-ui,sans-serif}
+.mm-setcard header span{font-size:10px;letter-spacing:.18em;color:var(--g)}
+.mm-setcard .mm-fine{margin:10px 0 0;font-size:13px;line-height:1.6;color:var(--mute)}.mm-setcard code{background:var(--field);border:1px solid var(--l2);padding:2px 6px;font-size:12px;color:var(--ink)}
+.mm-setcard .mm-err{margin:10px 0 0}
+.mm-setrow{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-top:12px}
+.mm-setrow>div:first-child{display:grid;gap:3px;font-size:13px;color:var(--mute);max-width:560px}.mm-setrow small{font-size:9px;letter-spacing:.16em;color:var(--g)}.mm-setrow b{color:var(--ink);font-weight:500;font-size:15px;word-break:break-all}
+.mm-setbtns{display:flex;gap:8px;flex-wrap:wrap}

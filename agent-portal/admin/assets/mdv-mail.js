@@ -83,13 +83,20 @@ function paint(){
       +'<button class="mm-btn gold" data-a="connect">'+(re?'Reconnect Microsoft 365':'Connect Microsoft 365')+'</button><p class="mm-err" id="mm-conn-err"></p></div></div>';wire();return;}
   h.innerHTML='<div class="mm '+(S.readerOpen?'read-open':'')+'">'
     +'<aside class="mm-side" id="mm-side"></aside><section class="mm-list" id="mm-list"></section><section class="mm-reader" id="mm-reader"></section></div>';
-  paintSide();paintList();paintReader();
+  paintSide();paintList();paintReader();fit();
 }
+function fit(){
+  var h=S.host,mm=h&&h.querySelector('.mm');if(!mm)return;
+  if(window.innerWidth<=900){mm.style.height='';return;}
+  var top=mm.getBoundingClientRect().top,pad=parseFloat(getComputedStyle(h).paddingBottom)||0;
+  mm.style.height=Math.max(480,Math.floor(window.innerHeight-top-pad-14))+'px';
+}
+window.addEventListener('resize',function(){fit();});
 function paintSide(){
-  var el=document.getElementById('mm-side');if(!el)return;var st=S.status||{};
+  var el=document.getElementById('mm-side');if(!el)return;
   el.innerHTML='<button class="mm-btn gold mm-compose" data-a="compose">+ New message</button>'
     +'<nav class="mm-folders">'+S.folders.map(function(f){return '<button class="'+(S.folder===f.id?'on':'')+'" data-a="folder" data-id="'+esc(f.id)+'"><span>'+esc(f.name)+'</span>'+(f.unread?'<em>'+f.unread+'</em>':'')+'</button>';}).join('')+'</nav>'
-    +'<div class="mm-acct"><small>CONNECTED AS</small><b>'+esc(st.email||'')+'</b><span>'+esc(st.display_name||'')+'</span><button class="mm-link" data-a="disconnect">Disconnect</button></div>';
+    +'';
   wire(el);
 }
 function paintList(){
@@ -200,6 +207,43 @@ function compose(o){
     }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
   };
 }
+
+/* ---------- Settings → Email card (connection lives here, not in the mailbox) ---------- */
+function cardHtml(st,err){
+  var body;
+  if(err)body='<p class="mm-err">'+esc(err)+'</p>';
+  else if(!st)body='<p class="mm-fine">Checking…</p>';
+  else if(!st.configured)body='<p class="mm-fine">Email isn\'t set up for the portal yet. An admin needs to add: <b>'+esc(arr(st.missing).join(', '))+'</b> (see <code>docs/mail-setup.md</code>).</p>';
+  else if(st.storage_ok===false)body='<p class="mm-fine">One database step is left: run <code>docs/sql/2026-10-07-mail-connections.sql</code> in Supabase.</p>';
+  else if(st.connected)body='<div class="mm-setrow"><div><small>CONNECTED AS</small><b>'+esc(st.email||'')+'</b><span>'+esc(st.display_name||'')+'</span></div><div class="mm-setbtns"><button type="button" class="mm-btn" data-set="open">Open Mail</button><button type="button" class="mm-btn danger" data-set="disconnect">Disconnect</button></div></div>';
+  else body='<div class="mm-setrow"><div><b>'+(st.needs_reconnect?'Your Microsoft sign-in expired':'No mailbox connected')+'</b><span>'+(st.needs_reconnect?'Sign in again to keep sending and receiving email in the portal.':'Connect your Microsoft 365 account to read and send email here. Only you can see your mailbox.')+'</span></div><div class="mm-setbtns"><button type="button" class="mm-btn gold" data-set="connect">'+(st.needs_reconnect?'Reconnect Microsoft 365':'Connect Microsoft 365')+'</button></div></div>';
+  return '<header><div><span>EMAIL · MICROSOFT 365</span><p>Your own mailbox for the Mail page.</p></div></header>'+body;
+}
+function mountSettingsCard(panel){
+  var page=panel.querySelector('.v152-page');if(!page||page.querySelector('[data-mdv-mail-card]'))return;
+  var card=document.createElement('div');card.className='v152-card mm-setcard';card.setAttribute('data-mdv-mail-card','1');card.innerHTML=cardHtml(null);
+  var anchor=page.querySelector('#vx-wave-settings');
+  if(anchor)page.insertBefore(card,anchor);else page.appendChild(card);
+  function draw(st,err){card.innerHTML=cardHtml(st,err);
+    card.querySelectorAll('[data-set]').forEach(function(b){b.onclick=async function(){
+      try{
+        if(b.dataset.set==='open'){if(typeof window.navTo==='function')window.navTo('mail');return;}
+        if(b.dataset.set==='connect'){b.disabled=true;b.textContent='Opening Microsoft…';var d=await call('connect_url');window.location.href=d.url;return;}
+        if(b.dataset.set==='disconnect'){if(!window.confirm('Disconnect your email from the portal? Your mailbox itself is not touched.'))return;b.disabled=true;await call('disconnect');S.status=null;S.folders=[];S.messages=[];S.sel=null;S.detail=null;toast('Email disconnected');load();}
+      }catch(e){toast(msg(e),'bad');b.disabled=false;}
+    };});}
+  function load(){status().then(function(st){draw(st);}).catch(function(e){draw(null,msg(e));});}
+  load();
+}
+(function watchSettings(){
+  var n=0,t=setInterval(function(){
+    var panel=document.getElementById('p-systemsettings');
+    if(panel){clearInterval(t);
+      var run=function(){try{mountSettingsCard(panel);}catch(e){}};
+      new MutationObserver(run).observe(panel,{childList:true,subtree:true});run();}
+    else if(++n>120)clearInterval(t);
+  },500);
+})();
 
 /* ---------- page entry + wiring into the portal ---------- */
 function render(host){S.host=host;S.status=null;S.err='';S.sel=null;S.detail=null;S.readerOpen=false;S.search='';S.unreadOnly=false;return boot();}
