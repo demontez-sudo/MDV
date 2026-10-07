@@ -205,8 +205,8 @@ function paintReply(focus){
       if(!to.value.trim())throw new Error('Add at least one recipient.');
       if(r.mode!=='forward'&&!ta.value.trim())throw new Error('Write a message first.');
       btn.disabled=true;btn.textContent='Sending…';
-      await call('reply',{id:m.id,mode:r.mode,to:to.value.trim(),cc:cc.value.trim(),text:ta.value});
-      S.reply=null;paintReply();toast('Sent');if(S.folder==='sentitems')loadList(true);
+      var sv=await call('reply',{id:m.id,mode:r.mode,to:to.value.trim(),cc:cc.value.trim(),text:ta.value});
+      S.reply=null;paintReply();toast(sv&&sv.via==='resend'?'Sent — a copy is in your inbox':'Sent');if(S.folder==='sentitems')loadList(true);
     }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
   };
   if(focus)setTimeout(function(){(to.value?ta:to).focus();},30);
@@ -230,7 +230,7 @@ function compose(o){
     +'<datalist id="mm-sug">'+sugOptions()+'</datalist></div>'
     +'<p class="mm-err" id="mm-cerr"></p><footer><button type="button" class="mm-btn" data-x>Cancel</button><button type="button" class="mm-btn gold" id="mm-send">Send</button></footer></section>';
   document.body.appendChild(back);
-  var files=[],$=function(q){return back.querySelector(q);};
+  var files=[],sentVia=null,$=function(q){return back.querySelector(q);};
   function close(){back.remove();}
   back.querySelectorAll('[data-x]').forEach(function(x){x.onclick=close;});
   back.addEventListener('mousedown',function(e){if(e.target===back&&!$('#mm-text').value.trim())close();});
@@ -247,11 +247,11 @@ function compose(o){
       if(mode==='new'){
         var tot=files.reduce(function(n,f){return n+f.size;},0);if(tot>3*1048576)throw new Error('Attachments are over 3 MB in total.');
         var atts=await Promise.all(files.map(readFile));
-        await call('send',{to:toV,cc:$('#mm-cc').value,bcc:$('#mm-bcc').value,subject:$('#mm-subject').value,text:text,attachments:atts});
+        sentVia=await call('send',{to:toV,cc:$('#mm-cc').value,bcc:$('#mm-bcc').value,subject:$('#mm-subject').value,text:text,attachments:atts});
       }else{
-        await call('reply',{id:m.id,mode:mode==='replyAll'?'replyAll':mode,to:toV,text:text});
+        sentVia=await call('reply',{id:m.id,mode:mode==='replyAll'?'replyAll':mode,to:toV,text:text});
       }
-      close();toast('Sent');if(S.folder==='sentitems')loadList(true);
+      close();toast(sentVia&&sentVia.via==='resend'?'Sent — a copy is in your inbox':'Sent');if(S.folder==='sentitems')loadList(true);
     }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
   };
 }

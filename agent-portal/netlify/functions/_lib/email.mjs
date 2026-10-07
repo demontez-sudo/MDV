@@ -79,6 +79,8 @@ export async function sendResendEmail(message) {
   if (message.bcc_emails?.length) payload.bcc = message.bcc_emails;
   if (message.html_body) payload.html = message.html_body;
   if (message.text_body) payload.text = message.text_body;
+  if (Array.isArray(message.attachments) && message.attachments.length) payload.attachments = message.attachments;
+  if (message.headers && typeof message.headers === 'object') payload.headers = message.headers;
 
   // Resend idempotency belongs on the API request header, not inside the email headers payload.
   const requestHeaders = {

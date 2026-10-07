@@ -4,6 +4,7 @@ import {
   mailConfig, appError, signState, newNonce, authorizeUrl, getConnection, deleteConnection, graph, safeId,
   buildSendPayload, parseAddresses, textToHtml, mapSummary, mapMessage, FOLDERS, SUMMARY_SELECT, GRAPH, LIMITS
 } from './_lib/mail-graph.mjs';
+import { resendReady, shouldUseResend, sendViaResend, quoteHtml } from './_lib/mail-resend.mjs';
 
 /* Team-member mailbox (Microsoft 365). Every call is scoped to the signed-in staff member's OWN
    connection — user id comes from the verified session, never from the request body. */
@@ -29,7 +30,7 @@ export const handler = async event => {
     if (event.httpMethod === 'GET') {
       let conn = null, storage_ok = true;
       if (cfg.configured) { try { conn = await getConnection(admin, organization.id, user.id); } catch (e) { if (e.code === 'MAIL_TABLE_MISSING') storage_ok = false; else throw e; } }
-      return json(200, { ok: true, configured: cfg.configured, missing: cfg.missing, storage_ok, redirect_uri: cfg.redirectUri, user_email: user.email || null, ...publicConn(conn) });
+      return json(200, { ok: true, configured: cfg.configured, missing: cfg.missing, storage_ok, redirect_uri: cfg.redirectUri, user_email: user.email || null, resend: resendReady(), ...publicConn(conn) });
     }
 
     const action = clean(body.action);
@@ -93,8 +94,13 @@ export const handler = async event => {
     }
 
     if (action === 'send') {
-      await G('/me/sendMail', { method: 'POST', body: buildSendPayload(body) });
-      return json(200, { ok: true, verified: true, sent: true });
+      const payload = buildSendPayload(body), m = payload.message;
+      if (shouldUseResend([m.toRecipients, m.ccRecipients || [], m.bccRecipients || []], conn.email)) {
+        const r = await sendViaResend({ conn, to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, text: String(body.text ?? body.body ?? ''), attachments: m.attachments || [], copyMe: body.copy_me !== false });
+        return json(200, { ok: true, verified: true, sent: true, via: 'resend', id: r?.providerMessageId || null });
+      }
+      await G('/me/sendMail', { method: 'POST', body: payload });
+      return json(200, { ok: true, verified: true, sent: true, via: 'microsoft' });
     }
 
     if (action === 'reply') {
@@ -106,6 +112,14 @@ export const handler = async event => {
       /* The To / Cc the person sees (and may have edited) in the reply box are what get sent. */
       const to = parseAddresses(body.to, 'recipient'), cc = parseAddresses(body.cc, 'Cc');
       if (!to.length) throw appError(400, mode === 'forward' ? 'Add at least one recipient to forward to.' : 'Add at least one recipient.', 'MAIL_NO_RECIPIENT');
+      if (shouldUseResend([to, cc], conn.email)) {
+        const orig = await G(`/me/messages/${encodeURIComponent(id)}?$select=subject,internetMessageId,from,sentDateTime,receivedDateTime,body`, { headers: { Prefer: 'outlook.body-content-type="html"' } });
+        const base = clean(orig?.subject).replace(/^((re|fwd?):\s*)+/i, '');
+        const html = `${textToHtml(text)}${quoteHtml(orig)}`;
+        const mid = clean(orig?.internetMessageId);
+        const r = await sendViaResend({ conn, to, cc, bcc: [], subject: `${mode === 'forward' ? 'Fwd' : 'Re'}: ${base || '(no subject)'}`, html, text, replyHeaders: mode !== 'forward' && mid ? { 'In-Reply-To': mid, References: mid } : undefined, copyMe: body.copy_me !== false });
+        return json(200, { ok: true, verified: true, sent: true, via: 'resend', id: r?.providerMessageId || null });
+      }
       const draft = await G(`/me/messages/${encodeURIComponent(id)}/${create}`, { method: 'POST', body: {} });
       const quoted = String(draft?.body?.content || '');
       const mine = textToHtml(text);
@@ -115,7 +129,7 @@ export const handler = async event => {
       patch.ccRecipients = cc;
       await G(`/me/messages/${encodeURIComponent(draft.id)}`, { method: 'PATCH', body: patch });
       await G(`/me/messages/${encodeURIComponent(draft.id)}/send`, { method: 'POST' });
-      return json(200, { ok: true, verified: true, sent: true });
+      return json(200, { ok: true, verified: true, sent: true, via: 'microsoft' });
     }
 
     if (action === 'mark_read') {
