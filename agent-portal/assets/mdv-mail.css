@@ -114,3 +114,5 @@
 .mm-rr-foot{padding-right:150px}
 @media(max-width:900px){.mm-rr-foot{padding-right:0}.mm{margin-bottom:140px}}
 @media(max-width:700px){.mm-modal-back{padding-bottom:150px}}
+
+.mm-rr-cc b{min-width:auto}.mm-rr-to b{min-width:76px}

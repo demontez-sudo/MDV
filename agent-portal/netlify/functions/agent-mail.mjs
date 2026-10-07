@@ -103,14 +103,16 @@ export const handler = async event => {
       const text = String(body.text ?? '');
       if (text.length > LIMITS.bodyChars) throw appError(413, 'That message is too long.', 'MAIL_TOO_LONG');
       const create = mode === 'forward' ? 'createForward' : mode === 'replyAll' ? 'createReplyAll' : 'createReply';
-      const to = mode === 'forward' ? parseAddresses(body.to, 'recipient') : null;
-      if (mode === 'forward' && !to.length) throw appError(400, 'Add at least one recipient to forward to.', 'MAIL_NO_RECIPIENT');
+      /* The To / Cc the person sees (and may have edited) in the reply box are what get sent. */
+      const to = parseAddresses(body.to, 'recipient'), cc = parseAddresses(body.cc, 'Cc');
+      if (!to.length) throw appError(400, mode === 'forward' ? 'Add at least one recipient to forward to.' : 'Add at least one recipient.', 'MAIL_NO_RECIPIENT');
       const draft = await G(`/me/messages/${encodeURIComponent(id)}/${create}`, { method: 'POST', body: {} });
       const quoted = String(draft?.body?.content || '');
       const mine = textToHtml(text);
       const html = /<body[^>]*>/i.test(quoted) ? quoted.replace(/<body([^>]*)>/i, `<body$1>${mine}<br>`) : `${mine}<br>${quoted}`;
       const patch = { body: { contentType: 'HTML', content: html } };
-      if (to) patch.toRecipients = to;
+      patch.toRecipients = to;
+      patch.ccRecipients = cc;
       await G(`/me/messages/${encodeURIComponent(draft.id)}`, { method: 'PATCH', body: patch });
       await G(`/me/messages/${encodeURIComponent(draft.id)}/send`, { method: 'POST' });
       return json(200, { ok: true, verified: true, sent: true });

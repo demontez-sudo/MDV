@@ -173,11 +173,16 @@ function replyTo(mode,m){
   if(mode==='forward')return '';
   if(mode==='reply')return m.reply_to&&m.reply_to[0]?m.reply_to[0].address:(m.from&&m.from.address)||'';
   var me=String(S.status.email||'').toLowerCase();
-  return [m.from&&m.from.address].concat(m.to.map(function(x){return x.address;})).concat(m.cc.map(function(x){return x.address;})).filter(function(x,i,a){return x&&x.toLowerCase()!==me&&a.indexOf(x)===i;}).join(', ');
+  return [m.from&&m.from.address].concat(m.to.map(function(x){return x.address;})).filter(function(x,i,a){return x&&x.toLowerCase()!==me&&a.indexOf(x)===i;}).join(', ');
+}
+function replyCc(mode,m,to){
+  if(mode!=='replyAll')return '';
+  var me=String(S.status.email||'').toLowerCase(),inTo=String(to||'').toLowerCase().split(/[,;]\s*/);
+  return m.cc.map(function(x){return x.address;}).filter(function(x,i,a){return x&&x.toLowerCase()!==me&&inTo.indexOf(x.toLowerCase())<0&&a.indexOf(x)===i;}).join(', ');
 }
 function openReply(mode,m){
   var keep=S.reply&&S.reply.id===m.id?S.reply.text:'';
-  S.reply={id:m.id,mode:mode,to:replyTo(mode,m),text:keep};
+  var rto=replyTo(mode,m);S.reply={id:m.id,mode:mode,to:rto,cc:S.reply&&S.reply.id===m.id&&S.reply.mode===mode?S.reply.cc:replyCc(mode,m,rto),text:keep};
   paintReply(true);
 }
 function paintReply(focus){
@@ -186,12 +191,13 @@ function paintReply(focus){
   var label=r.mode==='replyAll'?'Reply all':r.mode==='forward'?'Forward':'Reply';
   var d=document.createElement('div');d.id='mm-reply';d.className='mm-reply';
   d.innerHTML='<div class="mm-rr-to"><b>'+label+'</b><input id="mm-rto" list="mm-sug" value="'+esc(r.to)+'" placeholder="name@example.com, …" autocomplete="off" aria-label="To"><button type="button" class="mm-rr-x" data-rx aria-label="Discard reply">×</button></div>'
+    +'<div class="mm-rr-to mm-rr-cc"><b>Cc</b><input id="mm-rcc" list="mm-sug" value="'+esc(r.cc||'')+'" placeholder="Add people to copy (optional)" autocomplete="off" aria-label="Cc"></div>'
     +'<textarea id="mm-rtext" rows="5" placeholder="'+(r.mode==='forward'?'Add a note (optional) — the original message is included below automatically.':'Write your reply — the original message is quoted below automatically.')+'"></textarea>'
     +'<datalist id="mm-sug">'+sugOptions()+'</datalist>'
     +'<div class="mm-rr-foot"><span class="mm-err" id="mm-rerr"></span><button type="button" class="mm-btn" data-rx>Discard</button><button type="button" class="mm-btn gold" id="mm-rsend">Send</button></div>';
   el.appendChild(d);
-  var ta=d.querySelector('#mm-rtext'),to=d.querySelector('#mm-rto');
-  ta.value=r.text||'';ta.oninput=function(){r.text=ta.value;};to.oninput=function(){r.to=to.value;};
+  var ta=d.querySelector('#mm-rtext'),to=d.querySelector('#mm-rto'),cc=d.querySelector('#mm-rcc');
+  ta.value=r.text||'';ta.oninput=function(){r.text=ta.value;};to.oninput=function(){r.to=to.value;};cc.oninput=function(){r.cc=cc.value;};
   d.querySelectorAll('[data-rx]').forEach(function(b){b.onclick=function(){if(ta.value.trim()&&!window.confirm('Discard this reply?'))return;S.reply=null;paintReply();};});
   d.querySelector('#mm-rsend').onclick=async function(){
     var btn=this,err=d.querySelector('#mm-rerr');err.textContent='';
@@ -199,7 +205,7 @@ function paintReply(focus){
       if(!to.value.trim())throw new Error('Add at least one recipient.');
       if(r.mode!=='forward'&&!ta.value.trim())throw new Error('Write a message first.');
       btn.disabled=true;btn.textContent='Sending…';
-      await call('reply',{id:m.id,mode:r.mode,to:to.value.trim(),text:ta.value});
+      await call('reply',{id:m.id,mode:r.mode,to:to.value.trim(),cc:cc.value.trim(),text:ta.value});
       S.reply=null;paintReply();toast('Sent');if(S.folder==='sentitems')loadList(true);
     }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
   };
