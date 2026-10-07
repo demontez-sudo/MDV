@@ -28,16 +28,12 @@ h1,h2,h3{letter-spacing:-.012em}
 @font-face{font-family:'MDV Wide';font-style:normal;font-weight:400 800;font-display:swap;src:url(fonts/archivo-wide-latin.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}
 
 /* page titles: wide, upright capitals (the high-fashion masthead look) */
-html body .panel.on h1,html body .panel.on .ph-h1,html body .ct-hero h1,html body .cc49-head h1,html body .v1686-pagehead h1{font-family:'MDV Wide','Cormorant Garamond','Helvetica Neue',Arial,sans-serif!important;font-weight:700!important;text-transform:uppercase;letter-spacing:-.01em!important;line-height:1.05;overflow-wrap:anywhere}
+html body .panel.on h1,html body .panel.on .ph-h1,html body .ct-hero h1,html body .cc49-head h1,html body .v1686-pagehead h1{font-family:'MDV Wide','Cormorant Garamond','Helvetica Neue',Arial,sans-serif!important;font-weight:700!important;font-size:clamp(20px,2.1vw,30px)!important;text-transform:uppercase;letter-spacing:-.005em!important;line-height:1.1;overflow-wrap:anywhere}
 @media(max-width:700px){html body .panel.on h1,html body .panel.on .ph-h1,html body .ct-hero h1,html body .cc49-head h1,html body .v1686-pagehead h1{font-family:'Cormorant Garamond','Helvetica Neue',Arial,sans-serif!important;text-transform:none;letter-spacing:-.015em!important}}
 
 /* menu & navigation: one tidy, compact scale (the wide grotesk needs smaller sizes than the old narrow serif) */
-html body .vx81-nav-flyout>header h2{font:600 15px/1.25 var(--fM)!important;letter-spacing:.09em!important;text-transform:uppercase;margin:3px 0 0}
-html body .vx81-nav-flyout>header small{font:500 9px var(--fM)!important;letter-spacing:.2em!important}
-html body .vx81-nav-flyout nav button{font:500 11px var(--fM)!important;letter-spacing:.09em!important}
 html body #mdv-mm h2{font:600 17px/1.2 var(--fM)!important;letter-spacing:.09em;text-transform:uppercase}
 html body #mdv-mm .mm-tile{font:500 11px var(--fM);letter-spacing:.07em;text-transform:uppercase}
 html body #mdv-mm .mm-row{font:500 13px var(--fM);letter-spacing:.04em}
 html body #mdv-install-card h3{font:600 16px/1.2 var(--fM);letter-spacing:.06em;text-transform:uppercase}
 html body .tb-name.tb-name{font-family:var(--fM)!important;font-style:normal!important;font-size:12px!important;font-weight:600!important;letter-spacing:.12em!important;text-transform:uppercase}
-html body .sn-grp-hd{font-size:11px;font-weight:500;letter-spacing:.12em!important}
