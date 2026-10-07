@@ -110,3 +110,7 @@
 .mm-widget{--g:var(--mdv-gold,#d4b077);--ink:var(--mdv-ink,#f3efe8);--mute:var(--mdv-mute,#a89f92);--l2:var(--mdv-line-2,rgba(255,255,255,.09));--field:var(--mdv-field,#0b0a08);font-family:Inter,system-ui,sans-serif}.mm-widget button{font-family:inherit}
 
 .mdv-emailable{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}.mdv-emailable:hover{color:var(--mdv-gold,#d4b077)}
+/* keep Send clear of the floating Vera orb + version badge (bottom-right of the screen) */
+.mm-rr-foot{padding-right:150px}
+@media(max-width:900px){.mm-rr-foot{padding-right:0}.mm{margin-bottom:140px}}
+@media(max-width:700px){.mm-modal-back{padding-bottom:150px}}
