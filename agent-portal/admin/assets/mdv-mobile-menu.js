@@ -3,7 +3,7 @@
 if(window.__MDV_MM__)return;window.__MDV_MM__=1;
 var MQ=window.matchMedia('(max-width:820px)');
 var TILES=[
-  ['inbox','Messages','ti-message-circle'],['mail','Mail','ti-mail'],['seasonmanagement','Season','ti-calendar-event'],['industrydirectory','Clients','ti-building-store'],
+  ['inbox','Messages','ti-message-circle'],['mail','Mail','ti-mail'],['contacts','Contacts','ti-address-book'],['seasonmanagement','Season','ti-calendar-event'],['industrydirectory','Clients','ti-building-store'],
   ['multipackage','Packages','ti-package'],['globalmobility','Mobility','ti-plane'],['financelegal','Finance','ti-cash'],
   ['scouting','Scouting','ti-search'],['modeldevelopment','Development','ti-trending-up'],['team','Team','ti-users-group'],
   ['editorial','Editorial','ti-news'],['__vera__','Vera','ti-sparkles'],['systemsettings','Settings','ti-settings']

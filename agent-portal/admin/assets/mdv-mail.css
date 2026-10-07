@@ -108,3 +108,5 @@
 .mm-wfine{margin:0;font-size:12px;color:var(--mute,#a89f92)}
 .mm-wempty{display:grid;gap:8px;justify-items:start}.mm-wempty b{font:400 17px var(--fD,Georgia,serif)}.mm-wempty span{font-size:12px;color:var(--mute,#a89f92)}
 .mm-widget{--g:var(--mdv-gold,#d4b077);--ink:var(--mdv-ink,#f3efe8);--mute:var(--mdv-mute,#a89f92);--l2:var(--mdv-line-2,rgba(255,255,255,.09));--field:var(--mdv-field,#0b0a08);font-family:Inter,system-ui,sans-serif}.mm-widget button{font-family:inherit}
+
+.mdv-emailable{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}.mdv-emailable:hover{color:var(--mdv-gold,#d4b077)}

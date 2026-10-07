@@ -187,7 +187,7 @@ function paintReply(focus){
   var d=document.createElement('div');d.id='mm-reply';d.className='mm-reply';
   d.innerHTML='<div class="mm-rr-to"><b>'+label+'</b><input id="mm-rto" list="mm-sug" value="'+esc(r.to)+'" placeholder="name@example.com, …" autocomplete="off" aria-label="To"><button type="button" class="mm-rr-x" data-rx aria-label="Discard reply">×</button></div>'
     +'<textarea id="mm-rtext" rows="5" placeholder="'+(r.mode==='forward'?'Add a note (optional) — the original message is included below automatically.':'Write your reply — the original message is quoted below automatically.')+'"></textarea>'
-    +'<datalist id="mm-sug">'+Object.keys(S.senders).slice(0,80).map(function(a){return '<option value="'+esc(a)+'">'+esc(S.senders[a]||'')+'</option>';}).join('')+'</datalist>'
+    +'<datalist id="mm-sug">'+sugOptions()+'</datalist>'
     +'<div class="mm-rr-foot"><span class="mm-err" id="mm-rerr"></span><button type="button" class="mm-btn" data-rx>Discard</button><button type="button" class="mm-btn gold" id="mm-rsend">Send</button></div>';
   el.appendChild(d);
   var ta=d.querySelector('#mm-rtext'),to=d.querySelector('#mm-rto');
@@ -212,15 +212,16 @@ function compose(o){
   var old=document.getElementById('mm-modal');if(old)old.remove();
   var mode=o.mode||'new',m=o.m,title=mode==='reply'?'Reply':mode==='replyAll'?'Reply all':mode==='forward'?'Forward':'New message';
   var to=mode==='reply'?(m.reply_to&&m.reply_to[0]?m.reply_to[0].address:(m.from&&m.from.address)||''):mode==='replyAll'?[m.from&&m.from.address].concat(m.to.map(function(x){return x.address;})).concat(m.cc.map(function(x){return x.address;})).filter(function(x,i,a){return x&&x.toLowerCase()!==String(S.status.email||'').toLowerCase()&&a.indexOf(x)===i;}).join(', '):'';
+  if(mode==='new'&&o.to)to=o.to;
   var subj=m?(mode==='forward'?'Fwd: ':'Re: ')+m.subject.replace(/^(re|fwd?):\s*/i,''):'';
   var back=document.createElement('div');back.id='mm-modal';back.className='mm-modal-back';
   back.innerHTML='<section class="mm-modal" role="dialog" aria-modal="true" aria-label="'+title+'"><header><div><small>MAIL</small><h2>'+title+'</h2></div><button type="button" data-x aria-label="Close">×</button></header>'
     +'<div class="mm-form">'+(mode==='new'||mode==='forward'?'<label><span>To</span><input id="mm-to" list="mm-sug" value="'+esc(to)+'" placeholder="name@example.com, …" autocomplete="off"></label>':'<label><span>To</span><input id="mm-to" list="mm-sug" value="'+esc(to)+'" autocomplete="off"></label>')
-    +(mode==='new'?'<div class="mm-ccrow"><label><span>Cc</span><input id="mm-cc" list="mm-sug" autocomplete="off"></label><label><span>Bcc</span><input id="mm-bcc" list="mm-sug" autocomplete="off"></label></div>':'')
-    +(mode==='new'?'<label><span>Subject</span><input id="mm-subject" maxlength="300"></label>':'<label><span>Subject</span><input id="mm-subject" value="'+esc(subj)+'" disabled></label>')
+    +(mode==='new'?'<div class="mm-ccrow"><label><span>Cc</span><input id="mm-cc" list="mm-sug" autocomplete="off"></label><label><span>Bcc</span><input id="mm-bcc" list="mm-sug" value="'+esc(o.bcc||'')+'" autocomplete="off"></label></div>':'')
+    +(mode==='new'?'<label><span>Subject</span><input id="mm-subject" maxlength="300" value="'+esc(o.subject||'')+'"></label>':'<label><span>Subject</span><input id="mm-subject" value="'+esc(subj)+'" disabled></label>')
     +'<label><span>Message</span><textarea id="mm-text" rows="10" placeholder="'+(m?'Write your reply — the original message is quoted below automatically.':'Write your message…')+'"></textarea></label>'
     +(mode==='new'?'<div class="mm-attach"><button type="button" class="mm-btn" id="mm-addfile">📎 Attach files</button><input type="file" id="mm-file" multiple hidden><span id="mm-files" class="mm-fine">Up to 8 files, 3 MB total.</span></div>':'')
-    +'<datalist id="mm-sug">'+Object.keys(S.senders).slice(0,80).map(function(a){return '<option value="'+esc(a)+'">'+esc(S.senders[a]||'')+'</option>';}).join('')+'</datalist></div>'
+    +'<datalist id="mm-sug">'+sugOptions()+'</datalist></div>'
     +'<p class="mm-err" id="mm-cerr"></p><footer><button type="button" class="mm-btn" data-x>Cancel</button><button type="button" class="mm-btn gold" id="mm-send">Send</button></footer></section>';
   document.body.appendChild(back);
   var files=[],$=function(q){return back.querySelector(q);};
@@ -228,7 +229,8 @@ function compose(o){
   back.querySelectorAll('[data-x]').forEach(function(x){x.onclick=close;});
   back.addEventListener('mousedown',function(e){if(e.target===back&&!$('#mm-text').value.trim())close();});
   var af=$('#mm-addfile');if(af){af.onclick=function(){$('#mm-file').click();};$('#mm-file').onchange=function(){files=files.concat([].slice.call(this.files)).slice(0,8);this.value='';var tot=files.reduce(function(n,f){return n+f.size;},0);$('#mm-files').textContent=files.length?files.map(function(f){return f.name;}).join(', ')+' ('+size(tot)+')':'Up to 8 files, 3 MB total.';};}
-  setTimeout(function(){($('#mm-to').value?$('#mm-text'):$('#mm-to')).focus();},50);
+  setTimeout(function(){var sb=$('#mm-subject');($('#mm-to').value?(mode==='new'&&sb&&!sb.value?sb:$('#mm-text')):$('#mm-to')).focus();},50);
+  if(mode==='new')ensureDirectory(function(){var dl=back.querySelector('#mm-sug');if(dl)dl.innerHTML=sugOptions();});
   $('#mm-send').onclick=async function(){
     var btn=this,err=$('#mm-cerr');err.textContent='';
     try{
@@ -286,6 +288,74 @@ function mountSettingsCard(panel){
 })();
 
 
+
+/* ---------- address book + "email anyone" ---------- */
+var DIR={map:{},at:0,busy:false,cbs:[]};
+function sugOptions(){var all=Object.assign({},DIR.map,S.senders);return Object.keys(all).slice(0,500).map(function(a){return '<option value="'+esc(a)+'">'+esc(all[a]||'')+'</option>';}).join('');}
+function crm(force){
+  if(!force&&W_crm.data&&Date.now()-W_crm.at<300000)return Promise.resolve(W_crm.data);
+  if(W_crm.p)return W_crm.p;
+  W_crm.p=bridge().api('/api/agent/crm/v9?organization='+encodeURIComponent(org())+'&_t='+Date.now(),{method:'GET',headers:{},__fresh:true}).then(function(d){W_crm.data=d||{};W_crm.at=Date.now();W_crm.p=null;return W_crm.data;},function(e){W_crm.p=null;throw e;});
+  return W_crm.p;
+}
+var W_crm={data:null,at:0,p:null};
+function ensureDirectory(cb){
+  if(DIR.at&&Date.now()-DIR.at<300000){cb&&cb();return;}
+  crm().then(function(d){
+    arr(d.contacts).forEach(function(c){var e=String(c.email||'').trim().toLowerCase();if(EMAIL_RE.test(e))DIR.map[e]=c.display_name||'';});
+    DIR.at=Date.now();cb&&cb();
+  }).catch(function(){});
+}
+var EMAIL_RE=/^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[A-Za-z]{2,}$/;
+async function emailTo(list,o){
+  o=o||{};
+  var addrs=(Array.isArray(list)?list:String(list||'').split(/[,;]/)).map(function(x){return String(x||'').trim();}).filter(function(x,i,a){return EMAIL_RE.test(x)&&a.indexOf(x)===i;});
+  if(!addrs.length)return false;
+  var fallback=function(){window.location.href='mailto:'+addrs.join(',')+(o.subject?'?subject='+encodeURIComponent(o.subject):'');return false;};
+  try{
+    if(!S.status||S.status.connected===undefined){var st=await status();S.status=Object.assign({},S.status,st);}
+    if(!S.status.connected){
+      toast(S.status.configured===false?'Portal email isn\'t set up yet — opening your mail app':'Connect your mailbox in Settings → Email to send from the portal — opening your mail app','bad');
+      setTimeout(fallback,900);return false;
+    }
+  }catch(e){return fallback();}
+  if(addrs.length>1&&!o.to_all){
+    /* Several people: send to yourself and Bcc everyone so clients never see each other. */
+    compose({to:String(S.status.email||''),bcc:addrs.join(', '),subject:o.subject||''});
+  }else compose({to:addrs.join(', '),subject:o.subject||''});
+  return true;
+}
+(function globalEmailLinks(){
+  var BLOCK='button,[role="button"],[tabindex],input,textarea,select,[contenteditable],iframe,.mm,#mm-modal,a[href]:not([href^="mailto:"])';
+  function plainEmail(t){
+    if(!t||t.nodeType!==1||t.children.length||t.closest(BLOCK))return '';
+    var v=(t.textContent||'').trim();return v.length<120&&EMAIL_RE.test(v)?v:'';
+  }
+  document.addEventListener('click',function(e){
+    if(e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;
+    var t=e.target;if(!t||!t.closest)return;
+    var a=t.closest('a[href^="mailto:"]');
+    if(a){
+      if(a.closest('#mm-modal'))return;
+      var h=a.getAttribute('href').slice(7),q=h.indexOf('?'),addr=decodeURIComponent(q<0?h:h.slice(0,q)),subj='';
+      if(q>=0){try{subj=new URLSearchParams(h.slice(q+1)).get('subject')||'';}catch(x){}}
+      if(!window.VEUX_AGENT_V4)return;
+      e.preventDefault();emailTo(addr,{subject:subj});return;
+    }
+    var em=plainEmail(t);
+    if(em&&window.VEUX_AGENT_V4){e.preventDefault();emailTo(em);}
+  });
+  /* Buttons that carry an address (Companies & Clients → Email Contact, and anything marked data-email-to). */
+  document.addEventListener('click',function(e){
+    var b=e.target&&e.target.closest&&e.target.closest('[data-cc49-emailcontact],[data-email-to]');
+    if(!b||!window.VEUX_AGENT_V4||(e.button!==0&&e.button!==undefined))return;
+    var addr=b.getAttribute('data-email-to')||b.getAttribute('data-cc49-emailcontact');
+    if(!addr)return;
+    e.preventDefault();e.stopImmediatePropagation();emailTo(addr);
+  },true);
+  document.addEventListener('mouseover',function(e){var t=e.target;if(plainEmail(t)&&!t.classList.contains('mdv-emailable'))t.classList.add('mdv-emailable');});
+})();
+
 /* ---------- Home page widget (Agency Command → Mail) ---------- */
 var W={data:null,at:0,busy:false};
 function widgetHtml(){
@@ -340,7 +410,7 @@ async function refreshWidget(){
 /* ---------- page entry + wiring into the portal ---------- */
 function render(host){W.at=0;S.host=host;S.status=null;S.err='';S.sel=null;S.detail=null;S.readerOpen=false;S.search='';S.unreadOnly=false;return boot();}
 window.renderMail=render;
-window.MDV_MAIL={render:render,state:S};
+window.MDV_MAIL={render:render,state:S,emailTo:emailTo,crm:crm};
 
 function registerRoute(){
   var map=window.VEUX_V15_ROUTE_RENDERERS;
