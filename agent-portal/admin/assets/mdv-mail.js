@@ -34,7 +34,7 @@ async function boot(force){
     if(st.connected){await loadFolders();if(seq!==S.seq)return;await loadList(true);}
   }catch(e){S.err=msg(e);}
   S.loading=false;paint();startTimer();
-  if(S.pendingCompose){S.pendingCompose=false;if(S.status&&S.status.connected)compose({});}
+  if(S.pendingCompose){var po=S.pendingCompose;S.pendingCompose=false;if(S.status&&S.status.connected)compose(po===true?{}:po);}
   if(S.pendingOpen&&S.status&&S.status.connected){var pid=S.pendingOpen;S.pendingOpen=null;openMessage(pid);}
 }
 async function loadFolders(){try{var d=await call('folders');S.folders=arr(d.folders);}catch(e){if(e&&/reconnect/i.test(msg(e))){S.status=Object.assign({},S.status,{connected:false,needs_reconnect:true});}else throw e;}}
@@ -50,6 +50,7 @@ async function loadList(reset){
   S.listLoading=false;paintList();
 }
 async function openMessage(id){
+  if(S.compose){if(S.compose.dirty()&&!window.confirm('Discard your draft?'))return;S.compose.close();}
   S.sel=id;S.reply=null;S.detail=null;S.detailLoading=true;S.showImages=false;S.readerOpen=true;
   var mmEl=S.host&&S.host.querySelector('.mm');if(mmEl)mmEl.classList.add('read-open');
   paintList();paintReader();
@@ -128,6 +129,7 @@ function bodyDoc(m,showImages){
 }
 function paintReader(){
   var el=document.getElementById('mm-reader');if(!el)return;
+  if(S.compose){mountCompose();return;}
   if(!S.sel){el.innerHTML='<div class="mm-none"><div><span>✉</span><p>Select a message to read it</p></div></div>';return;}
   if(S.detailLoading||!S.detail){el.innerHTML='<div class="mm-none"><p>Opening…</p></div>';return;}
   if(S.detail.error){el.innerHTML='<div class="mm-none"><div><p class="mm-err">'+esc(S.detail.error)+'</p><button class="mm-btn" data-a="close">Back</button></div></div>';wire(el);return;}
@@ -219,21 +221,35 @@ function paintReply(focus){
 
 /* ---------- compose (new message) ---------- */
 function readFile(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res({name:f.name,content_type:f.type||'application/octet-stream',content_base64:String(r.result).split(',')[1]||''});};r.onerror=function(){rej(new Error('Could not read '+f.name));};r.readAsDataURL(f);});}
+function inMail(){return String(window._currentPage||'')==='mail'&&!!document.getElementById('mm-reader');}
+function mountCompose(){
+  var r=document.getElementById('mm-reader'),c=S.compose&&S.compose.el;if(!r||!c)return;
+  if(c.parentNode!==r){r.innerHTML='';r.appendChild(c);}
+  var mm=r.closest('.mm');if(mm)mm.classList.add('read-open');
+}
+/* New message opens in the reading pane of the Mail page (no floating window). From any other page it takes you to Mail first. */
 function compose(o){
   o=o||{};
-  var old=document.getElementById('mm-modal');if(old)old.remove();
+  if(S.compose){
+    if(S.compose.dirty()&&!window.confirm('Discard your current draft and start a new message?')){if(!inMail()&&typeof window.navTo==='function')window.navTo('mail');return;}
+    S.compose.close();
+  }
+  if(!inMail()){
+    S.pendingCompose=o;
+    if(String(window._currentPage||'')!=='mail'){if(typeof window.navTo==='function')window.navTo('mail');else window.location.href='mailto:'+encodeURIComponent(o.to||'');}
+    return;
+  }
   var from=String((S.status&&S.status.email)||'');
-  var back=document.createElement('section');back.id='mm-modal';back.className='mmx mmx-dock';back.setAttribute('role','dialog');back.setAttribute('aria-label','New message');
+  var back=document.createElement('section');back.id='mm-modal';back.className='mmx mmx-pane';back.setAttribute('role','dialog');back.setAttribute('aria-label','New message');
   function row(id,label,extra){return '<div class="mmx-row" data-f="'+id+'"'+(extra||'')+'><span class="mmx-lab">'+label+'</span><div class="mmx-chips"><input class="mmx-in" id="mm-'+id+'-in" list="mm-sug" autocomplete="off" placeholder="'+(id==='to'?'Add recipients':'')+'" aria-label="'+label+'"></div><input type="hidden" id="mm-'+id+'">'+(id==='to'?'<span class="mmx-tog"><button type="button" data-show="cc">Cc</button><button type="button" data-show="bcc">Bcc</button></span>':'')+'</div>';}
-  back.innerHTML='<header class="mmx-h"><div><b>New message</b>'+(from?'<span>From '+esc(from)+'</span>':'')+'</div><span class="mmx-hb"><button type="button" data-min aria-label="Minimize" title="Minimize">–</button><button type="button" data-x aria-label="Close" title="Close">×</button></span></header>'
+  back.innerHTML='<header class="mmx-h"><div><b>New message</b>'+(from?'<span>From '+esc(from)+'</span>':'')+'</div><span class="mmx-hb"><button type="button" data-x aria-label="Close" title="Close">×</button></span></header>'
     +'<div class="mmx-body">'+row('to','To')+row('cc','Cc',' hidden')+row('bcc','Bcc',' hidden')
     +'<div class="mmx-row"><span class="mmx-lab">Subject</span><input class="mmx-in grow" id="mm-subject" maxlength="300" placeholder="What is this about?" autocomplete="off"></div>'
     +'<textarea id="mm-text" class="mmx-text" placeholder="Write your message…" aria-label="Message"></textarea>'
     +'<div class="mmx-files" id="mm-files" hidden></div>'
     +'<datalist id="mm-sug">'+sugOptions()+'</datalist></div>'
     +'<p class="mm-err" id="mm-cerr"></p>'
-    +'<footer class="mmx-f"><div class="mmx-tools"><button type="button" class="mmx-attach" id="mm-addfile"><span aria-hidden="true">📎</span> Attach</button><input type="file" id="mm-file" multiple hidden>'+copySelect('mm-copy')+'</div><span class="mm-sp"></span><span class="mmx-hint">Ctrl/⌘ + Enter</span><button type="button" class="mm-btn" data-x>Cancel</button><button type="button" class="mm-btn gold" id="mm-send">Send</button></footer>';
-  document.body.appendChild(back);
+    +'<footer class="mmx-f"><button type="button" class="mm-btn gold" id="mm-send">Send</button><button type="button" class="mm-btn" data-x>Cancel</button><span class="mmx-tools"><button type="button" class="mmx-attach" id="mm-addfile"><span aria-hidden="true">📎</span> Attach</button><input type="file" id="mm-file" multiple hidden>'+copySelect('mm-copy')+'</span><span class="mmx-hint">Ctrl/⌘ + Enter to send</span></footer>';
   var files=[],sentVia=null,$=function(q){return back.querySelector(q);};
   var BAD=function(a){return !EMAIL_RE.test(a);};
 
@@ -271,17 +287,19 @@ function compose(o){
   if(o.subject)$('#mm-subject').value=o.subject;
 
   function dirty(){return $('#mm-text').value.trim()||F.to.has()||F.cc.has()||F.bcc.has()||$('#mm-subject').value.trim()||files.length;}
-  function close(){back.remove();document.removeEventListener('keydown',onKey,true);}
+  function close(){
+    document.removeEventListener('keydown',onKey,true);S.compose=null;back.remove();
+    var mm=S.host&&S.host.querySelector('.mm');if(mm&&!S.sel)mm.classList.remove('read-open');
+    paintReader();
+  }
   function tryClose(){if(dirty()&&!window.confirm('Discard this message?'))return;close();}
   function onKey(e){
-    if(!document.body.contains(back))return;
+    if(!back.offsetParent)return;
     if(e.key==='Escape'){e.stopPropagation();tryClose();}
     else if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();$('#mm-send').click();}
   }
   document.addEventListener('keydown',onKey,true);
   back.querySelectorAll('[data-x]').forEach(function(x){x.onclick=tryClose;});
-  var mn=$('[data-min]');mn.onclick=function(){var m=back.classList.toggle('min');mn.textContent=m?'▢':'–';mn.title=m?'Expand':'Minimize';mn.setAttribute('aria-label',mn.title);if(!m)setTimeout(function(){$('#mm-text').focus();},0);};
-  $('.mmx-h').addEventListener('dblclick',function(e){if(!e.target.closest('button'))mn.click();});
 
   /* attachments */
   function paintFiles(){
@@ -293,8 +311,10 @@ function compose(o){
   $('#mm-addfile').onclick=function(){$('#mm-file').click();};
   $('#mm-file').onchange=function(){files=files.concat([].slice.call(this.files)).slice(0,8);this.value='';paintFiles();};
 
-  setTimeout(function(){var f=!F.to.has()?$('#mm-to-in'):(!$('#mm-subject').value?$('#mm-subject'):$('#mm-text'));f.focus();},50);
   ensureDirectory(function(){var dl=back.querySelector('#mm-sug');if(dl)dl.innerHTML=sugOptions();});
+  S.compose={el:back,dirty:function(){return !!dirty();},close:close};
+  mountCompose();
+  setTimeout(function(){var f=!F.to.has()?$('#mm-to-in'):(!$('#mm-subject').value?$('#mm-subject'):$('#mm-text'));f.focus();},60);
 
   $('#mm-send').onclick=async function(){
     var btn=this,err=$('#mm-cerr');err.textContent='';
