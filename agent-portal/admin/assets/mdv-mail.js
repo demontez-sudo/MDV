@@ -220,42 +220,94 @@ function paintReply(focus){
 /* ---------- compose (new message) ---------- */
 function readFile(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res({name:f.name,content_type:f.type||'application/octet-stream',content_base64:String(r.result).split(',')[1]||''});};r.onerror=function(){rej(new Error('Could not read '+f.name));};r.readAsDataURL(f);});}
 function compose(o){
+  o=o||{};
   var old=document.getElementById('mm-modal');if(old)old.remove();
-  var mode=o.mode||'new',m=o.m,title=mode==='reply'?'Reply':mode==='replyAll'?'Reply all':mode==='forward'?'Forward':'New message';
-  var to=mode==='reply'?(m.reply_to&&m.reply_to[0]?m.reply_to[0].address:(m.from&&m.from.address)||''):mode==='replyAll'?[m.from&&m.from.address].concat(m.to.map(function(x){return x.address;})).concat(m.cc.map(function(x){return x.address;})).filter(function(x,i,a){return x&&x.toLowerCase()!==String(S.status.email||'').toLowerCase()&&a.indexOf(x)===i;}).join(', '):'';
-  if(mode==='new'&&o.to)to=o.to;
-  var subj=m?(mode==='forward'?'Fwd: ':'Re: ')+m.subject.replace(/^(re|fwd?):\s*/i,''):'';
+  var from=String((S.status&&S.status.email)||'');
   var back=document.createElement('div');back.id='mm-modal';back.className='mm-modal-back';
-  back.innerHTML='<section class="mm-modal" role="dialog" aria-modal="true" aria-label="'+title+'"><header><div><small>MAIL</small><h2>'+title+'</h2></div><button type="button" data-x aria-label="Close">×</button></header>'
-    +'<div class="mm-form">'+(mode==='new'||mode==='forward'?'<label><span>To</span><input id="mm-to" list="mm-sug" value="'+esc(to)+'" placeholder="name@example.com, …" autocomplete="off"></label>':'<label><span>To</span><input id="mm-to" list="mm-sug" value="'+esc(to)+'" autocomplete="off"></label>')
-    +(mode==='new'?'<div class="mm-ccrow"><label><span>Cc</span><input id="mm-cc" list="mm-sug" autocomplete="off"></label><label><span>Bcc</span><input id="mm-bcc" list="mm-sug" value="'+esc(o.bcc||'')+'" autocomplete="off"></label></div>':'')
-    +(mode==='new'?'<label><span>Subject</span><input id="mm-subject" maxlength="300" value="'+esc(o.subject||'')+'"></label>':'<label><span>Subject</span><input id="mm-subject" value="'+esc(subj)+'" disabled></label>')
-    +'<label><span>Message</span><textarea id="mm-text" rows="10" placeholder="'+(m?'Write your reply — the original message is quoted below automatically.':'Write your message…')+'"></textarea></label>'
-    +(mode==='new'?'<div class="mm-attach"><button type="button" class="mm-btn" id="mm-addfile">📎 Attach files</button><input type="file" id="mm-file" multiple hidden><span id="mm-files" class="mm-fine">Up to 8 files, 3 MB total.</span></div>':'')
+  function row(id,label,extra){return '<div class="mmx-row" data-f="'+id+'"'+(extra||'')+'><span class="mmx-lab">'+label+'</span><div class="mmx-chips"><input class="mmx-in" id="mm-'+id+'-in" list="mm-sug" autocomplete="off" placeholder="'+(id==='to'?'Add recipients':'')+'" aria-label="'+label+'"></div><input type="hidden" id="mm-'+id+'">'+(id==='to'?'<span class="mmx-tog"><button type="button" data-show="cc">Cc</button><button type="button" data-show="bcc">Bcc</button></span>':'')+'</div>';}
+  back.innerHTML='<section class="mm-modal mmx" role="dialog" aria-modal="true" aria-label="New message">'
+    +'<header class="mmx-h"><div><b>New message</b>'+(from?'<span>From '+esc(from)+'</span>':'')+'</div><button type="button" data-x aria-label="Close">×</button></header>'
+    +'<div class="mmx-body">'+row('to','To')+row('cc','Cc',' hidden')+row('bcc','Bcc',' hidden')
+    +'<div class="mmx-row"><span class="mmx-lab">Subject</span><input class="mmx-in grow" id="mm-subject" maxlength="300" placeholder="What is this about?" autocomplete="off"></div>'
+    +'<textarea id="mm-text" class="mmx-text" placeholder="Write your message…" aria-label="Message"></textarea>'
+    +'<div class="mmx-files" id="mm-files" hidden></div>'
     +'<datalist id="mm-sug">'+sugOptions()+'</datalist></div>'
-    +'<p class="mm-err" id="mm-cerr"></p><footer>'+copySelect('mm-copy')+'<span class="mm-sp"></span><button type="button" class="mm-btn" data-x>Cancel</button><button type="button" class="mm-btn gold" id="mm-send">Send</button></footer></section>';
+    +'<p class="mm-err" id="mm-cerr"></p>'
+    +'<footer class="mmx-f"><div class="mmx-tools"><button type="button" class="mmx-attach" id="mm-addfile"><span aria-hidden="true">📎</span> Attach</button><input type="file" id="mm-file" multiple hidden>'+copySelect('mm-copy')+'</div><span class="mm-sp"></span><span class="mmx-hint">Ctrl/⌘ + Enter</span><button type="button" class="mm-btn" data-x>Cancel</button><button type="button" class="mm-btn gold" id="mm-send">Send</button></footer></section>';
   document.body.appendChild(back);
   var files=[],sentVia=null,$=function(q){return back.querySelector(q);};
-  function close(){back.remove();}
-  back.querySelectorAll('[data-x]').forEach(function(x){x.onclick=close;});
-  back.addEventListener('mousedown',function(e){if(e.target===back&&!$('#mm-text').value.trim())close();});
-  var af=$('#mm-addfile');if(af){af.onclick=function(){$('#mm-file').click();};$('#mm-file').onchange=function(){files=files.concat([].slice.call(this.files)).slice(0,8);this.value='';var tot=files.reduce(function(n,f){return n+f.size;},0);$('#mm-files').textContent=files.length?files.map(function(f){return f.name;}).join(', ')+' ('+size(tot)+')':'Up to 8 files, 3 MB total.';};}
-  setTimeout(function(){var sb=$('#mm-subject');($('#mm-to').value?(mode==='new'&&sb&&!sb.value?sb:$('#mm-text')):$('#mm-to')).focus();},50);
-  if(mode==='new')ensureDirectory(function(){var dl=back.querySelector('#mm-sug');if(dl)dl.innerHTML=sugOptions();});
+  var BAD=function(a){return !EMAIL_RE.test(a);};
+
+  /* recipient chips: type or paste addresses; comma, semicolon, Enter or leaving the box turns them into chips */
+  function chipField(id){
+    var rowEl=$('[data-f="'+id+'"]'),inp=$('#mm-'+id+'-in'),hid=$('#mm-'+id),box=rowEl.querySelector('.mmx-chips'),list=[];
+    function sync(){hid.value=list.join(', ');}
+    function paint(){
+      box.querySelectorAll('.mmx-chip').forEach(function(n){n.remove();});
+      list.forEach(function(a,i){var c=document.createElement('span');c.className='mmx-chip'+(BAD(a)?' bad':'');c.title=BAD(a)?'This does not look like an email address':a;
+        var t=document.createElement('span');t.textContent=a;var x=document.createElement('button');x.type='button';x.setAttribute('aria-label','Remove '+a);x.textContent='×';
+        x.onclick=function(){list.splice(i,1);paint();inp.focus();};c.appendChild(t);c.appendChild(x);box.insertBefore(c,inp);});
+      sync();
+    }
+    function add(raw){String(raw||'').split(/[,;\n]+/).forEach(function(part){var t=part.trim();if(!t)return;var m=t.match(/<([^>]+)>\s*$/);if(m)t=m[1].trim();if(t&&list.map(function(x){return x.toLowerCase();}).indexOf(t.toLowerCase())<0)list.push(t);});paint();}
+    function commit(){if(inp.value.trim()){add(inp.value);inp.value='';}}
+    inp.addEventListener('input',function(e){
+      var v=inp.value;
+      if(/[,;]\s*$/.test(v)||(/\s$/.test(v)&&EMAIL_RE.test(v.trim()))||(e&&e.inputType==='insertReplacementText'&&EMAIL_RE.test(v.trim()))||(e&&!e.inputType&&EMAIL_RE.test(v.trim())))commit();
+    });
+    inp.addEventListener('paste',function(){setTimeout(commit,0);});
+    inp.addEventListener('keydown',function(e){
+      if(e.key==='Enter'&&inp.value.trim()&&!(e.metaKey||e.ctrlKey)){e.preventDefault();commit();}
+      else if(e.key==='Backspace'&&!inp.value&&list.length){list.pop();paint();}
+    });
+    inp.addEventListener('blur',commit);
+    box.addEventListener('mousedown',function(e){if(e.target===box){e.preventDefault();inp.focus();}});
+    return {add:add,commit:commit,get:function(){commit();return list.slice();},has:function(){return list.length>0||!!inp.value.trim();}};
+  }
+  var F={to:chipField('to'),cc:chipField('cc'),bcc:chipField('bcc')};
+  function reveal(id){var r=$('[data-f="'+id+'"]');r.hidden=false;var tg=$('[data-show="'+id+'"]');if(tg)tg.hidden=true;return r;}
+  back.querySelectorAll('[data-show]').forEach(function(b){b.onclick=function(){var r=reveal(b.dataset.show);r.querySelector('.mmx-in').focus();};});
+  if(o.to)F.to.add(o.to);
+  if(o.bcc){F.bcc.add(o.bcc);reveal('bcc');}
+  if(o.subject)$('#mm-subject').value=o.subject;
+
+  function dirty(){return $('#mm-text').value.trim()||F.to.has()||F.cc.has()||F.bcc.has()||$('#mm-subject').value.trim()||files.length;}
+  function close(){back.remove();document.removeEventListener('keydown',onKey,true);}
+  function tryClose(){if(dirty()&&!window.confirm('Discard this message?'))return;close();}
+  function onKey(e){
+    if(!document.body.contains(back))return;
+    if(e.key==='Escape'){e.stopPropagation();tryClose();}
+    else if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();$('#mm-send').click();}
+  }
+  document.addEventListener('keydown',onKey,true);
+  back.querySelectorAll('[data-x]').forEach(function(x){x.onclick=tryClose;});
+  back.addEventListener('mousedown',function(e){if(e.target===back&&!dirty())close();});
+
+  /* attachments */
+  function paintFiles(){
+    var box=$('#mm-files'),tot=files.reduce(function(n,f){return n+f.size;},0);
+    box.hidden=!files.length;box.innerHTML='';
+    files.forEach(function(f,i){var c=document.createElement('span');c.className='mmx-file';var n=document.createElement('span');n.textContent=f.name;var z=document.createElement('em');z.textContent=size(f.size);var x=document.createElement('button');x.type='button';x.setAttribute('aria-label','Remove '+f.name);x.textContent='×';x.onclick=function(){files.splice(i,1);paintFiles();};c.appendChild(n);c.appendChild(z);c.appendChild(x);box.appendChild(c);});
+    if(files.length){var t=document.createElement('small');t.textContent=files.length+' of 8 · '+size(tot)+' of 3 MB';if(tot>3*1048576)t.className='over';box.appendChild(t);}
+  }
+  $('#mm-addfile').onclick=function(){$('#mm-file').click();};
+  $('#mm-file').onchange=function(){files=files.concat([].slice.call(this.files)).slice(0,8);this.value='';paintFiles();};
+
+  setTimeout(function(){var f=!F.to.has()?$('#mm-to-in'):(!$('#mm-subject').value?$('#mm-subject'):$('#mm-text'));f.focus();},50);
+  ensureDirectory(function(){var dl=back.querySelector('#mm-sug');if(dl)dl.innerHTML=sugOptions();});
+
   $('#mm-send').onclick=async function(){
     var btn=this,err=$('#mm-cerr');err.textContent='';
     try{
-      var text=$('#mm-text').value,toV=$('#mm-to').value.trim();
-      if(!toV)throw new Error('Add at least one recipient.');
-      if(mode!=='new'&&!text.trim())throw new Error('Write a message first.');
+      var to=F.to.get(),cc=F.cc.get(),bcc=F.bcc.get(),text=$('#mm-text').value;
+      var bad=to.concat(cc,bcc).filter(BAD);
+      if(!to.length)throw new Error('Add at least one recipient.');
+      if(bad.length)throw new Error('"'+bad[0]+'" is not a valid email address. Remove it or fix it.');
+      var tot=files.reduce(function(n,f){return n+f.size;},0);if(tot>3*1048576)throw new Error('Attachments are over 3 MB in total.');
+      if(!$('#mm-subject').value.trim()&&!text.trim())throw new Error('Write a subject or a message first.');
       setCopyPref($('#mm-copy').value);btn.disabled=true;btn.textContent='Sending…';
-      if(mode==='new'){
-        var tot=files.reduce(function(n,f){return n+f.size;},0);if(tot>3*1048576)throw new Error('Attachments are over 3 MB in total.');
-        var atts=await Promise.all(files.map(readFile));
-        sentVia=await call('send',{to:toV,cc:$('#mm-cc').value,bcc:$('#mm-bcc').value,subject:$('#mm-subject').value,text:text,attachments:atts,copy_to:$('#mm-copy').value});
-      }else{
-        sentVia=await call('reply',{id:m.id,mode:mode==='replyAll'?'replyAll':mode,to:toV,text:text,copy_to:$('#mm-copy').value});
-      }
+      var atts=await Promise.all(files.map(readFile));
+      sentVia=await call('send',{to:to.join(', '),cc:cc.join(', '),bcc:bcc.join(', '),subject:$('#mm-subject').value,text:text,attachments:atts,copy_to:$('#mm-copy').value});
       close();toast(sentToast(sentVia));if(S.folder==='sentitems')loadList(true);
     }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
   };
