@@ -223,17 +223,16 @@ function compose(o){
   o=o||{};
   var old=document.getElementById('mm-modal');if(old)old.remove();
   var from=String((S.status&&S.status.email)||'');
-  var back=document.createElement('div');back.id='mm-modal';back.className='mm-modal-back';
+  var back=document.createElement('section');back.id='mm-modal';back.className='mmx mmx-dock';back.setAttribute('role','dialog');back.setAttribute('aria-label','New message');
   function row(id,label,extra){return '<div class="mmx-row" data-f="'+id+'"'+(extra||'')+'><span class="mmx-lab">'+label+'</span><div class="mmx-chips"><input class="mmx-in" id="mm-'+id+'-in" list="mm-sug" autocomplete="off" placeholder="'+(id==='to'?'Add recipients':'')+'" aria-label="'+label+'"></div><input type="hidden" id="mm-'+id+'">'+(id==='to'?'<span class="mmx-tog"><button type="button" data-show="cc">Cc</button><button type="button" data-show="bcc">Bcc</button></span>':'')+'</div>';}
-  back.innerHTML='<section class="mm-modal mmx" role="dialog" aria-modal="true" aria-label="New message">'
-    +'<header class="mmx-h"><div><b>New message</b>'+(from?'<span>From '+esc(from)+'</span>':'')+'</div><button type="button" data-x aria-label="Close">×</button></header>'
+  back.innerHTML='<header class="mmx-h"><div><b>New message</b>'+(from?'<span>From '+esc(from)+'</span>':'')+'</div><span class="mmx-hb"><button type="button" data-min aria-label="Minimize" title="Minimize">–</button><button type="button" data-x aria-label="Close" title="Close">×</button></span></header>'
     +'<div class="mmx-body">'+row('to','To')+row('cc','Cc',' hidden')+row('bcc','Bcc',' hidden')
     +'<div class="mmx-row"><span class="mmx-lab">Subject</span><input class="mmx-in grow" id="mm-subject" maxlength="300" placeholder="What is this about?" autocomplete="off"></div>'
     +'<textarea id="mm-text" class="mmx-text" placeholder="Write your message…" aria-label="Message"></textarea>'
     +'<div class="mmx-files" id="mm-files" hidden></div>'
     +'<datalist id="mm-sug">'+sugOptions()+'</datalist></div>'
     +'<p class="mm-err" id="mm-cerr"></p>'
-    +'<footer class="mmx-f"><div class="mmx-tools"><button type="button" class="mmx-attach" id="mm-addfile"><span aria-hidden="true">📎</span> Attach</button><input type="file" id="mm-file" multiple hidden>'+copySelect('mm-copy')+'</div><span class="mm-sp"></span><span class="mmx-hint">Ctrl/⌘ + Enter</span><button type="button" class="mm-btn" data-x>Cancel</button><button type="button" class="mm-btn gold" id="mm-send">Send</button></footer></section>';
+    +'<footer class="mmx-f"><div class="mmx-tools"><button type="button" class="mmx-attach" id="mm-addfile"><span aria-hidden="true">📎</span> Attach</button><input type="file" id="mm-file" multiple hidden>'+copySelect('mm-copy')+'</div><span class="mm-sp"></span><span class="mmx-hint">Ctrl/⌘ + Enter</span><button type="button" class="mm-btn" data-x>Cancel</button><button type="button" class="mm-btn gold" id="mm-send">Send</button></footer>';
   document.body.appendChild(back);
   var files=[],sentVia=null,$=function(q){return back.querySelector(q);};
   var BAD=function(a){return !EMAIL_RE.test(a);};
@@ -281,7 +280,8 @@ function compose(o){
   }
   document.addEventListener('keydown',onKey,true);
   back.querySelectorAll('[data-x]').forEach(function(x){x.onclick=tryClose;});
-  back.addEventListener('mousedown',function(e){if(e.target===back&&!dirty())close();});
+  var mn=$('[data-min]');mn.onclick=function(){var m=back.classList.toggle('min');mn.textContent=m?'▢':'–';mn.title=m?'Expand':'Minimize';mn.setAttribute('aria-label',mn.title);if(!m)setTimeout(function(){$('#mm-text').focus();},0);};
+  $('.mmx-h').addEventListener('dblclick',function(e){if(!e.target.closest('button'))mn.click();});
 
   /* attachments */
   function paintFiles(){

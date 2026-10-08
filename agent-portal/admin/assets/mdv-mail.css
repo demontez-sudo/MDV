@@ -169,3 +169,14 @@ html body .mmx .mmx-in{flex:1 1 140px;width:auto;min-width:120px;padding:6px 0!i
 html body .mmx .mmx-in.grow{flex:1;width:100%}
 html body .mmx .mmx-text{padding:16px 0!important}
 html body .mmx .mm-copy select{background:var(--mdv-field,#0b0a08)!important}
+
+/* New message: a docked window (no dimmed backdrop), so the mailbox stays visible and usable behind it */
+.mmx.mmx-dock{position:fixed;right:150px;bottom:0;z-index:10060;width:min(680px,calc(100vw - 32px));max-height:min(80vh,720px);display:flex;flex-direction:column;overflow:hidden;
+  background:var(--mdv-panel,#14120f);color:var(--mdv-ink,#f3efe8);border:1px solid var(--mdv-line,rgba(217,184,102,.3));border-bottom:0;border-radius:14px 14px 0 0;box-shadow:0 -10px 50px rgba(0,0,0,.55);font-family:Inter,system-ui,sans-serif}
+.mmx.mmx-dock.min{max-height:none}
+.mmx.mmx-dock.min>.mmx-body,.mmx.mmx-dock.min>.mm-err,.mmx.mmx-dock.min>.mmx-f{display:none}
+.mmx-hb{display:flex;align-items:center;gap:2px}
+.mmx.mmx-dock>.mmx-h{cursor:default}
+.mmx.mmx-dock.min>.mmx-h{border-bottom:0}
+@media(max-width:1100px){.mmx.mmx-dock{right:16px}}
+@media(max-width:700px){.mmx.mmx-dock{left:8px;right:8px;width:auto;bottom:120px;max-height:calc(100vh - 140px);border-bottom:1px solid var(--mdv-line,rgba(217,184,102,.3));border-radius:14px}}
