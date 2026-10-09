@@ -5,7 +5,7 @@
 if(window.__MDV_MAIL__)return;window.__MDV_MAIL__=true;
 
 var S={host:null,status:null,loading:false,err:'',folder:'inbox',folders:[],messages:[],next:null,listLoading:false,listErr:'',search:'',unreadOnly:false,
-  sel:null,detail:null,detailLoading:false,showImages:false,readerOpen:false,timer:null,seq:0,senders:{}};
+  sel:null,detail:null,detailLoading:false,showImages:false,readerOpen:false,timer:null,seq:0,senders:{},listScroll:0};
 
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function arr(v){return Array.isArray(v)?v:[];}
@@ -40,7 +40,7 @@ async function boot(force){
 async function loadFolders(){try{var d=await call('folders');S.folders=arr(d.folders);}catch(e){if(e&&/reconnect/i.test(msg(e))){S.status=Object.assign({},S.status,{connected:false,needs_reconnect:true});}else throw e;}}
 async function loadList(reset){
   if(!S.status||!S.status.connected)return;
-  var token=++S.seq;S.listLoading=true;S.listErr='';if(reset){S.messages=[];S.next=null;}paintList();
+  var token=++S.seq;S.listLoading=true;S.listErr='';if(reset){S.messages=[];S.next=null;S.listScroll=0;}paintList();
   try{
     var d=await call('messages',reset?{folder:S.folder,search:S.search,unread_only:S.unreadOnly}:{next:S.next});
     if(token!==S.seq&&reset)return;
@@ -110,6 +110,7 @@ function paintSide(){
 function paintList(){
   var el=document.getElementById('mm-list');if(!el)return;
   var ae=document.activeElement,hadFocus=!!(ae&&ae.hasAttribute&&ae.hasAttribute('data-q')&&el.contains(ae)),caret=hadFocus?ae.selectionStart:0;
+  var cur=el.querySelector('.mm-rows');if(cur)S.listScroll=cur.scrollTop;
   var fname=(S.folders.filter(function(f){return f.id===S.folder;})[0]||{}).name||'Inbox';
   var rows=S.messages.map(function(m){
     var from=S.folder==='sentitems'||S.folder==='drafts'?('To: '+(arr(m.to).map(who).join(', ')||'(no recipients)')):who(m.from);
@@ -120,6 +121,8 @@ function paintList(){
     +(S.listErr?'<p class="mm-err">'+esc(S.listErr)+' <button class="mm-link" data-a="refresh">Retry</button></p>':'')
     +(S.listLoading?'<p class="mm-empty">Loading…</p>':'')+(S.next&&!S.listLoading?'<button class="mm-btn mm-more" data-a="more">Load more</button>':'')+'</div>';
   wire(el);
+  var rowsEl=el.querySelector('.mm-rows');
+  if(rowsEl){rowsEl.scrollTop=S.listScroll||0;rowsEl.addEventListener('scroll',function(){S.listScroll=rowsEl.scrollTop;},{passive:true});}
   if(hadFocus){var q=el.querySelector('[data-q]');if(q){q.focus();try{q.setSelectionRange(caret,caret);}catch(e){}}}
 }
 function bodyDoc(m,showImages){
