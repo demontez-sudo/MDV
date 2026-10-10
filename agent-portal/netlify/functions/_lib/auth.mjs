@@ -79,10 +79,13 @@ export async function requireUser(event) {
   return { token, user: data.user, client };
 }
 
+/* Areas every active staff member can use, whatever their role. Messages (read and reply) is open to all staff. */
+export const STAFF_DEFAULT_PERMISSIONS = new Set(['messages.read', 'messages.write']);
+
 export async function assertPermission(admin, userId, organizationId, permissionKey) {
   const { data: members, error: memberError } = await admin
     .from('organization_members')
-    .select('id,status')
+    .select('id,status,member_type')
     .eq('organization_id', organizationId)
     .eq('user_id', userId)
     .eq('status', 'active')
@@ -90,6 +93,7 @@ export async function assertPermission(admin, userId, organizationId, permission
   if (memberError) throw memberError;
   const member = members?.[0];
   if (!member) return false;
+  if (member.member_type === 'staff' && STAFF_DEFAULT_PERMISSIONS.has(permissionKey)) return true;
 
   const { data: roleLinks, error: roleError } = await admin
     .from('member_roles')
