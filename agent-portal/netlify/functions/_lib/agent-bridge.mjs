@@ -64,9 +64,30 @@ export async function requirePermission(userId, organizationId, permissionKey) {
   const admin = adminClient();
   const ok = await assertPermission(admin, userId, organizationId, permissionKey);
   if (!ok) {
-    const err = new Error(`Missing permission: ${permissionKey}`); err.statusCode = 403; throw err;
+    const err = new Error(`Missing permission: ${permissionKey}`);
+    err.statusCode = 403; err.code = 'MISSING_PERMISSION';
+    err.publicMessage = accessMessage(permissionKey);
+    throw err;
   }
   return admin;
+}
+
+/* What the person sees when their role does not include something, in plain words. */
+const AREAS = {
+  'messages': 'Messages', 'crm': 'Companies & Clients', 'models': 'the roster', 'models.private': 'private model details',
+  'calendar': 'the calendar', 'bookings': 'bookings', 'tasks': 'tasks', 'finance': 'finance', 'packages': 'packages',
+  'scouting': 'scouting', 'season': 'the season desk', 'mobility': 'travel and visa', 'documents': 'files and forms',
+  'media': 'media', 'development': 'model development', 'availability': 'availability', 'contracts': 'contracts',
+  'communications': 'sending email and messages', 'org': 'agency settings', 'members': 'team management', 'ai': 'Vera',
+  'public_profiles': 'website profiles', 'billing': 'billing', 'usage': 'usage'
+};
+export function accessMessage(permissionKey) {
+  const key = String(permissionKey || '');
+  const [area, action] = [key.split('.').slice(0, -1).join('.') || key, key.split('.').pop()];
+  const label = AREAS[area] || AREAS[area.split('.')[0]] || 'this part of the portal';
+  const edit = /write|manage|send|share|approve|import/.test(action);
+  const head = edit ? `Your role can't make changes in ${label} yet.` : `Your role doesn't include access to ${label} yet.`;
+  return `${head} Ask an admin to add it to your role in Team. (Needs: ${key})`;
 }
 
 export function normalizeStatus(status, allowed, fallback) {
