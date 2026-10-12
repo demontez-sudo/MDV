@@ -3,7 +3,7 @@
 'use strict';
 if(window.__MDV_ATELIER__)return;window.__MDV_ATELIER__=1;
 var KEY='mdv-outlook';
-function outlook(){try{return localStorage.getItem(KEY)==='classic'?'classic':'atelier';}catch(e){return 'atelier';}}
+function outlook(){try{return localStorage.getItem(KEY)==='atelier'?'atelier':'classic';}catch(e){return 'classic';}}
 function apply(v){document.documentElement.setAttribute('data-outlook',v);}
 apply(outlook());
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -58,7 +58,7 @@ function outlookRow(){
   document.querySelectorAll('#vx-wave-settings,.mdv-appearance .v152-settings-grid').forEach(function(host){
     if(!host||host.querySelector('.at-outlook')||host.parentNode.querySelector('.at-outlook'))return;
     var row=document.createElement('div');row.className='at-outlook';
-    function paint(){var cur=outlook();row.innerHTML='<b>Layout</b><button type="button" data-ol="atelier" class="'+(cur==='atelier'?'on':'')+'">Atelier</button><button type="button" data-ol="classic" class="'+(cur==='classic'?'on':'')+'">Classic</button><span>Atelier uses a top menu and square panels. Classic is the previous look with the side icon menu.</span>';
+    function paint(){var cur=outlook();row.innerHTML='<b>Layout</b><button type="button" data-ol="atelier" class="'+(cur==='atelier'?'on':'')+'">Atelier</button><button type="button" data-ol="classic" class="'+(cur==='classic'?'on':'')+'">Classic</button><span>Classic is the side menu. Atelier is an optional top-menu layout with square panels.</span>';
       row.querySelectorAll('[data-ol]').forEach(function(b){b.onclick=function(){window.MDV_OUTLOOK.set(b.dataset.ol);paint();};});}
     paint();host.parentNode.insertBefore(row,host);
   });
