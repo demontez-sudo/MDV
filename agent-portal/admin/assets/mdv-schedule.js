@@ -432,5 +432,10 @@ window.renderDaySchedule=function(el){
   return loadLive(true).then(function(){render(el);});
 };
 (function register(){var n=0,t=setInterval(function(){var m=window.VEUX_V15_ROUTE_RENDERERS;if(m&&typeof m==='object'){m.dayschedule=function(el){return window.renderDaySchedule(el);};clearInterval(t);}else if(++n>120)clearInterval(t);},500);})();
-window.MDV_SCHEDULE={embeddedHtml:embeddedHtml,bindEmbedded:bindEmbedded,evalRule:evalRule,evalWeek:evalWeek,defaults:defaults,state:S,blockSpans:blockSpans,splitBreak:splitBreak};
+function todayFocus(){
+  if(!S.tpl)load();
+  var d=new Date(),id=tplIdFor(d),t=S.tpl[id],sp=blockSpans(t.blocks),deep=sp.filter(function(b){return (b.f||[]).indexOf('deep')>=0})[0]||null;
+  return{name:t.name,id:id,deep:deep?{title:deep.t,start:clock(deep.s),end:clock(deep.end)}:null};
+}
+window.MDV_SCHEDULE={todayFocus:todayFocus,embeddedHtml:embeddedHtml,bindEmbedded:bindEmbedded,evalRule:evalRule,evalWeek:evalWeek,defaults:defaults,state:S,blockSpans:blockSpans,splitBreak:splitBreak};
 })();

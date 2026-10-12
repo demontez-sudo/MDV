@@ -33,7 +33,7 @@ export const handler=async(event)=>{
       // direct and same-org FKs, which can make embedded relationship discovery ambiguous.
       const [invoices,payments,payouts,recon,periods,models,partnerAgencies,companies]=await Promise.all([
         rows(admin.from('invoices').select('*').eq('organization_id',organization.id).order('issue_date',{ascending:false}).limit(250)),
-        rows(admin.from('payments').select('*').eq('organization_id',organization.id).order('created_at',{ascending:false}).limit(250)),
+        rows(admin.from('payments').select('*').eq('organization_id',organization.id).order('created_at',{ascending:false}).limit(1000)),
         rows(admin.from('payouts').select('*').eq('organization_id',organization.id).order('created_at',{ascending:false}).limit(250)),
         rows(admin.from('reconciliation_sessions').select('*').eq('organization_id',organization.id).order('period_end',{ascending:false}).limit(50)),
         rows(admin.from('accounting_periods').select('*').eq('organization_id',organization.id).order('ends_on',{ascending:false}).limit(50)),
