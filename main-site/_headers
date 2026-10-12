@@ -24,5 +24,18 @@
 # build indefinitely. Force it explicitly on this project's own edge.
 /admin
   Cache-Control: no-cache, no-store, must-revalidate
-/admin/*
+/admin/
   Cache-Control: no-cache, no-store, must-revalidate
+/admin/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+/admin/api/*
+  Cache-Control: no-cache, no-store, must-revalidate
+# Portal scripts/styles/fonts are all loaded with a ?v= release stamp, so a
+# new release is a new URL. Letting browsers keep them means the ~150 files
+# the portal needs are not re-downloaded on every visit (this was the slowness).
+/admin/assets/*
+  Cache-Control: public, max-age=3600
+/admin/assets/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+/admin/assets/backdrops/*
+  Cache-Control: public, max-age=604800
