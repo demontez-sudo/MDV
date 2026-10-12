@@ -11,7 +11,6 @@ var PRIMARY=[
  ['calendar','◇','Castings'],
  ['industrydirectory','♡','Relationships'],
  ['calendar','▣','Calendar'],
- ['dayschedule','▤','Schedule'],
  ['tasksconsolidated','<b class="ti ti-circle-check"></b>','Tasks'],
  ['inbox','✉','Messages'],
  ['multipackage','▱','Packages'],
