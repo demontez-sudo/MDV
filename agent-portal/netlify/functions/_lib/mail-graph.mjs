@@ -113,20 +113,43 @@ function graphError(status, body) {
   if (status === 429) return appError(429, 'Microsoft is rate limiting mail requests. Try again in a moment.', 'MAIL_RATE_LIMIT');
   return appError(502, `Microsoft mail request failed${msg ? ': ' + msg : ''}.`, 'MAIL_GRAPH_ERROR');
 }
-export async function ensureAccess(admin, cfg, conn) {
-  if (conn.status === 'needs_reconnect') throw appError(409, 'Your Microsoft sign-in expired. Reconnect your email.', 'MAIL_RECONNECT_REQUIRED');
-  if (conn.access_token_enc && conn.expires_at && Date.parse(conn.expires_at) > Date.now() + 30000) return decrypt(conn.access_token_enc);
-  let t;
-  try { t = await refreshTokens(cfg, decrypt(conn.refresh_token_enc)); }
+/* Keeping people signed in: tokens are refreshed ahead of time, only one refresh runs per mailbox at a time, and a
+   mailbox is only marked "needs reconnect" after we have checked that no other request already renewed it. */
+const flights = new Map();
+const wait = ms => new Promise(r => setTimeout(r, ms));
+async function refreshWithRetry(cfg, refresh) {
+  try { return await refreshTokens(cfg, refresh); }
+  catch (e) { if (e.code === 'MAIL_TOKEN_ERROR' || !e.code) { await wait(700); return refreshTokens(cfg, refresh); } throw e; }
+}
+async function renew(admin, cfg, conn) {
+  const used = conn.refresh_token_enc;
+  let t = null;
+  try { t = await refreshWithRetry(cfg, decrypt(used)); }
   catch (e) {
-    if (e.code === 'MAIL_RECONNECT_REQUIRED') { try { await admin.from('mail_connections').update({ status: 'needs_reconnect', updated_at: new Date().toISOString() }).eq('id', conn.id); } catch (_x) { /* best effort */ } }
-    throw e;
+    if (e.code !== 'MAIL_RECONNECT_REQUIRED') throw e;
+    /* Another request (or the keep-alive job) may have rotated the token a moment ago. */
+    const { data: fresh } = await admin.from('mail_connections').select('*').eq('id', conn.id).maybeSingle();
+    if (fresh && fresh.status !== 'needs_reconnect') {
+      if (fresh.access_token_enc && fresh.expires_at && Date.parse(fresh.expires_at) > Date.now() + 30000) { Object.assign(conn, fresh); return decrypt(fresh.access_token_enc); }
+      if (fresh.refresh_token_enc && fresh.refresh_token_enc !== used) { try { t = await refreshTokens(cfg, decrypt(fresh.refresh_token_enc)); } catch (_e2) { /* fall through */ } }
+    }
+    if (!t) {
+      try { await admin.from('mail_connections').update({ status: 'needs_reconnect', updated_at: new Date().toISOString() }).eq('id', conn.id); } catch (_x) { /* best effort */ }
+      throw e;
+    }
   }
   const upd = { access_token_enc: encrypt(t.access), expires_at: t.expiresAt, updated_at: new Date().toISOString(), status: 'active' };
   if (t.refresh) upd.refresh_token_enc = encrypt(t.refresh);
   await admin.from('mail_connections').update(upd).eq('id', conn.id);
   Object.assign(conn, upd);
   return t.access;
+}
+export async function ensureAccess(admin, cfg, conn, { force = false } = {}) {
+  if (conn.status === 'needs_reconnect') throw appError(409, 'Your Microsoft sign-in expired. Reconnect your email.', 'MAIL_RECONNECT_REQUIRED');
+  if (!force && conn.access_token_enc && conn.expires_at && Date.parse(conn.expires_at) > Date.now() + 120000) return decrypt(conn.access_token_enc);
+  let p = flights.get(conn.id);
+  if (!p) { p = renew(admin, cfg, conn).finally(() => flights.delete(conn.id)); flights.set(conn.id, p); }
+  return p;
 }
 export async function graph(admin, cfg, conn, pathOrUrl, { method = 'GET', body, headers = {}, raw = false } = {}) {
   if (/^[a-z][a-z0-9+.-]*:/i.test(pathOrUrl) && !/^https:\/\/graph\.microsoft\.com\/v1\.0\//.test(pathOrUrl)) throw appError(400, 'That link is not a Microsoft Graph address.', 'MAIL_BAD_URL');
