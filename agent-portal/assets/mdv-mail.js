@@ -51,16 +51,20 @@ async function loadList(reset){
 }
 async function openMessage(id){
   if(S.compose){if(S.compose.dirty()&&!window.confirm('Discard your draft?'))return;S.compose.close();}
+  var had=!!(S.detail&&!S.detail.error&&document.getElementById('mm-reader'));
   S.sel=id;S.reply=null;S.detail=null;S.detailLoading=true;S.showImages=false;S.readerOpen=true;
   var mmEl=S.host&&S.host.querySelector('.mm');if(mmEl)mmEl.classList.add('read-open');
-  paintList();paintReader();
+  markSelected();
+  if(had){var rd=document.getElementById('mm-reader');if(rd)rd.classList.add('mm-busy');}else paintReader();
   try{
     var d=await call('message',{id:id});if(S.sel!==id)return;
     S.detail={m:d.message,att:arr(d.attachments)};
     var row=S.messages.filter(function(x){return x.id===id;})[0];
     if(row&&!row.is_read){row.is_read=true;var f=S.folders.filter(function(x){return x.id===S.folder;})[0];if(f&&f.unread>0)f.unread--;}
   }catch(e){S.detail={error:msg(e)};}
-  S.detailLoading=false;paintList();paintSide();paintReader();
+  S.detailLoading=false;markSelected();markRead(id);syncFolderBadge();
+  var rd2=document.getElementById('mm-reader');if(rd2)rd2.classList.remove('mm-busy');
+  paintReader();
 }
 function startTimer(){
   if(S.timer)return;
@@ -106,6 +110,14 @@ function paintSide(){
     +'<nav class="mm-folders">'+S.folders.map(function(f){return '<button class="'+(S.folder===f.id?'on':'')+'" data-a="folder" data-id="'+esc(f.id)+'"><span>'+esc(f.name)+'</span>'+(f.unread?'<em>'+f.unread+'</em>':'')+'</button>';}).join('')+'</nav>'
     +'';
   wire(el);
+}
+/* Opening an email only needs the selected row and the unread badge updated, not the whole list and sidebar rebuilt. */
+function markSelected(){document.querySelectorAll('#mm-list .mm-row').forEach(function(r){r.classList.toggle('on',r.getAttribute('data-id')===S.sel);});}
+function markRead(id){var r=document.querySelector('#mm-list .mm-row[data-id="'+String(id).replace(/"/g,'')+'"]');if(r)r.classList.remove('unread');}
+function syncFolderBadge(){
+  var f=S.folders.filter(function(x){return x.id===S.folder;})[0],b=document.querySelector('#mm-side [data-a="folder"][data-id="'+String(S.folder).replace(/"/g,'')+'"]');
+  if(!f||!b)return;var em=b.querySelector('em');
+  if(f.unread){if(!em){em=document.createElement('em');b.appendChild(em);}em.textContent=f.unread;}else if(em)em.remove();
 }
 function paintList(){
   var el=document.getElementById('mm-list');if(!el)return;

@@ -180,3 +180,5 @@ html body .mmx .mm-copy select{background:var(--mdv-field,#0b0a08)!important}
 /* The portal has an old global rule that spaces out every button and label (.14em). Mail rows, folders and plain labels are buttons/labels, so reset them here. Real buttons (.mm-btn etc.) keep their own spacing. */
 html body :is(.mm,.mm-widget,.mmx,.mm-reply,.mm-setcard) :is(button:not([class*="btn"]):not(.mmx-attach),label){letter-spacing:0}
 html body .mm .mm-chk,html body .mmx .mm-copy,html body .mm-reply .mm-copy{letter-spacing:.01em}
+
+.mm-reader.mm-busy>*{opacity:.55;transition:opacity .15s ease}.mm-reader.mm-busy{pointer-events:none}
