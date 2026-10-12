@@ -87,7 +87,7 @@ export const handler = async event => {
 
     if (action === 'attachment') {
       const id = safeId(body.id), aid = safeId(body.attachment_id);
-      const a = await G(`/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(aid)}?$select=name,size,contentType,contentBytes`);
+      const a = await G(`/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(aid)}`); /* no $select: contentBytes only exists on fileAttachment, so selecting it on the base type fails */
       if (!a?.contentBytes) throw appError(409, 'That attachment cannot be downloaded here. Open it in Outlook.', 'MAIL_ATTACHMENT_UNSUPPORTED');
       if ((a.size || 0) > 4.5 * 1048576) throw appError(413, 'That attachment is too large to download here. Open it in Outlook.', 'MAIL_ATTACHMENT_TOO_BIG');
       return json(200, { ok: true, name: a.name, content_type: a.contentType, content_base64: a.contentBytes });
