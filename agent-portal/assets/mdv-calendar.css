@@ -511,7 +511,7 @@ html body #p-calendar .vx75-calendar.is-plan>.vx75-control .vx75-identity small{
 .pl-pill:hover{border-color:var(--mdv-gold)}.pl-pill.on{background:var(--mdv-gold);border-color:var(--mdv-gold);color:#15110c}.pl-pill.on b{color:#15110c}.pl-pill.on .pl-dot.has{background:#15110c}
 .pl-pill.today:not(.on) b{color:var(--mdv-gold)}.pl-pill.free{opacity:.65}
 .pl-pill.vx100-drop-target{border-color:var(--mdv-gold);background:color-mix(in srgb,var(--mdv-gold) 22%,transparent)}.pl-pill.vx100-drop-risk{border-color:#e0685a}
-.pl-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(260px,1fr);gap:12px;align-items:start;min-width:0}
+.pl-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,1fr);gap:12px;align-items:start;min-width:0}.pl-left,.pl-right{display:grid;gap:12px;min-width:0;align-content:start}
 .pl-card,.pl-side{border:1px solid var(--mdv-line-2);background:var(--mdv-panel);border-radius:12px;min-width:0}
 .pl-card{padding:16px 18px 6px}
 .pl-card>header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
@@ -560,3 +560,12 @@ html body #p-calendar .mdv2-mkt b{font-size:16px!important}
 html body #p-calendar .mdv2-pipe,html body #p-calendar .mdv2-seg button,html body #p-calendar .mdv2-all,html body #p-calendar .mdv2-more,html body #p-calendar .mdv2-cat,html body #p-calendar .mdv2-model,html body #p-calendar .mdv2-reset{font-size:12px!important}
 html body #p-calendar .mdv2-pipe{padding:7px 14px!important}html body #p-calendar .mdv2-cat{padding:5px 11px!important}html body #p-calendar .mdv2-seg button{padding:6px 12px!important}
 html body #p-calendar .vx75-calendar{min-width:0;max-width:100%}
+
+/* Market week and Rules for every day inside the Agenda */
+.pl-right .sc-embed{display:grid;gap:12px;padding:0}
+.sc-embed .sc-panel{padding:14px 16px;border-radius:12px}.sc-embed .sc-panel h3{font-size:18px}
+.sc-embed .sc-mk-sum{font-size:11px;gap:10px}.sc-embed .sc-mrow{padding:9px 0;gap:10px;grid-template-columns:48px 1fr 1fr}.sc-embed .sc-mhead{grid-template-columns:48px 1fr 1fr;gap:10px}
+.sc-embed .sc-mrow>b{font-size:16px}.sc-embed .sc-mrow>b small{font-size:10px}.sc-embed .sc-mc{font-size:12px}.sc-embed .sc-mc small{font-size:10px}
+.sc-embed .sc-seg button{padding:4px 10px;font-size:11px}
+.sc-embed .sc-rules li{padding:10px 0;gap:10px;grid-template-columns:30px 1fr}.sc-embed .sc-rn{font-size:16px}.sc-embed .sc-rules b{font-size:13px}.sc-embed .sc-rules em{font-size:11.5px}
+.sc-embed .sc-fine{font-size:10.5px}
