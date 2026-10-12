@@ -152,12 +152,66 @@ function paintReader(){
   var hasRemote=m.body_type==='html'&&/<img[^>]+src=["']?https?:/i.test(m.body);
   el.innerHTML='<header class="mm-rh"><button class="mm-back mm-only-mobile" data-a="close">← Back</button><h2>'+esc(m.subject)+'</h2>'
     +'<div class="mm-from"><span class="mm-av big">'+esc(initials(who(m.from)))+'</span><div><b>'+esc(who(m.from))+'</b> <span>&lt;'+esc(m.from?m.from.address:'')+'&gt;</span><small>To: '+esc(m.to.map(who).join(', ')||'—')+(m.cc.length?' · Cc: '+esc(m.cc.map(who).join(', ')):'')+' · '+esc(whenFull(m.received))+'</small></div></div>'
-    +'<div class="mm-actions"><button class="mm-btn" data-a="reply">Reply</button><button class="mm-btn" data-a="replyAll">Reply all</button><button class="mm-btn" data-a="forward">Forward</button><span class="mm-sp"></span><button class="mm-btn" data-a="unread">Mark unread</button><button class="mm-btn" data-a="archive">Archive</button><button class="mm-btn danger" data-a="delete">Delete</button>'+(m.web_link?'<a class="mm-btn" href="'+esc(m.web_link)+'" target="_blank" rel="noopener noreferrer">Open in Outlook</a>':'')+'</div>'
+    +'<div class="mm-actions"><button class="mm-btn mm-thr" id="mm-thr" data-a="thread" hidden></button><button class="mm-btn" data-a="reply">Reply</button><button class="mm-btn" data-a="replyAll">Reply all</button><button class="mm-btn" data-a="forward">Forward</button><span class="mm-sp"></span><button class="mm-btn" data-a="unread">Mark unread</button><button class="mm-btn" data-a="archive">Archive</button><button class="mm-btn danger" data-a="delete">Delete</button>'+(m.web_link?'<a class="mm-btn" href="'+esc(m.web_link)+'" target="_blank" rel="noopener noreferrer">Open in Outlook</a>':'')+'</div>'
     +(att.length?'<div class="mm-atts">'+att.map(function(a){return '<button class="mm-att" data-a="download" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'"><i>'+esc((a.name.split('.').pop()||'file').slice(0,4).toUpperCase())+'</i><span>'+esc(a.name)+'</span><em>'+esc(size(a.size))+'</em></button>';}).join('')+'</div>':'')
     +(hasRemote&&!S.showImages?'<div class="mm-imgs">Images are hidden to protect your privacy. <button class="mm-link" data-a="images">Show images</button></div>':'')+'</header>'
-    +'<iframe class="mm-body" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Message body"></iframe>';
+    +'<iframe class="mm-body" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Message body"></iframe>'
+    +'<div class="mm-thread" id="mm-thread" hidden></div>';
   el.querySelector('iframe').srcdoc=bodyDoc(m,S.showImages);
-  wire(el);paintReply();
+  wire(el);paintReply();loadThread(m.id);
+}
+
+/* ---------- conversation: the whole back-and-forth, oldest first ---------- */
+function threadOpen(){try{return localStorage.getItem('mdv-mail-thread')==='1';}catch(e){return false;}}
+function setThreadOpen(v){try{localStorage.setItem('mdv-mail-thread',v?'1':'0');}catch(e){}}
+async function loadThread(id){
+  if(S.thread&&S.thread.id===id){paintThread();return;}
+  S.thread={id:id,items:[],bodies:{},open:{},loading:true};paintThread();
+  try{
+    var d=await call('thread',{id:id});if(S.sel!==id)return;
+    S.thread.items=arr(d.messages);
+  }catch(e){if(S.sel!==id)return;S.thread.items=[];}
+  S.thread.loading=false;paintThread();
+}
+function tBody(id){
+  var T=S.thread,m=S.detail&&S.detail.m;
+  if(m&&m.id===id)return Promise.resolve(m);
+  if(T.bodies[id])return Promise.resolve(T.bodies[id]);
+  return call('message',{id:id}).then(function(d){T.bodies[id]=d.message;return d.message;});
+}
+function paintThread(){
+  var btn=document.getElementById('mm-thr'),box=document.getElementById('mm-thread'),fr=document.querySelector('#mm-reader .mm-body'),T=S.thread;
+  if(!btn||!box||!fr)return;
+  var n=T&&T.id===S.sel?T.items.length:0;
+  if(n<2){btn.hidden=!(T&&T.id===S.sel&&T.loading);if(!btn.hidden){btn.textContent='Conversation…';btn.disabled=true;}box.hidden=true;fr.hidden=false;return;}
+  var open=threadOpen();
+  btn.hidden=false;btn.disabled=false;btn.textContent='Conversation · '+n;btn.classList.toggle('on',open);
+  fr.hidden=open;box.hidden=!open;
+  if(!open)return;
+  var cur=S.sel,keep=box.scrollTop;
+  box.innerHTML='<div class="mm-tbar"><span>'+n+' messages in this conversation, oldest first</span><button class="mm-link" data-t="all">Expand all</button><button class="mm-link" data-t="none">Collapse all</button></div>'
+    +T.items.map(function(x){
+      var on=x.id===cur||T.open[x.id];
+      return '<article class="mm-tc'+(x.mine?' mine':'')+(x.id===cur?' cur':'')+(on?' open':'')+'" data-id="'+esc(x.id)+'"><button class="mm-tch" data-t="toggle" data-id="'+esc(x.id)+'" aria-expanded="'+(on?'true':'false')+'"><span class="mm-av">'+esc(initials(who(x.from)))+'</span><span class="mm-tw"><b>'+esc(x.mine?'You':who(x.from))+'</b>'+(x.id===cur?'<em>Replying to this</em>':'')+'<small>'+esc(on?('To: '+arr(x.to).map(who).join(', ')):x.preview)+'</small></span><time>'+esc(whenFull(x.received))+'</time></button>'+(on?'<iframe class="mm-tcb" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Message" data-id="'+esc(x.id)+'"></iframe>':'')+'</article>';
+    }).join('');
+  box.scrollTop=keep;
+  box.querySelectorAll('[data-t]').forEach(function(b){b.onclick=function(e){e.stopPropagation();var k=b.dataset.t;
+    if(k==='all'){T.items.forEach(function(x){T.open[x.id]=true;});}
+    else if(k==='none'){T.open={};}
+    else{var id=b.dataset.id;if(id===cur){var c=box.querySelector('.mm-tc[data-id="'+id.replace(/"/g,'')+'"]');c.classList.toggle('open');var f=c.querySelector('iframe');if(f)f.hidden=!c.classList.contains('open');if(!f)paintThreadBodies(box);return;}T.open[id]=!T.open[id];}
+    paintThread();};});
+  paintThreadBodies(box);
+  if(!T.scrolled){T.scrolled=true;var c=box.querySelector('.mm-tc.cur');if(c)setTimeout(function(){box.scrollTop=Math.max(0,c.offsetTop-box.offsetTop-8);},60);}
+}
+function paintThreadBodies(box){
+  box.querySelectorAll('iframe.mm-tcb').forEach(function(f){
+    if(f.dataset.done)return;f.dataset.done='1';
+    tBody(f.dataset.id).then(function(m){
+      if(!f.isConnected)return;
+      f.onload=function(){try{f.style.height='24px';var h=f.contentDocument.documentElement.scrollHeight;f.style.height=Math.min(Math.max(h,60),640)+'px';}catch(e){}};
+      f.srcdoc=bodyDoc(m,S.showImages);
+    }).catch(function(e){if(f.isConnected){f.style.height='auto';f.srcdoc='<p style="font:13px sans-serif;color:#a33;padding:14px">'+esc(msg(e))+'</p>';}});
+  });
 }
 
 /* ---------- interactions ---------- */
@@ -178,6 +232,7 @@ async function act(a,b){
     if(a==='close'){S.readerOpen=false;S.sel=null;S.detail=null;paint();return;}
     if(a==='compose'){compose({});return;}
     if(a==='images'){S.showImages=true;paintReader();return;}
+    if(a==='thread'){setThreadOpen(!threadOpen());paintThread();return;}
     var m=S.detail&&S.detail.m;
     if(a==='disconnect'){if(!window.confirm('Disconnect your email from the portal? Your mailbox itself is not touched.'))return;await call('disconnect');S.status=Object.assign({},S.status,{connected:false});S.folders=[];S.messages=[];S.sel=null;S.detail=null;paint();toast('Email disconnected');return;}
     if(a==='download'){b.disabled=true;var f=await call('attachment',{id:m.id,attachment_id:b.dataset.id});b.disabled=false;var bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:f.content_type||'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=f.name||b.dataset.name||'attachment';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);return;}

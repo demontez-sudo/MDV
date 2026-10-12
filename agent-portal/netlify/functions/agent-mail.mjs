@@ -85,6 +85,26 @@ export const handler = async event => {
       return json(200, { ok: true, message: mapMessage(m), attachments });
     }
 
+    /* Every message in the same conversation (received and sent), oldest first, so a reply can be read
+       against the whole back-and-forth. Bodies are loaded one at a time by the existing `message` action. */
+    if (action === 'thread') {
+      const id = safeId(body.id);
+      const cur = await G(`/me/messages/${encodeURIComponent(id)}?$select=conversationId`);
+      const cid = clean(cur?.conversationId);
+      if (!cid) return json(200, { ok: true, messages: [], current: id });
+      const q = new URLSearchParams({ $top: '50', $select: `${SUMMARY_SELECT},parentFolderId`, $filter: `conversationId eq '${cid.replace(/'/g, "''")}'` });
+      const [d, hidden] = await Promise.all([
+        G(`${GRAPH}/me/messages?${q}`),
+        Promise.all(['deleteditems', 'drafts', 'junkemail'].map(f => G(`/me/mailFolders/${f}?$select=id`).then(x => x?.id).catch(() => null)))
+      ]);
+      const skip = new Set(hidden.filter(Boolean));
+      const me = clean(conn.email).toLowerCase();
+      const rows = (d?.value || []).filter(m => m.id === id || !skip.has(m.parentFolderId))
+        .map(m => ({ ...mapSummary(m), mine: clean(m.from?.emailAddress?.address).toLowerCase() === me }))
+        .sort((a, b) => String(a.received || '').localeCompare(String(b.received || '')));
+      return json(200, { ok: true, messages: rows, current: id });
+    }
+
     if (action === 'attachment') {
       const id = safeId(body.id), aid = safeId(body.attachment_id);
       const a = await G(`/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(aid)}`); /* no $select: contentBytes only exists on fileAttachment, so selecting it on the base type fails */
