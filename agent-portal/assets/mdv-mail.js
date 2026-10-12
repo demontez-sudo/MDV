@@ -107,7 +107,7 @@ window.addEventListener('resize',function(){fit();});
 function paintSide(){
   var el=document.getElementById('mm-side');if(!el)return;
   el.innerHTML='<button class="mm-btn gold mm-compose" data-a="compose">+ New message</button>'
-    +'<nav class="mm-folders">'+S.folders.map(function(f){return '<button class="'+(S.folder===f.id?'on':'')+'" data-a="folder" data-id="'+esc(f.id)+'"><span>'+esc(f.name)+'</span>'+(f.unread?'<em>'+f.unread+'</em>':'')+'</button>';}).join('')+'</nav>'
+    +'<button type="button" class="mm-sigbtn" data-a="signature"><span>✎ Signature</span><em>'+(sigActive()?'On':(sigGet()?'Off':'Not set'))+'</em></button>'+'<nav class="mm-folders">'+S.folders.map(function(f){return '<button class="'+(S.folder===f.id?'on':'')+'" data-a="folder" data-id="'+esc(f.id)+'"><span>'+esc(f.name)+'</span>'+(f.unread?'<em>'+f.unread+'</em>':'')+'</button>';}).join('')+'</nav>'
     +'';
   wire(el);
 }
@@ -232,6 +232,7 @@ async function act(a,b){
     if(a==='close'){S.readerOpen=false;S.sel=null;S.detail=null;paint();return;}
     if(a==='compose'){compose({});return;}
     if(a==='images'){S.showImages=true;paintReader();return;}
+    if(a==='signature'){sigEditor();return;}
     if(a==='thread'){setThreadOpen(!threadOpen());paintThread();return;}
     var m=S.detail&&S.detail.m;
     if(a==='disconnect'){if(!window.confirm('Disconnect your email from the portal? Your mailbox itself is not touched.'))return;await call('disconnect');S.status=Object.assign({},S.status,{connected:false});S.folders=[];S.messages=[];S.sel=null;S.detail=null;paint();toast('Email disconnected');return;}
@@ -270,9 +271,10 @@ function paintReply(focus){
   d.innerHTML='<div class="mm-rr-to"><b>'+label+'</b><input id="mm-rto" list="mm-sug" value="'+esc(r.to)+'" placeholder="name@example.com, …" autocomplete="off" aria-label="To"><button type="button" class="mm-rr-x" data-rx aria-label="Discard reply">×</button></div>'
     +'<div class="mm-rr-to mm-rr-cc"><b>Cc</b><input id="mm-rcc" list="mm-sug" value="'+esc(r.cc||'')+'" placeholder="Add people to copy (optional)" autocomplete="off" aria-label="Cc"></div>'
     +'<textarea id="mm-rtext" rows="5" placeholder="'+(r.mode==='forward'?'Add a note (optional) — the original message is included below automatically.':'Write your reply — the original message is quoted below automatically.')+'"></textarea>'
-    +'<datalist id="mm-sug">'+sugOptions()+'</datalist>'
+    +'<div id="mm-rsig"></div><datalist id="mm-sug">'+sugOptions()+'</datalist>'
     +'<div class="mm-rr-foot"><span class="mm-err" id="mm-rerr"></span>'+copySelect('mm-rcopy')+'<button type="button" class="mm-btn" data-rx>Discard</button><button type="button" class="mm-btn gold" id="mm-rsend">Send</button></div>';
   el.appendChild(d);
+  if(!r.sig)r.sig={};var rs=d.querySelector('#mm-rsig');rs.innerHTML=sigStrip(r.sig);sigWire(rs,r.sig);
   var ta=d.querySelector('#mm-rtext'),to=d.querySelector('#mm-rto'),cc=d.querySelector('#mm-rcc');
   ta.value=r.text||'';ta.oninput=function(){r.text=ta.value;};to.oninput=function(){r.to=to.value;};cc.oninput=function(){r.cc=cc.value;};
   d.querySelectorAll('[data-rx]').forEach(function(b){b.onclick=function(){if(ta.value.trim()&&!window.confirm('Discard this reply?'))return;S.reply=null;paintReply();};});
@@ -282,13 +284,70 @@ function paintReply(focus){
       if(!to.value.trim())throw new Error('Add at least one recipient.');
       if(r.mode!=='forward'&&!ta.value.trim())throw new Error('Write a message first.');
       btn.disabled=true;btn.textContent='Sending…';
-      setCopyPref(d.querySelector('#mm-rcopy').value);var sv=await call('reply',{id:m.id,mode:r.mode,to:to.value.trim(),cc:cc.value.trim(),text:ta.value,copy_to:d.querySelector('#mm-rcopy').value});
+      setCopyPref(d.querySelector('#mm-rcopy').value);var sv=await call('reply',{id:m.id,mode:r.mode,to:to.value.trim(),cc:cc.value.trim(),text:ta.value,copy_to:d.querySelector('#mm-rcopy').value,signature:(r.sig.on!==false?sigActive():null)});
       S.reply=null;paintReply();toast(sentToast(sv));if(S.folder==='sentitems')loadList(true);
     }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
   };
   if(focus)setTimeout(function(){(to.value?ta:to).focus();},30);
 }
 
+/* ---------- signature ---------- */
+var SIGKEY='mdv-mail-signature';
+function sigLocal(){try{return JSON.parse(localStorage.getItem(SIGKEY)||'null');}catch(e){return null;}}
+function sigGet(){var s=(S.status&&S.status.signature)||sigLocal();return s&&typeof s==='object'?s:null;}
+function sigHas(s){return !!(s&&(s.name||s.title||s.company||s.phone||s.email||s.website||s.address||s.note));}
+function sigActive(){var s=sigGet();return s&&s.enabled!==false&&sigHas(s)?s:null;}
+function sigDefaults(){var st=S.status||{};return {enabled:true,name:st.display_name||'',title:'',company:'Maison de Veux',phone:'',email:st.email||'',website:'www.maisondeveux.com',address:'',note:''};}
+function sigHtml(s){
+  if(!sigHas(s))return '';
+  var contact=[s.phone?esc(s.phone):'',s.email?'<a>'+esc(s.email)+'</a>':'',s.website?'<a>'+esc(s.website)+'</a>':''].filter(Boolean).join(' &nbsp;·&nbsp; ');
+  return '<div class="sg"><div class="sg-n">'+esc(s.name||'')+'</div>'+(s.title?'<div class="sg-t">'+esc(s.title)+'</div>':'')+(s.company?'<div class="sg-c">'+esc(s.company)+'</div>':'')+(contact?'<div class="sg-k">'+contact+'</div>':'')+(s.address?'<div class="sg-k">'+esc(s.address)+'</div>':'')+(s.note?'<div class="sg-o">'+esc(s.note)+'</div>':'')+'</div>';
+}
+/* the little "Signature" strip under a message being written; `st` remembers whether it is switched on for this message */
+function sigStrip(st){
+  var a=sigActive();
+  if(!a)return '<div class="mm-sigbox"><button type="button" class="mm-link" data-sig-edit>+ Add a signature</button></div>';
+  if(st.on===undefined)st.on=true;
+  return '<div class="mm-sigbox"><label class="mm-sigtog"><input type="checkbox" data-sig-on'+(st.on?' checked':'')+'> Signature</label><button type="button" class="mm-link" data-sig-edit>Edit</button>'+(st.on?'<div class="mm-sigprev">'+sigHtml(a)+'</div>':'')+'</div>';
+}
+function sigWire(box,st){
+  var on=box.querySelector('[data-sig-on]');if(on)on.onchange=function(){st.on=on.checked;box.innerHTML=sigStrip(st);sigWire(box,st);};
+  var ed=box.querySelector('[data-sig-edit]');if(ed)ed.onclick=function(){sigEditor();};
+}
+function sigPaintAll(){
+  [[document.getElementById('mm-sig'),S.compose&&S.compose.sig],[document.getElementById('mm-rsig'),S.reply&&S.reply.sig]].forEach(function(x){if(x[0]&&x[1]){x[0].innerHTML=sigStrip(x[1]);sigWire(x[0],x[1]);}});
+  var b=document.querySelector('.mm-sigbtn em');if(b)b.textContent=sigActive()?'On':(sigGet()?'Off':'Not set');
+}
+function sigEditor(){
+  var cur=Object.assign(sigDefaults(),sigGet()||{}),o=document.createElement('div');o.className='mm-modal-back';
+  function f(id,label,ph,val){return '<label>'+label+'<input id="sg-'+id+'" maxlength="140" placeholder="'+esc(ph||'')+'" value="'+esc(val||'')+'"></label>';}
+  o.innerHTML='<form class="mm-modal mm-sigm" role="dialog" aria-modal="true" aria-label="Email signature"><header><div><small>MAIL</small><h2>Your signature</h2></div><button type="button" data-x aria-label="Close">×</button></header>'
+    +'<div class="mm-form"><div class="mm-ccrow">'+f('name','Name','Full name',cur.name)+f('title','Title','e.g. Founder',cur.title)+'</div>'
+    +'<div class="mm-ccrow">'+f('company','Company','',cur.company)+f('phone','Phone','+1 …',cur.phone)+'</div>'
+    +'<div class="mm-ccrow">'+f('email','Email','',cur.email)+f('website','Website','',cur.website)+'</div>'
+    +f('address','Address','e.g. New York · Paris',cur.address)+f('note','Small print (optional)','e.g. Confidential',cur.note)
+    +'<label class="mm-sigon"><input type="checkbox" id="sg-enabled"'+(cur.enabled!==false?' checked':'')+'> Add it automatically to new messages, replies and forwards</label>'
+    +'<div class="mm-sigpv"><small>Preview</small><div id="sg-prev"></div></div></div>'
+    +'<footer class="mm-sigf"><span class="mm-err" id="sg-err"></span><button type="button" class="mm-btn" data-x>Cancel</button><button type="submit" class="mm-btn gold">Save signature</button></footer></form>';
+  document.body.appendChild(o);var form=o.querySelector('form');
+  function read(){var v={enabled:form.querySelector('#sg-enabled').checked};['name','title','company','phone','email','website','address','note'].forEach(function(k){v[k]=form.querySelector('#sg-'+k).value.trim();});return v;}
+  function prev(){var v=read();form.querySelector('#sg-prev').innerHTML=sigHas(v)?sigHtml(v):'<p class="mm-wfine">Fill in your details to see the signature.</p>';}
+  form.addEventListener('input',prev);prev();setTimeout(function(){form.querySelector('#sg-name').focus();},30);
+  function close(){o.remove();}
+  o.addEventListener('click',function(e){if(e.target===o||e.target.closest('[data-x]'))close();});
+  o.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+  form.onsubmit=async function(e){
+    e.preventDefault();var v=read(),btn=form.querySelector('[type=submit]'),err=form.querySelector('#sg-err');err.textContent='';
+    if(v.email&&!EMAIL_RE.test(v.email)){err.textContent='That email address does not look right.';return;}
+    btn.disabled=true;btn.textContent='Saving…';
+    try{localStorage.setItem(SIGKEY,JSON.stringify(v));}catch(x){}
+    S.status=Object.assign({},S.status,{signature:v});
+    var note='Signature saved';
+    try{await call('signature_save',{signature:v});}
+    catch(x){note=/this device only/i.test(msg(x))?'Signature saved on this device. '+msg(x).replace(/^Saved on this device only\.\s*/,''):'Signature saved on this device (could not sync: '+msg(x)+')';}
+    close();sigPaintAll();toast(note);
+  };
+}
 /* ---------- compose (new message) ---------- */
 function readFile(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res({name:f.name,content_type:f.type||'application/octet-stream',content_base64:String(r.result).split(',')[1]||''});};r.onerror=function(){rej(new Error('Could not read '+f.name));};r.readAsDataURL(f);});}
 function inMail(){return String(window._currentPage||'')==='mail'&&!!document.getElementById('mm-reader');}
@@ -315,7 +374,7 @@ function compose(o){
   back.innerHTML='<header class="mmx-h"><div><b>New message</b>'+(from?'<span>From '+esc(from)+'</span>':'')+'</div><span class="mmx-hb"><button type="button" data-x aria-label="Close" title="Close">×</button></span></header>'
     +'<div class="mmx-body">'+row('to','To')+row('cc','Cc',' hidden')+row('bcc','Bcc',' hidden')
     +'<div class="mmx-row"><span class="mmx-lab">Subject</span><input class="mmx-in grow" id="mm-subject" maxlength="300" placeholder="What is this about?" autocomplete="off"></div>'
-    +'<textarea id="mm-text" class="mmx-text" placeholder="Write your message…" aria-label="Message"></textarea>'
+    +'<textarea id="mm-text" class="mmx-text" placeholder="Write your message…" aria-label="Message"></textarea><div id="mm-sig"></div>'
     +'<div class="mmx-files" id="mm-files" hidden></div>'
     +'<datalist id="mm-sug">'+sugOptions()+'</datalist></div>'
     +'<p class="mm-err" id="mm-cerr"></p>'
@@ -382,7 +441,7 @@ function compose(o){
   $('#mm-file').onchange=function(){files=files.concat([].slice.call(this.files)).slice(0,8);this.value='';paintFiles();};
 
   ensureDirectory(function(){var dl=back.querySelector('#mm-sug');if(dl)dl.innerHTML=sugOptions();});
-  S.compose={el:back,dirty:function(){return !!dirty();},close:close};
+  var sigState={};S.compose={el:back,dirty:function(){return !!dirty();},close:close,sig:sigState};var sb=$('#mm-sig');sb.innerHTML=sigStrip(sigState);sigWire(sb,sigState);
   mountCompose();
   setTimeout(function(){var f=!F.to.has()?$('#mm-to-in'):(!$('#mm-subject').value?$('#mm-subject'):$('#mm-text'));f.focus();},60);
 
@@ -397,7 +456,7 @@ function compose(o){
       if(!$('#mm-subject').value.trim()&&!text.trim())throw new Error('Write a subject or a message first.');
       setCopyPref($('#mm-copy').value);btn.disabled=true;btn.textContent='Sending…';
       var atts=await Promise.all(files.map(readFile));
-      sentVia=await call('send',{to:to.join(', '),cc:cc.join(', '),bcc:bcc.join(', '),subject:$('#mm-subject').value,text:text,attachments:atts,copy_to:$('#mm-copy').value});
+      sentVia=await call('send',{to:to.join(', '),cc:cc.join(', '),bcc:bcc.join(', '),subject:$('#mm-subject').value,text:text,attachments:atts,copy_to:$('#mm-copy').value,signature:(sigState.on!==false?sigActive():null)});
       close();toast(sentToast(sentVia));if(S.folder==='sentitems')loadList(true);
     }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
   };

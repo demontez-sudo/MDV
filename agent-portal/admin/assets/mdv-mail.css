@@ -195,3 +195,17 @@ html body :is(.mm,.mm-widget,.mmx,.mm-reply,.mm-setcard) :is(button:not([class*=
 html body .mm .mm-chk,html body .mmx .mm-copy,html body .mm-reply .mm-copy{letter-spacing:.01em}
 
 .mm-reader.mm-busy>*{opacity:.55;transition:opacity .15s ease}.mm-reader.mm-busy{pointer-events:none}
+
+/* signature */
+.mm-sigbtn{display:flex;justify-content:space-between;align-items:center;width:100%;margin:8px 0 4px;padding:8px 10px;border:1px solid var(--l2,rgba(255,255,255,.12));background:transparent;color:var(--ink,#f3efe8);font:12px Inter,system-ui,sans-serif;cursor:pointer;text-align:left}
+.mm-sigbtn:hover{border-color:var(--g,#d4b077)}.mm-sigbtn em{font-style:normal;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute,#a89f92)}
+.mm-sigbox{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;padding:8px 0 2px;font-size:12px;color:var(--mute,#a89f92)}
+.mm-sigtog{display:inline-flex;gap:6px;align-items:center;cursor:pointer}
+.mm-sigprev{flex:1 1 100%;margin-top:4px;padding:10px 14px;background:#fff;border-radius:6px;max-width:420px}
+.sg{color:#1b1814;font:12px/1.6 Arial,Helvetica,sans-serif;border-top:1px solid #a9895f;padding-top:8px}
+.sg-n{font:600 15px Georgia,serif}.sg-t{font-size:10.5px;letter-spacing:1.1px;text-transform:uppercase;color:#6b5f4d;margin-top:2px}.sg-c{font:italic 14px Georgia,serif;margin:8px 0 3px}.sg-k{color:#4a4238}.sg-k a{color:#8c6a2f}.sg-o{font-size:10.5px;color:#8a8070;margin-top:8px}
+.mm-sigm{width:min(560px,100%)}.mm-sigon{display:flex!important;grid-template-columns:none!important;flex-direction:row;gap:8px;align-items:center;text-transform:none!important;letter-spacing:0!important;font-size:13px!important;color:var(--mdv-ink,#f3efe8)!important}
+.mm-sigon input{width:auto!important}
+.mm-sigpv{display:grid;gap:6px}.mm-sigpv small{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mdv-mute,#a89f92)}.mm-sigpv>div{background:#fff;border-radius:6px;padding:12px 16px;min-height:60px}
+.mm-sigf{display:flex;gap:8px;align-items:center;justify-content:flex-end;padding:12px 20px;border-top:1px solid var(--mdv-line-2,rgba(255,255,255,.1))}.mm-sigf .mm-err{flex:1;margin:0;font-size:12px}
+.mm-form .mm-sigon input[type=checkbox]{width:16px!important;height:16px!important;min-width:16px;padding:0!important;margin:0;flex:none;appearance:auto;-webkit-appearance:checkbox}

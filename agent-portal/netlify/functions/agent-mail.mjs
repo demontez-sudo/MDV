@@ -4,6 +4,7 @@ import {
   mailConfig, appError, signState, newNonce, authorizeUrl, getConnection, deleteConnection, graph, safeId,
   buildSendPayload, parseAddresses, textToHtml, mapSummary, mapMessage, FOLDERS, SUMMARY_SELECT, GRAPH, LIMITS
 } from './_lib/mail-graph.mjs';
+import { cleanSignature, signatureHtml, signatureText } from './_lib/mail-signature.mjs';
 import { resendReady, shouldUseResend, sendViaResend, quoteHtml, copyTarget, saveCopy } from './_lib/mail-resend.mjs';
 
 /* Team-member mailbox (Microsoft 365). Every call is scoped to the signed-in staff member's OWN
@@ -15,7 +16,7 @@ const folderOf = v => { const f = clean(v || 'inbox').toLowerCase(); if (!FOLDER
 const NEXT_RX = /^https:\/\/graph\.microsoft\.com\/v1\.0\/me\/(mailFolders|messages)[/?]/;
 
 function publicConn(c) {
-  return c ? { connected: c.status === 'active', needs_reconnect: c.status === 'needs_reconnect', email: c.email, display_name: c.display_name, connected_at: c.created_at } : { connected: false };
+  return c ? { connected: c.status === 'active', needs_reconnect: c.status === 'needs_reconnect', email: c.email, display_name: c.display_name, connected_at: c.created_at, signature: cleanSignature(c.signature) } : { connected: false };
 }
 
 export const handler = async event => {
@@ -113,11 +114,22 @@ export const handler = async event => {
       return json(200, { ok: true, name: a.name, content_type: a.contentType, content_base64: a.contentBytes });
     }
 
+    if (action === 'signature_save') {
+      const sig = cleanSignature(body.signature) || { enabled: false };
+      const { error } = await admin.from('mail_connections').update({ signature: sig, updated_at: new Date().toISOString() }).eq('id', conn.id);
+      if (error) {
+        if (/signature/i.test(String(error.message || '')) || String(error.code) === '42703' || String(error.code) === 'PGRST204') throw appError(503, 'Saved on this device only. Run agent-portal/docs/sql/2026-10-12-mail-signature.sql in Supabase to keep your signature on every device.', 'MAIL_SIGNATURE_COLUMN_MISSING');
+        throw error;
+      }
+      return json(200, { ok: true, verified: true, signature: cleanSignature(sig) });
+    }
+
     if (action === 'send') {
-      const payload = buildSendPayload(body), m = payload.message;
+      const payload = buildSendPayload(body), m = payload.message, sigH = signatureHtml(body.signature), sigT = signatureText(body.signature);
+      if (sigH) m.body.content += sigH;
       if (shouldUseResend([m.toRecipients, m.ccRecipients || [], m.bccRecipients || []], conn.email)) {
         const ct = copyTarget(body);
-        const r = await sendViaResend({ conn, to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, text: String(body.text ?? body.body ?? ''), attachments: m.attachments || [], copyInbox: ct === 'inbox' });
+        const r = await sendViaResend({ conn, to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, text: String(body.text ?? body.body ?? '') + sigT, attachments: m.attachments || [], copyInbox: ct === 'inbox' });
         const copy = await saveCopy(G, conn, ct, { to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, attachments: m.attachments });
         return json(200, { ok: true, verified: true, sent: true, via: 'resend', copy, id: r?.providerMessageId || null });
       }
@@ -133,20 +145,21 @@ export const handler = async event => {
       const create = mode === 'forward' ? 'createForward' : mode === 'replyAll' ? 'createReplyAll' : 'createReply';
       /* The To / Cc the person sees (and may have edited) in the reply box are what get sent. */
       const to = parseAddresses(body.to, 'recipient'), cc = parseAddresses(body.cc, 'Cc');
+      const sigH = signatureHtml(body.signature), sigT = signatureText(body.signature);
       if (!to.length) throw appError(400, mode === 'forward' ? 'Add at least one recipient to forward to.' : 'Add at least one recipient.', 'MAIL_NO_RECIPIENT');
       if (shouldUseResend([to, cc], conn.email)) {
         const orig = await G(`/me/messages/${encodeURIComponent(id)}?$select=subject,internetMessageId,from,sentDateTime,receivedDateTime,body`, { headers: { Prefer: 'outlook.body-content-type="html"' } });
         const base = clean(orig?.subject).replace(/^((re|fwd?):\s*)+/i, '');
-        const html = `${textToHtml(text)}${quoteHtml(orig)}`;
+        const html = `${textToHtml(text)}${sigH}${quoteHtml(orig)}`;
         const mid = clean(orig?.internetMessageId);
         const ct = copyTarget(body), subj = `${mode === 'forward' ? 'Fwd' : 'Re'}: ${base || '(no subject)'}`;
-        const r = await sendViaResend({ conn, to, cc, bcc: [], subject: subj, html, text, replyHeaders: mode !== 'forward' && mid ? { 'In-Reply-To': mid, References: mid } : undefined, copyInbox: ct === 'inbox' });
+        const r = await sendViaResend({ conn, to, cc, bcc: [], subject: subj, html, text: text + sigT, replyHeaders: mode !== 'forward' && mid ? { 'In-Reply-To': mid, References: mid } : undefined, copyInbox: ct === 'inbox' });
         const copy = await saveCopy(G, conn, ct, { to, cc, bcc: [], subject: subj, html });
         return json(200, { ok: true, verified: true, sent: true, via: 'resend', copy, id: r?.providerMessageId || null });
       }
       const draft = await G(`/me/messages/${encodeURIComponent(id)}/${create}`, { method: 'POST', body: {} });
       const quoted = String(draft?.body?.content || '');
-      const mine = textToHtml(text);
+      const mine = textToHtml(text) + sigH;
       const html = /<body[^>]*>/i.test(quoted) ? quoted.replace(/<body([^>]*)>/i, `<body$1>${mine}<br>`) : `${mine}<br>${quoted}`;
       const patch = { body: { contentType: 'HTML', content: html } };
       patch.toRecipients = to;
