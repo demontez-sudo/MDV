@@ -132,7 +132,10 @@ greenNude:['#9BA58A','#C4CBB8','rgba(155,165,138,.13)','rgba(155,165,138,.055)',
 galaxy:['#A98BFF','#D8C8FF','rgba(169,139,255,.16)','rgba(169,139,255,.065)','rgba(169,139,255,.34)','#10111D','#03040A','#F8F5FF','#CAC5DB','#85829A'],
 christmas:['#D5B56D','#F5DCA0','rgba(213,181,109,.15)','rgba(213,181,109,.06)','rgba(213,181,109,.31)','#111915','#030705','#F9F4E8','#D3CBB9','#918B7F'],
 earth:['#55D7C1','#91F4E1','rgba(85,215,193,.15)','rgba(85,215,193,.06)','rgba(85,215,193,.31)','#0B1718','#010606','#EEFFFB','#B8D9D4','#759995'],
-waterfall:['#52D6E0','#A5F7FA','rgba(82,214,224,.15)','rgba(82,214,224,.06)','rgba(82,214,224,.31)','#0A171A','#010609','#F0FEFF','#B8D8DC','#71969B']
+waterfall:['#52D6E0','#A5F7FA','rgba(82,214,224,.15)','rgba(82,214,224,.06)','rgba(82,214,224,.31)','#0A171A','#010609','#F0FEFF','#B8D8DC','#71969B'],
+fallArt:['#D9704F','#EE9E82','rgba(217,112,79,.15)','rgba(217,112,79,.06)','rgba(217,112,79,.31)','#201A16','#14100E','#F6EFE6','#D8CCBF','#A39686'],
+deepForest:['#8FB27A','#BBD6A8','rgba(143,178,122,.15)','rgba(143,178,122,.06)','rgba(143,178,122,.30)','#121A14','#080D09','#EEF5EA','#BFD0B8','#7F9279'],
+fallLeaf:['#E0925A','#F2BF93','rgba(224,146,90,.15)','rgba(224,146,90,.06)','rgba(224,146,90,.31)','#1F1A14','#15120E','#F6EEE0','#D6CAB5','#A39784']
 };
 function arr(v){return Array.isArray(v)?v:[]}function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]})}
 function bridge(){return window.VEUX_AGENT_V4}function org(){var s=bridge()&&bridge().state||{};return s.org&&s.org.slug||'maison-de-veux'}function api(path){return bridge().api(path,{method:'GET',headers:{},__fresh:true})}
@@ -239,7 +242,7 @@ function applyWave(theme,persist){
   });
   var s=document.querySelector('.vx-wave-status');
   if(s){
-    var labels={burntOrange:'Burnt Orange',blueNude:'Blue Nude',greenNude:'Green Nude',purple:'Purple',turquoise:'Turquoise',classic:'Classic',green:'Green',blue:'Blue',red:'Red',white:'White',galaxy:'Galaxy',christmas:'Winter Forest',earth:'Earth',waterfall:'Waterfall'};
+    var labels={burntOrange:'Burnt Orange',blueNude:'Blue Nude',greenNude:'Green Nude',purple:'Purple',turquoise:'Turquoise',classic:'Classic',green:'Green',blue:'Blue',red:'Red',white:'White',galaxy:'Galaxy',christmas:'Winter Forest',earth:'Earth',waterfall:'Waterfall',fallArt:'Art Image',deepForest:'Deep Forest',fallLeaf:'Fall Leaf'};
     s.innerHTML='Active wave: <strong>'+(labels[theme]||theme)+'</strong> · applied across the live portal';
   }
   window.dispatchEvent(new CustomEvent('veux:smart-wave-applied',{detail:{theme:theme}}));

@@ -19,7 +19,9 @@ var THEMES={
   christmas:{name:'Christmas',sub:'Forest · Ruby · Gold',preview:'#D5B56D',bg:'radial-gradient(circle at 72% 28%,rgba(185,39,51,.30),transparent 31%),radial-gradient(circle at 28% 70%,rgba(24,111,69,.32),transparent 35%),linear-gradient(145deg,#030605,#0C1811)',text:'#F9F4E8'},
   earth:{name:'Earth',sub:'Orbit Teal',preview:'#55D7C1',bg:'radial-gradient(ellipse at 50% 105%,rgba(83,220,196,.40),transparent 35%),linear-gradient(180deg,#02070C,#06151A)',text:'#EEFFFB'},
   waterfall:{name:'Waterfall',sub:'Cyan Mist',preview:'#52D6E0',bg:'repeating-linear-gradient(97deg,transparent 0 14%,rgba(118,240,243,.11) 16%,transparent 19% 30%),linear-gradient(155deg,#02080B,#06202A)',text:'#F0FEFF'},
-  fall:{name:'Fall',sub:'Amber · Olive · Cream',preview:'#E0925A',bg:'radial-gradient(circle at 72% 26%,rgba(214,120,66,.36),transparent 33%),radial-gradient(circle at 26% 72%,rgba(124,138,78,.30),transparent 36%),linear-gradient(145deg,#15120E,#2B241A)',text:'#F6EEE0'}
+  fallArt:{name:'Art Image',sub:'Illustrated Crowd',preview:'#D9704F',bg:'linear-gradient(145deg,rgba(20,16,14,.55),rgba(20,16,14,.2)),linear-gradient(115deg,#8a3b2d 0%,#c8624a 22%,#d9a56e 44%,#5b6b4a 66%,#7f98a8 100%)',text:'#F6EFE6'},
+  deepForest:{name:'Deep Forest',sub:'Moss · Mist · Shade',preview:'#8FB27A',bg:'radial-gradient(circle at 62% 30%,rgba(143,178,122,.30),transparent 38%),linear-gradient(145deg,#060a07,#142016)',text:'#EEF5EA'},
+  fallLeaf:{name:'Fall Leaf',sub:'Amber · Falling Leaves',preview:'#E0925A',bg:'radial-gradient(circle at 72% 26%,rgba(214,120,66,.40),transparent 33%),radial-gradient(circle at 26% 72%,rgba(124,138,78,.28),transparent 36%),linear-gradient(145deg,#15120E,#2B241A)',text:'#F6EEE0'}
 };
 
 function orgKey(){
@@ -52,7 +54,9 @@ function metaColor(theme){
     christmas:'#040805',
     earth:'#020809',
     waterfall:'#02080B',
-    fall:'#15120E',
+    fallArt:'#14100E',
+    deepForest:'#080D09',
+    fallLeaf:'#15120E',
   }[theme]||'#080604';
 }
 function apply(theme,persist){
