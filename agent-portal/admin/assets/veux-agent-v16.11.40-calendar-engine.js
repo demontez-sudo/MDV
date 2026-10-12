@@ -18,7 +18,7 @@ function time(v){var d=new Date(v);return isNaN(d)?'—':d.toLocaleTimeString([]
 function date(v,o){var d=new Date(v);return isNaN(d)?'—':d.toLocaleDateString([],o||{month:'short',day:'numeric'});}
 function money(v,currency,compact){try{return new Intl.NumberFormat('en-US',{style:'currency',currency:String(currency||'USD').slice(0,3).toUpperCase(),maximumFractionDigits:compact===false?2:1,notation:compact===false?'standard':'compact'}).format(Number(v||0));}catch(e){return (currency||'USD')+' '+Number(v||0).toLocaleString();}}
 function org(){var s=window.VEUX_AGENT_V4&&window.VEUX_AGENT_V4.state||{};return s.org&&s.org.slug||'maison-de-veux';}
-function range(){var a=new Date(S.anchor),s=new Date(a),e=new Date(a);a.setHours(0,0,0,0);if(S.view==='plan'){s=monday(a);e=add(s,Math.max(7,agendaSpan())-1);}else if(S.view==='week'){s=monday(a);e=add(s,6);}else if(S.view==='3day'){s=a;e=add(a,2);}else if(S.view==='agenda'){s=a;e=add(a,agendaSpan()-1);}else if(S.view==='month'){s=new Date(a.getFullYear(),a.getMonth(),1);e=new Date(a.getFullYear(),a.getMonth()+1,0);}else{s=a;e=a;}return{start:s,end:e};}
+function range(){var a=new Date(S.anchor),s=new Date(a),e=new Date(a);a.setHours(0,0,0,0);if(S.view==='plan'){s=monday(a);e=add(s,6);}else if(S.view==='week'){s=monday(a);e=add(s,6);}else if(S.view==='3day'){s=a;e=add(a,2);}else if(S.view==='agenda'){s=a;e=add(a,agendaSpan()-1);}else if(S.view==='month'){s=new Date(a.getFullYear(),a.getMonth(),1);e=new Date(a.getFullYear(),a.getMonth()+1,0);}else{s=a;e=a;}return{start:s,end:e};}
 function market(x){var z=((x.market||'')+' '+(x.location||'')).toLowerCase();return /paris|france|cdg|cest|cet/.test(z)?'Paris':'New York';}
 function type(x){var r=x.raw||{},v=(r.metadata&&r.metadata.calendar_event_type)||r.event_type||r.job_type||(x.kind==='casting'?'Casting':x.kind==='booking'?'Booking':'Meeting');return String(v||'Event').replace(/_/g,' ').replace(/\b\w/g,function(m){return m.toUpperCase();});}
 function tone(x){var s=(type(x)+' '+x.status).toLowerCase();return /travel|flight/.test(s)?'travel':/conflict|overdue|expired|declin|cancel/.test(s)?'risk':/confirm|paid|complete/.test(s)?'ok':'pending';}
@@ -440,9 +440,56 @@ function planRow(x,i,rows,nowMs){
     +'<span class="pl-main"><b>'+esc(x.title||'Untitled')+'</b><small>'+esc([sub,who].filter(Boolean).join(' · ')||type(x))+'</small>'+(flags?'<span class="pl-flags">'+flags+'</span>':'')+'</span>'
     +'<span class="pl-end">'+(amt?'<b>'+esc(money(amt,currencyOf(x),false))+'</b>':'')+'<span class="pl-tag k-'+k+'">'+esc(type(x))+'</span></span></button>';
 }
+
+/* ---------- Agent tasks (replaces "Coming up") ---------- */
+var TK={list:null,members:[],loading:false,err:'',scope:'mine',me:null};
+function tkUid(){try{var st=window.VEUX_AGENT_V4.state;return (st.user&&st.user.id)||(st.session&&st.session.user&&st.session.user.id)||(st.profile&&st.profile.user_id)||null;}catch(e){return null;}}
+function tkDiff(iso){if(!iso)return null;var d=new Date(iso);if(isNaN(d))return null;var a=new Date(d.getFullYear(),d.getMonth(),d.getDate()),n=new Date();n=new Date(n.getFullYear(),n.getMonth(),n.getDate());return Math.round((a-n)/864e5);}
+function tkDue(iso){var d=tkDiff(iso);if(d==null)return '';if(d===0)return 'Today';if(d===1)return 'Tomorrow';if(d===-1)return 'Yesterday';return date(iso,{month:'short',day:'numeric'});}
+async function loadTasks(force){
+  if(TK.loading||(TK.list&&!force))return;TK.loading=true;
+  try{
+    var d=await window.VEUX_AGENT_V4.api('/api/agent/tasks/v11?organization='+encodeURIComponent(org())+'&_t='+Date.now(),{method:'GET',headers:{},__fresh:true});
+    TK.members=arr(d.members);var u=tkUid();TK.me=u?(TK.members.filter(function(m){return m.user_id===u;})[0]||null):null;
+    if(!TK.me&&TK.scope==='mine')TK.scope='all';
+    TK.list=arr(d.tasks).filter(function(t){return !t.parent_task_id;});TK.err='';
+  }catch(e){TK.err=(e&&e.message)||'Tasks could not load';TK.list=TK.list||[];}
+  TK.loading=false;paintTasks();
+}
+function tkMine(t){return !!TK.me&&arr(t.assignments).some(function(a){return a.member_id===TK.me.id;});}
+function tkOpen(){return arr(TK.list).filter(function(t){var s=String(t.status||'open').toLowerCase();return s!=='completed'&&s!=='done'&&s!=='complete'&&s!=='cancelled'&&s!=='canceled';}).filter(function(t){return TK.scope==='all'||tkMine(t);});}
+function tasksHtml(sel){
+  if(!TK.list){loadTasks();return '<header><h3>Agent tasks</h3></header><p class="pl-none">Loading tasks…</p>';}
+  var open=tkOpen().sort(function(a,b){var x=a.due_at?new Date(a.due_at):new Date(8e15),y=b.due_at?new Date(b.due_at):new Date(8e15);return x-y;});
+  var G=[['over','Overdue'],['today','Today'],['week','Next 7 days'],['later','Later'],['none','No date']],by={over:[],today:[],week:[],later:[],none:[]};
+  open.forEach(function(t){var d=tkDiff(t.due_at);by[d==null?'none':d<0?'over':d===0?'today':d<=7?'week':'later'].push(t);});
+  var rank={urgent:'u',high:'h'};
+  function row(t){var d=tkDiff(t.due_at),pr=rank[String(t.priority||'').toLowerCase()]||'';return '<div class="tk-row'+(d!=null&&d<0?' over':'')+'"><button type="button" class="tk-check" data-tk-done="'+esc(t.id)+'" aria-label="Mark done"></button><button type="button" class="tk-title" data-tk-open="'+esc(t.id)+'">'+esc(t.title||'Untitled')+'</button>'+(pr?'<i class="tk-pr '+pr+'" title="'+(pr==='u'?'Urgent':'High')+'"></i>':'')+(t.due_at?'<em>'+esc(tkDue(t.due_at))+'</em>':'')+'</div>';}
+  var body=G.map(function(g){var l=by[g[0]];if(!l.length)return '';var shown=l.slice(0,g[0]==='later'||g[0]==='none'?3:6);return '<div class="tk-grp'+(g[0]==='over'?' over':'')+'"><h4>'+g[1]+' <em>'+l.length+'</em></h4>'+shown.map(row).join('')+(l.length>shown.length?'<button type="button" class="tk-more" data-tk-open="">+ '+(l.length-shown.length)+' more</button>':'')+'</div>';}).join('');
+  if(!open.length)body='<p class="pl-none">'+(TK.err?esc(TK.err):'No open tasks. Nice work.')+'</p>';
+  var sd=sel?date(new Date(sel+'T12:00:00'),{weekday:'short',month:'short',day:'numeric'}):'';
+  return '<header><h3>Agent tasks</h3><span class="tk-count">'+open.length+' open'+(by.over.length?' · <b>'+by.over.length+' overdue</b>':'')+'</span><div class="pl-seg"><button type="button" class="'+(TK.scope==='mine'?'on':'')+'" data-tk-scope="mine"'+(TK.me?'':' disabled')+'>Mine</button><button type="button" class="'+(TK.scope==='all'?'on':'')+'" data-tk-scope="all">Everyone</button></div></header>'
+    +'<form class="tk-add" data-tk-add><input type="text" maxlength="200" placeholder="Add a task for '+esc(sd)+'…" aria-label="New task"><button type="submit">Add</button></form>'
+    +'<div class="tk-list">'+body+'</div><footer><button type="button" class="tk-all" data-tk-open="">Open all tasks →</button></footer>';
+}
+function paintTasks(){var el=document.getElementById('pl-tasks');if(el)el.innerHTML=tasksHtml(el.dataset.tkday);}
+document.addEventListener('click',function(e){
+  var t=e.target&&e.target.closest&&e.target.closest('#pl-tasks [data-tk-scope],#pl-tasks [data-tk-done],#pl-tasks [data-tk-open]');if(!t)return;
+  if(t.dataset.tkScope){TK.scope=t.dataset.tkScope;paintTasks();return;}
+  if(t.hasAttribute('data-tk-open')){if(typeof window.navTo==='function')window.navTo('tasksconsolidated');return;}
+  if(t.dataset.tkDone){var id=t.dataset.tkDone,task=arr(TK.list).filter(function(x){return String(x.id)===id;})[0];if(!task)return;var prev=task.status;task.status='completed';paintTasks();
+    window.VEUX_AGENT_V4.api('/api/agent/tasks/v11',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organization_slug:org(),action:'task_status',task_id:id,status:'completed'})}).then(function(r){if(!r||r.verified!==true)throw new Error('Not verified');toastMove('Task done');}).catch(function(err){task.status=prev;paintTasks();toastMove('Could not save: '+(err&&err.message||err),true);});}
+});
+document.addEventListener('submit',function(e){
+  var f=e.target&&e.target.closest&&e.target.closest('#pl-tasks [data-tk-add]');if(!f)return;e.preventDefault();
+  var inp=f.querySelector('input'),title=inp.value.trim();if(!title)return;var box=document.getElementById('pl-tasks'),day=box&&box.dataset.tkday;
+  var body={organization_slug:org(),action:'create_task',title:title,priority:'normal',category:null,member_ids:TK.me?[TK.me.id]:[]};if(day)body.due_at=new Date(day+'T12:00:00').toISOString();
+  inp.disabled=true;
+  window.VEUX_AGENT_V4.api('/api/agent/tasks/v11',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(function(r){if(!r||r.verified!==true)throw new Error('Not verified');toastMove('Task added');TK.list=null;return loadTasks(true);}).catch(function(err){inp.disabled=false;toastMove('Could not add: '+(err&&err.message||err),true);});
+});
 function planPanels(sel){try{if(window.MDV_SCHEDULE&&MDV_SCHEDULE.embeddedHtml)return MDV_SCHEDULE.embeddedHtml(S.items,sel);}catch(e){console.error('[calendar] panels',e);}return '';}
 function planView(items){
-  var r=range(),nowMs=Date.now(),todayKey=key(new Date()),sel=planSel(),span=Math.max(7,agendaSpan()),typeF=S.agendaType||'all';
+  var r=range(),nowMs=Date.now(),todayKey=key(new Date()),sel=planSel(),typeF=S.agendaType||'all';
   var every=items.slice().sort(function(a,b){return new Date(a.starts_at)-new Date(b.starts_at);});
   var counts={all:every.length};PLAN_KINDS.forEach(function(q){counts[q[0]]=every.filter(function(x){return agendaKindOf(x)===q[0];}).length;});
   var all=typeF==='all'?every:every.filter(function(x){return agendaKindOf(x)===typeF;});
@@ -471,17 +518,8 @@ function planView(items){
   var card='<section class="pl-card"><header><h2>'+esc(date(sd,{weekday:'long'}))+'</h2><small>'+esc(date(sd,{month:'long',day:'numeric'}))+'</small>'+(isToday?'<span class="pl-today">Today</span>':'')+'<span class="pl-meta">'+day.length+' event'+(day.length===1?'':'s')+(dayHrs?' · '+planH(dayHrs):'')+'</span></header>'
     +(chips?'<div class="pl-chips">'+chips+'</div>':'')
     +(day.length?'<div class="pl-rows">'+rowsHtml+'</div>':'<div class="pl-empty"><b>'+(isToday?'Nothing scheduled today':'A free day')+'</b><span>Add an event, or drag one here from another day.</span><button type="button" class="pl-primary" data-act="add-day" data-day="'+sel+'">+ Add an event</button></div>')+'</section>';
-  var spans=[7,14,30].map(function(n){return '<button type="button" class="'+(agendaSpan()===n?'on':'')+'" data-ag-span="'+n+'">'+n+' days</button>';}).join('');
-  var side='',shown=0;
-  for(var j=0;j<span;j++){
-    var d2=add(r.start,j),k2=key(d2),l2=all.filter(function(x){return key(x.starts_at)===k2;});
-    if(!l2.length)continue;shown++;
-    side+='<button type="button" class="pl-day'+(k2===sel?' on':'')+(k2===todayKey?' today':'')+'" data-pl-go="'+k2+'"><span class="pl-dl"><b>'+esc(date(d2,{weekday:'short'}))+'</b><small>'+esc(date(d2,{month:'short',day:'numeric'}))+'</small></span><span class="pl-dc">'
-      +l2.slice(0,3).map(function(x){return '<span class="pl-line k-'+agendaKindOf(x)+'"><i></i><em>'+esc(time(x.starts_at))+'</em>'+esc(x.title||'Untitled')+'</span>';}).join('')+(l2.length>3?'<small>+'+(l2.length-3)+' more</small>':'')+'</span></button>';
-  }
-  if(!shown)side='<p class="pl-none">Nothing scheduled in the next '+span+' days.</p>';
   return '<div class="mdv-plan">'+bar+strip+'<nav class="pl-pills" aria-label="Days this week">'+pills+'</nav>'
-    +'<div class="pl-grid"><div class="pl-left">'+card+'<section class="pl-side"><header><h3>Coming up</h3><div class="pl-seg">'+spans+'</div></header><div class="pl-days">'+side+'</div></section></div><aside class="pl-right" data-pl-panels>'+planPanels(sel)+'</aside></div></div>';
+    +'<div class="pl-grid"><div class="pl-left">'+card+'<section class="pl-side pl-tasks" id="pl-tasks" data-tkday="'+sel+'">'+tasksHtml(sel)+'</section></div><aside class="pl-right" data-pl-panels>'+planPanels(sel)+'</aside></div></div>';
 }
 function renderBody(){var r=range(),items=scoped(S.items).filter(function(x){var d=new Date(x.starts_at);return d>=r.start&&d<add(r.end,1);});if(S.view==='plan')return planView(items);if(window.matchMedia&&window.matchMedia('(max-width: 900px)').matches)return mobileView(items);return S.view==='day'?dayView(items):S.view==='3day'?threeView(items):S.view==='week'?weekView(items):monthView85(items);}
 function vxLimit(pr,ms){return Promise.race([pr,new Promise(function(_,rej){setTimeout(function(){rej(new Error('The calendar took too long to respond. Tap Retry.'));},ms);})]);}

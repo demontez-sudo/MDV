@@ -569,3 +569,24 @@ html body #p-calendar .vx75-calendar{min-width:0;max-width:100%}
 .sc-embed .sc-seg button{padding:4px 10px;font-size:11px}
 .sc-embed .sc-rules li{padding:10px 0;gap:10px;grid-template-columns:30px 1fr}.sc-embed .sc-rn{font-size:16px}.sc-embed .sc-rules b{font-size:13px}.sc-embed .sc-rules em{font-size:11.5px}
 .sc-embed .sc-fine{font-size:10.5px}
+
+/* Agent tasks */
+.pl-tasks{padding:14px 16px}
+.pl-tasks>header{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}.pl-tasks>header h3{margin:0;font:500 18px var(--fD,Georgia,serif)}
+.tk-count{font-size:11px;color:var(--mdv-mute);margin-right:auto}.tk-count b{color:#e08f82;font-weight:500}
+.pl-tasks .pl-seg button:disabled{opacity:.4;cursor:default}
+.tk-add{display:flex;gap:6px;margin:4px 0 10px}.tk-add input{flex:1;min-width:0;height:34px;border:1px solid var(--mdv-line-2);background:var(--mdv-field,#0b0a08);color:var(--mdv-ink);padding:0 12px;font:12.5px Inter,system-ui,sans-serif;border-radius:999px}
+.tk-add input:focus{outline:none;border-color:var(--mdv-gold)}.tk-add button{height:34px;border:0;border-radius:999px;background:var(--mdv-gold);color:#15110c;padding:0 16px;font:600 12px Inter,sans-serif;cursor:pointer}
+.tk-list{display:grid;gap:10px;max-height:520px;overflow:auto}
+.tk-grp h4{margin:0 0 2px;font:600 10px Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mdv-mute)}.tk-grp h4 em{font-style:normal;opacity:.7}.tk-grp.over h4{color:#e08f82}
+.tk-row{display:flex;align-items:center;gap:10px;padding:7px 2px;border-top:1px solid var(--mdv-line-2);min-width:0}
+.tk-check{flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--mdv-mute);background:transparent;cursor:pointer;padding:0}.tk-check:hover{border-color:var(--mdv-gold);background:color-mix(in srgb,var(--mdv-gold) 25%,transparent)}
+.tk-title{flex:1;min-width:0;text-align:left;border:0;background:none;color:var(--mdv-ink);font:13px/1.35 Inter,system-ui,sans-serif;cursor:pointer;padding:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tk-title:hover{color:var(--mdv-gold)}
+.tk-row em{flex:none;font-style:normal;font-size:11px;color:var(--mdv-mute)}.tk-row.over em{color:#e08f82}
+.tk-pr{flex:none;width:7px;height:7px;border-radius:50%;background:#e0b05a}.tk-pr.u{background:#e0685a}
+.tk-more,.tk-all{border:0;background:none;color:var(--mdv-gold);font:12px Inter,sans-serif;cursor:pointer;padding:6px 0;text-align:left}
+.pl-tasks>footer{border-top:1px solid var(--mdv-line-2);margin-top:6px;padding-top:4px}
+html body #p-calendar .tk-check{width:18px!important;height:18px!important;min-width:18px!important;min-height:18px!important;max-width:18px!important;padding:0!important;border-radius:50%!important;box-sizing:border-box}
+html body #p-calendar .tk-title,html body #p-calendar .tk-more,html body #p-calendar .tk-all{min-height:0!important;width:auto;letter-spacing:0!important;text-transform:none!important;box-shadow:none!important}
+html body #p-calendar .tk-title{flex:1 1 auto;width:auto}
+.sc-embed .sc-score{white-space:nowrap}
