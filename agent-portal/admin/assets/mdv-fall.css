@@ -1,0 +1,21 @@
+/* The Fall skin: warm charcoal, olive and cream with amber and terracotta accents, taken from the Fall artwork.
+   Select it in Settings → Portal Color Wave. The backdrop (falling leaves, then a forest path, over the artwork still)
+   is set up in mdv-scenes.js; this file holds the palette and keeps the panels soft and readable over the video. */
+html[data-veux-wave="fall"]{
+  --skin-0:#15120e;--skin-1:#1b1712;--skin-2:#221d16;--skin-3:#2b251c;
+  --skin-card:#1f1a14;--skin-card2:#28221a;--skin-line:#3d3528;--skin-line2:#54483a;
+  --skin-accent:#e0925a;--skin-accent2:#f2bf93;--skin-text:#f6eee0;--skin-text2:#d6cab5;--skin-muted:#a39784;
+  --skin-soft:rgba(224,146,90,.12);--skin-glow:rgba(224,146,90,.20);
+  --wave:#E0925A;--wave-bright:#F2BF93;--wave-soft:rgba(224,146,90,.15);--wave-faint:rgba(224,146,90,.06);--wave-line:rgba(224,146,90,.30);--wave-glow:rgba(224,146,90,.18);--wave-rgb:224,146,90;
+  --ivory:#14110d;--paper:#1d1913;--line:#3a3226;--line2:#4b4132;--ink:#f6eee0;--ink2:#dacfba;--mute:#a69a86;--faint:#6d6352;--void:#0e0c09;
+  --gold:var(--wave);--goldl:var(--wave-bright);--goldp:var(--wave-soft);
+  --burg:#c0563c;--burgp:rgba(192,86,60,.15);--sage:#8d9b60;--sagep:rgba(141,155,96,.16);
+  --cvy-atmo-a:#b5532f;--cvy-atmo-b:#5d6b36;--cvy-atmo-c:#e0925a;--cvy-atmo-d:#17120c;
+  color-scheme:dark;
+}
+html[data-veux-wave="fall"] #cavyre-environment-stage{display:block}
+html[data-veux-wave="fall"] body{background:#15120e}
+/* over the moving backdrop: warm frosted glass, a little lighter than the other skins so text stays easy to read */
+html[data-veux-wave="fall"][data-cavyre-environment-active] body :is(.vx73-topbar,.tb,#vx73-rail,.sidenav){background-color:color-mix(in srgb,#17130f 72%,transparent)!important}
+html[data-veux-wave="fall"][data-cavyre-environment-active] body #app :is([class*="-panel"],[class*="-card"],[class*="_card"]):not(.panel):not(#pm){background-color:color-mix(in srgb,#1d1913 74%,transparent)!important;border-color:color-mix(in srgb,#e0925a 16%,#3a3226)!important}
+html[data-veux-wave="fall"] #mdv-scene-video .mdv-shade{background:radial-gradient(ellipse at 50% 40%,rgba(21,18,14,0) 35%,rgba(21,18,14,.50) 100%),linear-gradient(rgba(21,18,14,.20),rgba(21,18,14,.34))}

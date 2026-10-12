@@ -2,7 +2,7 @@
    GPU shaders only (no image assets). Renders behind the portal, only while one of those four themes is active. */
 (function(){'use strict';
 if(window.__MDV_SCENES__)return;window.__MDV_SCENES__=true;
-var KEYS={galaxy:1,christmas:1,earth:1,waterfall:1};
+var KEYS={galaxy:1,christmas:1,earth:1,waterfall:1,fall:1};
 
 var COMMON=[
 '#ifdef GL_FRAGMENT_PRECISION_HIGH','precision highp float;','#else','precision mediump float;','#endif',
@@ -172,7 +172,9 @@ var CFG={
  galaxy:{gl:'galaxy'},
  earth:{video:['earth-1.mp4','earth-2.mp4'],poster:'earth.jpg',fallback:'earth'},
  waterfall:{gl:'waterfall'},
- christmas:{video:['christmas.mp4'],poster:'christmas.jpg',fallback:'christmas',filter:'brightness(.58) saturate(.92) contrast(1.05)'}
+ christmas:{video:['christmas.mp4'],poster:'christmas.jpg',fallback:'christmas',filter:'brightness(.58) saturate(.92) contrast(1.05)'},
+ /* Fall: falling leaves, then a forest path. The artwork is the still shown while video loads (and when motion is reduced). No GPU fallback, the artwork simply stays. */
+ fall:{video:['fall-leaves.mp4','fall-forest.mp4'],poster:'fall.jpg',filter:'brightness(.6) saturate(.85) contrast(1.04) sepia(.12) hue-rotate(-20deg)'}
 };
 function reduced(){try{return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}}
 function saveData(){try{return !!(navigator.connection&&navigator.connection.saveData);}catch(e){return false;}}
@@ -214,8 +216,8 @@ function stopAll(){cur='';stopVideo();gv.stop();sv.stop();html(false);if(raf){ca
 function start(key){var c=CFG[key];if(!c)return;cur=key;
  if(c.gl){showGL(c.gl);return;}
  gv.stop();
- var ok=startVideo(key,c,function(){if(cur===key){console.warn('[MDV scenes] video failed, using GPU render for',key);showGL(c.fallback);}});
- if(!ok){showGL(c.fallback);return;}
+ var ok=startVideo(key,c,function(){if(cur===key&&c.fallback){console.warn('[MDV scenes] video failed, using GPU render for',key);showGL(c.fallback);}});
+ if(!ok){if(c.fallback)showGL(c.fallback);return;}
  html(true);
  if(c.snow&&!reduced()&&sv.start('snow')){last=0;kick();}else sv.stop();}
 function sync(){var k=String(document.documentElement.getAttribute('data-veux-wave')||'').toLowerCase();if(CFG[k]){var missing=!document.getElementById(CFG[k].gl?'mdv-scene-canvas':'mdv-scene-video');if(cur!==k||(missing&&!CFG[k].gl&&!(gv.key)))start(k);else if(anyGL())kick();}else if(cur||document.documentElement.classList.contains('mdv-gl'))stopAll();}

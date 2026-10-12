@@ -6,7 +6,7 @@ window.__VEUX_SETTINGS_WAVE_AUTHORITY_161039__=true;
 function repair(){
   var grid=document.querySelector('#vx-wave-settings .vx-wave-grid');
   if(!grid)return;
-  var needed=['classic','green','blue','red','white','purple','burntOrange','turquoise','blueNude','greenNude','galaxy','christmas','earth','waterfall'];
+  var needed=['classic','green','blue','red','white','purple','burntOrange','turquoise','blueNude','greenNude','galaxy','christmas','earth','waterfall','fall'];
   var existing=[].map.call(grid.querySelectorAll('.vx-wave-option'),function(b){return b.dataset.wave;});
   if(needed.every(function(k){return existing.indexOf(k)>=0;}))return;
   if(window.VEUX_COLOR_WAVES&&typeof VEUX_COLOR_WAVES.settingsMarkup==='function'){

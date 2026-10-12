@@ -1,0 +1,25 @@
+/* Calm layer, all skins: softer corners, gentler lines and glow, calmer buttons.
+   Removing the 'mdv-calm.css' entry from the loader list in index.html puts the sharper look back. */
+:root{
+  --mdv-line:color-mix(in srgb,var(--mdv-gold) 20%,transparent);
+  --mdv-line-2:rgba(255,255,255,.07);
+  --mdv-glow:0 0 0 1px color-mix(in srgb,var(--mdv-gold) 22%,transparent),0 8px 28px rgba(0,0,0,.22);
+}
+/* The angular cut corners become soft rounded rectangles */
+html body button:not(.mdv-dd-btn):is([class*="btn"],.btn,.gold,.fill),
+html body .v1682-btn,html body .v1682-tab,html body .v1699-switch button,html body .v144-gold{clip-path:none!important;border-radius:10px!important;letter-spacing:.07em!important}
+html body .v1682-modal,html body .mdv-dd-menu,html body .v1699-doc{clip-path:none!important;border-radius:16px!important}
+html body .v1682-modal{box-shadow:0 24px 70px rgba(0,0,0,.45)!important}
+/* Cards, panels, fields and menus */
+html body :is(.card,.v152-card,.vx-card,.vxrel-card,.vx17-panel,.v1686-crm-list,.v1686-crm-detail,.cc49-detail,.cc49-toolbar,.mm,.ct-sec,.ct-hero,.ct-card,.vs-modal,.mmx){border-radius:14px}
+html body :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]),select,textarea){border-radius:10px!important}
+html body :is(.vx73-topbar,.tb){border-radius:0 0 14px 14px}
+html body .mm{overflow:hidden}
+/* Calmer spacing and type for reading */
+html body :is(p,li,td){line-height:1.65}
+html body :is(.card,.v152-card,.vx-card,.ct-sec,.vx17-panel){box-shadow:0 10px 32px rgba(0,0,0,.16)}
+/* Slower, softer motion */
+html body *{scroll-behavior:smooth}
+@media(prefers-reduced-motion:reduce){html body *{scroll-behavior:auto}}
+/* Classic skin: a touch lighter and warmer so it is less stark */
+html[data-veux-wave="classic"]{--skin-0:#0c0a08;--skin-1:#12100d;--skin-2:#181510;--skin-3:#201b15;--skin-card:#1a1612;--skin-card2:#241e17;--skin-line:#3e3322}
