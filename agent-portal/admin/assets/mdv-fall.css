@@ -14,7 +14,6 @@ html[data-veux-wave="deepForest"]{
   --wave-glow:rgba(143,178,122,.18);color-scheme:dark;
 }
 html:is([data-veux-wave="fallArt"],[data-veux-wave="deepForest"],[data-veux-wave="fallLeaf"]) #cavyre-environment-stage{display:block}
-html:is([data-veux-wave="fallArt"],[data-veux-wave="deepForest"],[data-veux-wave="fallLeaf"]) body{background:#0f0d0a}
 /* over the backdrop: frosted glass, a little lighter than the other skins so text stays easy to read */
 html:is([data-veux-wave="fallArt"],[data-veux-wave="fallLeaf"])[data-cavyre-environment-active] body :is(.vx73-topbar,.tb,#vx73-rail,.sidenav){background-color:color-mix(in srgb,#17130f 74%,transparent)!important}
 html:is([data-veux-wave="fallArt"],[data-veux-wave="fallLeaf"])[data-cavyre-environment-active] body #app :is([class*="-panel"],[class*="-card"],[class*="_card"]):not(.panel):not(#pm){background-color:color-mix(in srgb,#1d1913 76%,transparent)!important;border-color:color-mix(in srgb,#e0925a 16%,#3a3226)!important}
@@ -22,3 +21,14 @@ html[data-veux-wave="deepForest"][data-cavyre-environment-active] body :is(.vx73
 html[data-veux-wave="deepForest"][data-cavyre-environment-active] body #app :is([class*="-panel"],[class*="-card"],[class*="_card"]):not(.panel):not(#pm){background-color:color-mix(in srgb,#121a14 76%,transparent)!important;border-color:color-mix(in srgb,#8fb27a 16%,#26382b)!important}
 html:is([data-veux-wave="fallArt"],[data-veux-wave="fallLeaf"]) #mdv-scene-video .mdv-shade{background:radial-gradient(ellipse at 50% 40%,rgba(21,18,14,0) 35%,rgba(21,18,14,.50) 100%),linear-gradient(rgba(21,18,14,.20),rgba(21,18,14,.34))}
 html[data-veux-wave="deepForest"] #mdv-scene-video .mdv-shade{background:radial-gradient(ellipse at 50% 42%,rgba(5,10,6,0) 35%,rgba(5,10,6,.5) 100%),linear-gradient(rgba(5,10,6,.16),rgba(5,10,6,.3))}
+
+/* Let the backdrop show through. The portal makes pages see-through for each animated skin by name; these are the same rules for the three Fall looks. */
+html:is([data-veux-wave="fallArt"],[data-veux-wave="deepForest"],[data-veux-wave="fallLeaf"]){--cvy-env-glass:rgba(23,19,15,.58);--cvy-env-glass-strong:rgba(20,16,12,.82)}
+html[data-veux-wave="deepForest"]{--cvy-env-glass:rgba(9,14,11,.58);--cvy-env-glass-strong:rgba(7,11,8,.82)}
+html:is([data-veux-wave="fallArt"],[data-veux-wave="deepForest"],[data-veux-wave="fallLeaf"]) body{background:transparent!important;color:var(--ink);isolation:isolate}
+html:is([data-veux-wave="fallArt"],[data-veux-wave="deepForest"],[data-veux-wave="fallLeaf"]) :is(#app,#pm,.portal-main,#pm>.panel){background:transparent!important}
+html:is([data-veux-wave="fallArt"],[data-veux-wave="deepForest"],[data-veux-wave="fallLeaf"]) #pm>.panel>:first-child{background:color-mix(in srgb,var(--void) 12%,transparent)!important;backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+html:is([data-veux-wave="fallArt"],[data-veux-wave="deepForest"],[data-veux-wave="fallLeaf"]) #pm :is(section,article,[class*="card"],[class*="detail"],[class*="table"],[class*="toolbar"]){background-color:var(--cvy-env-glass)!important;backdrop-filter:blur(15px) saturate(115%);-webkit-backdrop-filter:blur(15px) saturate(115%)}
+html:is([data-veux-wave="fallArt"],[data-veux-wave="deepForest"],[data-veux-wave="fallLeaf"]) .sidenav{background:var(--cvy-env-glass-strong)!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+html:is([data-veux-wave="fallArt"],[data-veux-wave="deepForest"],[data-veux-wave="fallLeaf"]) :is(.topbar,.tb,.sidebar,.sb){background:color-mix(in srgb,var(--void) 84%,transparent)!important;backdrop-filter:blur(22px) saturate(125%);-webkit-backdrop-filter:blur(22px) saturate(125%);border-color:color-mix(in srgb,var(--wave) 18%,rgba(255,255,255,.10))!important}
+html:is([data-veux-wave="fallArt"],[data-veux-wave="deepForest"],[data-veux-wave="fallLeaf"]) :is(.card,.v152-card,.vx-card,.v1686-crm-list,.v1686-crm-detail,.vxrel-card,.vx95-intelligence,.modal,.vx-modal,.vx-dialog,[role="dialog"]){background:color-mix(in srgb,var(--paper) 88%,transparent)!important;backdrop-filter:blur(18px) saturate(118%);-webkit-backdrop-filter:blur(18px) saturate(118%);border-color:color-mix(in srgb,var(--wave) 17%,var(--line))!important}
