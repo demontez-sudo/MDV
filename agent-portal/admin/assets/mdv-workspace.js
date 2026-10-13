@@ -300,13 +300,17 @@ function glanceHtml(){
 }
 function paint(){
   var el=S.el,p=S.p,H=S.H;if(!el||!p)return;
+  if(!el.classList.contains('on')){S.stale=true;return;}
+  S.stale=false;
   var now=new Date();
-  el.innerHTML='<div class="ws-home"><header class="ws-head"><div><div class="ws-eye">'+now.toLocaleDateString('en-US',{weekday:'long'}).toUpperCase()+' <i>/</i> '+now.toLocaleDateString('en-US',{month:'long',day:'numeric'}).toUpperCase()+'</div><h1>AGENCY <em>COMMAND</em></h1></div><p>Agency performance. Daily action. One workspace.</p>'+createMenu()+'</header>'
+  var html='<div class="ws-home"><header class="ws-head"><div><div class="ws-eye">'+now.toLocaleDateString('en-US',{weekday:'long'}).toUpperCase()+' <i>/</i> '+now.toLocaleDateString('en-US',{month:'long',day:'numeric'}).toUpperCase()+'</div><h1>AGENCY <em>COMMAND</em></h1></div><p>Agency performance. Daily action. One workspace.</p>'+createMenu()+'</header>'
     +stripHtml(p,H)
     +glanceHtml()
     +'<div class="ws-r2">'+deskHtml(p,H)+scheduleHtml(p)+'</div>'
     +'<div class="ws-r3">'+talentHtml(p)+financeHtml(p)+'</div>'
     +'<div class="ws-r4">'+signalsHtml(p)+mailHtml()+'</div></div>';
+  if(S.last===html&&el.firstChild)return;
+  S.last=html;el.innerHTML=html;
   H.bind&&H.bind(el);
 }
 function fetchDay(key){
@@ -401,6 +405,7 @@ function patchSheets(){
 function tick(){
   try{
     layoutRow();
+    if(S.stale&&S.el&&S.el.isConnected&&S.el.classList.contains('on'))paint();
     if(document.documentElement.getAttribute('data-outlook')!=='workspace')return;
     patchSheets();buildMenu();buildDock();masthead();skinOnce();tighten();
   }catch(e){}
