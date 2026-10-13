@@ -354,12 +354,19 @@ function skinOnce(){
     if((cur==='classic'||cur==='purple')&&outlook()==='workspace')w.set('burntOrange');
   }catch(e){}
 }
+function docTop(el){var y=0,n=el;while(n){y+=n.offsetTop||0;n=n.offsetParent;}return y;}
+/* keep the page content just under the top bar, whatever else the page adds above it */
 function tighten(){
-  var h=document.querySelector('#p-overview .ws-home'),tb=document.querySelector('#app .topbar'),root=document.documentElement;
-  if(!h||!tb||!h.offsetParent){root.style.setProperty('--ws-pull','0px');return;}
-  var z=parseFloat(getComputedStyle(document.body).zoom)||1,cur=parseFloat(root.style.getPropertyValue('--ws-pull'))||0;
-  var gap=(h.getBoundingClientRect().top-tb.getBoundingClientRect().bottom)/z+cur-6;
-  var want=Math.max(0,Math.round(gap));if(Math.abs(want-cur)>2)root.style.setProperty('--ws-pull',want+'px');
+  var tb=document.querySelector('#app .topbar'),root=document.documentElement;if(!tb)return;
+  var panel=document.querySelector('#pm .panel.on, .pm .panel.on');if(!panel){return;}
+  var first=null,kids=panel.children;for(var i=0;i<kids.length;i++){var k=kids[i];if(k.offsetParent===null&&getComputedStyle(k).position!=='fixed')continue;if(k.offsetHeight>8){first=k;break;}}
+  if(!first)return;
+  var inner=first.querySelector('.ws-home')||first;
+  var cur=parseFloat(root.style.getPropertyValue('--ws-adj'))||0;
+  var tbBottom=(tb.offsetTop||0)+tb.offsetHeight,want=tbBottom+14,have=docTop(first);
+  if(window.scrollY>2)return;
+  var next=Math.max(-160,Math.min(60,Math.round(cur-(have-want))));
+  if(Math.abs(next-cur)>2)root.style.setProperty('--ws-adj',next+'px');
 }
 function tick(){
   try{

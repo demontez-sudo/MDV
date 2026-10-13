@@ -8,7 +8,7 @@ html:not([data-outlook="workspace"]) #ws-side,html:not([data-outlook="workspace"
 @media(min-width:901px){
 html[data-outlook="workspace"] body #app{background:radial-gradient(90% 55% at 70% -10%,color-mix(in srgb,var(--ws-wave) 11%,transparent),transparent 62%),var(--ws-ground)!important}
 html[data-outlook="workspace"] body #app #vx73-rail,html[data-outlook="workspace"] body #app .vx73-rail,html[data-outlook="workspace"] body #app #sidenav,html[data-outlook="workspace"] body #app .sidenav,html[data-outlook="workspace"] body #app .tb-burger{display:none!important}
-html[data-outlook="workspace"] body #app .shell{margin-left:var(--ws-side)!important;margin-top:var(--ws-top)!important;padding-bottom:40px!important}
+html[data-outlook="workspace"] body #app .shell{margin-left:var(--ws-side)!important;margin-top:calc(var(--ws-top) + var(--ws-adj,0px))!important;padding-bottom:40px!important}
 html[data-outlook="workspace"] body #app .pm{padding-left:clamp(14px,1.5vw,24px)!important;padding-right:clamp(14px,1.5vw,24px)!important}
 
 /* ---------- side menu ---------- */
@@ -163,7 +163,7 @@ html[data-outlook="workspace"] body #app .vx17-command{background:none!important
 .ws-layoutrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 0 18px;padding:14px 16px;border:1px solid var(--mdv-line-2,rgba(255,255,255,.13));border-radius:10px;background:var(--mdv-panel,#100e0c)}
 
 /* ---------- size, shape and spacing refinements ---------- */
-html[data-outlook="workspace"]{--ws-pull:0px}
+html[data-outlook="workspace"]{--ws-adj:0px}
 @media(min-width:901px){
 /* everything a little smaller: Compact is the default, Standard is 100% */
 html[data-outlook="workspace"][data-ws-size="compact"] body{zoom:.84}
@@ -171,7 +171,7 @@ html[data-outlook="workspace"][data-ws-size="standard"] body{zoom:1}
 /* no dead space above or below the page */
 html[data-outlook="workspace"] body #app .shell{padding-bottom:96px!important;min-height:0!important}
 html[data-outlook="workspace"] body #app .pm,html[data-outlook="workspace"] body #app .pm>.panel{min-height:0!important}
-html[data-outlook="workspace"] body #app .ws-home{margin-top:calc(-1 * var(--ws-pull))}
+
 /* round buttons stay round */
 html[data-outlook="workspace"] body #app .ws-ask button,html[data-outlook="workspace"] body #app .vx73-command button,html[data-outlook="workspace"] body #app .ws-oav,html[data-outlook="workspace"] body #app .ws-uav,html[data-outlook="workspace"] body #app .ws-pr{border-radius:50%!important}
 html[data-outlook="workspace"] body #app .ws-badge,html[data-outlook="workspace"] body #app .ws-dkb{border-radius:999px!important}
