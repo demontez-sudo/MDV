@@ -368,11 +368,39 @@ function tighten(){
   var next=Math.max(-160,Math.min(60,Math.round(cur-(have-want))));
   if(Math.abs(next-cur)>2)root.style.setProperty('--ws-adj',next+'px');
 }
+/* ---------- Compact size: keep viewport units honest ----------
+   CSS zoom shrinks everything, including 100vh / 100vw, so full-screen backdrops and viewport-height layouts came out 16% short.
+   Every vh / vw in the loaded stylesheets is rewritten once to use --ws-vh / --ws-vw, which are 1vh / 1vw divided by the zoom. */
+var patched=typeof WeakSet==='function'?new WeakSet():null,UNIT=/\d(?:dvh|svh|lvh|vh|dvw|svw|lvw|vw)\b/;
+function fixVal(v){return v.replace(/(-?\d*\.?\d+)(?:dvh|svh|lvh|vh)\b/g,'calc($1 * var(--ws-vh))').replace(/(-?\d*\.?\d+)(?:dvw|svw|lvw|vw)\b/g,'calc($1 * var(--ws-vw))');}
+function patchRules(rules){
+  for(var i=0;i<rules.length;i++){
+    var r=rules[i];
+    try{
+      if(r.cssRules&&r.cssRules.length&&!r.style)patchRules(r.cssRules);
+      else if(r.style){
+        if(r.cssRules&&r.cssRules.length)patchRules(r.cssRules);
+        var st=r.style,names=[];for(var j=0;j<st.length;j++)names.push(st[j]);
+        names.forEach(function(n){if(n==='--ws-vh'||n==='--ws-vw')return;var v=st.getPropertyValue(n);if(v&&UNIT.test(v)&&v.indexOf('--ws-v')<0)st.setProperty(n,fixVal(v),st.getPropertyPriority(n));});
+      }
+    }catch(e){}
+  }
+}
+function patchSheets(){
+  if(!patched)return;
+  for(var i=0;i<document.styleSheets.length;i++){
+    var sh=document.styleSheets[i];if(patched.has(sh))continue;
+    var rules;try{rules=sh.cssRules;}catch(e){patched.add(sh);continue;}
+    if(!rules)continue;
+    if(sh.ownerNode&&sh.ownerNode.tagName==='LINK'&&!rules.length)continue;
+    patched.add(sh);patchRules(rules);
+  }
+}
 function tick(){
   try{
     layoutRow();
     if(document.documentElement.getAttribute('data-outlook')!=='workspace')return;
-    buildMenu();buildDock();masthead();skinOnce();tighten();
+    patchSheets();buildMenu();buildDock();masthead();skinOnce();tighten();
   }catch(e){}
 }
 setInterval(tick,700);

@@ -202,3 +202,8 @@ html:not([data-outlook="workspace"]) #ws-dock{display:none!important}
 .ws-gb.g-daily{background:color-mix(in srgb,#c9a35a 38%,#1a140d)}.ws-gb.g-work{background:color-mix(in srgb,#6f86b8 42%,#10141c)}.ws-gb.g-health{background:color-mix(in srgb,#6fa56a 40%,#101810)}
 .ws-gn{position:absolute;top:-4px;bottom:-4px;width:2px;background:#ff7a5c;z-index:3;pointer-events:none}.ws-gn::before{content:"";position:absolute;top:-2px;left:-4px;width:10px;height:10px;border-radius:50%;background:#ff7a5c}
 }
+
+html{--ws-vh:1vh;--ws-vw:1vw}
+@media(min-width:901px){
+html[data-outlook="workspace"][data-ws-size="compact"]{--ws-vh:calc(1vh / .84);--ws-vw:calc(1vw / .84)}
+}
