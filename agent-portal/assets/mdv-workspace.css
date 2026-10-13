@@ -11,6 +11,10 @@ html[data-outlook="workspace"] body #app #vx73-rail,html[data-outlook="workspace
 html[data-outlook="workspace"] body #app .shell{margin-left:var(--ws-side)!important;margin-top:calc(var(--ws-top) + var(--ws-adj,0px))!important;padding-bottom:40px!important}
 html[data-outlook="workspace"] body #app .pm{padding-left:clamp(14px,1.5vw,24px)!important;padding-right:clamp(14px,1.5vw,24px)!important}
 
+/* Mail runs the full height of the page, down to the dock */
+html[data-outlook="workspace"] body #app #p-mail .mm{height:calc(100 * var(--ws-vh) - 210px)!important;min-height:520px}
+html[data-outlook="workspace"][data-ws-size="standard"] body #app #p-mail .mm{height:calc(100 * var(--ws-vh) - 176px)!important}
+
 /* ---------- side menu ---------- */
 #ws-side{position:fixed;left:0;top:0;bottom:0;width:var(--ws-side);z-index:5020;display:flex;flex-direction:column;background:linear-gradient(180deg,#0b0807,#070504);border-right:1px solid var(--ws-line)}
 .ws-logo{display:grid;justify-items:center;gap:7px;padding:16px 12px 10px;text-decoration:none;color:var(--ws-bright)!important}
