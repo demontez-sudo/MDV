@@ -569,7 +569,7 @@ function enhanceCommand(root){
     var input=cmd.querySelector('input');
     if(input){
       input.setAttribute('aria-label','Ask Vera');
-      input.setAttribute('placeholder','Ask Vera to plan, move or resolve…');
+      input.setAttribute('placeholder','Ask Vera to research, decide, build or act…');/* same text as the Vera site script: two different texts made the two scripts rewrite it back and forth forever */
     }
 
     var button=cmd.querySelector('button');

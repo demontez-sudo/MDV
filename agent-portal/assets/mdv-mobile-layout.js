@@ -20,12 +20,13 @@ function pin(){
     touched=true;
   },{passive:true,capture:true});
 });
-var old=null;
+function inChain(f,mark){var n=0;while(f&&n++<60){if(f[mark])return true;f=f.__orig||f.__previous;}return false;}
 function hook(){
-  if(typeof window.navTo!=='function'||window.navTo.__ml)return;
-  old=window.navTo;
-  var w=function(){var r=old.apply(this,arguments);pin();return r;};w.__ml=1;
-  for(var k in old){try{w[k]=old[k];}catch(_e){}}
+  if(typeof window.navTo!=='function'||inChain(window.navTo,'__ml'))return;
+  var prev=window.navTo;
+  var w=function(){var r=prev.apply(this,arguments);pin();return r;};
+  for(var k in prev){try{w[k]=prev[k];}catch(_e){}}
+  w.__ml=1;w.__orig=prev;
   window.navTo=w;
 }
 hook();window.addEventListener('veux:shell-ready',hook);setTimeout(hook,1500);setTimeout(hook,4000);

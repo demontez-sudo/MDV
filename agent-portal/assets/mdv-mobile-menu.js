@@ -75,11 +75,14 @@ function settingsCard(){
   var first=host.querySelector('.cnt')||host;first.insertBefore(c,first.firstChild);
 }
 ['veux:page-rendered','veux:pwa-state'].forEach(function(ev){window.addEventListener(ev,function(){setTimeout(settingsCard,150);setTimeout(settingsCard,900);});});
-var oldNav=null;
+/* Wrap navTo exactly once. Each wrapper keeps its own reference to the function it wraps; sharing one variable between wrappers
+   made two hooks call each other forever ("Maximum call stack size exceeded") whenever another script re-wrapped navTo. */
+function inChain(f,mark){var n=0;while(f&&n++<60){if(f[mark])return true;f=f.__orig||f.__previous;}return false;}
 function hook(){
-  if(typeof window.navTo!=='function'||window.navTo.__mm)return;
-  oldNav=window.navTo;var w=function(p){var r=oldNav.apply(this,arguments);if(p==='systemsettings'){setTimeout(settingsCard,200);setTimeout(settingsCard,900);setTimeout(settingsCard,2000);}return r;};w.__mm=1;
-  for(var k in oldNav){try{w[k]=oldNav[k];}catch(_e){}}
+  if(typeof window.navTo!=='function'||inChain(window.navTo,'__mm'))return;
+  var prev=window.navTo;var w=function(p){var r=prev.apply(this,arguments);if(p==='systemsettings'){setTimeout(settingsCard,200);setTimeout(settingsCard,900);setTimeout(settingsCard,2000);}return r;};
+  for(var k in prev){try{w[k]=prev[k];}catch(_e){}}
+  w.__mm=1;w.__orig=prev;
   window.navTo=w;
 }
 hook();window.addEventListener('veux:shell-ready',hook);setTimeout(hook,1500);setTimeout(hook,4000);

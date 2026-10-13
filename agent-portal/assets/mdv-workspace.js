@@ -138,7 +138,6 @@ function masthead(){
   if(brand&&!brand.querySelector('.ws-brand')){
     var a=document.createElement('a');a.className='ws-brand';a.href='#';a.setAttribute('aria-label','Maison de Veux, home');a.innerHTML='<b>Maison de Veux</b><small>Agent Portal</small>';a.onclick=function(e){e.preventDefault();go('overview');};brand.appendChild(a);
   }
-  var cmd=tb.querySelector('.vx73-command input');if(cmd&&cmd.placeholder.indexOf('Find anything')<0)cmd.placeholder='Find anything — talent, clients, bookings, tasks…';
   var right=tb.querySelector('.tb-right');
   if(right&&!document.getElementById('ws-clocks')){
     var c=document.createElement('div');c.id='ws-clocks';right.parentNode.insertBefore(c,right);clocks();temp(40.71,-74.01,'ny');temp(48.86,2.35,'paris');
@@ -334,9 +333,12 @@ window.addEventListener('mdv:mail-widget',function(){if(S.el&&S.el.isConnected&&
 function home(el,p,H){S.el=el;S.p=p;S.H=H;if(!S.sday)S.sday=dkey(new Date());paint();badges();}
 
 /* ================= appearance + one-time skin ================= */
+var rowHosts=typeof WeakSet==='function'?new WeakSet():null;
 function layoutRow(){
+  var pg=String(window._currentPage||'');if(pg!=='systemsettings'&&!document.querySelector('.mdv-appearance'))return;
   document.querySelectorAll('#vx-wave-settings,.mdv-appearance .v152-settings-grid').forEach(function(host){
-    if(!host||host.querySelector('.ws-layoutrow')||host.parentNode.querySelector('.ws-layoutrow'))return;
+    if(!host||!host.parentNode||(rowHosts&&rowHosts.has(host))||host.querySelector('.ws-layoutrow')||host.parentNode.querySelector('.ws-layoutrow'))return;
+    if(rowHosts)rowHosts.add(host);
     var row=document.createElement('div');row.className='ws-layoutrow';
     function paintRow(){var cur=outlook();row.innerHTML='<b>Layout</b><button type="button" data-ol="workspace" class="'+(cur==='workspace'?'on':'')+'">Workspace</button><button type="button" data-ol="classic" class="'+(cur==='classic'?'on':'')+'">Classic</button><b style="margin-left:18px">Size</b><button type="button" data-size="compact" class="'+(size()==='compact'?'on':'')+'">Compact</button><button type="button" data-size="standard" class="'+(size()==='standard'?'on':'')+'">Standard</button><span>Workspace has the sectioned side menu and the Agency Command home. Classic is the previous look. Compact fits more on screen.</span>';
       row.querySelectorAll('[data-ol]').forEach(function(b){b.onclick=function(){window.MDV_WORKSPACE.set(b.dataset.ol);paintRow();};});
@@ -403,8 +405,9 @@ function tick(){
     patchSheets();buildMenu();buildDock();masthead();skinOnce();tighten();
   }catch(e){}
 }
-setInterval(tick,700);
-var raf=0;new MutationObserver(function(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;tick();});}).observe(document.documentElement,{childList:true,subtree:true});
+setInterval(function(){if(!document.hidden)tick();},600);
+/* polling only: observing the whole document made this script and the older top-bar scripts re-trigger each other on busy pages */
+window.addEventListener('hashchange',tick);window.addEventListener('popstate',tick);window.addEventListener('veux:agency-v16-session',tick);
 window.MDV_WORKSPACE={active:function(){return outlook()==='workspace'&&window.matchMedia&&!window.matchMedia('(max-width:900px)').matches;},home:home,get:outlook,set:function(v){try{localStorage.setItem(KEY,v);}catch(e){}apply(v);tick();if(window.VEUX_SMART_PORTAL&&VEUX_SMART_PORTAL.refresh&&String(window._currentPage||'')==='overview')VEUX_SMART_PORTAL.refresh();}};
 tick();
 })();
