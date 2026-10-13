@@ -605,7 +605,7 @@ async function refreshWidget(){
       W.data={state:'ok',unread:inbox?inbox.unread:0,rows:arr(d.messages).slice(0,6)};
     }
   }catch(e){W.data=/reconnect/i.test(msg(e))?{state:'off',reconnect:true}:{state:'error'};}
-  W.at=Date.now();W.busy=false;paintWidgets();
+  W.at=Date.now();W.busy=false;paintWidgets();try{window.dispatchEvent(new Event('mdv:mail-widget'));}catch(e){}
 }
 (function watchWidget(){
   var pending=false;
@@ -623,7 +623,7 @@ async function refreshWidget(){
 /* ---------- page entry + wiring into the portal ---------- */
 function render(host){W.at=0;S.host=host;S.status=null;S.err='';S.sel=null;S.detail=null;S.readerOpen=false;S.search='';S.unreadOnly=false;return boot();}
 window.renderMail=render;
-window.MDV_MAIL={render:render,state:S,emailTo:emailTo,crm:crm};
+window.MDV_MAIL={render:render,state:S,emailTo:emailTo,crm:crm,widget:function(){return W.data;},refreshWidget:function(){return refreshWidget();}};
 
 function registerRoute(){
   var map=window.VEUX_V15_ROUTE_RENDERERS;

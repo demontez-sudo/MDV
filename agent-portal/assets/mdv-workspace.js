@@ -1,4 +1,4 @@
-/* Maison Flow workspace: side menu, bottom dock, masthead and the Agency workspace home.
+/* Maison Flow workspace: sectioned side menu, masthead and the Agency Command home.
    Layout switch: Appearance → Layout (Workspace | Classic). Everything is scoped to html[data-outlook="workspace"]. */
 (function(){
 'use strict';
@@ -13,144 +13,131 @@ function bridge(){var b=window.VEUX_AGENT_V4;if(!b||!b.api)throw new Error('not 
 function org(){try{return bridge().state.org.slug||'maison-de-veux';}catch(e){return 'maison-de-veux';}}
 function go(p){if(typeof window.navTo==='function')window.navTo(p);}
 function dkey(v){var d=new Date(v);return isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-function ago(iso){var m=Math.round((Date.now()-new Date(iso))/6e4);if(isNaN(m))return '';if(m<1)return 'now';if(m<60)return m+'m ago';if(m<1440)return Math.round(m/60)+'h ago';if(m<2880)return 'Yesterday';return Math.round(m/1440)+'d ago';}
 function initials(n){return String(n||'?').replace(/[^A-Za-z0-9 ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(function(x){return x[0];}).join('').toUpperCase()||'?';}
 function tint(s){var h=0;s=String(s||'');for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return Math.abs(h)%360;}
+function hm(d){return new Date(d).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});}
+function money(n,c){try{return new Intl.NumberFormat('en-US',{style:'currency',currency:c||'USD',maximumFractionDigits:0}).format(Number(n)||0);}catch(e){return '$'+Math.round(Number(n)||0);}}
+function dayDiff(iso){if(!iso)return null;var d=new Date(iso);if(isNaN(d))return null;var a=new Date(d.getFullYear(),d.getMonth(),d.getDate()),n=new Date();n=new Date(n.getFullYear(),n.getMonth(),n.getDate());return Math.round((a-n)/864e5);}
 
-/* ---------- menu: one grouped side bar with submenus ---------- */
-var MENU=[
-  {id:'home',label:'Home',icon:'ti-home-2',items:[['overview','Home']]},
-  {id:'calendar',label:'Calendar & Schedule',icon:'ti-calendar',items:[['calendar','Calendar'],['availability','Availability'],['seasonmanagement','Season']]},
-  {id:'talent',label:'Talent',icon:'ti-users',items:[['roster','Roster'],['scouting','Scouting'],['modeldevelopment','Development & Image'],['modelevaluations','Evaluations'],['modelsubmissions','Submissions']]},
-  {id:'clients',label:'Clients',icon:'ti-briefcase',items:[['industrydirectory','Client Directory'],['multipackage','Packages'],['packageresponses','Package Responses']]},
-  {id:'tasks',label:'Tasks & Approvals',icon:'ti-checkbox',items:[['tasksconsolidated','Tasks'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
-  {id:'comms',label:'Communication',icon:'ti-message-circle',items:[['inbox','Messages'],['mail','Mail'],['editorial','Editorial']]},
-  {id:'travel',label:'Travel & Visa',icon:'ti-plane',items:[['globalmobility','Mobility'],['visa','Visa & Compliance']]},
-  {id:'finance',label:'Finance & Legal',icon:'ti-chart-bar',items:[['financelegal','Finance Overview'],['modelaccounts','Model Accounts'],['agentcommissions','Commissions']]},
-  {id:'files',label:'Files & Forms',icon:'ti-files',items:[['filesforms','Files & Forms']]},
-  {id:'team',label:'Team',icon:'ti-users-group',items:[['team','Team']]},
-  {id:'vera',label:'Vera Intelligence',icon:'ti-sparkles',items:[['__vera__','Vera Intelligence']]}
+/* ================= menu ================= */
+var SECTIONS=[
+ {cap:'Daily',items:[
+  {id:'home',label:'Home',icon:'ti-home-2',page:'overview'},
+  {id:'tasks',label:'Tasks',icon:'ti-checkbox',page:'tasksconsolidated',badge:'tasks',sub:[['tasksconsolidated','Tasks'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
+  {id:'messages',label:'Messages',icon:'ti-message-circle',page:'inbox'},
+  {id:'mail',label:'Mail',icon:'ti-mail',page:'mail',badge:'mail'},
+  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Calendar'],['availability','Availability']]}]},
+ {cap:'Agency',items:[
+  {id:'roster',label:'Roster',icon:'ti-users',page:'roster'},
+  {id:'clients',label:'Clients',icon:'ti-user-circle',page:'industrydirectory'},
+  {id:'modeltools',label:'Model Tools',icon:'ti-heart-handshake',sub:[['multipackage','Packages'],['packageresponses','Package Responses'],['modelevaluations','Evaluations'],['modelsubmissions','Submissions']]},
+  {id:'scouting',label:'Scouting',icon:'ti-user-search',page:'scouting'},
+  {id:'season',label:'Season',icon:'ti-layout-grid',page:'seasonmanagement'},
+  {id:'development',label:'Development',icon:'ti-chart-bar',page:'modeldevelopment'},
+  {id:'editorial',label:'Editorial',icon:'ti-notebook',page:'editorial'}]},
+ {cap:'Management',items:[
+  {id:'travel',label:'Travel & Visa',icon:'ti-plane',sub:[['globalmobility','Mobility'],['visa','Visa & Compliance']]},
+  {id:'finance',label:'Finance & Legal',icon:'ti-scale',sub:[['financelegal','Finance Overview'],['modelaccounts','Model Accounts'],['agentcommissions','Commissions']]},
+  {id:'team',label:'Team',icon:'ti-users-group',page:'team'},
+  {id:'files',label:'Files & Forms',icon:'ti-file-text',page:'filesforms'}]}
 ];
-var MENU_BOTTOM={id:'settings',label:'Settings',icon:'ti-settings',items:[['systemsettings','Portal Settings'],['releaseaudit','Release Audit']]};
-var ALWAYS={overview:1,calendar:1,inbox:1,mail:1,systemsettings:1,__vera__:1};
+var SETTINGS={id:'settings',label:'Settings',icon:'ti-settings',sub:[['systemsettings','Portal Settings'],['releaseaudit','Release Audit']]};
+var ALWAYS={overview:1,calendar:1,inbox:1,mail:1,systemsettings:1};
 var LINKED={visa:'globalmobility',agentcommissions:'financelegal'};
 function groups(){return (window.NAV_AGENT||window.VEUX_V15_NAV_FULL||[]).filter(function(g){return g&&g.items&&g.items.length;});}
 function allowed(){var ok=Object.assign({},ALWAYS);groups().forEach(function(g){g.items.forEach(function(i){ok[i[0]]=1;});});Object.keys(LINKED).forEach(function(k){if(ok[LINKED[k]])ok[k]=1;});return ok;}
 function current(){var p=String(window._currentPage||'overview').toLowerCase();if(p==='season')return 'seasonmanagement';if(['industrydirectory','companies','contacts','allcontacts','clientbook'].indexOf(p)>-1)return 'industrydirectory';if(p==='mobility')return 'globalmobility';return p;}
-function openSet(){try{return JSON.parse(localStorage.getItem('mdv-sb-open')||'[]');}catch(e){return [];}}
-function saveOpen(a){try{localStorage.setItem('mdv-sb-open',JSON.stringify(a));}catch(e){}}
-function collapsed(){try{return localStorage.getItem('mdv-sb-collapsed')==='1';}catch(e){return false;}}
-function setCollapsed(v){try{localStorage.setItem('mdv-sb-collapsed',v?'1':'0');}catch(e){}document.documentElement.setAttribute('data-ws-collapsed',v?'1':'0');var i=document.querySelector('.ws-collapse i');if(i)i.className='ti '+(v?'ti-layout-sidebar-left-expand':'ti-layout-sidebar-left-collapse');}
-document.documentElement.setAttribute('data-ws-collapsed',collapsed()?'1':'0');
-function visibleMenu(){
-  var ok=allowed(),seen={},out=[];
-  MENU.concat([MENU_BOTTOM]).forEach(function(g){var items=g.items.filter(function(i){return ok[i[0]];});items.forEach(function(i){seen[i[0]]=1;});if(items.length)out.push({id:g.id,label:g.label,icon:g.icon,items:items,bottom:g===MENU_BOTTOM});});
-  /* anything permitted that is not placed above lands in "More" so no page is ever unreachable */
+function visible(){
+  var ok=allowed(),seen={};
+  function fix(it){var sub=arr(it.sub).filter(function(s){return ok[s[0]];}),page=it.page&&ok[it.page]?it.page:(sub[0]&&sub[0][0])||null;if(!page)return null;sub.forEach(function(s){seen[s[0]]=1;});seen[page]=1;return Object.assign({},it,{page:page,sub:sub.length>1?sub:[]});}
+  var secs=SECTIONS.map(function(sc){return {cap:sc.cap,items:sc.items.map(fix).filter(Boolean)};}).filter(function(sc){return sc.items.length;});
+  var settings=fix(SETTINGS);
   var extra=[];groups().forEach(function(g){g.items.forEach(function(i){if(!seen[i[0]]&&i[0]!=='overview'){seen[i[0]]=1;extra.push([i[0],i[1]]);}});});
-  if(extra.length){var bi=out.findIndex(function(g){return g.bottom;});out.splice(bi<0?out.length:bi,0,{id:'more',label:'More',icon:'ti-layout-grid',items:extra});}
-  return out;
+  if(extra.length)secs.push({cap:'More',items:[{id:'more',label:'More pages',icon:'ti-dots',page:extra[0][0],sub:extra.length>1?extra:[]}]});
+  return {secs:secs,settings:settings};
 }
-function groupOf(menu,page){return menu.find(function(g){return g.items.some(function(i){return i[0]===page;});});}
-var sig='',query='';
-function itemHtml(g,i){return '<button type="button" class="ws-si" data-ws="'+esc(i[0])+'"><span>'+esc(i[1])+'</span></button>';}
+function pagesOf(it){return [it.page].concat(arr(it.sub).map(function(s){return s[0];}));}
+var sig='',openId='';
+function itemHtml(it){
+  var has=it.sub&&it.sub.length;
+  return '<button type="button" class="ws-it" data-item="'+it.id+'" data-page="'+esc(it.page)+'"'+(has?' data-sub="1" aria-haspopup="true"':'')+'><i class="ti '+it.icon+' ws-ic"></i><span>'+esc(it.label)+'</span>'+(it.badge?'<em class="ws-badge" data-badge="'+it.badge+'" hidden></em>':'')+(has?'<i class="ti ti-chevron-right ws-ch"></i>':'')+'</button>';
+}
+function userCard(){
+  var n=(document.getElementById('tbName')||{}).textContent||'',r=(document.getElementById('tbRole')||{}).textContent||'';
+  return '<button type="button" class="ws-user" data-ws-user><span class="ws-uav">'+esc(initials(n))+'</span><span class="ws-un"><b>'+esc(n||'Your account')+'</b><small>'+esc(r||'Team')+'</small></span><i class="ti ti-chevron-right ws-ch"></i></button>';
+}
 function buildMenu(){
   var app=document.getElementById('app');if(!app)return;
-  var menu=visibleMenu(),s=menu.map(function(g){return g.id+':'+g.items.map(function(i){return i[0];}).join();}).join('|');
+  var v=visible(),s=v.secs.map(function(sc){return sc.cap+sc.items.map(function(i){return i.id+i.page+arr(i.sub).length;}).join();}).join('|')+((document.getElementById('tbName')||{}).textContent||'');
   var sb=document.getElementById('ws-side');
   if(!sb){sb=document.createElement('nav');sb.id='ws-side';sb.setAttribute('aria-label','Main menu');app.appendChild(sb);sig='';}
   if(s!==sig){
     sig=s;
-    function grp(g){
-      var single=g.items.length===1,first=g.items[0];
-      if(single)return '<div class="ws-g ws-direct" data-g="'+g.id+'"><button type="button" class="ws-gh" data-ws="'+esc(first[0])+'" title="'+esc(g.label)+'"><span class="ws-gi"><i class="ti '+g.icon+'"></i></span><b>'+esc(g.label)+'</b></button></div>';
-      return '<div class="ws-g" data-g="'+g.id+'"><button type="button" class="ws-gh" data-ws-grp="'+g.id+'" aria-expanded="false" title="'+esc(g.label)+'"><span class="ws-gi"><i class="ti '+g.icon+'"></i></span><b>'+esc(g.label)+'</b><i class="ti ti-chevron-down ws-chev"></i></button><div class="ws-sub">'+g.items.map(function(i){return itemHtml(g,i);}).join('')+'</div></div>';
-    }
-    sb.innerHTML='<header class="ws-sbh"><a class="ws-logo" href="#" aria-label="Maison de Veux, home"><span>M</span><div><b>Maison de Veux</b><small>Maison Flow</small></div></a><button type="button" class="ws-collapse" data-ws-collapse aria-label="Collapse menu" title="Collapse menu"><i class="ti '+(collapsed()?'ti-layout-sidebar-left-expand':'ti-layout-sidebar-left-collapse')+'"></i></button></header>'
-      +'<label class="ws-find"><i class="ti ti-search"></i><input type="search" placeholder="Find a page" autocomplete="off" aria-label="Find a page"></label>'
-      +'<div class="ws-scroll"><div class="ws-groups">'+menu.filter(function(g){return !g.bottom;}).map(grp).join('')+'</div><div class="ws-results" hidden></div></div>'
-      +'<div class="ws-sbf">'+menu.filter(function(g){return g.bottom;}).map(grp).join('')+'</div>';
+    sb.innerHTML='<a class="ws-logo" href="#" aria-label="Maison de Veux, home"><span class="ws-sym" aria-hidden="true"></span><small>Maison Flow</small></a>'
+      +'<div class="ws-scroll">'+v.secs.map(function(sc){return '<div class="ws-sec"><h4>'+esc(sc.cap)+'</h4>'+sc.items.map(itemHtml).join('')+'</div>';}).join('')+'</div>'
+      +'<div class="ws-sbf">'+(v.settings?itemHtml(v.settings):'')+userCard()+'</div>';
     sb.querySelector('.ws-logo').onclick=function(e){e.preventDefault();go('overview');};
-    var inp=sb.querySelector('.ws-find input');
-    inp.oninput=function(){query=inp.value.trim().toLowerCase();paintResults(menu);};
-    inp.onkeydown=function(e){if(e.key==='Enter'){var f=sb.querySelector('.ws-results [data-ws]');if(f){f.click();}}else if(e.key==='Escape'){inp.value='';query='';paintResults(menu);}};
-    sb.dataset.menu=JSON.stringify(menu.map(function(g){return {id:g.id,label:g.label,items:g.items};}));
+    sb.__items={};v.secs.forEach(function(sc){sc.items.forEach(function(i){sb.__items[i.id]=i;});});if(v.settings)sb.__items.settings=v.settings;
+    badges();
   }
-  paintActive(menu);
+  var cur=current();
+  sb.querySelectorAll('.ws-it').forEach(function(b){var it=sb.__items[b.dataset.item],on=it&&pagesOf(it).indexOf(cur)>=0;b.classList.toggle('on',!!on);});
 }
-function paintResults(menu){
-  var sb=document.getElementById('ws-side'),res=sb.querySelector('.ws-results'),gr=sb.querySelector('.ws-groups');
-  if(!query){res.hidden=true;gr.hidden=false;return;}
-  var hits=[];menu.forEach(function(g){g.items.forEach(function(i){if((i[1]+' '+g.label).toLowerCase().indexOf(query)>=0)hits.push({g:g,i:i});});});
-  gr.hidden=true;res.hidden=false;
-  res.innerHTML=hits.length?hits.map(function(h){return '<button type="button" class="ws-si ws-hit" data-ws="'+esc(h.i[0])+'"><i class="ti '+h.g.icon+'"></i><span>'+esc(h.i[1])+'</span><small>'+esc(h.g.label)+'</small></button>';}).join(''):'<p class="ws-none">No page matches “'+esc(query)+'”.</p>';
+function badges(){
+  var p=window.VEUX_SMART_PORTAL&&VEUX_SMART_PORTAL.last,sb=document.getElementById('ws-side');if(!sb)return;
+  var w=window.MDV_MAIL&&MDV_MAIL.widget&&MDV_MAIL.widget();
+  var counts={tasks:p&&p.tasks?arr(p.tasks.open).length:0,mail:(w&&w.unread)||0};
+  sb.querySelectorAll('[data-badge]').forEach(function(e){var n=counts[e.dataset.badge]||0;e.hidden=!n;e.textContent=n>99?'99+':n;});
 }
-function paintActive(menu){
-  var sb=document.getElementById('ws-side');if(!sb)return;
-  var cur=current(),g=groupOf(menu,cur),open=openSet();
-  if(g&&g.items.length>1&&sb.dataset.curg!==cur){sb.dataset.curg=cur;if(open.indexOf(g.id)<0){open=[g.id];saveOpen(open);}}
-  sb.querySelectorAll('.ws-g').forEach(function(el){
-    var id=el.dataset.g,isOpen=open.indexOf(id)>=0,has=g&&g.id===id;
-    el.classList.toggle('open',isOpen);el.classList.toggle('has',!!has);
-    var h=el.querySelector('.ws-gh');if(h&&h.hasAttribute('data-ws-grp'))h.setAttribute('aria-expanded',isOpen?'true':'false');
-    if(h&&h.hasAttribute('data-ws'))h.classList.toggle('on',h.dataset.ws===cur);
-  });
-  sb.querySelectorAll('.ws-si[data-ws]').forEach(function(b){b.classList.toggle('on',b.dataset.ws===cur);});
+function fly(anchor,it){
+  var f=document.getElementById('ws-fly');
+  if(!f){f=document.createElement('div');f.id='ws-fly';document.body.appendChild(f);}
+  var cur=current();
+  f.innerHTML='<h4>'+esc(it.label)+'</h4>'+arr(it.sub).map(function(s){return '<button type="button" class="ws-fi'+(s[0]===cur?' on':'')+'" data-go="'+esc(s[0])+'">'+esc(s[1])+'</button>';}).join('');
+  var r=anchor.getBoundingClientRect();f.style.top=Math.max(8,Math.min(innerHeight-70-it.sub.length*40,r.top-8))+'px';f.classList.add('open');openId=it.id;
 }
-function fly(anchor,gid){
-  var sb=document.getElementById('ws-side'),menu=JSON.parse(sb.dataset.menu||'[]'),g=menu.find(function(x){return x.id===gid;}),f=document.getElementById('ws-fly');
-  if(!g){return;}
-  if(!f){f=document.createElement('div');f.id='ws-fly';document.body.appendChild(f);f.addEventListener('mouseleave',function(){f.classList.remove('open');});}
-  var r=anchor.getBoundingClientRect(),cur=current();
-  f.innerHTML='<h4>'+esc(g.label)+'</h4>'+g.items.map(function(i){return '<button type="button" class="ws-si'+(i[0]===cur?' on':'')+'" data-ws="'+esc(i[0])+'"><span>'+esc(i[1])+'</span></button>';}).join('');
-  f.style.top=Math.max(8,Math.min(innerHeight-60-g.items.length*40,r.top-6))+'px';f.classList.add('open');
-}
-function navigate(page){
-  var f=document.getElementById('ws-fly');if(f)f.classList.remove('open');
-  if(page==='__vera__'){if(window.MDV_VERA_CHAT&&MDV_VERA_CHAT.open)MDV_VERA_CHAT.open();else{var b=document.getElementById('_asst-btn');if(b)b.click();}return;}
-  go(page);
-}
+function closeFly(){var f=document.getElementById('ws-fly');if(f)f.classList.remove('open');openId='';}
+function navigate(page){closeFly();go(page);}
 document.addEventListener('click',function(e){
   var t=e.target;if(!t.closest)return;
-  var col=t.closest('[data-ws-collapse]');if(col){setCollapsed(!collapsed());return;}
-  var gh=t.closest('#ws-side [data-ws-grp]');
-  if(gh){
-    var id=gh.dataset.wsGrp;
-    if(collapsed()){fly(gh,id);return;}
-    var open=openSet(),i=open.indexOf(id);if(i>=0)open.splice(i,1);else open=[id];/* one section open at a time keeps the menu short */
-    saveOpen(open);var sb=document.getElementById('ws-side');paintActive(JSON.parse(sb.dataset.menu||'[]').map(function(g){return g;}));
-    return;
-  }
-  var b=t.closest('#ws-side [data-ws],#ws-fly [data-ws]');
-  if(b){navigate(b.dataset.ws);var sb2=document.getElementById('ws-side');var inp=sb2&&sb2.querySelector('.ws-find input');if(inp&&inp.value){inp.value='';query='';paintResults(JSON.parse(sb2.dataset.menu||'[]'));}return;}
-  var fl=document.getElementById('ws-fly');if(fl&&!t.closest('#ws-fly'))fl.classList.remove('open');
+  var so=t.closest('#ws-fly [data-go="__signout__"]');if(so){closeFly();if(typeof window.signOut==='function')window.signOut();return;}
+  var it=t.closest('#ws-side .ws-it');
+  if(it){var sb=document.getElementById('ws-side'),def=sb.__items&&sb.__items[it.dataset.item];if(def&&def.sub&&def.sub.length){if(openId===def.id)closeFly();else fly(it,def);}else navigate(it.dataset.page);return;}
+  var fi=t.closest('#ws-fly [data-go]');if(fi){navigate(fi.dataset.go);return;}
+  var u=t.closest('[data-ws-user]');if(u){if(openId==='user')closeFly();else fly(u,{id:'user',label:'Account',sub:[['systemsettings','Settings & appearance'],['__signout__','Sign out']]});return;}
+  if(!t.closest('#ws-fly'))closeFly();
   var cm=document.querySelector('.ws-create.open');if(cm&&!t.closest('.ws-create'))cm.classList.remove('open');
 });
-document.addEventListener('mouseover',function(e){
-  if(!collapsed())return;var gh=e.target.closest&&e.target.closest('#ws-side [data-ws-grp]');if(gh)fly(gh,gh.dataset.wsGrp);
-});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeFly();});
 
-/* masthead */
-var MK=function(){try{return localStorage.getItem('mdv-market')||'both';}catch(e){return 'both';}};
+/* ================= masthead ================= */
+var TEMPS={ny:'',paris:''};
+function temp(lat,lon,k){try{fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m&temperature_unit=fahrenheit').then(function(r){return r.json();}).then(function(d){var t=Math.round(d.current&&d.current.temperature_2m);if(isFinite(t)){TEMPS[k]=t+'°F';clocks();}}).catch(function(){});}catch(e){}}
+function clocks(){
+  var el=document.getElementById('ws-clocks');if(!el)return;var n=new Date();
+  function one(tz,label,k){var t=n.toLocaleTimeString('en-GB',{timeZone:tz,hour:'2-digit',minute:'2-digit'}),d=n.toLocaleDateString('en-US',{timeZone:tz,weekday:'short',month:'short',day:'numeric'});return '<div><small>'+label+'</small><b>'+t+'</b><span>'+d+(TEMPS[k]?' <i>•</i> '+TEMPS[k]:'')+'</span></div>';}
+  el.innerHTML=one('America/New_York','New York','ny')+one('Europe/Paris','Paris','paris');
+}
 function masthead(){
-  var right=document.querySelector('#app .tb-right');
-  if(right&&!right.querySelector('.ws-market')){
-    var w=document.createElement('div');w.className='ws-market';
-    function labelOf(v){return v==='ny'?'New York':v==='paris'?'Paris':'New York / Paris';}
-    w.innerHTML='<button type="button" aria-haspopup="true"><span>'+labelOf(MK())+'</span><i class="ti ti-chevron-down"></i></button><div class="ws-mpop">'+[['both','New York / Paris'],['ny','New York'],['paris','Paris']].map(function(x){return '<button type="button" data-mk="'+x[0]+'">'+x[1]+'</button>';}).join('')+'</div>';
-    w.onclick=function(e){var b=e.target.closest('[data-mk]');if(b){try{localStorage.setItem('mdv-market',b.dataset.mk);}catch(x){}w.querySelector('button span').textContent=labelOf(b.dataset.mk);w.classList.remove('open');window.dispatchEvent(new Event('mdv:market'));return;}w.classList.toggle('open');};
-    document.addEventListener('click',function(e){if(!e.target.closest('.ws-market'))w.classList.remove('open');});
-    right.insertBefore(w,right.firstChild);
-    var d=document.createElement('span');d.className='ws-date';d.textContent=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}).toUpperCase();right.insertBefore(d,w.nextSibling);
+  var tb=document.querySelector('#app .topbar');if(!tb)return;
+  var brand=tb.querySelector('.tb-brand');
+  if(brand&&!brand.querySelector('.ws-brand')){
+    var a=document.createElement('a');a.className='ws-brand';a.href='#';a.setAttribute('aria-label','Maison de Veux, home');a.innerHTML='<b>Maison de Veux</b><small>Agent Portal</small>';a.onclick=function(e){e.preventDefault();go('overview');};brand.appendChild(a);
+  }
+  var cmd=tb.querySelector('.vx73-command input');if(cmd&&cmd.placeholder.indexOf('Find anything')<0)cmd.placeholder='Find anything — talent, clients, bookings, tasks…';
+  var right=tb.querySelector('.tb-right');
+  if(right&&!document.getElementById('ws-clocks')){
+    var c=document.createElement('div');c.id='ws-clocks';right.parentNode.insertBefore(c,right);clocks();temp(40.71,-74.01,'ny');temp(48.86,2.35,'paris');
   }
 }
+setInterval(function(){clocks();},15000);
 
-/* ---------- home ---------- */
-var S={tab:'overview',day:null,dayCache:{},dayBusy:false,board:'women',el:null,p:null,H:null};
-var TABS=[['overview','Overview'],['desk','My desk'],['insights','Insights']];
+/* ================= home: Agency Command ================= */
+var S={deskRange:'today',deskScope:'mine',sday:null,dayCache:{},el:null,p:null,H:null};
 function modelMap(p){var m={};arr(p.models).forEach(function(x){if(x&&x.id)m[x.id]=x;});arr(p.cal&&p.cal.lookups&&p.cal.lookups.models).forEach(function(x){if(x&&x.id&&!m[x.id])m[x.id]=x;});return m;}
 function photoOf(m){if(!m)return '';var pm=m.primary_media||{};return String(pm.url||pm.public_url||m.image_url||m.avatar_url||m.profile_image_url||m.thumbnail_url||'').replace(/'/g,'%27').replace(/"/g,'%22');}
 function nameOf(m){return (m&&(m.display_name||m.name||[m.first_name,m.last_name].filter(Boolean).join(' ')))||'Model';}
-function avatarHtml(m,cls){var u=photoOf(m);return u?'<span class="'+cls+'" style="background-image:url(\''+esc(u)+'\')"></span>':'<span class="'+cls+' ph" style="--t:'+tint(nameOf(m))+'">'+esc(initials(nameOf(m)))+'</span>';}
+function thumb(m,cls,fallbackName){var u=photoOf(m),n=nameOf(m)||fallbackName;return u?'<span class="'+cls+'" style="background-image:url(\''+esc(u)+'\')"></span>':'<span class="'+cls+' ph" style="--t:'+tint(n)+'">'+esc(initials(n))+'</span>';}
 function eventsOf(cal){
   var out=[];
   [['bookings','booking','booking_models'],['castings','casting','casting_models'],['events','event','event_models']].forEach(function(g){
@@ -158,148 +145,188 @@ function eventsOf(cal){
       if(!x.starts_at)return;
       var links=arr(x[g[2]]||x.model_assignments),ms=links.map(function(l){return l.models||l;}).filter(function(q){return q&&(q.id||q.display_name||q.name);});
       var t=(x.title||'')+' '+((x.metadata&&x.metadata.calendar_event_type)||x.event_type||x.job_type||'');
-      var kind=/travel|flight|arriv|depart/i.test(t)?'travel':g[1]==='casting'||/casting|go.?see|callback/i.test(t)?'casting':/fitting/i.test(t)?'fitting':g[1]==='booking'?'booking':'other';
-      out.push({id:x.id,kind:g[1],type:kind,title:x.title||x.job_title||(g[1]==='casting'?'Casting':g[1]==='booking'?'Booking':'Event'),s:new Date(x.starts_at),e:x.ends_at?new Date(x.ends_at):null,loc:x.location||'',market:String((x.markets&&x.markets.name)||x.market_name||x.market||''),status:String(x.status||''),models:ms,raw:x});
+      var type=/travel|flight|arriv|depart/i.test(t)?'Travel':g[1]==='casting'||/casting|go.?see|callback/i.test(t)?'Casting':/fitting/i.test(t)?'Fitting':g[1]==='booking'?'Booking':'Meeting';
+      out.push({id:x.id,kind:g[1],type:type,title:x.title||x.job_title||type,s:new Date(x.starts_at),e:x.ends_at?new Date(x.ends_at):null,loc:x.location||'',client:(x.companies&&x.companies.name)||x.client_name||'',market:String((x.markets&&x.markets.name)||x.market_name||x.market||x.location||''),status:String(x.status||''),models:ms,raw:x});
     });
   });
   return out.sort(function(a,b){return a.s-b.s;});
 }
-function marketOk(ev){var m=MK();if(m==='both')return true;var t=(ev.market+' '+ev.loc).toLowerCase();if(!t.trim())return true;return m==='paris'?/paris|france/.test(t):/new york|nyc|ny\b|brooklyn|manhattan|queens/.test(t);}
+function spark(vals,w,h){
+  if(!vals.length)return '';var mx=Math.max.apply(null,vals)||1,mn=Math.min.apply(null,vals),rg=(mx-mn)||1;
+  var pts=vals.map(function(v,i){return (i/(Math.max(1,vals.length-1))*w).toFixed(1)+','+(h-2-((v-mn)/rg)*(h-6)).toFixed(1);});
+  return '<svg class="ws-sp" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" aria-hidden="true"><polyline fill="none" stroke="currentColor" stroke-width="1.6" points="'+pts.join(' ')+'"/></svg>';
+}
+function bars(vals){var mx=Math.max.apply(null,vals)||1;return '<span class="ws-bs" aria-hidden="true">'+vals.map(function(v){return '<i style="height:'+Math.max(10,Math.round(v/mx*100))+'%"></i>';}).join('')+'</span>';}
+function weekDays(){var t=new Date();t.setHours(12,0,0,0);var m=new Date(t);m.setDate(t.getDate()-((t.getDay()+6)%7));var out=[];for(var i=0;i<7;i++){var d=new Date(m);d.setDate(m.getDate()+i);out.push(d);}return out;}
 
-function timeline(p,H){
-  var key=S.day||dkey(new Date()),isToday=key===dkey(new Date()),cal=S.dayCache[key]||(isToday?p.cal:null),mm=modelMap(p);
-  var all=cal?eventsOf(cal).filter(function(e){return dkey(e.s)===key&&marketOk(e);}):[];
-  var rows={},order=[];
-  all.forEach(function(e){(e.models.length?e.models:[{id:'x'+e.id,display_name:e.client||'Unassigned'}]).forEach(function(q){var id=q.id||q.display_name,r=rows[id];if(!r){r=rows[id]={m:mm[q.id]||q,ev:[]};order.push(id);}r.ev.push(e);});});
-  var list=order.map(function(id){return rows[id];}).slice(0,6);
-  /* fill with available talent so the board never looks empty */
-  if(list.length<3){arr(p.models).filter(function(m){return !rows[m.id]&&!/inactive|archiv|paused|hold/i.test(String(m.status||''));}).slice(0,3-list.length).forEach(function(m){list.push({m:m,ev:[]});});}
-  var h0=9,h1=18;all.forEach(function(e){h0=Math.min(h0,e.s.getHours());var en=e.e||new Date(e.s.getTime()+36e5);h1=Math.max(h1,en.getHours()+(en.getMinutes()?1:0));});
-  h0=Math.max(0,Math.min(h0,9));h1=Math.min(24,Math.max(h1,h0+8));var span=(h1-h0)*60,now=new Date(),nowMin=now.getHours()*60+now.getMinutes()-h0*60;
-  var cols='';for(var h=h0;h<h1;h++)cols+='<span>'+String(h).padStart(2,'0')+':00</span>';
-  var body=list.map(function(r){
-    var live=r.ev.some(function(e){var en=e.e||new Date(e.s.getTime()+36e5);return isToday&&e.s<=now&&en>=now;});
-    var cards=r.ev.map(function(e){
-      var st=(e.s.getHours()*60+e.s.getMinutes()-h0*60),en=e.e?(e.e.getHours()*60+e.e.getMinutes()-h0*60):st+60,dur=Math.max(30,en-st),
-          left=Math.max(0,st/span*100),width=Math.min(100-left,dur/span*100),durTxt=dur>=60?(Math.floor(dur/60)+'h'+(dur%60?' '+(dur%60)+'m':'')):dur+'m';
-      var hm=function(d){return d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});};
-      return '<button type="button" class="ws-ev k-'+e.type+'" data-vx17-nav="calendar" style="left:'+left.toFixed(2)+'%;width:'+Math.max(width,13).toFixed(2)+'%">'+avatarHtml(r.m,'ws-evp')+'<span class="ws-evt"><b>'+esc(e.title)+'</b><small>'+hm(e.s)+(e.e?' – '+hm(e.e):'')+' · '+durTxt+'</small>'+(e.loc?'<small class="loc"><i class="ti ti-map-pin"></i>'+esc(e.loc)+'</small>':'')+'</span></button>';
-    }).join('');
-    return '<div class="ws-trow"><div class="ws-who">'+avatarHtml(r.m,'ws-wp')+'<span><b>'+esc(nameOf(r.m).toUpperCase())+'</b><small>'+esc(r.m.gender?'Model':'Model')+'</small><em class="'+(live?'live':'')+'"><i></i>'+(live?'On set':'Available')+'</em></span></div><div class="ws-lane" style="--cols:'+(h1-h0)+'">'+cards+'</div></div>';
-  }).join('');
-  var nowLine=(isToday&&nowMin>0&&nowMin<span)?'<div class="ws-now" style="left:'+(nowMin/span*100).toFixed(2)+'%"><span>'+now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</span></div>':'';
-  var dl=new Date(key+'T12:00:00').toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
-  var empty=all.length?'':'<p class="ws-empty">Nothing booked on this day'+(MK()!=='both'?' in this market':'')+'. Available talent is shown below.</p>';
-  return '<section class="ws-card ws-motion"><header><h2>Today in motion <button type="button" class="ws-go" data-vx17-nav="calendar" aria-label="Open calendar"><i class="ti ti-chevron-right"></i></button></h2>'
-    +'<div class="ws-dnav"><span>'+esc(dl)+'</span><button type="button" data-ws-day="-1" aria-label="Previous day"><i class="ti ti-chevron-left"></i></button><button type="button" data-ws-day="1" aria-label="Next day"><i class="ti ti-chevron-right"></i></button><select data-ws-view aria-label="View"><option>Day</option><option value="week">Week</option></select></div></header>'
-    +empty+'<div class="ws-tgrid"><div class="ws-hours"><span></span><div>'+cols+'</div></div><div class="ws-tbody">'+body+'<div class="ws-lanes-fx" aria-hidden="true">'+nowLine+'</div></div></div></section>';
+function stripHtml(p,H){
+  var ev=eventsOf(p.cal),days=weekDays(),wk=days.map(function(d){return ev.filter(function(e){return e.kind==='booking'&&dkey(e.s)===dkey(d);}).length;}),weekN=wk.reduce(function(a,b){return a+b;},0);
+  var talent=arr(p.models).length,ready=p.ready||0,amt=H.amount,
+      val=days.map(function(d){return arr(p.bookings).filter(function(b){return dkey(b.starts_at)===dkey(d);}).reduce(function(n,b){return n+Number(amt(b)||0);},0);}),valTotal=val.reduce(function(a,b){return a+b;},0);
+  var unpaid=arr(p.finance&&p.finance.unpaid),os=Number(p.finance&&p.finance.outstanding||0),cur=(p.finance&&p.finance.currency)||'USD',osSeries=unpaid.slice(0,10).map(function(x){return Number(x.amount_due||x.balance_due||0);});
+  function cell(icon,big,label,sub,vis){return '<div class="ws-st"><i class="ti '+icon+' ws-sti"></i><div class="ws-stn"><b>'+big+'</b></div><div class="ws-stl"><span>'+label+'</span><small>'+sub+'</small></div><div class="ws-stv">'+vis+'</div></div>';}
+  return '<section class="ws-strip">'+cell('ti-calendar-event',weekN||arr(p.bookings).length,'Bookings','this week',bars(wk.some(function(x){return x;})?wk:[1,1,1,1,1,1,1]))
+   +cell('ti-users',talent,'Active talent',ready+' ready',bars(arr(p.models).slice(0,8).map(function(m,i){return 4+((i*3)%5);})))
+   +cell('ti-currency-dollar',money(valTotal||arr(p.bookings).reduce(function(n,b){return n+Number(amt(b)||0);},0),cur),'Booking value','this week',spark(val.length?val:[0,0],70,28))
+   +cell('ti-file-invoice',money(os,cur),'Outstanding',unpaid.length+' invoice'+(unpaid.length===1?'':'s'),spark(osSeries.length>1?osSeries:[0,0],70,28))+'</section>';
 }
-function stats(p){
-  var cal=eventsOf(p.cal),today=dkey(new Date()),total=arr(p.bookings).length,todayN=cal.filter(function(e){return e.kind==='booking'&&dkey(e.s)===today;}).length;
-  var talent=arr(p.models).length,wk=arr(p.models).filter(function(m){return m.created_at&&Date.now()-new Date(m.created_at)<7*864e5;}).length;
-  var appr=arr(p.tasks&&p.tasks.approvals).length,ready=talent?Math.round(p.ready/talent*100):100;
-  function cell(icon,n,l,sub){return '<div class="ws-stat"><i class="ti '+icon+'"></i><b>'+n+'</b><span>'+l+'</span><small>'+sub+'</small></div>';}
-  return '<section class="ws-stats">'+cell('ti-calendar-event',total,'Bookings','+'+todayN+' today')+cell('ti-users',talent,'Talent',wk?'+'+wk+' this week':'active')+cell('ti-file-check',String(appr).padStart(2,'0'),'Approvals',appr?appr+' pending':'all clear')+'<div class="ws-stat"><span class="ws-ring" style="--p:'+ready+'"></span><b>'+ready+'%</b><span>Ready</span><small>'+(ready>=90?'All systems go':'Needs updates')+'</small></div></section>';
+
+/* ----- desk ----- */
+function deskItems(p,H){
+  var mm=modelMap(p),members=arr(p.taskMembers),memberById={};members.forEach(function(m){memberById[m.id]=m;});
+  var uid=null;try{var st=bridge().state;uid=(st.user&&st.user.id)||(st.session&&st.session.user&&st.session.user.id)||null;}catch(e){}
+  var me=uid?members.filter(function(m){return m.user_id===uid;})[0]:null,out=[];
+  function mname(m){return m?((m.profile&&m.profile.display_name)||m.job_title||'Team'):'Unassigned';}
+  arr(p.tasks&&p.tasks.open).forEach(function(t){
+    var due=t.due_at||t.due_date||null,d=dayDiff(due),pr=String(t.priority||'').toLowerCase(),owners=arr(t.assignments||t.assignees).map(function(a){return memberById[a.member_id||a]||null;}).filter(Boolean),mod=mm[t.model_id];
+    out.push({k:'task',pri:(d!=null&&d<0)||/urgent|critical/.test(pr)?'r':d===0||/high/.test(pr)?'o':/low/.test(pr)?'g':'y',title:t.title||'Task',sub:(mod?nameOf(mod)+' · ':'')+String(t.category||'Task'),model:mod||null,owner:owners[0]?mname(owners[0]):'Unassigned',due:due,btn:'Open',nav:'tasksconsolidated',mine:!owners.length||!me||owners.some(function(o){return o.id===me.id;}),id:t.id});
+  });
+  arr(p.tasks&&p.tasks.approvals).forEach(function(a){var due=a.due_at||a.created_at||null;out.push({k:'approval',pri:'o',title:a.title||a.subject||'Approval required',sub:a.requested_by_name||a.type||'Needs a decision',owner:(me&&mname(me))||'You',due:due,btn:'Approve',nav:'approvals',mine:true,id:a.id});});
+  H.calList(p.cal).filter(function(x){var t=new Date(x.starts_at).getTime();return t>=Date.now()&&t<=Date.now()+48*36e5&&/pending|hold|tentative|await|invited/i.test(x.status);}).slice(0,3).forEach(function(x){out.push({k:'booking',pri:'y',title:'Confirm '+x.title,sub:(x.models[0]||'')+(x.sub?(x.models[0]?' · ':'')+x.sub:''),owner:'Bookings',due:x.starts_at,btn:'Review',nav:'calendar',mine:true,modelName:x.models[0]});});
+  arr(p.finance&&p.finance.overdue).slice(0,2).forEach(function(x){out.push({k:'invoice',pri:'r',title:'Follow up overdue invoice',sub:((x.companies&&x.companies.name)||'Client')+' · '+(x.invoice_number||'Invoice'),owner:'Finance',due:x.due_date||null,btn:'Open',nav:'agentcommissions',mine:true,overdue:true});});
+  H.veraSignals(p).filter(function(x){return /blocked|critical/.test(x.severity);}).slice(0,2).forEach(function(x){out.push({k:'vera',pri:'r',title:x.title,sub:String(x.domain||'')+' · '+(x.detail||''),owner:'Vera',due:null,btn:'Open',nav:x.nav,mine:true,blocked:true,rt:x.recordType,rid:x.recordId});});
+  return out;
 }
-function genderOf(m){var g=String(m.gender||m.sex||'').toLowerCase();return /^f|wom/.test(g)?'women':/^m|^men/.test(g)?'men':'';}
-function isNew(m){var t=String(m.stage||'')+' '+arr(m.tags).map(function(x){return x.name;}).join(' ')+' '+arr(m.divisions).map(function(x){return (x.name||'')+(x.board||'');}).join(' ');return /new.?face|development/i.test(t)||(m.created_at&&Date.now()-new Date(m.created_at)<60*864e5);}
-function board(p){
-  var all=arr(p.models),tab=S.board,list=all.filter(function(m){return tab==='women'?genderOf(m)==='women':tab==='men'?genderOf(m)==='men':isNew(m);});
-  if(!list.length&&tab!=='new')list=all;
-  var cards=list.slice(0,4).map(function(m){
-    var u=photoOf(m),mk=m.primary_market_label||arr(m.markets).map(function(x){return x.name||x.city;}).filter(Boolean).slice(0,2).join(' / ')||'',st=String(m.status||'active').toLowerCase(),on=/set|booked|busy/.test(st);
-    return '<button type="button" class="ws-mc'+(u?'':' ph')+'" data-vx17-nav="roster" data-vx17-record-type="model" data-vx17-record-id="'+esc(m.id||'')+'" style="'+(u?'background-image:url(\''+esc(u)+'\')':'--t:'+tint(nameOf(m)))+'"><span class="ws-star"><i class="ti ti-star"></i></span>'+(u?'':'<em class="ini">'+esc(initials(nameOf(m)))+'</em>')+'<span class="ws-mi"><b>'+esc(nameOf(m).toUpperCase())+'</b><small>'+esc(mk||'Maison de Veux')+'</small><span class="'+(on?'busy':'ok')+'"><i></i>'+(on?'On set':'Available')+'</span></span></button>';
-  }).join('')||'<p class="ws-empty">No talent in this group yet.</p>';
-  var tabs=[['women','Women'],['men','Men'],['new','New Faces']].map(function(t){return '<button type="button" class="'+(tab===t[0]?'on':'')+'" data-ws-board="'+t[0]+'">'+t[1]+'</button>';}).join('');
-  var act=arr(p.relationships&&p.relationships.activity).slice(0,3).map(function(a){var name=a.company_name||(a.company&&a.company.name)||a.client_name||a.title||'Client',line=a.summary||a.description||a.activity_type||a.type||a.action||'Activity';return '<button type="button" class="ws-act" data-vx17-nav="industrydirectory"><span class="ws-ci" style="--t:'+tint(name)+'">'+esc(initials(name))+'</span><span><b>'+esc(name)+'</b><small>'+esc(String(line).replace(/_/g,' '))+'</small></span><em>'+esc(ago(a.created_at||a.occurred_at||a.at))+'</em></button>';}).join('')
-    ||arr(p.relationships&&p.relationships.stale).slice(0,3).map(function(x){var name=(x.company&&x.company.name)||'Client';return '<button type="button" class="ws-act" data-vx17-nav="industrydirectory"><span class="ws-ci" style="--t:'+tint(name)+'">'+esc(initials(name))+'</span><span><b>'+esc(name)+'</b><small>Follow-up due</small></span><em>Today</em></button>';}).join('')
-    ||'<p class="ws-empty">No recent client activity.</p>';
-  return '<section class="ws-card ws-board"><div class="ws-bleft"><header><h2>The board <button type="button" class="ws-go" data-vx17-nav="roster" aria-label="Open roster"><i class="ti ti-chevron-right"></i></button></h2><div class="ws-seg">'+tabs+'</div><button type="button" class="ws-link" data-vx17-nav="roster">View all <i class="ti ti-chevron-right"></i></button></header><div class="ws-mcs">'+cards+'</div></div>'
-    +'<div class="ws-bright"><header><h3>Client activity</h3><button type="button" class="ws-link" data-vx17-nav="industrydirectory">View all <i class="ti ti-chevron-right"></i></button></header>'+act+'</div></section>';
+function dueLabel(it){
+  if(it.overdue)return {t:'Overdue',c:'over'};var d=dayDiff(it.due);
+  if(d==null)return {t:'—',c:''};if(d<0)return {t:'Overdue',c:'over'};
+  if(d===0){var dt=new Date(it.due),timed=(dt.getHours()||dt.getMinutes())&&!(dt.getHours()===12&&dt.getMinutes()===0)&&it.k==='booking';return timed?{t:hm(it.due),c:''}:{t:'Today',c:'today'};}
+  if(d===1)return {t:'Tomorrow',c:''};return {t:new Date(it.due).toLocaleDateString('en-GB',{day:'numeric',month:'short'}),c:''};
 }
-function veraPanel(p,H){
-  var sig=H.veraSignals(p),n=sig.length,rows=sig.slice(0,3).map(function(x){
-    var verb=/conflict|overlap/i.test(x.title)?'Open':/approv|review|submission|digital|portfolio/i.test(x.title+' '+x.domain)?'Review':/confirm|arriv|travel/i.test(x.title+' '+x.domain)?'Confirm':'Open';
-    return '<div class="ws-vr"><span class="ws-vi" style="--t:'+tint(x.domain)+'"><i class="ti '+(/mobility|travel/i.test(x.domain)?'ti-plane':/finance|invoice/i.test(x.domain)?'ti-cash':/calendar|booking/i.test(x.domain)?'ti-calendar-event':/task/i.test(x.domain)?'ti-checkbox':'ti-sparkles')+'"></i></span><span class="ws-vt"><b>'+esc(x.title)+'</b><small>'+esc(String(x.domain||'').toUpperCase())+' · '+esc(x.detail||'')+'</small></span><button type="button" data-vx17-nav="'+esc(x.nav)+'" data-vx17-record-type="'+esc(x.recordType||'')+'" data-vx17-record-id="'+esc(x.recordId||'')+'">'+verb+'</button></div>';
-  }).join('')||'<p class="ws-empty">Nothing needs a decision right now.</p>';
-  var trav=eventsOf(p.cal).filter(function(e){return e.type==='travel'&&e.s>=new Date(Date.now()-864e5);})[0],mm=modelMap(p),mv='';
-  if(trav){var q=trav.models[0],m=q?(mm[q.id]||q):null,route=(trav.title.match(/\b([A-Z]{3})\b\s*(?:→|->|to|–|-)\s*\b([A-Z]{3})\b/)||[]),txt=trav.s.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
-    mv='<div class="ws-mv" data-vx17-nav="globalmobility" role="button" tabindex="0">'+avatarHtml(m,'ws-mvp')+'<span><b>'+esc(nameOf(m).toUpperCase())+'</b>'+(route[1]?'<strong>'+route[1]+' <i class="ti ti-arrow-narrow-right"></i> '+route[2]+'</strong>':'<strong>'+esc(trav.title)+'</strong>')+'<small>'+esc(txt)+'</small></span><i class="ti ti-plane-departure ws-plane"></i></div>';}
-  else mv='<p class="ws-empty">No travel scheduled.</p>';
-  return '<aside class="ws-vera"><div class="ws-vtop"><span class="ws-orb" aria-hidden="true"></span><h2>Vera</h2><small>Agency intelligence</small></div>'
-    +'<h3>'+(n?(n===1?'One decision needs':n<=3?['','','Two decisions need','Three decisions need'][n]:n+' decisions need')+' your attention.':'You are all caught up.')+'</h3><div class="ws-vrows">'+rows+'</div>'
-    +'<header class="ws-vh"><h3>Movement</h3><button type="button" class="ws-link" data-vx17-nav="globalmobility">View travel <i class="ti ti-chevron-right"></i></button></header>'+mv
-    +'<form class="ws-ask" data-ws-ask><i class="ti ti-sparkles"></i><input type="text" placeholder="What would you like to do?" aria-label="Ask Vera"><button type="submit" aria-label="Ask"><i class="ti ti-arrow-right"></i></button></form></aside>';
+function deskHtml(p,H){
+  var all=deskItems(p,H),bucket=function(it){if(it.overdue)return 'overdue';var d=dayDiff(it.due);return d!=null&&d<0?'overdue':d===0?'today':'upcoming';};
+  var counts={today:0,upcoming:0,overdue:0};all.forEach(function(i){counts[bucket(i)]++;});
+  var rows=all.filter(function(i){return bucket(i)===S.deskRange&&(S.deskScope==='team'||i.mine);});
+  rows.sort(function(a,b){var o={r:0,o:1,y:2,g:3};return o[a.pri]-o[b.pri]||(new Date(a.due||8e15)-new Date(b.due||8e15));});
+  var dueToday=counts.today,appr=arr(p.tasks&&p.tasks.approvals).length,blocked=all.filter(function(i){return i.blocked;}).length;
+  var body=rows.slice(0,6).map(function(i){
+    var d=dueLabel(i),mod=i.model||(i.modelName?arr(p.models).filter(function(m){return nameOf(m)===i.modelName;})[0]:null);
+    var rec=mod?thumb(mod,'ws-dp'):'<span class="ws-dp ph" style="--t:'+tint(i.title)+'">'+esc(initials(i.sub||i.title))+'</span>';
+    return '<div class="ws-dr"><span class="ws-pr pr-'+i.pri+'"></span><div class="ws-rec">'+rec+'<span><b>'+esc(i.title)+'</b><small>'+esc(i.sub)+'</small></span></div><div class="ws-own"><span class="ws-oav">'+esc(initials(i.owner))+'</span><span>'+esc(i.owner)+'</span></div><span class="ws-due '+d.c+'">'+esc(d.t)+'</span><button type="button" class="ws-act" data-vx17-nav="'+esc(i.nav)+'" data-vx17-record-type="'+esc(i.rt||'')+'" data-vx17-record-id="'+esc(i.rid||'')+'">'+i.btn+'</button><button type="button" class="ws-more" aria-label="More">⋯</button></div>';
+  }).join('')||'<p class="ws-empty">Nothing here. Clear desk.</p>';
+  var tab=function(a,k,label){return '<button type="button" class="'+(S[a]===k?'on':'')+'" data-ws-'+(a==='deskRange'?'range':'scope')+'="'+k+'">'+label+'</button>';};
+  return '<section class="ws-card ws-desk"><header><h2>Agency Desk</h2><span class="ws-rule"></span><div class="ws-seg">'+tab('deskRange','today','Today')+tab('deskRange','upcoming','Upcoming')+tab('deskRange','overdue','Overdue')+'</div><div class="ws-seg">'+tab('deskScope','mine','My tasks')+tab('deskScope','team','Team')+'</div></header>'
+    +'<p class="ws-dsum"><b>'+dueToday+'</b> due today<i>·</i><b>'+appr+'</b> approvals<i>·</i><b>'+blocked+'</b> blocked</p>'
+    +'<div class="ws-dh"><span>Priority</span><span>Action / Record</span><span>Owner</span><span>Due</span><span>Next step</span><span></span></div>'+body
+    +'<footer><button type="button" class="ws-link" data-vx17-nav="tasksconsolidated">View all tasks →</button></footer></section>';
+}
+
+/* ----- schedule ----- */
+function scheduleHtml(p){
+  var key=S.sday||dkey(new Date()),days=weekDays(),todayK=dkey(new Date()),diff=dayDiff(key+'T12:00:00');
+  var cal=S.dayCache[key]||(diff!=null&&diff>=0&&diff<=8?p.cal:null),mm=modelMap(p);
+  var list=cal?eventsOf(cal).filter(function(e){return dkey(e.s)===key;}):[];
+  var strip=days.map(function(d){var k=dkey(d);return '<button type="button" class="'+(k===key?'on':'')+(k===todayK?' today':'')+'" data-ws-sday="'+k+'"><small>'+d.toLocaleDateString('en-US',{weekday:'short'}).toUpperCase()+'</small><b>'+d.getDate()+'</b></button>';}).join('');
+  var rows=list.slice(0,5).map(function(e){
+    var q=e.models[0],m=q?(mm[q.id]||q):null,who=m?nameOf(m):(e.client||e.title);
+    return '<button type="button" class="ws-sr" data-vx17-nav="calendar"><span class="ws-st1">'+hm(e.s)+'</span>'+(m?thumb(m,'ws-sp1'):'<span class="ws-sp1 ph" style="--t:'+tint(who)+'">'+esc(initials(who))+'</span>')+'<span class="ws-sw"><b>'+esc(who)+'</b><small>'+esc(e.type+(e.client?' – '+e.client:e.title&&e.title!==e.type?' – '+e.title:''))+'</small></span><span class="ws-sm">'+esc(String(e.market||'').split(',')[0].slice(0,14))+'</span><i class="ti ti-map-pin"></i></button>';
+  }).join('')||'<p class="ws-empty">Nothing scheduled.</p>';
+  return '<section class="ws-card ws-sched"><header><h2>Today’s Schedule</h2><button type="button" class="ws-link" data-vx17-nav="calendar">View calendar →</button></header><div class="ws-wk">'+strip+'</div><div class="ws-sl">'+rows+'</div>'+veraHtml(p)+'</section>';
+}
+function veraHtml(p){
+  var sg=S.H.veraSignals(p),top=sg[0],n=sg.length;
+  var txt=top?(n>1?n+' items need a decision. ':'')+top.title+(top.detail?' — '+top.detail:''):'Nothing needs a decision right now.';
+  return '<div class="ws-vera"><header><span class="ws-vmark"></span><h3>Vera Briefing</h3><button type="button" class="ws-more" aria-label="Ask Vera" data-vx17-vera>⋯</button></header><div class="ws-vb"><p>'+esc(txt)+'</p>'+(top?'<button type="button" class="ws-act" data-vx17-nav="'+esc(top.nav)+'" data-vx17-record-type="'+esc(top.recordType||'')+'" data-vx17-record-id="'+esc(top.recordId||'')+'">Review options</button>':'')+'</div>'
+    +'<form class="ws-ask" data-ws-ask><i class="ti ti-sparkles"></i><input type="text" placeholder="Ask Vera to research, decide or draft…" aria-label="Ask Vera"><button type="submit" aria-label="Ask"><i class="ti ti-arrow-right"></i></button></form></div>';
+}
+
+/* ----- talent readiness ----- */
+function talentHtml(p){
+  var ev=eventsOf(p.cal),mob={};
+  arr(p.mobility&&p.mobility.items).forEach(function(x){var b=x.booking||{};arr(b.booking_models).forEach(function(l){var q=l.models||l;if(q&&q.id)mob[q.id]=1;});});
+  var opt={};ev.filter(function(e){return /pending|hold|tentative|option/i.test(e.status);}).forEach(function(e){e.models.forEach(function(q){if(q.id)opt[q.id]=1;});});
+  var list=arr(p.models).filter(function(m){return !/inactive|archiv|paused/i.test(String(m.status||''));}).slice(0,4);
+  var cards=list.map(function(m){
+    var st=mob[m.id]?['Visa review','y']:opt[m.id]?['On option','g']:!photoOf(m)?['Digitals due','y']:['Ready','g'];
+    var mk=m.primary_market_label||arr(m.markets).map(function(x){return x.name||x.city;}).filter(Boolean).slice(0,2).join(' / ')||'',u=photoOf(m);
+    return '<button type="button" class="ws-tc" data-vx17-nav="roster" data-vx17-record-type="model" data-vx17-record-id="'+esc(m.id||'')+'"><span class="ws-tp'+(u?'':' ph')+'" style="'+(u?'background-image:url(\''+esc(u)+'\')':'--t:'+tint(nameOf(m)))+'">'+(u?'':'<em>'+esc(initials(nameOf(m)))+'</em>')+'</span><span class="ws-tn"><b>'+esc(nameOf(m))+'</b><span class="ws-ts"><i class="d-'+st[1]+'"></i>'+st[0]+'</span><small>'+esc(mk||'Maison de Veux')+'</small></span><i class="ti ti-plane-departure ws-tpl"></i></button>';
+  }).join('')||'<p class="ws-empty">No talent yet.</p>';
+  return '<section class="ws-card ws-talent"><header><h2>Talent Readiness</h2><button type="button" class="ws-link" data-vx17-nav="roster">View roster →</button></header><div class="ws-tcs">'+cards+'</div></section>';
+}
+
+/* ----- finance watch ----- */
+function financeHtml(p){
+  var f=p.finance||{},cur=f.currency||'USD',now=new Date();now.setHours(0,0,0,0);var t0=+now,DAY=864e5;
+  var pays=arr(f.payments).filter(function(x){return String(x.status||'')!=='failed';}).map(function(x){return{d:+new Date(x.paid_at||x.settled_at||x.created_at||0),a:Number(x.base_amount||x.amount||0)};});
+  function sum(a,b){return pays.filter(function(x){return x.d>=a&&x.d<b;}).reduce(function(n,x){return n+x.a;},0);}
+  var inc=sum(t0-6*DAY,t0+DAY),prev=sum(t0-13*DAY,t0-6*DAY),delta=prev>0?Math.round((inc-prev)/prev*100):null,series=[];for(var i=13;i>=0;i--)series.push(sum(t0-i*DAY,t0-(i-1)*DAY));
+  var unpaid=arr(f.unpaid).slice().sort(function(a,b){return new Date(a.due_date||8e15)-new Date(b.due_date||8e15);});
+  var rows=unpaid.slice(0,2).map(function(x){var over=/overdue/i.test(x.status||'')||(x.due_date&&+new Date(x.due_date)<Date.now());return '<div class="ws-fr"><b>'+esc((x.companies&&x.companies.name)||'Client')+'</b><span>• '+esc(x.invoice_number||'Invoice')+'</span><em>'+money(x.amount_due||x.balance_due,x.currency||cur)+'</em><span class="'+(over?'bad':'warn')+'"><i></i>'+(over?'Overdue':'Due '+(x.due_date?new Date(x.due_date).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'soon'))+'</span><button type="button" class="ws-act sm" data-vx17-nav="agentcommissions">View</button></div>';}).join('')||'<p class="ws-empty">No open invoices.</p>';
+  return '<section class="ws-card ws-fin"><header><h2>Finance Watch</h2><button type="button" class="ws-link" data-vx17-nav="agentcommissions">View finance →</button></header>'
+    +'<div class="ws-fk"><div><b>'+money(inc,cur)+'</b><span>Incoming<br><small>(7 days)</small></span>'+(delta==null?'':'<em class="'+(delta>=0?'up':'down')+'">'+(delta>=0?'↑ ':'↓ ')+Math.abs(delta)+'%</em>')+'</div><div><b>'+money(f.outstanding,cur)+'</b><span>Outstanding<br><small>('+unpaid.length+' invoice'+(unpaid.length===1?'':'s')+')</small></span></div><div class="ws-fsp">'+spark(series,160,48)+'</div></div>'+rows+'</section>';
+}
+
+/* ----- client signals + mail ----- */
+function signalsHtml(p){
+  var act=arr(p.relationships&&p.relationships.activity).slice(0,3);
+  var rows=act.map(function(a){var name=a.company_name||(a.company&&a.company.name)||a.client_name||a.title||'Client',t=a.created_at||a.occurred_at||a.at;return '<button type="button" class="ws-cs" data-vx17-nav="industrydirectory"><span class="t">'+(t?hm(t):'')+'</span><i class="d-o"></i><b>'+esc(name)+'</b><span class="ev">'+esc(String(a.activity_type||a.type||a.action||'Activity').replace(/_/g,' '))+'</span><small>'+esc(a.summary||a.description||'')+'</small><span class="ws-ct" style="--t:'+tint(name)+'">'+esc(initials(name))+'</span></button>';}).join('')
+    ||arr(p.relationships&&p.relationships.stale).slice(0,3).map(function(x){var name=(x.company&&x.company.name)||'Client';return '<button type="button" class="ws-cs" data-vx17-nav="industrydirectory"><span class="t">Today</span><i class="d-o"></i><b>'+esc(name)+'</b><span class="ev">Follow-up due</span><small>'+(x.days>999?'No recent activity':x.days+' days since activity')+'</small><span class="ws-ct" style="--t:'+tint(name)+'">'+esc(initials(name))+'</span></button>';}).join('')
+    ||'<p class="ws-empty">No client signals yet.</p>';
+  return '<section class="ws-card ws-sig"><header><h2>Client Signals</h2><button type="button" class="ws-link" data-vx17-nav="industrydirectory">View all →</button></header>'+rows+'</section>';
+}
+function mailHtml(){
+  var w=window.MDV_MAIL&&MDV_MAIL.widget&&MDV_MAIL.widget(),rows='';
+  if(!w){rows='<p class="ws-empty">Checking your inbox…</p>';try{if(window.MDV_MAIL&&MDV_MAIL.refreshWidget)MDV_MAIL.refreshWidget();}catch(e){}}
+  else if(w.state==='ok'){rows=arr(w.rows).slice(0,3).map(function(m){var from=(m.from&&(m.from.name||m.from.address))||'Unknown';return '<button type="button" class="ws-ml" data-vx17-nav="mail"><span class="t">'+hm(m.received)+'</span><i class="'+(m.is_read?'d-g':'d-o')+'"></i><b>'+esc(from)+'</b><span class="sj">'+esc(m.subject)+'</span><small>'+esc(m.preview||'')+'</small>'+(m.has_attachments?'<i class="ti ti-paperclip clip"></i>':'<span></span>')+'</button>';}).join('')||'<p class="ws-empty">Inbox is clear.</p>';}
+  else rows='<p class="ws-empty">Connect your email to see messages here. <button type="button" class="ws-link" data-vx17-nav="mail">Open mail →</button></p>';
+  return '<section class="ws-card ws-mail"><header><h2>Mail &amp; Handoffs</h2><button type="button" class="ws-link" data-vx17-nav="mail">Open inbox →</button></header>'+rows+'</section>';
 }
 function createMenu(){
   var items=[['New booking','ti-calendar-plus','book'],['New casting','ti-camera','cast'],['New task','ti-checkbox','task'],['New message','ti-mail','mail'],['Add talent','ti-user-plus','roster']];
-  return '<div class="ws-create"><button type="button" data-ws-create><i class="ti ti-plus"></i> Create <i class="ti ti-chevron-down"></i></button><div class="ws-cpop">'+items.map(function(x){return '<button type="button" data-ws-new="'+x[2]+'"><i class="ti '+x[1]+'"></i>'+x[0]+'</button>';}).join('')+'</div></div>';
+  return '<div class="ws-create"><button type="button" data-ws-create><i class="ti ti-plus"></i> CREATE <i class="ti ti-chevron-down"></i></button><div class="ws-cpop">'+items.map(function(x){return '<button type="button" data-ws-new="'+x[2]+'"><i class="ti '+x[1]+'"></i>'+x[0]+'</button>';}).join('')+'</div></div>';
 }
-function insights(p,H){
-  var ss=H.series(p.cal),mx=Math.max.apply(null,ss.map(function(x){return x.v}))||1;
-  var bars=ss.map(function(x){var dl=new Date(x.k+'T12:00:00').toLocaleDateString([],{weekday:'long',month:'short',day:'numeric'});return '<button type="button" class="vx17-bar" data-vx17-day="'+x.k+'" title="'+esc(dl+' · '+x.v+' scheduled')+'" style="--h:'+Math.max(18,Math.round(x.v/mx*100))+'%"><em>'+x.v+'</em><span>'+x.l+'</span></button>';}).join('');
-  return '<div class="ws-two"><section class="ws-card"><header><h2>Schedule load</h2></header><div class="vx17-bars ws-bars">'+bars+'</div></section>'+H.incPanel(p)+'</div>';
-}
-function desk(p,H){return '<div class="ws-two">'+H.focusPanel(p)+H.calPanel(p)+'</div>';}
 function paint(){
   var el=S.el,p=S.p,H=S.H;if(!el||!p)return;
-  var body=S.tab==='desk'?desk(p,H):S.tab==='insights'?insights(p,H):timeline(p,H)+stats(p)+board(p);
-  el.innerHTML='<div class="ws-home"><section class="ws-main"><header class="ws-title"><h1>Agency workspace</h1><span class="ws-live"><i></i>Live</span>'+createMenu()+'</header>'
-    +'<nav class="ws-tabs">'+TABS.map(function(t){return '<button type="button" class="'+(S.tab===t[0]?'on':'')+'" data-ws-tab="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</nav>'+body+'</section>'+veraPanel(p,H)+'</div>';
+  var now=new Date();
+  el.innerHTML='<div class="ws-home"><header class="ws-head"><div><div class="ws-eye">'+now.toLocaleDateString('en-US',{weekday:'long'}).toUpperCase()+' <i>/</i> '+now.toLocaleDateString('en-US',{month:'long',day:'numeric'}).toUpperCase()+'</div><h1>AGENCY <em>COMMAND</em></h1></div><p>Agency performance. Daily action. One workspace.</p>'+createMenu()+'</header>'
+    +stripHtml(p,H)
+    +'<div class="ws-r2">'+deskHtml(p,H)+scheduleHtml(p)+'</div>'
+    +'<div class="ws-r3">'+talentHtml(p)+financeHtml(p)+'</div>'
+    +'<div class="ws-r4">'+signalsHtml(p)+mailHtml()+'</div></div>';
   H.bind&&H.bind(el);
 }
 function fetchDay(key){
-  if(S.dayCache[key]||S.dayBusy)return Promise.resolve();
-  S.dayBusy=true;var s=new Date(key+'T00:00:00'),e=new Date(s.getTime()+864e5);
-  return bridge().api('/api/agent/calendar/v9?organization='+encodeURIComponent(org())+'&start='+encodeURIComponent(s.toISOString())+'&end='+encodeURIComponent(e.toISOString())+'&_t='+Date.now(),{method:'GET',headers:{},__fresh:true})
-    .then(function(d){S.dayCache[key]=d||{};}).catch(function(){S.dayCache[key]={};}).then(function(){S.dayBusy=false;});
+  if(S.dayCache[key])return Promise.resolve();
+  var s=new Date(key+'T00:00:00'),e=new Date(s.getTime()+864e5);
+  return bridge().api('/api/agent/calendar/v9?organization='+encodeURIComponent(org())+'&start='+encodeURIComponent(s.toISOString())+'&end='+encodeURIComponent(e.toISOString())+'&_t='+Date.now(),{method:'GET',headers:{},__fresh:true}).then(function(d){S.dayCache[key]=d||{};}).catch(function(){S.dayCache[key]={};});
 }
 document.addEventListener('click',function(e){
   var host=e.target.closest&&e.target.closest('.ws-home');if(!host)return;
-  var t=e.target.closest('[data-ws-tab]');if(t){S.tab=t.dataset.wsTab;paint();return;}
-  var b=e.target.closest('[data-ws-board]');if(b){S.board=b.dataset.wsBoard;paint();return;}
-  var d=e.target.closest('[data-ws-day]');if(d){var base=new Date((S.day||dkey(new Date()))+'T12:00:00');base.setDate(base.getDate()+Number(d.dataset.wsDay));S.day=dkey(base);fetchDay(S.day).then(paint);paint();return;}
+  var r=e.target.closest('[data-ws-range]');if(r){S.deskRange=r.dataset.wsRange;paint();return;}
+  var sc=e.target.closest('[data-ws-scope]');if(sc){S.deskScope=sc.dataset.wsScope;paint();return;}
+  var d=e.target.closest('[data-ws-sday]');if(d){S.sday=d.dataset.wsSday;paint();if(!S.dayCache[S.sday])fetchDay(S.sday).then(paint);return;}
   var c=e.target.closest('[data-ws-create]');if(c){c.closest('.ws-create').classList.toggle('open');return;}
   var n=e.target.closest('[data-ws-new]');if(n){
     n.closest('.ws-create').classList.remove('open');var k=n.dataset.wsNew;
     if(k==='mail'){if(window.MDV_MAIL&&MDV_MAIL.emailTo)try{MDV_MAIL.emailTo([]);return;}catch(x){}go('mail');}
-    else if(k==='task'){go('tasksconsolidated');}
-    else if(k==='roster'){go('roster');}
-    else if(window.VEUX_V152&&VEUX_V152.createOnDate){VEUX_V152.createOnDate(dkey(new Date()));}else go('calendar');
-    return;}
+    else if(k==='task')go('tasksconsolidated');else if(k==='roster')go('roster');
+    else if(window.VEUX_V152&&VEUX_V152.createOnDate)VEUX_V152.createOnDate(dkey(new Date()));else go('calendar');
+  }
 });
-document.addEventListener('change',function(e){var v=e.target.closest&&e.target.closest('[data-ws-view]');if(v&&v.value==='week'){v.value='Day';go('calendar');}});
 document.addEventListener('submit',function(e){var f=e.target.closest&&e.target.closest('[data-ws-ask]');if(!f)return;e.preventDefault();var i=f.querySelector('input'),q=i.value.trim();i.value='';if(window.MDV_VERA_CHAT&&MDV_VERA_CHAT.open)MDV_VERA_CHAT.open(q||undefined);});
-window.addEventListener('mdv:market',function(){if(S.el&&S.el.isConnected)paint();});
+window.addEventListener('mdv:mail-widget',function(){if(S.el&&S.el.isConnected&&S.p)paint();badges();});
+function home(el,p,H){S.el=el;S.p=p;S.H=H;if(!S.sday)S.sday=dkey(new Date());paint();badges();}
 
-function home(el,p,H){
-  S.el=el;S.p=p;S.H=H;if(!S.day)S.day=dkey(new Date());
-  paint();
-  var key=S.day;if(key!==dkey(new Date()))fetchDay(key).then(paint);
-}
-
-/* ---------- Appearance toggle ---------- */
+/* ================= appearance + one-time skin ================= */
 function layoutRow(){
   document.querySelectorAll('#vx-wave-settings,.mdv-appearance .v152-settings-grid').forEach(function(host){
     if(!host||host.querySelector('.ws-layoutrow')||host.parentNode.querySelector('.ws-layoutrow'))return;
     var row=document.createElement('div');row.className='ws-layoutrow';
-    function paintRow(){var cur=outlook();row.innerHTML='<b>Layout</b><button type="button" data-ol="workspace" class="'+(cur==='workspace'?'on':'')+'">Workspace</button><button type="button" data-ol="classic" class="'+(cur==='classic'?'on':'')+'">Classic</button><span>Workspace has the side menu with a bottom dock and the new home. Classic is the previous look.</span>';
+    function paintRow(){var cur=outlook();row.innerHTML='<b>Layout</b><button type="button" data-ol="workspace" class="'+(cur==='workspace'?'on':'')+'">Workspace</button><button type="button" data-ol="classic" class="'+(cur==='classic'?'on':'')+'">Classic</button><span>Workspace has the sectioned side menu and the Agency Command home. Classic is the previous look.</span>';
       row.querySelectorAll('[data-ol]').forEach(function(b){b.onclick=function(){window.MDV_WORKSPACE.set(b.dataset.ol);paintRow();};});}
     paintRow();host.parentNode.insertBefore(row,host);
   });
 }
-
-/* one-time: the Maison Flow look is purple; move people still on the default Classic skin to it (they can switch back) */
+/* one-time: the Agency Command look is copper on black; move people on the default or the earlier violet trial to Burnt Orange */
 function skinOnce(){
   try{
-    if(localStorage.getItem('mdv-ws-skin'))return;
+    if(localStorage.getItem('mdv-ws-skin2'))return;
     var w=window.VEUX_COLOR_WAVES;if(!w||typeof w.set!=='function')return;
-    localStorage.setItem('mdv-ws-skin','1');
+    localStorage.setItem('mdv-ws-skin2','1');
     var cur=document.documentElement.getAttribute('data-veux-wave')||'classic';
-    if(cur==='classic'&&outlook()==='workspace')w.set('purple');
+    if((cur==='classic'||cur==='purple')&&outlook()==='workspace')w.set('burntOrange');
   }catch(e){}
 }
-
 function tick(){
   try{
     layoutRow();
