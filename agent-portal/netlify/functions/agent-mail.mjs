@@ -83,7 +83,25 @@ export const handler = async event => {
         const a = await G(`/me/messages/${encodeURIComponent(id)}/attachments?$select=id,name,size,contentType,isInline`);
         attachments = (a?.value || []).filter(x => !x.isInline).map(x => ({ id: x.id, name: x.name, size: x.size, content_type: x.contentType }));
       }
-      return json(200, { ok: true, message: mapMessage(m), attachments });
+      /* Pictures embedded in the body (signature logos, pasted photos) are referenced as cid:… and never load on their own.
+         Fetch the small ones so the reader can inline them as data: URLs. */
+      let inline_images = [];
+      if (m.hasAttachments) {
+        try {
+          const all = await G(`/me/messages/${encodeURIComponent(id)}/attachments?$select=id,name,size,contentType,isInline`);
+          const want = (all?.value || []).filter(x => x.isInline && /^image\//i.test(x.contentType || '') && Number(x.size || 0) <= 1500000).slice(0, 12);
+          let budget = 3500000;
+          const got = await Promise.all(want.map(async x => {
+            try {
+              const f = await G(`/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(x.id)}`);
+              if (!f?.contentBytes || !f.contentId) return null;
+              return { cid: String(f.contentId).replace(/^<|>$/g, ''), content_type: x.contentType, data: f.contentBytes };
+            } catch (_e) { return null; }
+          }));
+          inline_images = got.filter(Boolean).filter(x => { budget -= x.data.length; return budget >= 0; });
+        } catch (_e) { /* non-fatal: the message still opens without its embedded pictures */ }
+      }
+      return json(200, { ok: true, message: mapMessage(m), attachments, inline_images });
     }
 
     /* Every message in the same conversation (received and sent), oldest first, so a reply can be read

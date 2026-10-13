@@ -5,7 +5,7 @@
 if(window.__MDV_MAIL__)return;window.__MDV_MAIL__=true;
 
 var S={host:null,status:null,loading:false,err:'',folder:'inbox',folders:[],messages:[],next:null,listLoading:false,listErr:'',search:'',unreadOnly:false,
-  sel:null,detail:null,detailLoading:false,showImages:false,readerOpen:false,timer:null,seq:0,senders:{},listScroll:0};
+  sel:null,detail:null,detailLoading:false,showImages:imagesAlways(),readerOpen:false,timer:null,seq:0,senders:{},listScroll:0};
 
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function arr(v){return Array.isArray(v)?v:[];}
@@ -52,13 +52,13 @@ async function loadList(reset){
 async function openMessage(id){
   if(S.compose){if(S.compose.dirty()&&!window.confirm('Discard your draft?'))return;S.compose.close();}
   var had=!!(S.detail&&!S.detail.error&&document.getElementById('mm-reader'));
-  S.sel=id;S.reply=null;S.detail=null;S.detailLoading=true;S.showImages=false;S.readerOpen=true;
+  S.sel=id;S.reply=null;S.detail=null;S.detailLoading=true;S.showImages=imagesAlways();S.readerOpen=true;
   var mmEl=S.host&&S.host.querySelector('.mm');if(mmEl)mmEl.classList.add('read-open');
   markSelected();
   if(had){var rd=document.getElementById('mm-reader');if(rd)rd.classList.add('mm-busy');}else paintReader();
   try{
     var d=await call('message',{id:id});if(S.sel!==id)return;
-    S.detail={m:d.message,att:arr(d.attachments)};
+    d.message.inline=arr(d.inline_images);S.detail={m:d.message,att:arr(d.attachments)};
     var row=S.messages.filter(function(x){return x.id===id;})[0];
     if(row&&!row.is_read){row.is_read=true;var f=S.folders.filter(function(x){return x.id===S.folder;})[0];if(f&&f.unread>0)f.unread--;}
   }catch(e){S.detail={error:msg(e)};}
@@ -137,9 +137,15 @@ function paintList(){
   if(rowsEl){rowsEl.scrollTop=S.listScroll||0;rowsEl.addEventListener('scroll',function(){S.listScroll=rowsEl.scrollTop;},{passive:true});}
   if(hadFocus){var q=el.querySelector('[data-q]');if(q){q.focus();try{q.setSelectionRange(caret,caret);}catch(e){}}}
 }
+function imagesAlways(){try{return localStorage.getItem('mdv-mail-images')==='1';}catch(e){return false;}}
 function bodyDoc(m,showImages){
   var csp="default-src 'none'; img-src data: cid:"+(showImages?' https:':'')+"; style-src 'unsafe-inline'; font-src data:";
   var inner=m.body_type==='html'?m.body:'<pre style="white-space:pre-wrap;font:inherit">'+esc(m.body)+'</pre>';
+  if(m.body_type==='html'){
+    var pics={};arr(m.inline).forEach(function(x){if(x&&x.cid&&x.data)pics[String(x.cid).toLowerCase()]='data:'+(x.content_type||'image/png')+';base64,'+x.data;});
+    inner=inner.replace(/cid:([^"'\s)>]+)/gi,function(all,id){var k=id;try{k=decodeURIComponent(id);}catch(e){}return pics[k.toLowerCase()]||pics[id.toLowerCase()]||all;})
+      .replace(/(<img[^>]+src=["'])\/\//gi,'$1https://');
+  }
   return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="'+csp+'"><base target="_blank"><style>body{margin:0;padding:18px 22px;font:14px/1.55 -apple-system,Segoe UI,Calibri,Arial,sans-serif;color:#1b1814;background:#fff;word-wrap:break-word}img{max-width:100%;height:auto}a{color:#8c6a2f}blockquote{margin:8px 0;padding-left:12px;border-left:3px solid #ddd;color:#555}table{max-width:100%}</style></head><body>'+inner+'</body></html>';
 }
 function paintReader(){
@@ -149,12 +155,12 @@ function paintReader(){
   if(S.detailLoading||!S.detail){el.innerHTML='<div class="mm-none"><p>Opening…</p></div>';return;}
   if(S.detail.error){el.innerHTML='<div class="mm-none"><div><p class="mm-err">'+esc(S.detail.error)+'</p><button class="mm-btn" data-a="close">Back</button></div></div>';wire(el);return;}
   var m=S.detail.m,att=S.detail.att;
-  var hasRemote=m.body_type==='html'&&/<img[^>]+src=["']?https?:/i.test(m.body);
+  var hasRemote=m.body_type==='html'&&/<img[^>]+src=["']?(https?:)?\/\//i.test(m.body)||/url\(\s*["']?https?:/i.test(m.body);
   el.innerHTML='<header class="mm-rh"><button class="mm-back mm-only-mobile" data-a="close">← Back</button><h2>'+esc(m.subject)+'</h2>'
     +'<div class="mm-from"><span class="mm-av big">'+esc(initials(who(m.from)))+'</span><div><b>'+esc(who(m.from))+'</b> <span>&lt;'+esc(m.from?m.from.address:'')+'&gt;</span><small>To: '+esc(m.to.map(who).join(', ')||'—')+(m.cc.length?' · Cc: '+esc(m.cc.map(who).join(', ')):'')+' · '+esc(whenFull(m.received))+'</small></div></div>'
     +'<div class="mm-actions"><button class="mm-btn mm-thr" id="mm-thr" data-a="thread" hidden></button><button class="mm-btn" data-a="reply">Reply</button><button class="mm-btn" data-a="replyAll">Reply all</button><button class="mm-btn" data-a="forward">Forward</button><span class="mm-sp"></span><button class="mm-btn" data-a="unread">Mark unread</button><button class="mm-btn" data-a="archive">Archive</button><button class="mm-btn danger" data-a="delete">Delete</button>'+(m.web_link?'<a class="mm-btn" href="'+esc(m.web_link)+'" target="_blank" rel="noopener noreferrer">Open in Outlook</a>':'')+'</div>'
     +(att.length?'<div class="mm-atts">'+att.map(function(a){return '<button class="mm-att" data-a="download" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'"><i>'+esc((a.name.split('.').pop()||'file').slice(0,4).toUpperCase())+'</i><span>'+esc(a.name)+'</span><em>'+esc(size(a.size))+'</em></button>';}).join('')+'</div>':'')
-    +(hasRemote&&!S.showImages?'<div class="mm-imgs">Images are hidden to protect your privacy. <button class="mm-link" data-a="images">Show images</button></div>':'')+'</header>'
+    +(hasRemote&&!S.showImages?'<div class="mm-imgs">Pictures from the web are hidden to protect your privacy. <button class="mm-link" data-a="images">Show images</button> · <button class="mm-link" data-a="images-always">Always show</button></div>':'')+'</header>'
     +'<iframe class="mm-body" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Message body"></iframe>'
     +'<div class="mm-thread" id="mm-thread" hidden></div>';
   el.querySelector('iframe').srcdoc=bodyDoc(m,S.showImages);
@@ -177,7 +183,7 @@ function tBody(id){
   var T=S.thread,m=S.detail&&S.detail.m;
   if(m&&m.id===id)return Promise.resolve(m);
   if(T.bodies[id])return Promise.resolve(T.bodies[id]);
-  return call('message',{id:id}).then(function(d){T.bodies[id]=d.message;return d.message;});
+  return call('message',{id:id}).then(function(d){d.message.inline=arr(d.inline_images);T.bodies[id]=d.message;return d.message;});
 }
 function paintThread(){
   var btn=document.getElementById('mm-thr'),box=document.getElementById('mm-thread'),fr=document.querySelector('#mm-reader .mm-body'),T=S.thread;
@@ -232,6 +238,7 @@ async function act(a,b){
     if(a==='close'){S.readerOpen=false;S.sel=null;S.detail=null;paint();return;}
     if(a==='compose'){compose({});return;}
     if(a==='images'){S.showImages=true;paintReader();return;}
+    if(a==='images-always'){try{localStorage.setItem('mdv-mail-images','1');}catch(e){}S.showImages=true;paintReader();return;}
     if(a==='signature'){sigEditor();return;}
     if(a==='thread'){setThreadOpen(!threadOpen());paintThread();return;}
     var m=S.detail&&S.detail.m;
