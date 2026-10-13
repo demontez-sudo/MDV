@@ -161,3 +161,44 @@ html[data-outlook="workspace"] body #app .vx17-command{background:none!important
 .ws-layoutrow button{border:1px solid var(--mdv-line,rgba(255,255,255,.18));background:transparent;color:var(--mdv-ink,#efe9df);padding:8px 16px;border-radius:999px;font:500 12px Archivo,sans-serif;cursor:pointer}.ws-layoutrow button.on{background:var(--mdv-gold,#b8975f);border-color:var(--mdv-gold,#b8975f);color:#0a0908}
 }
 .ws-layoutrow{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 0 18px;padding:14px 16px;border:1px solid var(--mdv-line-2,rgba(255,255,255,.13));border-radius:10px;background:var(--mdv-panel,#100e0c)}
+
+/* ---------- size, shape and spacing refinements ---------- */
+html[data-outlook="workspace"]{--ws-pull:0px}
+@media(min-width:901px){
+/* everything a little smaller: Compact is the default, Standard is 100% */
+html[data-outlook="workspace"][data-ws-size="compact"] body{zoom:.84}
+html[data-outlook="workspace"][data-ws-size="standard"] body{zoom:1}
+/* no dead space above or below the page */
+html[data-outlook="workspace"] body #app .shell{padding-bottom:96px!important;min-height:0!important}
+html[data-outlook="workspace"] body #app .pm,html[data-outlook="workspace"] body #app .pm>.panel{min-height:0!important}
+html[data-outlook="workspace"] body #app .ws-home{margin-top:calc(-1 * var(--ws-pull))}
+/* round buttons stay round */
+html[data-outlook="workspace"] body #app .ws-ask button,html[data-outlook="workspace"] body #app .vx73-command button,html[data-outlook="workspace"] body #app .ws-oav,html[data-outlook="workspace"] body #app .ws-uav,html[data-outlook="workspace"] body #app .ws-pr{border-radius:50%!important}
+html[data-outlook="workspace"] body #app .ws-badge,html[data-outlook="workspace"] body #app .ws-dkb{border-radius:999px!important}
+html[data-outlook="workspace"] body #app .ws-more{background:transparent!important;border:0!important;box-shadow:none!important;width:auto!important;height:auto!important;min-width:0!important;padding:0 6px!important;border-radius:6px!important}
+html[data-outlook="workspace"] body #app .ws-ask button{width:34px!important;height:34px!important;min-width:34px!important;max-width:34px!important;padding:0!important}
+
+/* bottom dock: Tasks, Packages, Mail, Finance, Travel */
+#ws-dock{position:fixed;left:calc(var(--ws-side) + (100% - var(--ws-side))/2);transform:translateX(-50%);bottom:16px;z-index:5000;display:flex;align-items:stretch;gap:2px;padding:8px 12px;border-radius:26px;background:color-mix(in srgb,#0d0a08 88%,transparent);border:1px solid var(--ws-line);backdrop-filter:blur(18px);box-shadow:0 18px 50px rgba(0,0,0,.55)}
+#ws-dock .ws-dk{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;min-width:92px;padding:10px 16px 8px;border:1px solid transparent;border-radius:18px;background:transparent;color:var(--ws-mute);cursor:pointer;font:400 12.5px Archivo,Inter,sans-serif;letter-spacing:0;text-transform:none}
+#ws-dock .ws-dk i{font-size:24px;color:var(--ws-ink)}
+#ws-dock .ws-dk+.ws-dk::before{content:"";position:absolute;left:-1px;top:14px;bottom:14px;width:1px;background:var(--ws-hair)}
+#ws-dock .ws-dk:hover{background:rgba(255,255,255,.05);color:var(--ws-ink)}
+#ws-dock .ws-dk.on{color:#fff;background:color-mix(in srgb,var(--ws-wave) 22%,transparent);border-color:color-mix(in srgb,var(--ws-wave) 40%,transparent)}
+#ws-dock .ws-dk.on i{color:var(--ws-bright)}
+.ws-dkb{position:absolute;top:4px;right:16px;min-width:18px;height:18px;padding:0 5px;background:var(--ws-wave);color:#1a0d05;font:600 10.5px/18px Archivo,sans-serif;text-align:center;font-style:normal}.ws-dkb[hidden]{display:none}
+html:not([data-outlook="workspace"]) #ws-dock{display:none!important}
+
+/* day at a glance */
+.ws-glance{padding-bottom:16px}
+.ws-glance>header{align-items:center}.ws-glance h2{font-size:15px!important}
+.ws-gl{display:inline-flex;align-items:center;gap:8px;font:400 13px Archivo,sans-serif;color:var(--ws-mute)}
+.ws-gl i{width:12px;height:12px;border-radius:3px;display:inline-block;margin-left:10px}.ws-gl i:first-child{margin-left:0}
+.g-daily{background:#c9a35a}.g-work{background:#6f86b8}.g-health{background:#6fa56a}
+.ws-gt{position:relative;height:18px;margin:6px 0 4px;font:400 12px Archivo,sans-serif;color:var(--ws-mute)}.ws-gt span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.ws-gbar{position:relative;height:52px;background:repeating-linear-gradient(90deg,transparent 0,transparent calc(12.5% - 1px),var(--ws-hair) calc(12.5% - 1px),var(--ws-hair) 12.5%)}
+.ws-gb{position:absolute;top:0;bottom:0;display:flex;align-items:center;padding:0 7px;border:0;border-radius:3px;overflow:hidden;cursor:pointer;color:#fff;text-align:left;letter-spacing:0;text-transform:none;font:500 12px/1.2 Archivo,sans-serif;border-left:2px solid rgba(255,255,255,.35)}
+.ws-gb span{overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal}
+.ws-gb.g-daily{background:color-mix(in srgb,#c9a35a 38%,#1a140d)}.ws-gb.g-work{background:color-mix(in srgb,#6f86b8 42%,#10141c)}.ws-gb.g-health{background:color-mix(in srgb,#6fa56a 40%,#101810)}
+.ws-gn{position:absolute;top:-4px;bottom:-4px;width:2px;background:#ff7a5c;z-index:3;pointer-events:none}.ws-gn::before{content:"";position:absolute;top:-2px;left:-4px;width:10px;height:10px;border-radius:50%;background:#ff7a5c}
+}

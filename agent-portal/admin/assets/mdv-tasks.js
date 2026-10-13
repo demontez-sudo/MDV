@@ -10,8 +10,8 @@ function subOf(t){var h=(t.history||[]).slice().sort(function(a,b){return new Da
 function subLabel(h,to){var s=subByTag(subTagOf(h));return s?s[1]:meta(STATUSES,normStatus(to))[1];}
 var PALETTE=['#d4b077','#6ea8f0','#a884e8','#4fbdb5','#e0685a','#6fbf73','#e0b95a'];
 var S={data:null,tasks:[],view:'list',group:'due',quick:'',pv:null,sort:'due',q:'',mine:false,prio:'',assignee:'',cancelled:false,open:null,draft:null,collapsed:{completed:true,cancelled:true},limit:{},sel:{},selAnchor:null,cal:new Date(),loading:false,error:'',root:null,ready:false};
-try{var saved=JSON.parse(localStorage.getItem('mdv-tasks-ui2')||'{}');['view','group','sort'].forEach(function(k){if(saved[k])S[k]=saved[k];});}catch(_e){}
-function persist(){try{localStorage.setItem('mdv-tasks-ui2',JSON.stringify({view:S.view,group:S.group,sort:S.sort}));}catch(_e){}}
+try{var saved=JSON.parse(localStorage.getItem('mdv-tasks-ui2')||'{}');['view','group','sort'].forEach(function(k){if(saved[k])S[k]=saved[k];});if(!saved.flow)S.view='flow';}catch(_e){S.view='flow';}
+function persist(){try{localStorage.setItem('mdv-tasks-ui2',JSON.stringify({view:S.view,group:S.group,sort:S.sort,flow:1}));}catch(_e){}}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function bridge(){var b=window.VEUX_AGENT_V4;if(!b||!b.api)throw new Error('Secure session is not ready');return b;}
 function org(){try{return bridge().state.org.slug||'maison-de-veux';}catch(e){return 'maison-de-veux';}}
@@ -158,16 +158,116 @@ function toolbar(list){var me=myMember(),c=quickCounts(),over=c.overdue,done=S.t
  +'<button type="button" class="tk-pill'+(S.prio?' on':'')+'" data-act="fprio">'+(S.prio?meta(PRIOS,S.prio)[1]:'Priority')+' ▾</button><button type="button" class="tk-pill'+(S.assignee?' on':'')+'" data-act="fassign">'+(S.assignee==='none'?'Unassigned':S.assignee?esc(mName(memberById(S.assignee))):'Assignee')+' ▾</button>'
  +(S.view==='list'?'<button type="button" class="tk-pill" data-act="fgroup">Group: '+({status:'Status',priority:'Priority',assignee:'Assignee',due:'Due date',category:'List'}[S.group])+' ▾</button>':'')+'<button type="button" class="tk-pill" data-act="fsort">'+({due:'Due date ↓',priority:'Priority',title:'Name',created:'Newest'}[S.sort])+' ▾</button>'
  +(me?'<button type="button" class="tk-pill'+(S.mine?' on':'')+'" data-act="mine">My tasks</button>':'')+'<button type="button" class="tk-pill'+(S.cancelled?' on':'')+'" data-act="fcancelled">Show cancelled</button>'+((S.q||S.mine||S.prio||S.assignee||S.quick)?'<button type="button" class="tk-link" data-act="fclear">Clear filters</button>':'')
- +'<span class="tk-count">'+list.length+' shown</span><div class="tk-views">'+[['list','List'],['board','Board'],['calendar','Calendar']].map(function(v){return '<button type="button" class="'+(S.view===v[0]?'on':'')+'" data-view="'+v[0]+'">'+v[1]+'</button>';}).join('')+'</div></div>';}
+ +'<span class="tk-count">'+list.length+' shown</span><div class="tk-views">'+[['flow','Flow'],['list','List'],['board','Board'],['calendar','Calendar']].map(function(v){return '<button type="button" class="'+(S.view===v[0]?'on':'')+'" data-view="'+v[0]+'">'+v[1]+'</button>';}).join('')+'</div></div>';}
 function bulkBar(list){var n=selIds().length;if(!n||S.view==='calendar'&&false)return '';return '<div class="tk-bulk" role="toolbar" aria-label="Bulk actions"><b>'+n+' selected</b>'+(n<list.length?'<button type="button" class="tk-bl" data-act="bselall">Select all '+list.length+'</button>':'')+'<span class="tk-sep"></span><button type="button" class="tk-bb gold" data-act="bcomplete">'+ICON.check+' Mark complete</button><button type="button" class="tk-bb" data-act="bprog">In progress</button><button type="button" class="tk-bb" data-act="bopen">To do</button><button type="button" class="tk-bb" data-act="bprio">Priority</button><button type="button" class="tk-bb" data-act="bassign">Assign</button><button type="button" class="tk-bb" data-act="bdue">Due date</button><button type="button" class="tk-bb danger" data-act="bcancel">Cancel</button><button type="button" class="tk-bx" data-act="bclear" aria-label="Clear selection">'+ICON.x+'</button></div>';}
 function draw(){var el=S.root;if(!el||!el.isConnected)return;var keepQ=document.activeElement&&document.activeElement.hasAttribute&&document.activeElement.hasAttribute('data-q');var qs=keepQ?document.activeElement.selectionStart:0;
  if(S.error){el.innerHTML='<div class="tk-page"><div class="tk-error"><b>Tasks could not be loaded</b><p>'+esc(S.error)+'</p><button type="button" class="tk-btn" data-act="retry">Try again</button></div></div>';return;}
  if(!S.data){el.innerHTML='<div class="tk-page"><div class="tk-loading">Loading tasks…</div></div>';return;}
+ if(S.view==='flow'){var fy=window.scrollY;el.innerHTML=flowView();el.classList.add('tk-flowmode');return;}
+ el.classList.remove('tk-flowmode');
  var list=visible(),body=S.view==='board'?boardView(list):S.view==='calendar'?calView(list):listView(list);
  var scroll=el.querySelector('.tk-body');var st=scroll?scroll.scrollTop:0;
  el.innerHTML='<div class="tk-page tk2"><div class="tk2-main">'+toolbar(list)+'<div class="tk-body">'+body+'</div>'+(S.view==='list'?previewPanel():'')+'</div>'+railView()+bulkBar(list)+drawer()+'</div>';var nb=el.querySelector('.tk-body');if(nb)nb.scrollTop=st;
  if(keepQ){var q=el.querySelector('[data-q]');if(q){q.focus();q.setSelectionRange(qs,qs);}}
  if(window.MDV_UI&&window.MDV_UI.scan)try{window.MDV_UI.scan(el);}catch(e){}}
+
+
+/* ---------- Daily Flow: the default Tasks view (focus queue, add form, progress by area) ---------- */
+S.fx={};S.fq='';S.fdone=false;S.flimit=25;
+function areaOf(t){return String(t.cat||'').trim()||'General';}
+function fscore(t){var d=dayDiff(t.due),sc=0;if(d!=null){if(d<0)sc+=100+Math.min(60,-d);else if(d===0)sc+=80;else if(d<=3)sc+=40-d*4;else if(d<=14)sc+=10;}if(t.prio==='urgent')sc+=60;else if(t.prio==='high')sc+=35;if(t.status==='in_progress')sc+=6;return sc;}
+function fopen(){return S.tasks.filter(isOpenT);}
+function fRank(){return fopen().slice().sort(function(a,b){return fscore(b)-fscore(a)||cmpDue(a,b);});}
+function fdueChip(t){var d=dayDiff(t.due);if(d==null)return '<span class="tf-chip none">No deadline</span>';if(d<0)return '<span class="tf-chip over">'+(-d)+' day'+(d===-1?'':'s')+' overdue</span>';if(d===0)return '<span class="tf-chip today">Due today</span>';return '<span class="tf-chip">Due '+new Date(t.due).toLocaleDateString([],{month:'short',day:'numeric'})+'</span>';}
+function fsubs(t){var kids=(S.kids&&S.kids[t.id])||[],n=t.check.length+kids.length,d=t.check.filter(function(c){return c.done;}).length+kids.filter(function(x){return x.status==='completed';}).length;return {n:n,d:d};}
+function fcard(t,num){
+  var d=dayDiff(t.due),sb=fsubs(t),done=t.status==='completed',open=!!S.fx[t.id],hi=t.prio==='urgent'||t.prio==='high';
+  var chips=fdueChip(t)+'<span class="tf-area">'+esc(areaOf(t))+'</span>'+(hi?'<span class="tf-chip pri">Priority</span>':'')+(sb.n?'<span class="tf-prog">'+sb.d+' of '+sb.n+'</span>':'')
+    +'<input type="date" class="tf-date" data-fa-due="'+esc(t.id)+'" value="'+(t.due?ymd(t.due):'')+'" aria-label="Deadline">'+(t.due?'<button type="button" class="tf-x" data-fa-cleardue="'+esc(t.id)+'" aria-label="Remove deadline">×</button>':'');
+  var sub=d!=null&&d<0?'<div class="tf-note over">'+(-d)+'d overdue</div>':hi?'<div class="tf-note">priority</div>':'';
+  var bar=sb.n?'<div class="tf-bar"><i style="width:'+Math.round(sb.d/sb.n*100)+'%"></i></div>':'';
+  var more='';
+  if(open){var kids=(S.kids&&S.kids[t.id])||[];
+    more='<div class="tf-more"><div class="tf-subs">'+kids.map(function(k){return '<label class="tf-sub"><input type="checkbox" data-fa-kid="'+esc(k.id)+'"'+(k.status==='completed'?' checked':'')+'><span>'+esc(k.title)+'</span></label>';}).join('')+t.check.map(function(c,i){return '<label class="tf-sub"><input type="checkbox" data-fa-chk="'+esc(t.id)+':'+i+'"'+(c.done?' checked':'')+'><span>'+esc(c.text)+'</span></label>';}).join('')
+      +'</div><form data-fa-addsub="'+esc(t.id)+'"><input type="text" placeholder="Add a subtask" aria-label="Add a subtask"></form><textarea data-fa-notes="'+esc(t.id)+'" placeholder="Notes, links, who is involved" rows="3">'+esc(t.desc||'')+'</textarea></div>';}
+  return '<article class="tf-card'+(done?' done':'')+'" data-id="'+esc(t.id)+'"><label class="tf-ck"><input type="checkbox" data-fa-done="'+esc(t.id)+'"'+(done?' checked':'')+' aria-label="Mark done"></label><div class="tf-body"><h3>'+(num?'<i>'+num+'</i>':'')+'<span>'+esc(t.title)+'</span></h3><div class="tf-chips">'+chips+'</div>'+sub+bar+'<button type="button" class="tf-tog" data-fa-open="'+esc(t.id)+'">'+(open?'▾':'▸')+' Subtasks and notes</button>'+more+'</div></article>';
+}
+function fareas(){var m={};S.tasks.filter(function(t){return !t.parent&&t.status!=='cancelled';}).forEach(function(t){var a=areaOf(t),r=m[a]||(m[a]={n:0,d:0});r.n++;if(t.status==='completed')r.d++;});return Object.keys(m).map(function(k){return {a:k,n:m[k].n,d:m[k].d};}).sort(function(x,y){return y.n-x.n;});}
+function flowView(){
+  var open=fopen(),over=open.filter(function(t){var d=dayDiff(t.due);return d!=null&&d<0;}).length,rank=fRank(),top=rank.slice(0,5),rest=rank.slice(5);
+  var q=S.fq.trim().toLowerCase(),pool=q?S.tasks.filter(function(t){return !t.parent&&(t.title+' '+areaOf(t)+' '+t.desc).toLowerCase().indexOf(q)>=0;}):rest;
+  if(S.fdone&&!q)pool=pool.concat(S.tasks.filter(function(t){return !t.parent&&t.status==='completed';}));
+  var shown=pool.slice(0,S.flimit);
+  var areas=fareas(),areaOpts=areas.map(function(x){return '<option value="'+esc(x.a)+'">';}).join('');
+  var tom=new Date();var td=ymd(new Date(tom.getTime()+3*864e5));
+  var views=[['flow','Flow'],['list','List'],['board','Board'],['calendar','Calendar']].map(function(v){return '<button type="button" class="'+(S.view===v[0]?'on':'')+'" data-view="'+v[0]+'">'+v[1]+'</button>';}).join('');
+  return '<div class="tk-flow"><header class="tf-head"><div><small>Daily flow</small><h1>Tasks</h1><p>'+open.length+' open, '+over+' overdue. Every task has a deadline, subtasks and its own notes. Open a task to write in it.</p></div><div class="tf-views">'+views+'</div></header>'
+   +'<div class="tf-grid"><section class="tf-left"><div class="tf-sec"><h2>Focus queue <small>The system’s top 5 right now</small></h2>'+(top.length?top.map(function(t,i){return fcard(t,i+1);}).join(''):'<p class="tf-empty">Nothing open. Add your first task.</p>')+'</div>'
+   +'<div class="tf-sec"><h2>All tasks</h2><label class="tf-search"><input type="search" data-fa-q value="'+esc(S.fq)+'" placeholder="Search titles, subtasks and notes"></label><label class="tf-showdone"><input type="checkbox" data-fa-showdone'+(S.fdone?' checked':'')+'> Show completed</label>'
+   +(shown.length?shown.map(function(t){return fcard(t,0);}).join(''):'<p class="tf-empty">'+(q?'No task matches.':'No other tasks.')+'</p>')+(pool.length>shown.length?'<button type="button" class="tf-more-btn" data-fa-more>Show '+Math.min(25,pool.length-shown.length)+' more</button>':'')+'</div></section>'
+   +'<aside class="tf-right"><section class="tf-sec"><h2>Add a task</h2><form class="tf-form" data-fa-form><label>Task<input name="title" type="text" maxlength="200" placeholder="What needs to get done" autocomplete="off" required></label>'
+   +'<div class="tf-two"><label>Deadline<input name="date" type="date" value="'+td+'"></label><label>Time<input name="time" type="time"></label></div>'
+   +'<div class="tf-two"><label>Area<input name="area" list="tf-areas" placeholder="e.g. MDV" autocomplete="off"><datalist id="tf-areas">'+areaOpts+'</datalist></label><label>Priority<select name="prio"><option value="low">Low</option><option value="normal" selected>Normal</option><option value="high">High</option><option value="urgent">Urgent</option></select></label></div>'
+   +'<label>Subtasks, one per line<textarea name="subs" rows="3"></textarea></label><label>Notes<textarea name="notes" rows="3" placeholder="Context, links, who’s involved"></textarea></label><button type="submit" class="tf-add">Add task</button>'
+   +'<p class="tf-tip">Faster: press / anywhere and type the task with a date, like “Pitch Kujten fri #CDV”.</p></form></section>'
+   +'<section class="tf-sec"><h2>Progress by area</h2>'+(areas.map(function(x){return '<div class="tf-pa"><div><span>'+esc(x.a)+'</span><em>'+x.d+' of '+x.n+'</em></div><div class="tf-bar big"><i style="width:'+Math.round(x.d/x.n*100)+'%"></i></div></div>';}).join('')||'<p class="tf-empty">No areas yet.</p>')+'</section></aside></div></div>';
+}
+var DAYS=['sun','mon','tue','wed','thu','fri','sat'],MONTHS=['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+function quickParse(text){
+  var title=text,date=null,area='',m,today=new Date();today.setHours(12,0,0,0);
+  if((m=title.match(/(?:^|\s)#([A-Za-z0-9_\-]+)/))){area=m[1];title=title.replace(m[0],' ');}
+  function strip(rx){var x=title.match(rx);if(x){title=title.replace(x[0],' ');}return x;}
+  var x;
+  if((x=strip(/\b(today|tonight)\b/i)))date=new Date(today);
+  else if((x=strip(/\b(tomorrow|tmrw)\b/i))){date=new Date(today);date.setDate(date.getDate()+1);}
+  else if((x=strip(/\b(sun|mon|tue|tues|wed|thu|thur|thurs|fri|sat)(?:day|sday|nesday|rsday|urday)?\b/i))){var k=DAYS.indexOf(x[1].toLowerCase().slice(0,3));date=new Date(today);var diff=(k-today.getDay()+7)%7;if(diff===0)diff=7;date.setDate(date.getDate()+diff);}
+  else if((x=strip(/\b(\d{1,2})\/(\d{1,2})\b/))){date=new Date(today.getFullYear(),Number(x[1])-1,Number(x[2]),12);if(date<today)date.setFullYear(date.getFullYear()+1);}
+  else if((x=strip(new RegExp('\\b('+MONTHS.join('|')+')[a-z]*\\.?\\s+(\\d{1,2})\\b','i')))){date=new Date(today.getFullYear(),MONTHS.indexOf(x[1].toLowerCase().slice(0,3)),Number(x[2]),12);if(date<today)date.setFullYear(date.getFullYear()+1);}
+  return {title:title.replace(/\s+/g,' ').trim(),date:date,area:area};
+}
+async function flowCreate(f){
+  var raw=f.elements.title.value.trim();if(!raw){toast('Give the task a name','risk');return;}
+  var qp=quickParse(raw),title=qp.title||raw,dv=f.elements.date.value,tv=f.elements.time.value||'12:00';
+  var due=qp.date&&(!f.elements.date.dataset.touched)?qp.date:(dv?new Date(dv+'T'+tv+':00'):null);
+  if(qp.date&&tv&&f.elements.time.value){due=new Date(ymd(qp.date)+'T'+tv+':00');}
+  var area=(f.elements.area.value.trim()||qp.area||'');
+  if(area){var known=fareas().filter(function(x){return x.a.toLowerCase()===area.toLowerCase();})[0];if(known)area=known.a;}
+  var subs=f.elements.subs.value.split('\n').map(function(l){return l.trim();}).filter(Boolean),notes=f.elements.notes.value.trim();
+  var desc=notes+(subs.length?(notes?'\n':'')+subs.map(function(x){return '- [ ] '+x;}).join('\n'):''),me=myMember();
+  var btn=f.querySelector('.tf-add');btn.disabled=true;
+  try{var r=await post({action:'create_task',title:title,description:desc||null,priority:f.elements.prio.value,due_at:due?due.toISOString():null,category:area||null,member_ids:me?[me.id]:[]});if(!r||r.verified!==true)throw new Error('Not verified');f.reset();await load(true);toast('Task added');}
+  catch(e){toast('Could not add: '+(e&&e.message||e),'risk');}
+  btn.disabled=false;
+}
+function flowEvent(e){
+  var t=e.target;if(!t.closest||!t.closest('.tk-flow'))return false;
+  if(e.type==='click'){
+    var o=t.closest('[data-fa-open]');if(o){var id=o.dataset.faOpen;S.fx[id]=!S.fx[id];draw();return true;}
+    var cd=t.closest('[data-fa-cleardue]');if(cd){var tk=byId(cd.dataset.faCleardue);if(tk){tk.due=null;edit(tk);draw();}return true;}
+    if(t.closest('[data-fa-more]')){S.flimit+=25;draw();return true;}
+    return false;
+  }
+  if(e.type==='change'){
+    var dn=t.closest('[data-fa-done]');if(dn){var tk2=byId(dn.dataset.faDone);if(tk2)setStatus(tk2,dn.checked?'completed':'open');return true;}
+    var kid=t.closest('[data-fa-kid]');if(kid){var k=byId(kid.dataset.faKid);if(k)setStatus(k,kid.checked?'completed':'open');return true;}
+    var ck=t.closest('[data-fa-chk]');if(ck){var pr=ck.dataset.faChk.split(':'),tk3=byId(pr[0]);if(tk3&&tk3.check[Number(pr[1])]){tk3.check[Number(pr[1])].done=ck.checked;edit(tk3);draw();}return true;}
+    var due=t.closest('[data-fa-due]');if(due){var tk4=byId(due.dataset.faDue);if(tk4){var old=tk4.due?new Date(tk4.due):null,v=due.value;if(!v){tk4.due=null;edit(tk4);draw();}else{var nd=new Date(v+'T12:00:00');if(old&&hasTime(tk4.due)){nd.setHours(old.getHours(),old.getMinutes(),0,0);}tk4.due=nd.toISOString();edit(tk4);draw();}}return true;}
+    var nt=t.closest('[data-fa-notes]');if(nt){var tk5=byId(nt.dataset.faNotes);if(tk5){tk5.desc=nt.value;edit(tk5);}return true;}
+    if(t.closest('[data-fa-showdone]')){S.fdone=t.checked;draw();return true;}
+    if(t.name==='date'&&t.closest('[data-fa-form]')){t.dataset.touched='1';return true;}
+    return false;
+  }
+  if(e.type==='input'){var q=t.closest('[data-fa-q]');if(q){S.fq=q.value;S.flimit=25;var pos=q.selectionStart;draw();var nq=S.root.querySelector('[data-fa-q]');if(nq){nq.focus();nq.setSelectionRange(pos,pos);}return true;}return false;}
+  if(e.type==='submit'){
+    var f=t.closest('[data-fa-form]');if(f){e.preventDefault();flowCreate(f);return true;}
+    var as=t.closest('[data-fa-addsub]');if(as){e.preventDefault();var tk6=byId(as.dataset.faAddsub),inp=as.querySelector('input'),v2=inp.value.trim();if(tk6&&v2){tk6.check.push({done:false,text:v2});edit(tk6);S.fx[tk6.id]=true;draw();}return true;}
+  }
+  return false;
+}
+document.addEventListener('keydown',function(e){
+  if(e.key!=='/'||e.metaKey||e.ctrlKey||e.altKey)return;var a=document.activeElement;if(a&&(/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)||a.isContentEditable))return;
+  var el=S.root;if(!el||!el.isConnected||!el.offsetParent)return;var i=el.querySelector('[data-fa-form] [name="title"]');if(i){e.preventDefault();i.focus();}
+});
 
 /* ---------- actions ---------- */
 async function quickAdd(key,title){title=title.trim();if(!title)return;var body={action:'create_task',title:title,priority:'normal',category:null,member_ids:[]};var st='open';
@@ -270,11 +370,11 @@ async function bulk(ids,patch){if(!ids.length)return;var label={completed:'compl
 
 /* Handle clicks in the capture phase on window so legacy task scripts (which hijack any 'add/new task' button in this panel) never see them. */
 window.addEventListener('dblclick',function(e){var el=S.root;if(!el||!el.isConnected||!el.contains(e.target))return;var n=e.target.closest&&e.target.closest('.tk2-row .tk2-name');if(!n)return;var r=n.closest('[data-id]'),t=r&&byId(r.dataset.id);if(t){S.open=t.id;S.draft=null;draw();}});
-window.addEventListener('click',function(e){var el=S.root;if(!el||!el.isConnected||!el.contains(e.target))return;onClick(e);e.stopPropagation();try{var f=document.getElementById('vx81-nav-flyout');if(f)f.classList.remove('open');document.body.classList.remove('cvy-menu-hover','cvy-menu-pinned');}catch(_e){}},true);
-function render(el){if(!el)return Promise.resolve();if(S.root!==el){S.root=el;el.classList.add('mdv-tasks');el.addEventListener('input',onInput);el.addEventListener('change',onChange);el.addEventListener('keydown',onKey);el.addEventListener('dragstart',onDragStart);el.addEventListener('dragend',onDragEnd);el.addEventListener('dragover',onDragOver);el.addEventListener('drop',onDrop);}
+window.addEventListener('click',function(e){var el=S.root;if(!el||!el.isConnected||!el.contains(e.target))return;if(flowEvent(e)){e.stopPropagation();return;}onClick(e);e.stopPropagation();try{var f=document.getElementById('vx81-nav-flyout');if(f)f.classList.remove('open');document.body.classList.remove('cvy-menu-hover','cvy-menu-pinned');}catch(_e){}},true);
+function render(el){if(!el)return Promise.resolve();if(S.root!==el){S.root=el;el.classList.add('mdv-tasks');el.addEventListener('input',function(e){if(!flowEvent(e))onInput(e);});el.addEventListener('change',function(e){if(!flowEvent(e))onChange(e);});el.addEventListener('submit',function(e){flowEvent(e);});el.addEventListener('keydown',onKey);el.addEventListener('dragstart',onDragStart);el.addEventListener('dragend',onDragEnd);el.addEventListener('dragover',onDragOver);el.addEventListener('drop',onDrop);}
  draw();return load(true);}
 ['renderTasksConsolidated','renderTasks'].forEach(function(k){try{Object.defineProperty(window,k,{configurable:true,enumerable:true,get:function(){return render;},set:function(){}});}catch(e){window[k]=render;}});
-window.MDV_TASKS={render:render,reload:function(){return load(true);}};
+window.MDV_TASKS={render:render,reload:function(){return load(true);},state:S};
 
 /* long-press a task row on touch screens to start multi-select */
 (function(){var timer=null,sx=0,sy=0,fired=false;

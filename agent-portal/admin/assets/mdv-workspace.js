@@ -7,6 +7,8 @@ var KEY='mdv-outlook';
 function outlook(){try{return localStorage.getItem(KEY)==='classic'?'classic':'workspace';}catch(e){return 'workspace';}}
 function apply(v){document.documentElement.setAttribute('data-outlook',v);}
 apply(outlook());
+function size(){try{return localStorage.getItem('mdv-ws-size')==='standard'?'standard':'compact';}catch(e){return 'compact';}}
+document.documentElement.setAttribute('data-ws-size',size());
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function arr(v){return Array.isArray(v)?v:[];}
 function bridge(){var b=window.VEUX_AGENT_V4;if(!b||!b.api)throw new Error('not ready');return b;}
@@ -58,6 +60,15 @@ function visible(){
 }
 function pagesOf(it){return [it.page].concat(arr(it.sub).map(function(s){return s[0];}));}
 var sig='',openId='';
+var DOCK=[['tasksconsolidated','Tasks','ti-checkbox'],['multipackage','Packages','ti-package'],['mail','Mail','ti-mail'],['financelegal','Finance','ti-chart-bar'],['globalmobility','Travel','ti-plane']];
+function buildDock(){
+  var app=document.getElementById('app');if(!app)return;
+  var ok=allowed(),items=DOCK.filter(function(d){return ok[d[0]];}),dk=document.getElementById('ws-dock');
+  if(!dk){dk=document.createElement('nav');dk.id='ws-dock';dk.setAttribute('aria-label','Shortcuts');app.appendChild(dk);}
+  var s=items.map(function(d){return d[0];}).join();
+  if(dk.dataset.sig!==s){dk.dataset.sig=s;dk.innerHTML=items.map(function(d){return '<button type="button" class="ws-dk" data-dock="'+d[0]+'"><i class="ti '+d[2]+'"></i><span>'+d[1]+'</span>'+(d[0]==='tasksconsolidated'||d[0]==='mail'?'<em class="ws-dkb" data-badge="'+(d[0]==='mail'?'mail':'tasks')+'" hidden></em>':'')+'</button>';}).join('');}
+  var cur=current();dk.querySelectorAll('.ws-dk').forEach(function(b){b.classList.toggle('on',b.dataset.dock===cur||(b.dataset.dock==='globalmobility'&&cur==='visa')||(b.dataset.dock==='financelegal'&&['modelaccounts','agentcommissions'].indexOf(cur)>-1));});
+}
 function itemHtml(it){
   var has=it.sub&&it.sub.length;
   return '<button type="button" class="ws-it" data-item="'+it.id+'" data-page="'+esc(it.page)+'"'+(has?' data-sub="1" aria-haspopup="true"':'')+'><i class="ti '+it.icon+' ws-ic"></i><span>'+esc(it.label)+'</span>'+(it.badge?'<em class="ws-badge" data-badge="'+it.badge+'" hidden></em>':'')+(has?'<i class="ti ti-chevron-right ws-ch"></i>':'')+'</button>';
@@ -87,14 +98,16 @@ function badges(){
   var p=window.VEUX_SMART_PORTAL&&VEUX_SMART_PORTAL.last,sb=document.getElementById('ws-side');if(!sb)return;
   var w=window.MDV_MAIL&&MDV_MAIL.widget&&MDV_MAIL.widget();
   var counts={tasks:p&&p.tasks?arr(p.tasks.open).length:0,mail:(w&&w.unread)||0};
-  sb.querySelectorAll('[data-badge]').forEach(function(e){var n=counts[e.dataset.badge]||0;e.hidden=!n;e.textContent=n>99?'99+':n;});
+  document.querySelectorAll('#ws-side [data-badge],#ws-dock [data-badge]').forEach(function(e){var n=counts[e.dataset.badge]||0;e.hidden=!n;e.textContent=n>99?'99+':n;});
 }
 function fly(anchor,it){
   var f=document.getElementById('ws-fly');
   if(!f){f=document.createElement('div');f.id='ws-fly';document.body.appendChild(f);}
   var cur=current();
   f.innerHTML='<h4>'+esc(it.label)+'</h4>'+arr(it.sub).map(function(s){return '<button type="button" class="ws-fi'+(s[0]===cur?' on':'')+'" data-go="'+esc(s[0])+'">'+esc(s[1])+'</button>';}).join('');
-  var r=anchor.getBoundingClientRect();f.style.top=Math.max(8,Math.min(innerHeight-70-it.sub.length*40,r.top-8))+'px';f.classList.add('open');openId=it.id;
+  var app=document.getElementById('app');if(f.parentNode!==app)app.appendChild(f);
+  var y=0,n=anchor,sb=document.getElementById('ws-side'),sc=anchor.closest('.ws-scroll');while(n&&n!==sb){y+=n.offsetTop;n=n.offsetParent;}if(sc)y-=sc.scrollTop;
+  var vh=window.innerHeight/(parseFloat(getComputedStyle(document.body).zoom)||1);f.style.top=Math.max(8,Math.min(vh-70-it.sub.length*40,y-8))+'px';f.classList.add('open');openId=it.id;
 }
 function closeFly(){var f=document.getElementById('ws-fly');if(f)f.classList.remove('open');openId='';}
 function navigate(page){closeFly();go(page);}
@@ -103,6 +116,7 @@ document.addEventListener('click',function(e){
   var so=t.closest('#ws-fly [data-go="__signout__"]');if(so){closeFly();if(typeof window.signOut==='function')window.signOut();return;}
   var it=t.closest('#ws-side .ws-it');
   if(it){var sb=document.getElementById('ws-side'),def=sb.__items&&sb.__items[it.dataset.item];if(def&&def.sub&&def.sub.length){if(openId===def.id)closeFly();else fly(it,def);}else navigate(it.dataset.page);return;}
+  var dk=t.closest('#ws-dock [data-dock]');if(dk){navigate(dk.dataset.dock);return;}
   var fi=t.closest('#ws-fly [data-go]');if(fi){navigate(fi.dataset.go);return;}
   var u=t.closest('[data-ws-user]');if(u){if(openId==='user')closeFly();else fly(u,{id:'user',label:'Account',sub:[['systemsettings','Settings & appearance'],['__signout__','Sign out']]});return;}
   if(!t.closest('#ws-fly'))closeFly();
@@ -275,11 +289,22 @@ function createMenu(){
   var items=[['New booking','ti-calendar-plus','book'],['New casting','ti-camera','cast'],['New task','ti-checkbox','task'],['New message','ti-mail','mail'],['Add talent','ti-user-plus','roster']];
   return '<div class="ws-create"><button type="button" data-ws-create><i class="ti ti-plus"></i> CREATE <i class="ti ti-chevron-down"></i></button><div class="ws-cpop">'+items.map(function(x){return '<button type="button" data-ws-new="'+x[2]+'"><i class="ti '+x[1]+'"></i>'+x[0]+'</button>';}).join('')+'</div></div>';
 }
+function glanceHtml(){
+  var tb=null;try{tb=window.MDV_SCHEDULE&&MDV_SCHEDULE.todayBlocks&&MDV_SCHEDULE.todayBlocks();}catch(e){}
+  if(!tb||!tb.spans.length)return '';
+  var sp=tb.spans,a=Math.floor(Math.min.apply(null,sp.map(function(x){return x.s;}))/60)*60,b=Math.ceil(Math.max.apply(null,sp.map(function(x){return x.e;}))/60)*60,span=b-a,n=new Date(),nm=n.getHours()*60+n.getMinutes();
+  function cat(c){return c==='mdv'||c==='casa'||c==='cavyre'?'work':c==='body'?'health':'daily';}
+  var ticks='';for(var h=Math.ceil(a/60/3)*3;h*60<=b;h+=3){ticks+='<span style="left:'+((h*60-a)/span*100).toFixed(2)+'%">'+(h%12||12)+' '+(h>=12?'PM':'AM')+'</span>';}
+  var blocks=sp.map(function(x){return '<button type="button" class="ws-gb g-'+cat(x.c)+'" data-ws-open-day style="left:'+((x.s-a)/span*100).toFixed(3)+'%;width:'+Math.max(0.6,(x.e-x.s)/span*100-0.25).toFixed(3)+'%" title="'+esc(x.t)+'"><span>'+esc(x.t)+'</span></button>';}).join('');
+  var now=(nm>=a&&nm<=b)?'<i class="ws-gn" style="left:'+((nm-a)/span*100).toFixed(2)+'%"></i>':'';
+  return '<section class="ws-card ws-glance"><header><h2>Day at a glance</h2><span class="ws-gl"><i class="g-daily"></i>Daily<i class="g-work"></i>Work<i class="g-health"></i>Health</span><button type="button" class="ws-link" data-ws-open-day>Open Today →</button></header><div class="ws-gt">'+ticks+'</div><div class="ws-gbar">'+blocks+now+'</div></section>';
+}
 function paint(){
   var el=S.el,p=S.p,H=S.H;if(!el||!p)return;
   var now=new Date();
   el.innerHTML='<div class="ws-home"><header class="ws-head"><div><div class="ws-eye">'+now.toLocaleDateString('en-US',{weekday:'long'}).toUpperCase()+' <i>/</i> '+now.toLocaleDateString('en-US',{month:'long',day:'numeric'}).toUpperCase()+'</div><h1>AGENCY <em>COMMAND</em></h1></div><p>Agency performance. Daily action. One workspace.</p>'+createMenu()+'</header>'
     +stripHtml(p,H)
+    +glanceHtml()
     +'<div class="ws-r2">'+deskHtml(p,H)+scheduleHtml(p)+'</div>'
     +'<div class="ws-r3">'+talentHtml(p)+financeHtml(p)+'</div>'
     +'<div class="ws-r4">'+signalsHtml(p)+mailHtml()+'</div></div>';
@@ -295,6 +320,7 @@ document.addEventListener('click',function(e){
   var r=e.target.closest('[data-ws-range]');if(r){S.deskRange=r.dataset.wsRange;paint();return;}
   var sc=e.target.closest('[data-ws-scope]');if(sc){S.deskScope=sc.dataset.wsScope;paint();return;}
   var d=e.target.closest('[data-ws-sday]');if(d){S.sday=d.dataset.wsSday;paint();if(!S.dayCache[S.sday])fetchDay(S.sday).then(paint);return;}
+  if(e.target.closest('[data-ws-open-day]')){go('dayschedule');return;}
   var c=e.target.closest('[data-ws-create]');if(c){c.closest('.ws-create').classList.toggle('open');return;}
   var n=e.target.closest('[data-ws-new]');if(n){
     n.closest('.ws-create').classList.remove('open');var k=n.dataset.wsNew;
@@ -312,8 +338,9 @@ function layoutRow(){
   document.querySelectorAll('#vx-wave-settings,.mdv-appearance .v152-settings-grid').forEach(function(host){
     if(!host||host.querySelector('.ws-layoutrow')||host.parentNode.querySelector('.ws-layoutrow'))return;
     var row=document.createElement('div');row.className='ws-layoutrow';
-    function paintRow(){var cur=outlook();row.innerHTML='<b>Layout</b><button type="button" data-ol="workspace" class="'+(cur==='workspace'?'on':'')+'">Workspace</button><button type="button" data-ol="classic" class="'+(cur==='classic'?'on':'')+'">Classic</button><span>Workspace has the sectioned side menu and the Agency Command home. Classic is the previous look.</span>';
-      row.querySelectorAll('[data-ol]').forEach(function(b){b.onclick=function(){window.MDV_WORKSPACE.set(b.dataset.ol);paintRow();};});}
+    function paintRow(){var cur=outlook();row.innerHTML='<b>Layout</b><button type="button" data-ol="workspace" class="'+(cur==='workspace'?'on':'')+'">Workspace</button><button type="button" data-ol="classic" class="'+(cur==='classic'?'on':'')+'">Classic</button><b style="margin-left:18px">Size</b><button type="button" data-size="compact" class="'+(size()==='compact'?'on':'')+'">Compact</button><button type="button" data-size="standard" class="'+(size()==='standard'?'on':'')+'">Standard</button><span>Workspace has the sectioned side menu and the Agency Command home. Classic is the previous look. Compact fits more on screen.</span>';
+      row.querySelectorAll('[data-ol]').forEach(function(b){b.onclick=function(){window.MDV_WORKSPACE.set(b.dataset.ol);paintRow();};});
+      row.querySelectorAll('[data-size]').forEach(function(b){b.onclick=function(){try{localStorage.setItem('mdv-ws-size',b.dataset.size);}catch(x){}document.documentElement.setAttribute('data-ws-size',b.dataset.size);paintRow();};});}
     paintRow();host.parentNode.insertBefore(row,host);
   });
 }
@@ -327,11 +354,18 @@ function skinOnce(){
     if((cur==='classic'||cur==='purple')&&outlook()==='workspace')w.set('burntOrange');
   }catch(e){}
 }
+function tighten(){
+  var h=document.querySelector('#p-overview .ws-home'),tb=document.querySelector('#app .topbar'),root=document.documentElement;
+  if(!h||!tb||!h.offsetParent){root.style.setProperty('--ws-pull','0px');return;}
+  var z=parseFloat(getComputedStyle(document.body).zoom)||1,cur=parseFloat(root.style.getPropertyValue('--ws-pull'))||0;
+  var gap=(h.getBoundingClientRect().top-tb.getBoundingClientRect().bottom)/z+cur-6;
+  var want=Math.max(0,Math.round(gap));if(Math.abs(want-cur)>2)root.style.setProperty('--ws-pull',want+'px');
+}
 function tick(){
   try{
     layoutRow();
     if(document.documentElement.getAttribute('data-outlook')!=='workspace')return;
-    buildMenu();masthead();skinOnce();
+    buildMenu();buildDock();masthead();skinOnce();tighten();
   }catch(e){}
 }
 setInterval(tick,700);

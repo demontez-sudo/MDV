@@ -437,5 +437,10 @@ function todayFocus(){
   var d=new Date(),id=tplIdFor(d),t=S.tpl[id],sp=blockSpans(t.blocks),deep=sp.filter(function(b){return (b.f||[]).indexOf('deep')>=0})[0]||null;
   return{name:t.name,id:id,deep:deep?{title:deep.t,start:clock(deep.s),end:clock(deep.end)}:null};
 }
-window.MDV_SCHEDULE={todayFocus:todayFocus,embeddedHtml:embeddedHtml,bindEmbedded:bindEmbedded,evalRule:evalRule,evalWeek:evalWeek,defaults:defaults,state:S,blockSpans:blockSpans,splitBreak:splitBreak};
+function todayBlocks(){
+  if(!S.tpl)load();
+  var d=new Date(),id=tplIdFor(d),t=S.tpl[id];
+  return{name:t.name,spans:blockSpans(t.blocks).map(function(b){return{s:b.s,e:b.end,t:b.t,c:b.c};})};
+}
+window.MDV_SCHEDULE={todayFocus:todayFocus,todayBlocks:todayBlocks,embeddedHtml:embeddedHtml,bindEmbedded:bindEmbedded,evalRule:evalRule,evalWeek:evalWeek,defaults:defaults,state:S,blockSpans:blockSpans,splitBreak:splitBreak};
 })();
