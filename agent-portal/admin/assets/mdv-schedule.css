@@ -114,3 +114,8 @@
   .sc-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.sc-cell{min-height:64px;padding:5px}.sc-ct{display:none}.sc-weeks{grid-template-columns:1fr}
   .sc-mhead{grid-template-columns:44px 1fr 1fr;gap:8px}.sc-mrow{grid-template-columns:44px 1fr 1fr;gap:8px}.sc-mtags{grid-column:2/4}.sc-tabs button{padding:10px 12px;font-size:14px}.sc-live{width:100%;margin:0 0 6px}
 }
+
+/* the paper day sheet keeps its own colors on every skin (a skin rule had made it transparent, leaving dark text on a dark page) */
+html body .sc .sc-card{background:var(--paper)!important;color:var(--pink)!important}
+html body .sc .sc-card h2,html body .sc .sc-card .sc-label,html body .sc .sc-nowbar{color:var(--pink)!important}
+html body .sc .sc-card .sc-date{color:var(--pmute)!important}

@@ -298,12 +298,45 @@ function glanceHtml(){
   var now=(nm>=a&&nm<=b)?'<i class="ws-gn" style="left:'+((nm-a)/span*100).toFixed(2)+'%"></i>':'';
   return '<section class="ws-card ws-glance"><header><h2>Day at a glance</h2><span class="ws-gl"><i class="g-daily"></i>Daily<i class="g-work"></i>Work<i class="g-health"></i>Health</span><button type="button" class="ws-link" data-ws-open-day>Open Today →</button></header><div class="ws-gt">'+ticks+'</div><div class="ws-gbar">'+blocks+now+'</div></section>';
 }
+/* ----- phone home: one calm column, app style ----- */
+function isPhone(){return !!(window.matchMedia&&window.matchMedia('(max-width:820px)').matches);}
+function firstName(){var n=String((document.getElementById('tbName')||{}).textContent||'').trim().split(/\s+/)[0];return n||'';}
+function mhHead(t,link,page){return '<header><h2>'+t+'</h2>'+(link?'<button type="button" class="mh-link" data-vx17-nav="'+page+'">'+link+'</button>':'')+'</header>';}
+function mobileHomeHtml(p,H){
+  var now=new Date(),hr=now.getHours(),greet=hr<12?'Good morning':hr<18?'Good afternoon':'Good evening',nm=firstName(),todayK=dkey(now),mm=modelMap(p);
+  var ev=eventsOf(p.cal),days=weekDays(),inWeek=function(d){return days.some(function(x){return dkey(x)===dkey(d);});};
+  var wkB=ev.filter(function(e){return e.kind==='booking'&&inWeek(e.s);}).length||arr(p.bookings).length;
+  var wkV=arr(p.bookings).filter(function(b){return inWeek(b.starts_at);}).reduce(function(n,b){return n+Number(H.amount(b)||0);},0)||arr(p.bookings).reduce(function(n,b){return n+Number(H.amount(b)||0);},0);
+  var f=p.finance||{},cur=f.currency||'USD',os=Number(f.outstanding||0),unpaid=arr(f.unpaid),talent=arr(p.models).length;
+  function stat(ic,big,label,sub,nav){return '<button type="button" class="mh-stat" data-vx17-nav="'+nav+'"><i class="ti '+ic+'"></i><b>'+big+'</b><span>'+label+'</span><small>'+sub+'</small></button>';}
+  var quick=[['ti-calendar-plus','Book','calendar'],['ti-checkbox','Tasks','tasksconsolidated'],['ti-mail','Mail','mail'],['ti-package','Packages','multipackage'],['ti-users','Roster','roster'],['ti-user-circle','Clients','industrydirectory'],['ti-plane','Travel','globalmobility'],['ti-chart-bar','Finance','financelegal']]
+    .map(function(q){return '<button type="button" class="mh-q" data-vx17-nav="'+q[2]+'"><i class="ti '+q[0]+'"></i><span>'+q[1]+'</span></button>';}).join('');
+  var today=ev.filter(function(e){return dkey(e.s)===todayK;});
+  var evRows=today.slice(0,6).map(function(e){var q=e.models[0],m=q?(mm[q.id]||q):null,who=m?nameOf(m):(e.client||e.title);
+    return '<button type="button" class="mh-ev t-'+e.type.toLowerCase()+'" data-vx17-nav="calendar"><span class="mh-t">'+hm(e.s)+'</span><span class="mh-bar"></span><span class="mh-b"><b>'+esc(who)+'</b><small>'+esc(e.type+(e.client?' · '+e.client:e.title&&e.title!==e.type?' · '+e.title:''))+'</small></span></button>';}).join('')||'<p class="mh-empty">Nothing scheduled today.</p>';
+  var all=deskItems(p,H),bucket=function(it){if(it.overdue)return 0;var d=dayDiff(it.due);return d!=null&&d<0?0:d===0?1:2;};
+  var need=all.filter(function(i){return i.mine&&bucket(i)<2;}).sort(function(a,b){var o={r:0,o:1,y:2,g:3};return o[a.pri]-o[b.pri]||(new Date(a.due||8e15)-new Date(b.due||8e15));});
+  var needRows=need.slice(0,5).map(function(i){var d=dueLabel(i);return '<button type="button" class="mh-row" data-vx17-nav="'+esc(i.nav)+'"><i class="mh-dot pr-'+i.pri+'"></i><span class="mh-b"><b>'+esc(i.title)+'</b><small>'+esc(i.sub)+'</small></span><em class="'+d.c+'">'+esc(d.t)+'</em></button>';}).join('')||'<p class="mh-empty">Nothing needs you right now.</p>';
+  var sg=H.veraSignals(p),top=sg[0],vtxt=top?(sg.length>1?sg.length+' items need a decision. ':'')+top.title+(top.detail?' — '+top.detail:''):'Nothing needs a decision right now.';
+  var w=window.MDV_MAIL&&MDV_MAIL.widget&&MDV_MAIL.widget(),mrows='';
+  if(!w){mrows='<p class="mh-empty">Checking your inbox…</p>';try{if(window.MDV_MAIL&&MDV_MAIL.refreshWidget)MDV_MAIL.refreshWidget();}catch(e){}}
+  else if(w.state==='ok'){mrows=arr(w.rows).slice(0,3).map(function(m){var from=(m.from&&(m.from.name||m.from.address))||'Unknown';return '<button type="button" class="mh-row" data-vx17-nav="mail"><i class="mh-dot '+(m.is_read?'pr-g':'pr-o')+'"></i><span class="mh-b"><b>'+esc(from)+'</b><small>'+esc(m.subject||'')+'</small></span><em>'+hm(m.received)+'</em></button>';}).join('')||'<p class="mh-empty">Inbox is clear.</p>';}
+  else mrows='<p class="mh-empty">Connect your email to see messages here.</p>';
+  return '<div class="mh-home"><div class="mh-hello"><small>'+now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</small><h1>'+greet+(nm?', '+esc(nm):'')+'</h1></div>'
+   +'<form class="mh-ask" data-ws-ask><i class="ti ti-sparkles"></i><input type="text" placeholder="Ask Vera…" aria-label="Ask Vera"><button type="submit" aria-label="Ask"><i class="ti ti-arrow-right"></i></button></form>'
+   +'<div class="mh-quick">'+quick+'</div>'
+   +'<div class="mh-stats">'+stat('ti-calendar-event',wkB,'Bookings','this week','calendar')+stat('ti-users',talent,'Talent',(p.ready||0)+' ready','roster')+stat('ti-currency-dollar',money(wkV,cur),'Booking value','this week','calendar')+stat('ti-file-invoice',money(os,cur),'Outstanding',unpaid.length+' invoice'+(unpaid.length===1?'':'s'),'agentcommissions')+'</div>'
+   +'<section class="mh-card">'+mhHead('Today',today.length+' event'+(today.length===1?'':'s')+' →','calendar')+evRows+'</section>'
+   +'<section class="mh-card">'+mhHead('Needs attention','All tasks →','tasksconsolidated')+needRows+'</section>'
+   +'<section class="mh-card mh-vera"><header><h2><i class="ti ti-sparkles"></i> Vera briefing</h2></header><p>'+esc(vtxt)+'</p>'+(top?'<button type="button" class="mh-btn" data-vx17-nav="'+esc(top.nav)+'" data-vx17-record-type="'+esc(top.recordType||'')+'" data-vx17-record-id="'+esc(top.recordId||'')+'">Review options</button>':'')+'</section>'
+   +'<section class="mh-card">'+mhHead('Inbox','Open →','mail')+mrows+'</section></div>';
+}
 function paint(){
   var el=S.el,p=S.p,H=S.H;if(!el||!p)return;
   if(!el.classList.contains('on')){S.stale=true;return;}
   S.stale=false;
   var now=new Date();
-  var html='<div class="ws-home"><header class="ws-head"><div><div class="ws-eye">'+now.toLocaleDateString('en-US',{weekday:'long'}).toUpperCase()+' <i>/</i> '+now.toLocaleDateString('en-US',{month:'long',day:'numeric'}).toUpperCase()+'</div><h1>AGENCY <em>COMMAND</em></h1></div><p>Agency performance. Daily action. One workspace.</p>'+createMenu()+'</header>'
+  var html=isPhone()?mobileHomeHtml(p,H):'<div class="ws-home"><header class="ws-head"><div><div class="ws-eye">'+now.toLocaleDateString('en-US',{weekday:'long'}).toUpperCase()+' <i>/</i> '+now.toLocaleDateString('en-US',{month:'long',day:'numeric'}).toUpperCase()+'</div><h1>AGENCY <em>COMMAND</em></h1></div><p>Agency performance. Daily action. One workspace.</p>'+createMenu()+'</header>'
     +stripHtml(p,H)
     +glanceHtml()
     +'<div class="ws-r2">'+deskHtml(p,H)+scheduleHtml(p)+'</div>'
@@ -334,6 +367,7 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('submit',function(e){var f=e.target.closest&&e.target.closest('[data-ws-ask]');if(!f)return;e.preventDefault();var i=f.querySelector('input'),q=i.value.trim();i.value='';if(window.MDV_VERA_CHAT&&MDV_VERA_CHAT.open)MDV_VERA_CHAT.open(q||undefined);});
 window.addEventListener('mdv:mail-widget',function(){if(S.el&&S.el.isConnected&&S.p)paint();badges();});
+try{var mqp=window.matchMedia('(max-width:820px)');var mqf=function(){S.last=null;if(S.el&&S.el.isConnected&&S.p)paint();};if(mqp.addEventListener)mqp.addEventListener('change',mqf);}catch(e){}
 function home(el,p,H){S.el=el;S.p=p;S.H=H;if(!S.sday)S.sday=dkey(new Date());paint();badges();}
 
 /* ================= appearance + one-time skin ================= */
@@ -413,6 +447,6 @@ function tick(){
 setInterval(function(){if(!document.hidden)tick();},600);
 /* polling only: observing the whole document made this script and the older top-bar scripts re-trigger each other on busy pages */
 window.addEventListener('hashchange',tick);window.addEventListener('popstate',tick);window.addEventListener('veux:agency-v16-session',tick);
-window.MDV_WORKSPACE={active:function(){return outlook()==='workspace'&&window.matchMedia&&!window.matchMedia('(max-width:900px)').matches;},home:home,get:outlook,set:function(v){try{localStorage.setItem(KEY,v);}catch(e){}apply(v);tick();if(window.VEUX_SMART_PORTAL&&VEUX_SMART_PORTAL.refresh&&String(window._currentPage||'')==='overview')VEUX_SMART_PORTAL.refresh();}};
+window.MDV_WORKSPACE={active:function(){return outlook()==='workspace'&&(isPhone()||!window.matchMedia||!window.matchMedia('(max-width:900px)').matches);},phone:isPhone,sections:function(){return SECTIONS;},settings:function(){return SETTINGS;},counts:function(){var p=window.VEUX_SMART_PORTAL&&VEUX_SMART_PORTAL.last,w=window.MDV_MAIL&&MDV_MAIL.widget&&MDV_MAIL.widget();return {tasks:p&&p.tasks?arr(p.tasks.open).length:0,mail:(w&&w.unread)||0};},home:home,get:outlook,set:function(v){try{localStorage.setItem(KEY,v);}catch(e){}apply(v);tick();if(window.VEUX_SMART_PORTAL&&VEUX_SMART_PORTAL.refresh&&String(window._currentPage||'')==='overview')VEUX_SMART_PORTAL.refresh();}};
 tick();
 })();

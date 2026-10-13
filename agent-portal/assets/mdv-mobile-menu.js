@@ -24,15 +24,35 @@ function pwaRow(){
   var P=window.VEUX_PWA;if(!P||P.isStandalone())return '';
   return '<button type="button" class="mm-row" data-mm-install><i class="ti ti-download"></i><span>Install VEUX Desk</span></button>';
 }
+var PAGE_ICON={approvals:'ti-circle-check',escalations:'ti-alert-triangle',changecontrol:'ti-git-pull-request',availability:'ti-clock',multipackage:'ti-package',packageresponses:'ti-message-check',modelevaluations:'ti-star',modelsubmissions:'ti-send',globalmobility:'ti-plane',visa:'ti-id',financelegal:'ti-chart-bar',modelaccounts:'ti-wallet',agentcommissions:'ti-percentage',systemsettings:'ti-settings',releaseaudit:'ti-shield-check',inbox:'ti-message-circle',roster:'ti-users',industrydirectory:'ti-user-circle',scouting:'ti-user-search',seasonmanagement:'ti-layout-grid',modeldevelopment:'ti-chart-bar',editorial:'ti-notebook',team:'ti-users-group',filesforms:'ti-file-text'};
+var TABS={overview:1,tasksconsolidated:1,mail:1,calendar:1};
+function sections(){
+  var W=window.MDV_WORKSPACE;
+  if(!W||!W.sections)return [{cap:'Pages',tiles:TILES.map(function(t){return [t[0],t[1],t[2]];}).concat(MORE.map(function(m){return [m[0],m[1],'ti-point'];}))}];
+  var out=W.sections().map(function(sec){
+    var tiles=[];
+    sec.items.forEach(function(it){
+      var list=it.sub&&it.sub.length?it.sub:(it.page?[[it.page,it.label]]:[]);
+      list.forEach(function(x){if(TABS[x[0]])return;tiles.push([x[0],x[1],PAGE_ICON[x[0]]||it.icon]);});
+    });
+    return {cap:sec.cap,tiles:tiles};
+  });
+  var st=W.settings&&W.settings();
+  if(st)out.push({cap:'Settings',tiles:st.sub.map(function(x){return [x[0],x[1],PAGE_ICON[x[0]]||st.icon];})});
+  return out;
+}
+function who(){var n=String((document.getElementById('tbName')||{}).textContent||'').trim(),r=String((document.getElementById('tbRole')||{}).textContent||'').trim();return {n:n||'Your account',r:r,i:(n.split(/\s+/).map(function(x){return x[0];}).join('').slice(0,2)||'M').toUpperCase()};}
 function html(){
-  var cur=window._currentPage||'';
+  var cur=window._currentPage||'',u=who();
+  var body=sections().map(function(sec){
+    return '<section class="mm-sec"><h3>'+esc(sec.cap)+'</h3><div class="mm-tiles">'+sec.tiles.map(function(t){return '<button type="button" class="mm-tile'+(t[0]===cur?' on':'')+'" data-mm-go="'+t[0]+'" data-mm-name="'+esc(String(t[1]).toLowerCase())+'"><i class="ti '+t[2]+'"></i><span>'+esc(t[1])+'</span></button>';}).join('')+'</div></section>';
+  }).join('');
   return '<div class="mm-back" data-mm-x></div><section class="mm-sheet" role="dialog" aria-modal="true" aria-label="Menu">'+
     '<div class="mm-grip" data-mm-x></div>'+
-    '<header><h2>Menu</h2><button type="button" class="mm-close" data-mm-x aria-label="Close">×</button></header>'+
+    '<header><span class="mm-av">'+esc(u.i)+'</span><div class="mm-who"><b>'+esc(u.n)+'</b><small>'+esc(u.r)+'</small></div><button type="button" class="mm-close" data-mm-x aria-label="Close"><i class="ti ti-x"></i></button></header>'+
     '<label class="mm-search"><i class="ti ti-search"></i><input type="search" placeholder="Find a page…" autocomplete="off"></label>'+
-    '<div class="mm-tiles">'+TILES.map(function(t){return '<button type="button" class="mm-tile'+(t[0]===cur?' on':'')+'" data-mm-go="'+t[0]+'" data-mm-name="'+esc(t[1].toLowerCase())+'"><i class="ti '+t[2]+'"></i><span>'+esc(t[1])+'</span></button>';}).join('')+'</div>'+
-    '<details class="mm-more"><summary>More pages</summary><div class="mm-list">'+MORE.map(function(m){return '<button type="button" class="mm-row'+(m[0]===cur?' on':'')+'" data-mm-go="'+m[0]+'" data-mm-name="'+esc(m[1].toLowerCase())+'"><span>'+esc(m[1])+'</span><em>›</em></button>';}).join('')+'</div></details>'+
-    '<div class="mm-foot">'+pwaRow()+'<button type="button" class="mm-row" data-mm-out><i class="ti ti-logout"></i><span>Sign out</span></button></div>'+
+    '<div class="mm-scroll">'+body+
+    '<section class="mm-sec"><div class="mm-tiles"><button type="button" class="mm-tile" data-mm-go="__vera__" data-mm-name="vera ask"><i class="ti ti-sparkles"></i><span>Ask Vera</span></button>'+(window.VEUX_PWA&&!VEUX_PWA.isStandalone()?'<button type="button" class="mm-tile" data-mm-install data-mm-name="install app"><i class="ti ti-download"></i><span>Install app</span></button>':'')+'<button type="button" class="mm-tile mm-out" data-mm-out data-mm-name="sign out"><i class="ti ti-logout"></i><span>Sign out</span></button></div></section></div>'+
   '</section>';
 }
 function open(){
@@ -46,9 +66,9 @@ function open(){
     });
     root.addEventListener('input',function(e){
       if(!e.target.matches('input[type=search]'))return;
-      var q=e.target.value.trim().toLowerCase(),det=root.querySelector('.mm-more');
+      var q=e.target.value.trim().toLowerCase();
       root.querySelectorAll('[data-mm-name]').forEach(function(b){b.hidden=!!q&&b.getAttribute('data-mm-name').indexOf(q)<0;});
-      if(q)det.open=true;
+      root.querySelectorAll('.mm-sec').forEach(function(sec){sec.hidden=!!q&&!sec.querySelector('[data-mm-name]:not([hidden])');});
     });
   }
   root.innerHTML=html();root.hidden=false;document.documentElement.classList.add('mm-open');
