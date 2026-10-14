@@ -138,9 +138,10 @@ function paintList(){
   if(rowsEl){rowsEl.scrollTop=S.listScroll||0;rowsEl.addEventListener('scroll',function(){S.listScroll=rowsEl.scrollTop;},{passive:true});}
   if(hadFocus){var q=el.querySelector('[data-q]');if(q){q.focus();try{q.setSelectionRange(caret,caret);}catch(e){}}}
 }
-function imagesAlways(){try{return localStorage.getItem('mdv-mail-images')==='1';}catch(e){return false;}}
+/* pictures load by default; a person can switch them off (Hide web images) and that choice is remembered */
+function imagesAlways(){try{return localStorage.getItem('mdv-mail-images')!=='0';}catch(e){return true;}}
 function bodyDoc(m,showImages){
-  var csp="default-src 'none'; img-src data: cid:"+(showImages?' https:':'')+"; style-src 'unsafe-inline'; font-src data:";
+  var csp="default-src 'none'; img-src data: cid:"+(showImages?' https: http:':'')+"; style-src 'unsafe-inline'; font-src data:";
   var inner=m.body_type==='html'?m.body:'<pre style="white-space:pre-wrap;font:inherit">'+esc(m.body)+'</pre>';
   if(m.body_type==='html'){
     var pics={};arr(m.inline).forEach(function(x){if(x&&x.cid&&x.data)pics[String(x.cid).toLowerCase()]='data:'+(x.content_type||'image/png')+';base64,'+x.data;});
@@ -161,7 +162,7 @@ function paintReader(){
     +'<div class="mm-from"><span class="mm-av big">'+esc(initials(who(m.from)))+'</span><div><b>'+esc(who(m.from))+'</b> <span>&lt;'+esc(m.from?m.from.address:'')+'&gt;</span><small>To: '+esc(m.to.map(who).join(', ')||'—')+(m.cc.length?' · Cc: '+esc(m.cc.map(who).join(', ')):'')+' · '+esc(whenFull(m.received))+'</small></div></div>'
     +'<div class="mm-actions"><button class="mm-btn mm-thr" id="mm-thr" data-a="thread" hidden></button><button class="mm-btn" data-a="reply">Reply</button><button class="mm-btn" data-a="replyAll">Reply all</button><button class="mm-btn" data-a="forward">Forward</button><span class="mm-sp"></span><button class="mm-btn" data-a="unread">Mark unread</button><button class="mm-btn" data-a="archive">Archive</button><button class="mm-btn danger" data-a="delete">Delete</button>'+(m.web_link?'<a class="mm-btn" href="'+esc(m.web_link)+'" target="_blank" rel="noopener noreferrer">Open in Outlook</a>':'')+'</div>'
     +(att.length?'<div class="mm-atts">'+att.map(function(a){return '<button class="mm-att" data-a="download" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'"><i>'+esc((a.name.split('.').pop()||'file').slice(0,4).toUpperCase())+'</i><span>'+esc(a.name)+'</span><em>'+esc(size(a.size))+'</em></button>';}).join('')+'</div>':'')
-    +(hasRemote&&!S.showImages?'<div class="mm-imgs">Pictures from the web are hidden to protect your privacy. <button class="mm-link" data-a="images">Show images</button> · <button class="mm-link" data-a="images-always">Always show</button></div>':'')+'</header>'
+    +(hasRemote&&!S.showImages?'<div class="mm-imgs">Pictures from the web are hidden. <button class="mm-link" data-a="images">Show images</button> · <button class="mm-link" data-a="images-always">Always show</button></div>':'')+(hasRemote&&S.showImages?'<div class="mm-imgs mm-imgs-on"><button class="mm-link" data-a="images-off">Hide web images</button></div>':'')+'</header>'
     +'<iframe class="mm-body" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Message body"></iframe>'
     +'<div class="mm-thread" id="mm-thread" hidden></div>';
   el.querySelector('iframe').srcdoc=bodyDoc(m,S.showImages);
@@ -240,6 +241,7 @@ async function act(a,b){
     if(a==='compose'){compose({});return;}
     if(a==='images'){S.showImages=true;paintReader();return;}
     if(a==='images-always'){try{localStorage.setItem('mdv-mail-images','1');}catch(e){}S.showImages=true;paintReader();return;}
+    if(a==='images-off'){try{localStorage.setItem('mdv-mail-images','0');}catch(e){}S.showImages=false;paintReader();toast('Web images are hidden. Use Show images or Always show to turn them back on.');return;}
     if(a==='signature'){sigEditor();return;}
     if(a==='thread'){setThreadOpen(!threadOpen());paintThread();return;}
     var m=S.detail&&S.detail.m;
