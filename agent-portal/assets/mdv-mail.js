@@ -176,7 +176,7 @@ async function loadThread(id){
   if(S.thread&&S.thread.id===id){paintThread();return;}
   S.thread={id:id,items:[],bodies:{},open:{},loading:true};paintThread();
   try{
-    var d=await call('thread',{id:id});if(S.sel!==id)return;
+    var d=await call('thread',{id:id,conversation_id:(S.detail&&S.detail.m&&S.detail.m.conversation_id)||undefined});if(S.sel!==id)return;
     S.thread.items=arr(d.messages);
   }catch(e){if(S.sel!==id)return;S.thread.items=[];}
   S.thread.loading=false;paintThread();
@@ -185,7 +185,7 @@ function tBody(id){
   var T=S.thread,m=S.detail&&S.detail.m;
   if(m&&m.id===id)return Promise.resolve(m);
   if(T.bodies[id])return Promise.resolve(T.bodies[id]);
-  return call('message',{id:id}).then(function(d){d.message.inline=arr(d.inline_images);T.bodies[id]=d.message;return d.message;});
+  return call('message',{id:id,inline:false}).then(function(d){d.message.inline=arr(d.inline_images);T.bodies[id]=d.message;return d.message;});
 }
 function paintThread(){
   var btn=document.getElementById('mm-thr'),box=document.getElementById('mm-thread'),fr=document.querySelector('#mm-reader .mm-body'),T=S.thread;

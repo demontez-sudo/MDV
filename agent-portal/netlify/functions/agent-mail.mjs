@@ -19,6 +19,16 @@ function publicConn(c) {
   return c ? { connected: c.status === 'active', needs_reconnect: c.status === 'needs_reconnect', email: c.email, display_name: c.display_name, connected_at: c.created_at, signature: cleanSignature(c.signature) } : { connected: false };
 }
 
+/* ids of Deleted / Drafts / Junk almost never change: look them up once per mailbox, not on every message opened */
+const hiddenCache = new Map();
+async function hiddenFolders(G, conn) {
+  const hit = hiddenCache.get(conn.id);
+  if (hit && Date.now() - hit.at < 600000) return hit.ids;
+  const ids = await Promise.all(['deleteditems', 'drafts', 'junkemail'].map(f => G(`/me/mailFolders/${f}?$select=id`).then(x => x?.id).catch(() => null)));
+  hiddenCache.set(conn.id, { at: Date.now(), ids });
+  return ids;
+}
+
 export const handler = async event => {
   if (!['GET', 'POST'].includes(event.httpMethod)) return json(405, { error: 'Method not allowed' });
   try {
@@ -53,7 +63,12 @@ export const handler = async event => {
     if (action === 'folders') {
       const rows = await Promise.all(FOLDERS.map(async ([alias, label]) => {
         try { const f = await G(`/me/mailFolders/${alias}?$select=unreadItemCount,totalItemCount`); return { id: alias, name: label, unread: f?.unreadItemCount ?? 0, total: f?.totalItemCount ?? 0 }; }
-        catch (e) { if (e.code === 'MAIL_NOT_FOUND') return { id: alias, name: label, unread: 0, total: 0, missing: true }; throw e; }
+        catch (e) {
+          if (e.code === 'MAIL_NOT_FOUND') return { id: alias, name: label, unread: 0, total: 0, missing: true };
+          if (e.code === 'MAIL_RECONNECT_REQUIRED' || e.code === 'MAIL_FORBIDDEN') throw e;
+          /* one busy or rate-limited folder must not stop the whole mailbox from loading */
+          return { id: alias, name: label, unread: 0, total: 0, unavailable: true };
+        }
       }));
       return json(200, { ok: true, folders: rows.filter(f => !f.missing || f.id === 'inbox') });
     }
@@ -75,31 +90,33 @@ export const handler = async event => {
     }
 
     if (action === 'message') {
-      const id = safeId(body.id);
-      const m = await G(`/me/messages/${encodeURIComponent(id)}?$select=${SUMMARY_SELECT},ccRecipients,bccRecipients,replyTo,body,webLink`, { headers: { Prefer: 'outlook.body-content-type="html"' } });
-      if (!m.isRead) { try { await G(`/me/messages/${encodeURIComponent(id)}`, { method: 'PATCH', body: { isRead: true } }); m.isRead = true; } catch (_e) { /* non-fatal */ } }
-      let attachments = [];
-      if (m.hasAttachments) {
-        const a = await G(`/me/messages/${encodeURIComponent(id)}/attachments?$select=id,name,size,contentType,isInline`);
-        attachments = (a?.value || []).filter(x => !x.isInline).map(x => ({ id: x.id, name: x.name, size: x.size, content_type: x.contentType }));
-      }
+      const id = safeId(body.id), enc = encodeURIComponent(id), wantInline = body.inline !== false;
+      const m = await G(`/me/messages/${enc}?$select=${SUMMARY_SELECT},ccRecipients,bccRecipients,replyTo,body,webLink`, { headers: { Prefer: 'outlook.body-content-type="html"' } });
+      /* marking it read and listing the attachments do not depend on each other: run them together so opening stays quick */
+      const [, list] = await Promise.all([
+        m.isRead ? null : G(`/me/messages/${enc}`, { method: 'PATCH', body: { isRead: true } }).then(() => { m.isRead = true; }).catch(() => { /* non-fatal */ }),
+        m.hasAttachments ? G(`/me/messages/${enc}/attachments?$select=id,name,size,contentType,isInline`).catch(() => null) : null
+      ]);
+      const all = list?.value || [];
+      const attachments = all.filter(x => !x.isInline).map(x => ({ id: x.id, name: x.name, size: x.size, content_type: x.contentType }));
       /* Pictures embedded in the body (signature logos, pasted photos) are referenced as cid:… and never load on their own.
-         Fetch the small ones so the reader can inline them as data: URLs. */
+         Only fetch them when the body really points at one, keep it small, and never let it slow the message down much. */
       let inline_images = [];
-      if (m.hasAttachments) {
-        try {
-          const all = await G(`/me/messages/${encodeURIComponent(id)}/attachments?$select=id,name,size,contentType,isInline`);
-          const want = (all?.value || []).filter(x => x.isInline && /^image\//i.test(x.contentType || '') && Number(x.size || 0) <= 1500000).slice(0, 12);
-          let budget = 3500000;
-          const got = await Promise.all(want.map(async x => {
+      const html = String(m.body?.content || '');
+      if (wantInline && /cid:/i.test(html)) {
+        const want = all.filter(x => x.isInline && /^image\//i.test(x.contentType || '') && Number(x.size || 0) <= 900000).slice(0, 6);
+        if (want.length) {
+          const fetched = Promise.all(want.map(async x => {
             try {
-              const f = await G(`/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(x.id)}`);
+              const f = await G(`/me/messages/${enc}/attachments/${encodeURIComponent(x.id)}`);
               if (!f?.contentBytes || !f.contentId) return null;
               return { cid: String(f.contentId).replace(/^<|>$/g, ''), content_type: x.contentType, data: f.contentBytes };
             } catch (_e) { return null; }
           }));
-          inline_images = got.filter(Boolean).filter(x => { budget -= x.data.length; return budget >= 0; });
-        } catch (_e) { /* non-fatal: the message still opens without its embedded pictures */ }
+          const got = await Promise.race([fetched, new Promise(r => setTimeout(() => r([]), 5000))]);
+          let budget = 2500000;
+          inline_images = (got || []).filter(Boolean).filter(x => { budget -= x.data.length; return budget >= 0; });
+        }
       }
       return json(200, { ok: true, message: mapMessage(m), attachments, inline_images });
     }
@@ -108,13 +125,13 @@ export const handler = async event => {
        against the whole back-and-forth. Bodies are loaded one at a time by the existing `message` action. */
     if (action === 'thread') {
       const id = safeId(body.id);
-      const cur = await G(`/me/messages/${encodeURIComponent(id)}?$select=conversationId`);
-      const cid = clean(cur?.conversationId);
+      let cid = clean(body.conversation_id);
+      if (!cid || cid.length > 300) { const cur = await G(`/me/messages/${encodeURIComponent(id)}?$select=conversationId`); cid = clean(cur?.conversationId); }
       if (!cid) return json(200, { ok: true, messages: [], current: id });
       const q = new URLSearchParams({ $top: '50', $select: `${SUMMARY_SELECT},parentFolderId`, $filter: `conversationId eq '${cid.replace(/'/g, "''")}'` });
       const [d, hidden] = await Promise.all([
         G(`${GRAPH}/me/messages?${q}`),
-        Promise.all(['deleteditems', 'drafts', 'junkemail'].map(f => G(`/me/mailFolders/${f}?$select=id`).then(x => x?.id).catch(() => null)))
+        hiddenFolders(G, conn)
       ]);
       const skip = new Set(hidden.filter(Boolean));
       const me = clean(conn.email).toLowerCase();

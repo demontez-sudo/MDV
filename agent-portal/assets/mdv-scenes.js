@@ -179,6 +179,8 @@ var CFG={
  fallleaf:{video:['fall-leaves.mp4'],poster:'fall-leaves.jpg',filter:'brightness(.62) saturate(.9) contrast(1.04)'}
 };
 function reduced(){try{return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}}
+/* phones: stills only. Two looping videos, a GPU canvas and snow on top of the page can exhaust a phone's memory and make the browser reload the page. */
+function phone(){try{return window.matchMedia('(max-width: 820px)').matches;}catch(e){return false;}}
 function saveData(){try{return !!(navigator.connection&&navigator.connection.saveData);}catch(e){return false;}}
 function stage(){return document.getElementById('cavyre-environment-stage');}
 var t0=performance.now();
@@ -197,7 +199,7 @@ var gv=new GLView('mdv-scene-canvas',false,.62),sv=new GLView('mdv-snow-canvas',
 var vs=null,FADE=1.6;
 function stopVideo(){if(vs)clearInterval(vs.timer);var w=document.getElementById('mdv-scene-video');if(w)w.remove();vs=null;}
 function startVideo(key,cfg,onFail){stopVideo();var st=stage();if(!st)return false;var w=document.createElement('div');w.id='mdv-scene-video';w.setAttribute('aria-hidden','true');var img=document.createElement('img');img.className='mdv-poster';img.alt='';img.src=assetURL(cfg.poster);w.appendChild(img);
- if(cfg.filter)w.style.filter=cfg.filter;var still=reduced()||saveData()||!!cfg.still||!cfg.video||!cfg.video.length;
+ if(cfg.filter)w.style.filter=cfg.filter;var still=reduced()||saveData()||phone()||!!cfg.still||!cfg.video||!cfg.video.length;
  if(!still){var vids=[0,1].map(function(){var v=document.createElement('video');v.muted=true;v.defaultMuted=true;v.playsInline=true;v.setAttribute('playsinline','');v.setAttribute('muted','');v.preload='auto';v.disablePictureInPicture=true;v.className='mdv-vid';v.style.opacity='0';w.appendChild(v);return v;});
   var n=cfg.video.length,s={key:key,v:vids,i:0,idx:0,switching:false,n:n,timer:0,ok:false};vs=s;
   vids[0].src=assetURL(cfg.video[0]);vids[1].src=assetURL(cfg.video[1%n]);
@@ -216,12 +218,12 @@ function html(on){document.documentElement.classList.toggle('mdv-gl',!!on);}
 function showGL(key){stopVideo();sv.stop();var ok=gv.start(key);html(ok);if(ok){last=0;kick();}return ok;}
 function stopAll(){cur='';stopVideo();gv.stop();sv.stop();html(false);if(raf){cancelAnimationFrame(raf);raf=0;}}
 function start(key){var c=CFG[key];if(!c)return;cur=key;
- if(c.gl){showGL(c.gl);return;}
+ if(c.gl){if(phone()){stopVideo();gv.stop();sv.stop();html(false);return;}showGL(c.gl);return;}
  gv.stop();
  var ok=startVideo(key,c,function(){if(cur===key&&c.fallback){console.warn('[MDV scenes] video failed, using GPU render for',key);showGL(c.fallback);}});
  if(!ok){if(c.fallback)showGL(c.fallback);return;}
  html(true);
- if(c.snow&&!reduced()&&sv.start('snow')){last=0;kick();}else sv.stop();}
+ if(c.snow&&!reduced()&&!phone()&&sv.start('snow')){last=0;kick();}else sv.stop();}
 function sync(){var k=String(document.documentElement.getAttribute('data-veux-wave')||'').toLowerCase();if(CFG[k]){var missing=!document.getElementById(CFG[k].gl?'mdv-scene-canvas':'mdv-scene-video');if(cur!==k||(missing&&!CFG[k].gl&&!(gv.key)))start(k);else if(anyGL())kick();}else if(cur||document.documentElement.classList.contains('mdv-gl'))stopAll();}
 var q=0;function queue(){if(q)return;q=1;setTimeout(function(){q=0;try{sync();}catch(e){console.warn('[MDV scenes]',e);}},60);}
 new MutationObserver(queue).observe(document.documentElement,{attributes:true,attributeFilter:['data-veux-wave']});
