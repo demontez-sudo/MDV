@@ -144,8 +144,4 @@
   html body #p-dayschedule .sc-aside{margin-top:12px}
   html body #p-dayschedule .sc{padding:6px 12px 30px!important}
   html body #pm .v155-table-card,html body #pm .v152-table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
-
-  /* the animated backdrop is a still on phones (see mdv-scenes.js): no moving layers behind the page */
-  html body #cavyre-environment-stage *,html body #cavyre-environment-stage *::before,html body #cavyre-environment-stage *::after{animation:none!important}
-  html body #mdv-scene-canvas,html body #mdv-snow-canvas,html body #mdv-scene-video video{display:none!important}
 }

@@ -372,3 +372,6 @@ html body .mdv-tasks.mdv-tasks .tk2-send{width:36px;height:36px;padding:0!import
 .tk-flow .tf-ck input{width:24px!important;height:24px!important;min-height:0!important;padding:0!important;background:transparent!important;border:1.5px solid var(--tf-mute)!important;border-radius:6px!important;box-shadow:none!important}
 .tk-flow .tf-ck input:checked{background:var(--tf-acc)!important;border-color:var(--tf-acc)!important}
 .tk-flow .tf-sub input{width:17px!important;height:17px!important;min-height:0!important;padding:0!important}
+
+.tf-status{height:32px;padding:0 26px 0 12px;border:1px solid var(--c,var(--tf-line));border-radius:999px;background:rgba(255,255,255,.03);color:var(--tf-ink);font:500 13px Archivo,sans-serif;cursor:pointer;max-width:100%}
+.tf-card.done .tf-status{opacity:.6}

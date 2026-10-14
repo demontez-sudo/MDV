@@ -182,7 +182,8 @@ function fdueChip(t){var d=dayDiff(t.due);if(d==null)return '<span class="tf-chi
 function fsubs(t){var kids=(S.kids&&S.kids[t.id])||[],n=t.check.length+kids.length,d=t.check.filter(function(c){return c.done;}).length+kids.filter(function(x){return x.status==='completed';}).length;return {n:n,d:d};}
 function fcard(t,num){
   var d=dayDiff(t.due),sb=fsubs(t),done=t.status==='completed',open=!!S.fx[t.id],hi=t.prio==='urgent'||t.prio==='high';
-  var chips=fdueChip(t)+'<span class="tf-area">'+esc(areaOf(t))+'</span>'+(hi?'<span class="tf-chip pri">Priority</span>':'')+(sb.n?'<span class="tf-prog">'+sb.d+' of '+sb.n+'</span>':'')
+  var cur=t.sub||t.status,statusSel='<select class="tf-status" data-fa-status="'+esc(t.id)+'" aria-label="Status" style="--c:'+((meta(SUBS,cur)||[0,0,'#9aa0a6'])[2])+'">'+SUBS.map(function(x){return '<option value="'+x[0]+'"'+(x[0]===cur?' selected':'')+'>'+esc(x[0]==='cancelled'?'Cancel task':x[1])+'</option>';}).join('')+'</select>';
+  var chips=fdueChip(t)+statusSel+'<span class="tf-area">'+esc(areaOf(t))+'</span>'+(hi?'<span class="tf-chip pri">Priority</span>':'')+(sb.n?'<span class="tf-prog">'+sb.d+' of '+sb.n+'</span>':'')
     +'<input type="date" class="tf-date" data-fa-due="'+esc(t.id)+'" value="'+(t.due?ymd(t.due):'')+'" aria-label="Deadline">'+(t.due?'<button type="button" class="tf-x" data-fa-cleardue="'+esc(t.id)+'" aria-label="Remove deadline">×</button>':'');
   var sub=d!=null&&d<0?'<div class="tf-note over">'+(-d)+'d overdue</div>':hi?'<div class="tf-note">priority</div>':'';
   var bar=sb.n?'<div class="tf-bar"><i style="width:'+Math.round(sb.d/sb.n*100)+'%"></i></div>':'';
@@ -248,6 +249,8 @@ function flowEvent(e){
     return false;
   }
   if(e.type==='change'){
+    var st=t.closest('[data-fa-status]');
+    if(st){var tkS=byId(st.dataset.faStatus),xs=SUBS.filter(function(z){return z[0]===st.value;})[0];if(tkS&&xs){if(xs[3]==='cancelled'&&!window.confirm('Cancel this task?')){draw();return true;}setStatus(tkS,xs[3],xs[4]);}return true;}
     var dn=t.closest('[data-fa-done]');if(dn){var tk2=byId(dn.dataset.faDone);if(tk2)setStatus(tk2,dn.checked?'completed':'open');return true;}
     var kid=t.closest('[data-fa-kid]');if(kid){var k=byId(kid.dataset.faKid);if(k)setStatus(k,kid.checked?'completed':'open');return true;}
     var ck=t.closest('[data-fa-chk]');if(ck){var pr=ck.dataset.faChk.split(':'),tk3=byId(pr[0]);if(tk3&&tk3.check[Number(pr[1])]){tk3.check[Number(pr[1])].done=ck.checked;edit(tk3);draw();}return true;}
