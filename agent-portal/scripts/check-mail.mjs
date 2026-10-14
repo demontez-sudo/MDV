@@ -1,0 +1,22 @@
+/* Mail helpers: addresses, send payload, attachments, ids, Resend routing, signature clean-up. Run: node scripts/check-mail.mjs */
+import assert from 'node:assert/strict';
+const g = await import(new URL('../netlify/functions/_lib/mail-graph.mjs', import.meta.url));
+const s = await import(new URL('../netlify/functions/_lib/mail-signature.mjs', import.meta.url));
+const r = await import(new URL('../netlify/functions/_lib/mail-resend.mjs', import.meta.url));
+let n = 0; const ok = (name, fn) => { try { fn(); n++; } catch (e) { console.log('FAIL', name, e.message); process.exitCode = 1; } };
+ok('parse list', () => assert.deepEqual(g.parseAddresses('A <a@x.com>, b@y.org; a@x.com').map(x => x.emailAddress.address), ['a@x.com', 'b@y.org']));
+ok('parse bad', () => assert.throws(() => g.parseAddresses('nope'), /valid/));
+ok('parse empty', () => assert.equal(g.parseAddresses('').length, 0));
+ok('textToHtml escapes', () => assert.match(g.textToHtml('<b>$1 & "x"\nnext'), /&lt;b&gt;\$1 &amp; &quot;x&quot;<br>next/));
+ok('send needs recipient', () => assert.throws(() => g.buildSendPayload({ to: '', subject: 's' }), /recipient/));
+ok('send empty', () => assert.throws(() => g.buildSendPayload({ to: 'a@x.com' }), /subject or a message/));
+ok('send ok', () => { const p = g.buildSendPayload({ to: 'a@x.com', cc: 'c@x.com', subject: 'Hi', text: 'Yo', attachments: [{ name: 'a/b.txt', content_base64: 'SGVsbG8=', content_type: 'text/plain' }] }); assert.equal(p.message.attachments[0].name, 'a_b.txt'); assert.equal(p.message.ccRecipients.length, 1); });
+ok('bad attachment', () => assert.throws(() => g.cleanAttachments([{ name: 'x', content_base64: '***' }]), /could not be read/));
+ok('safeId', () => { assert.throws(() => g.safeId('../x'), /valid/); assert.equal(g.safeId('AAMkAGI2THVSAAA='), 'AAMkAGI2THVSAAA='); });
+ok('mapMessage', () => { const m = g.mapMessage({ id: 'AAAAAAAA1', subject: 'S', from: { emailAddress: { name: 'N', address: 'n@x.com' } }, body: { contentType: 'html', content: '<p>x</p>' }, isRead: false }); assert.equal(m.body_type, 'html'); assert.equal(m.is_read, false); });
+ok('resend rule', () => { process.env.RESEND_API_KEY = 'k'; assert.equal(r.shouldUseResend([[{ emailAddress: { address: 'a@mine.com' } }]], 'me@mine.com'), false); assert.equal(r.shouldUseResend([[{ emailAddress: { address: 'a@out.com' } }]], 'me@mine.com'), true); });
+ok('copyTarget', () => { assert.equal(r.copyTarget({ copy_to: 'JUNKEMAIL' }), 'junkemail'); assert.equal(r.copyTarget({}), 'sentitems'); assert.equal(r.copyTarget({ copy_me: false }), 'none'); });
+ok('sig clean', () => { const c = s.cleanSignature({ name: 'A\u0000B', website: 'https://x.com', enabled: true, evil: 1 }); assert.equal(c.name, 'A B'); assert.equal(c.website, 'x.com'); assert.ok(!('evil' in c)); });
+ok('sig html escapes', () => { const h = s.signatureHtml({ name: '<script>', enabled: true }); assert.ok(!/<script>/.test(h)); });
+ok('reply replace keeps $', () => { const quoted = '<html><body class="x"><p>old</p></body></html>', mine = 'Price is $100 and $& and $1'; const html = quoted.replace(/<body([^>]*)>/i, (_m, a) => `<body${a}>${mine}<br>`); assert.ok(html.includes('Price is $100 and $& and $1<br>')); });
+console.log('passed', n);

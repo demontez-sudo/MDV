@@ -40,10 +40,11 @@ async function boot(force){
 async function loadFolders(){try{var d=await call('folders');S.folders=arr(d.folders);}catch(e){if(e&&/reconnect/i.test(msg(e))){S.status=Object.assign({},S.status,{connected:false,needs_reconnect:true});}else throw e;}}
 async function loadList(reset){
   if(!S.status||!S.status.connected)return;
-  var token=++S.seq;S.listLoading=true;S.listErr='';if(reset){S.messages=[];S.next=null;S.listScroll=0;}paintList();
+  var token=reset?++S.seq:S.seq,ctx=S.folder+'|'+S.search+'|'+S.unreadOnly;S.listLoading=true;S.listErr='';if(reset){S.messages=[];S.next=null;S.listScroll=0;}paintList();
   try{
     var d=await call('messages',reset?{folder:S.folder,search:S.search,unread_only:S.unreadOnly}:{next:S.next});
-    if(token!==S.seq&&reset)return;
+    /* a newer search / folder change started while this was loading: drop these results */
+    if(token!==S.seq||ctx!==S.folder+'|'+S.search+'|'+S.unreadOnly)return;
     arr(d.messages).forEach(function(m){if(m.from&&m.from.address)S.senders[m.from.address.toLowerCase()]=m.from.name||'';});
     S.messages=reset?arr(d.messages):S.messages.concat(arr(d.messages));S.next=d.next||null;
   }catch(e){S.listErr=msg(e);}
@@ -243,7 +244,7 @@ async function act(a,b){
     if(a==='thread'){setThreadOpen(!threadOpen());paintThread();return;}
     var m=S.detail&&S.detail.m;
     if(a==='disconnect'){if(!window.confirm('Disconnect your email from the portal? Your mailbox itself is not touched.'))return;await call('disconnect');S.status=Object.assign({},S.status,{connected:false});S.folders=[];S.messages=[];S.sel=null;S.detail=null;paint();toast('Email disconnected');return;}
-    if(a==='download'){b.disabled=true;var f=await call('attachment',{id:m.id,attachment_id:b.dataset.id});b.disabled=false;var bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:f.content_type||'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=f.name||b.dataset.name||'attachment';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);return;}
+    if(a==='download'){if(!m)return;b.disabled=true;var f=await call('attachment',{id:m.id,attachment_id:b.dataset.id});b.disabled=false;var bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:f.content_type||'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=f.name||b.dataset.name||'attachment';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);return;}
     if(!m)return;
     if(a==='reply'||a==='replyAll'||a==='forward'){openReply(a,m);return;}
     if(a==='unread'){await call('mark_read',{id:m.id,read:false});var r=S.messages.filter(function(x){return x.id===m.id;})[0];if(r)r.is_read=false;var fo=S.folders.filter(function(x){return x.id===S.folder;})[0];if(fo)fo.unread++;paintList();paintSide();toast('Marked unread');return;}
@@ -292,7 +293,7 @@ function paintReply(focus){
       if(r.mode!=='forward'&&!ta.value.trim())throw new Error('Write a message first.');
       btn.disabled=true;btn.textContent='Sending…';
       setCopyPref(d.querySelector('#mm-rcopy').value);var sv=await call('reply',{id:m.id,mode:r.mode,to:to.value.trim(),cc:cc.value.trim(),text:ta.value,copy_to:d.querySelector('#mm-rcopy').value,signature:(r.sig.on!==false?sigActive():null)});
-      S.reply=null;paintReply();toast(sentToast(sv));if(S.folder==='sentitems')loadList(true);
+      S.reply=null;S.thread=null;paintReply();loadThread(m.id);toast(sentToast(sv));if(S.folder==='sentitems')loadList(true);
     }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
   };
   if(focus)setTimeout(function(){(to.value?ta:to).focus();},30);

@@ -178,12 +178,19 @@ export const handler = async event => {
       const draft = await G(`/me/messages/${encodeURIComponent(id)}/${create}`, { method: 'POST', body: {} });
       const quoted = String(draft?.body?.content || '');
       const mine = textToHtml(text) + sigH;
-      const html = /<body[^>]*>/i.test(quoted) ? quoted.replace(/<body([^>]*)>/i, `<body$1>${mine}<br>`) : `${mine}<br>${quoted}`;
+      /* a function replacer, so "$1" or "$&" typed in the message is kept literally (a string replacement would expand it) */
+      const html = /<body[^>]*>/i.test(quoted) ? quoted.replace(/<body([^>]*)>/i, (_m, attrs) => `<body${attrs}>${mine}<br>`) : `${mine}<br>${quoted}`;
       const patch = { body: { contentType: 'HTML', content: html } };
       patch.toRecipients = to;
       patch.ccRecipients = cc;
-      await G(`/me/messages/${encodeURIComponent(draft.id)}`, { method: 'PATCH', body: patch });
-      await G(`/me/messages/${encodeURIComponent(draft.id)}/send`, { method: 'POST' });
+      try {
+        await G(`/me/messages/${encodeURIComponent(draft.id)}`, { method: 'PATCH', body: patch });
+        await G(`/me/messages/${encodeURIComponent(draft.id)}/send`, { method: 'POST' });
+      } catch (e) {
+        /* do not leave a half-written reply sitting in Drafts */
+        try { await G(`/me/messages/${encodeURIComponent(draft.id)}`, { method: 'DELETE' }); } catch (_x) { /* best effort */ }
+        throw e;
+      }
       return json(200, { ok: true, verified: true, sent: true, via: 'microsoft' });
     }
 
