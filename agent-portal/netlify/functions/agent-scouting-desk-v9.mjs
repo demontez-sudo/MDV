@@ -5,6 +5,16 @@ async function one(q){const {data,error}=await q;if(error)throw error;return dat
 const group=(list,key)=>{const m=new Map();for(const x of list){const k=x[key];if(!m.has(k))m.set(k,[]);m.get(k).push(x);}return m;};
 function clean(v){const s=String(v==null?'':v).trim();return s||null;}
 function num(v){if(v===null||v===undefined||v==='')return null;const n=Number(v);return Number.isFinite(n)?n:null;}
+const SCOUT_SECTIONS=['step','profile','outreach','call','test','offer','contract','log','linked'];
+function cleanScout(v,depth=0){
+  if(v==null)return null;
+  if(typeof v==='string')return v.slice(0,4000);
+  if(typeof v==='number')return Number.isFinite(v)?v:null;
+  if(typeof v==='boolean')return v;
+  if(Array.isArray(v))return depth>4?[]:v.slice(0,200).map(x=>cleanScout(x,depth+1));
+  if(typeof v==='object'){if(depth>5)return {};const o={};let n=0;for(const [k,x] of Object.entries(v)){if(n++>80)break;if(!/^[A-Za-z0-9_]{1,40}$/.test(k))continue;o[k]=cleanScout(x,depth+1);}return o;}
+  return null;
+}
 function questionnaire(body){
   const q=body.questionnaire&&typeof body.questionnaire==='object'?body.questionnaire:{};
   const keys=['why_modeling','career_goals','agency_expectations','experience','runway_experience','shoot_experience','availability','travel_ready','passport_status','school_work_schedule','comfort_level','strengths','growth_areas','social_presence','representation_history','contract_history','support_system','notes_for_agent'];
@@ -58,6 +68,60 @@ export const handler=async(event)=>{
         if(!String(doc.mime_type||'').startsWith('image/'))return json(400,{error:'Scouting media must be an image'});
         const {data,error}=await admin.from('scouting_media').insert({organization_id:organization.id,prospect_id:body.prospect_id,media_type:body.media_type||'image',url:'secure-document:'+doc.id,storage_provider:'supabase',caption:body.caption||doc.name||null,sort_order:Number(body.sort_order||0),metadata:{document_id:doc.id,secure:true}}).select('*').single();if(error)throw error;
         return json(201,{ok:true,verified:true,media:data,persisted_at:data?.created_at||new Date().toISOString()});
+      }
+      /* Scout Records: the smart pipeline step, outreach, interest-call answers, walk / posing assessment and so on live in
+         metadata.scout (JSON on the prospect). Sections are merged one by one so saving one form never wipes another. */
+      if(action==='scout_save'){
+        if(!body.prospect_id)return json(400,{error:'prospect_id is required'});
+        const cur=await one(admin.from('scouting_prospects').select('id,metadata').eq('organization_id',organization.id).eq('id',body.prospect_id).maybeSingle());
+        if(!cur)return json(404,{error:'Prospect not found'});
+        const scout={...(cur.metadata?.scout||{})},inc=body.scout&&typeof body.scout==='object'?body.scout:{};
+        for(const k of SCOUT_SECTIONS){
+          if(!(k in inc))continue;
+          if(k==='step'){scout.step=String(inc.step||'').slice(0,40);continue;}
+          if(k==='log'){continue;}
+          const v=cleanScout(inc[k]);
+          scout[k]=v&&typeof v==='object'&&!Array.isArray(v)&&scout[k]&&typeof scout[k]==='object'?{...scout[k],...v}:v;
+        }
+        if(body.log_entry&&typeof body.log_entry==='object'){
+          const e=cleanScout(body.log_entry);
+          const log=Array.isArray(scout.log)?scout.log:[];
+          log.push({at:new Date().toISOString(),by:user.id,type:String(e.type||'note').slice(0,30),text:String(e.text||'').slice(0,600)});
+          scout.log=log.slice(-200);
+        }
+        if(JSON.stringify(scout).length>60000)return json(413,{error:'This scouting record is too large to save.'});
+        const {data,error}=await admin.from('scouting_prospects').update({metadata:{...(cur.metadata||{}),scout,last_agent_review_at:new Date().toISOString()}}).eq('organization_id',organization.id).eq('id',body.prospect_id).select('*').single();
+        if(error)throw error;
+        return json(200,{ok:true,verified:true,prospect:data,persisted_at:data?.updated_at||new Date().toISOString()});
+      }
+      /* After a signed prospect is converted: carry measurements (only into empty fields) and the scouting summary onto the model profile. */
+      if(action==='link_to_model'){
+        if(!body.prospect_id||!body.model_id)return json(400,{error:'prospect_id and model_id are required'});
+        const cur=await one(admin.from('scouting_prospects').select('id,metadata,converted_model_id').eq('organization_id',organization.id).eq('id',body.prospect_id).maybeSingle());
+        if(!cur)return json(404,{error:'Prospect not found'});
+        if(cur.converted_model_id&&cur.converted_model_id!==body.model_id)return json(409,{error:'This prospect was converted to a different model.'});
+        const mm=await one(admin.from('models').select('id').eq('organization_id',organization.id).eq('id',body.model_id).maybeSingle());
+        if(!mm)return json(404,{error:'Model not found'});
+        const incoming=body.measurements&&typeof body.measurements==='object'?body.measurements:{};
+        const numKeys=['height_cm','bust_cm','chest_cm','waist_cm','hips_cm'],textKeys=['height_display','bust_display','chest_display','waist_display','hips_display','dress','suit','shoe','hair','eyes','skin'];
+        const want={};for(const k of numKeys){const v=num(incoming[k]);if(v!==null)want[k]=v;}for(const k of textKeys){const v=clean(incoming[k]);if(v)want[k]=String(v).slice(0,40);}
+        const existing=await one(admin.from('model_measurements').select('*').eq('organization_id',organization.id).eq('model_id',body.model_id).maybeSingle());
+        const patch={};for(const [k,v] of Object.entries(want)){if(existing?.[k]==null||existing[k]==='')patch[k]=v;}
+        let measured=[];
+        if(Object.keys(patch).length){
+          const {error:me}=await admin.from('model_measurements').upsert({organization_id:organization.id,model_id:body.model_id,...patch},{onConflict:'model_id'});
+          if(me)throw me;measured=Object.keys(patch);
+        }
+        let noted=false;const text=String(body.note||'').trim().slice(0,6000);
+        if(text){
+          const base={organization_id:organization.id,model_id:body.model_id,body:text,pinned:true,created_by:user.id};
+          let r=await admin.from('model_notes').insert({...base,visible_to_model:false});
+          if(r.error&&/column|schema cache/i.test(String(r.error.message||'')))r=await admin.from('model_notes').insert(base);
+          if(r.error)throw r.error;noted=true;
+        }
+        const scout={...(cur.metadata?.scout||{}),linked:{model_id:body.model_id,at:new Date().toISOString(),measurements:measured,note:noted}};
+        await admin.from('scouting_prospects').update({metadata:{...(cur.metadata||{}),scout}}).eq('organization_id',organization.id).eq('id',body.prospect_id);
+        return json(200,{ok:true,verified:true,measurements_filled:measured,note_added:noted});
       }
       if(action==='convert_to_model'){
         if(!body.prospect_id)return json(400,{error:'prospect_id is required'});

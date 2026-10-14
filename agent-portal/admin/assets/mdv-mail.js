@@ -424,6 +424,7 @@ function compose(o){
   if(o.to)F.to.add(o.to);
   if(o.bcc){F.bcc.add(o.bcc);reveal('bcc');}
   if(o.subject)$('#mm-subject').value=o.subject;
+  if(o.text)$('#mm-text').value=o.text;
 
   function dirty(){return $('#mm-text').value.trim()||F.to.has()||F.cc.has()||F.bcc.has()||$('#mm-subject').value.trim()||files.length;}
   function close(){
@@ -544,8 +545,8 @@ async function emailTo(list,o){
   }catch(e){return fallback();}
   if(addrs.length>1&&!o.to_all){
     /* Several people: send to yourself and Bcc everyone so clients never see each other. */
-    compose({to:String(S.status.email||''),bcc:addrs.join(', '),subject:o.subject||''});
-  }else compose({to:addrs.join(', '),subject:o.subject||''});
+    compose({to:String(S.status.email||''),bcc:addrs.join(', '),subject:o.subject||'',text:o.text||''});
+  }else compose({to:addrs.join(', '),subject:o.subject||'',text:o.text||''});
   return true;
 }
 (function globalEmailLinks(){
