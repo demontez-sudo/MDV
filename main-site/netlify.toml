@@ -100,6 +100,12 @@
   force = true
 
 [[redirects]]
+  from = "/sign"
+  to = "https://maison-agent.netlify.app/sign"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/public/package"
   to = "https://maison-agent.netlify.app/api/public/package"
   status = 200

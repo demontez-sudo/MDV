@@ -50,6 +50,50 @@ export const handler=async(event)=>{
    return json(201,{ok:true,verified:true,signature_request:saved.signature_request,signers:saved.signers||[],persisted_at:saved.persisted_at});
   }
 
+  /* The signed PDF (or any contract document) is uploaded through the secure storage flow, then attached here.
+     The reference lives in the contract's structured_terms.documents so it travels with the contract. */
+  if(action==='attach_contract_document'||action==='remove_contract_document'){
+   const contractId=String(body.contract_id||''),documentId=String(body.document_id||'');
+   if(!contractId||!documentId){const e=new Error('contract_id and document_id are required');e.statusCode=400;throw e;}
+   const {data:contract,error:ce}=await admin.from('contracts').select('id,structured_terms').eq('organization_id',organization.id).eq('id',contractId).maybeSingle();if(ce)throw ce;
+   if(!contract){const e=new Error('Contract not found');e.statusCode=404;throw e;}
+   const terms=contract.structured_terms&&typeof contract.structured_terms==='object'&&!Array.isArray(contract.structured_terms)?{...contract.structured_terms}:{};
+   let docs=Array.isArray(terms.documents)?terms.documents.slice(0,20):[];
+   let label=documentId;
+   if(action==='attach_contract_document'){
+    const {data:doc,error:de}=await admin.from('documents').select('id,name,mime_type,size_bytes,status').eq('organization_id',organization.id).eq('id',documentId).maybeSingle();if(de)throw de;
+    if(!doc){const e=new Error('Uploaded document was not found');e.statusCode=404;throw e;}
+    label=doc.name||documentId;
+    docs=docs.filter(x=>x&&x.id!==doc.id);
+    docs.push({id:doc.id,name:doc.name||'Contract.pdf',mime_type:doc.mime_type||null,size_bytes:doc.size_bytes||null,attached_at:new Date().toISOString(),attached_by:user.id});
+   }else{
+    const hit=docs.find(x=>x&&x.id===documentId);label=hit?.name||documentId;
+    docs=docs.filter(x=>x&&x.id!==documentId);
+   }
+   terms.documents=docs;
+   const {data:saved,error:ue}=await admin.from('contracts').update({structured_terms:terms}).eq('organization_id',organization.id).eq('id',contractId).select('*').single();if(ue)throw ue;
+   try{await admin.from('contract_events').insert({organization_id:organization.id,contract_id:contractId,event_type:action==='attach_contract_document'?'document_attached':'document_removed',actor_user_id:user.id,note:String(label).slice(0,200)});}catch(_e){/* the history entry is best effort */}
+   return json(200,{ok:true,verified:true,contract:saved,documents:docs,persisted_at:saved?.updated_at||new Date().toISOString()});
+  }
+  /* Add the people who need to sign (name + email) to an existing signature request. */
+  if(action==='add_signers'){
+   const reqId=String(body.signature_request_id||'');if(!reqId){const e=new Error('signature_request_id is required');e.statusCode=400;throw e;}
+   const list=Array.isArray(body.signers)?body.signers.slice(0,10):[];
+   const emailRx=/^[^\s@<>"',;]+@[^\s@<>"',;]+\.[^\s@<>"',;]+$/;
+   const {data:reqRow,error:re}=await admin.from('signature_requests').select('id,status').eq('organization_id',organization.id).eq('id',reqId).maybeSingle();if(re)throw re;
+   if(!reqRow){const e=new Error('Signature request not found');e.statusCode=404;throw e;}
+   const existing=await rows(admin.from('signature_signers').select('id,email,signing_order').eq('organization_id',organization.id).eq('signature_request_id',reqId));
+   const have=new Set(existing.map(x=>String(x.email||'').toLowerCase()));let order=existing.reduce((m,x)=>Math.max(m,Number(x.signing_order)||0),0);
+   const out=[];
+   for(const raw of list){
+    const email=String(raw&&raw.email||'').trim().toLowerCase(),name=String(raw&&raw.display_name||raw&&raw.name||'').trim().slice(0,120);
+    if(!emailRx.test(email)){const e=new Error(`"${email||'(blank)'}" is not a valid email address`);e.statusCode=400;throw e;}
+    if(have.has(email))continue;have.add(email);order+=1;
+    const {data:row,error:ie}=await admin.from('signature_signers').insert({organization_id:organization.id,signature_request_id:reqId,display_name:name||email,email,status:'pending',signing_order:order}).select('*').single();if(ie)throw ie;
+    out.push(row);
+   }
+   return json(200,{ok:true,verified:true,signers:out,persisted_at:new Date().toISOString()});
+  }
   if(action==='record_contract_event'){if(!body.contract_id||!body.event_type){const e=new Error('contract_id and event_type are required');e.statusCode=400;throw e;}const {data:record,error}=await admin.from('contract_events').insert({organization_id:organization.id,contract_id:body.contract_id,event_type:body.event_type,actor_user_id:user.id,actor_label:body.actor_label||null,note:body.note||null,metadata:body.metadata||{}}).select('*').single();if(error)throw error;return json(201,{ok:true,verified:true,event:record,persisted_at:record?.occurred_at||record?.created_at||new Date().toISOString()});}
   if(action==='resolve_usage_conflict'){await requirePermission(user.id,organization.id,'usage.write');const required=['booking_id','model_id','usage_right_id','resolution'];for(const k of required)if(!body[k]){const e=new Error(`${k} is required`);e.statusCode=400;throw e;}const {data:record,error}=await admin.from('usage_conflict_resolutions').upsert({organization_id:organization.id,booking_id:body.booking_id,model_id:body.model_id,usage_right_id:body.usage_right_id,resolution:body.resolution,resolved_by:user.id,note:body.note||null,metadata:body.metadata||{}},{onConflict:'booking_id,model_id,usage_right_id'}).select('*').single();if(error)throw error;return json(200,{ok:true,verified:true,resolution:record,persisted_at:record?.updated_at||record?.created_at||new Date().toISOString()});}
   return json(400,{error:'Unsupported contract action'});

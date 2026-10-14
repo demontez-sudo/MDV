@@ -141,11 +141,12 @@ function reconHtml(d){
 }
 
 /* ---------- Legal: Contracts / Usage Rights / Signatures ---------- */
+function docsOfC(x){var t=x&&x.structured_terms;return t&&typeof t==='object'&&Array.isArray(t.documents)?t.documents:[];}
 function partyLabel(x){return (x.models&&x.models.display_name)||(x.companies&&x.companies.name)||(x.partner_agencies&&x.partner_agencies.name)||'—';}
 function contractsHtml(d){
   var q=S.q.trim().toLowerCase();
   var xs=arr(d.contracts).filter(function(x){if(!q)return true;var txt=[x.title,partyLabel(x)].filter(Boolean).join(' ').toLowerCase();return txt.indexOf(q)>-1;});
-  var rows=xs.map(function(x){return '<div class="fin-row"><div><b>'+esc(x.title||'Contract')+'</b><small>'+esc(x.contract_type||'')+'</small></div><div><small>'+esc(partyLabel(x))+'</small></div><div><small>'+dtShort(x.effective_on)+' → '+dtShort(x.expires_on)+'</small></div><div>'+statusPill(x.status)+'</div><div class="fin-row-acts"><button type="button" data-fin-edit-contract="'+esc(x.id)+'">Edit</button><button type="button" data-fin-sign="'+esc(x.id)+'">Send for sign</button></div></div>';}).join('');
+  var rows=xs.map(function(x){return '<div class="fin-row"><div><b>'+esc(x.title||'Contract')+'</b><small>'+esc(x.contract_type||'')+'</small></div><div><small>'+esc(partyLabel(x))+'</small></div><div><small>'+dtShort(x.effective_on)+' → '+dtShort(x.expires_on)+'</small></div><div>'+statusPill(x.status)+'</div><div class="fin-row-acts">'+(docsOfC(x).length?'<button type="button" data-fin-view-pdf="'+esc(docsOfC(x)[0].id)+'" title="'+esc(docsOfC(x)[0].name||'PDF')+'">PDF</button>':'')+'<button type="button" data-fin-edit-contract="'+esc(x.id)+'">Edit</button><button type="button" data-fin-sign="'+esc(x.id)+'">Send for e-sign</button></div></div>';}).join('');
   var h='<div class="fin-toolbar"><label class="fin-search"><input data-fin-q placeholder="Search contracts…" value="'+esc(S.q)+'"><i>⌕</i></label><button type="button" class="primary" data-fin-new-contract>+ New Contract</button></div>';
   h+='<div class="fin-table"><div class="fin-row fin-head"><div>Contract</div><div>Party</div><div>Dates</div><div>Status</div><div></div></div>'+(rows||'<div class="fin-empty-row">'+empty('No contracts yet.')+'</div>')+'</div>';
   return h;
@@ -160,7 +161,7 @@ function usageHtml(d){
 }
 function signaturesHtml(d){
   var xs=arr(d.signature_requests);
-  var rows=xs.map(function(x){var signers=arr(x.signature_signers);return '<div class="fin-row"><div><b>'+esc(x.provider||'Signature request')+'</b><small>'+signers.length+' signer'+(signers.length===1?'':'s')+'</small></div><div><small>Created '+dtShort(x.created_at)+'</small></div><div><small>Expires '+dtShort(x.expires_at)+'</small></div><div>'+statusPill(x.status)+'</div><div></div></div>';}).join('');
+  var rows=xs.map(function(x){var signers=arr(x.signature_signers);return '<div class="fin-row"><div><b>'+esc(x.provider||'Signature request')+'</b><small>'+signers.length+' signer'+(signers.length===1?'':'s')+'</small></div><div><small>Created '+dtShort(x.created_at)+'</small></div><div><small>Expires '+dtShort(x.expires_at)+'</small></div><div>'+statusPill(x.status)+'</div><div class="fin-signers">'+signers.map(function(sg){return '<small>'+esc(sg.display_name||sg.email||'Signer')+' · '+esc(sg.status||'pending')+'</small>';}).join('')+'</div></div>';}).join('');
   return '<div class="fin-table"><div class="fin-row fin-head"><div>Request</div><div>Created</div><div>Expires</div><div>Status</div><div></div></div>'+(rows||'<div class="fin-empty-row">'+empty('No signature requests yet. Send one from a contract.')+'</div>')+'</div>';
 }
 
@@ -287,6 +288,7 @@ function contractModalHtml(c){
    +'<label><span>Effective on</span><input type="date" id="fin-ct-eff" value="'+esc((c.effective_on||'').slice(0,10))+'"></label>'
    +'<label><span>Expires on</span><input type="date" id="fin-ct-exp" value="'+esc((c.expires_on||'').slice(0,10))+'"></label>'
    +'<label><span>Internal notes (optional)</span><textarea id="fin-ct-notes" rows="3">'+esc(c.internal_notes||'')+'</textarea></label>'
+   +'<div class="fin-pdf"><span>Contract PDF</span>'+(docsOfC(c).map(function(d){return '<p><a href="#" data-fin-view-pdf="'+esc(d.id)+'">📄 '+esc(d.name||'Contract.pdf')+'</a> <button type="button" class="ghost" data-fin-del-pdf="'+esc(d.id)+'">Remove</button></p>';}).join('')||'<p class="fin-hint">No PDF yet.</p>')+'<input type="file" id="fin-ct-file" accept="application/pdf,.pdf,.doc,.docx"></div>'
    +'<div class="fin-modal-err" id="fin-ct-err"></div></div>'
    +'<footer><button type="button" class="ghost" data-fin-modal-close>Cancel</button><button type="button" class="primary" id="fin-ct-submit">'+(c.id?'Save Contract':'Create Contract')+'</button></footer></section></div>';
 }
@@ -295,12 +297,25 @@ function openContractModal(id){
   closeModal();
   var host=document.createElement('div');host.id='fin-modal-host';host.innerHTML=contractModalHtml(c);document.body.appendChild(host);
   wireModalClose(host);
+  host.addEventListener('click',function(ev){
+    var v=ev.target.closest('[data-fin-view-pdf]'),d=ev.target.closest('[data-fin-del-pdf]');
+    if(v){ev.preventDefault();if(window.MDV_CONTRACTS)window.MDV_CONTRACTS.openDoc(v.dataset.finViewPdf);}
+    if(d&&c&&c.id&&window.MDV_CONTRACTS&&window.confirm('Remove this PDF from the contract?')){
+      window.MDV_CONTRACTS.detach(c.id,d.dataset.finDelPdf).then(function(){toast('PDF removed.');closeModal();loadLegal(true);}).catch(function(e){toast((e&&e.message)||'Could not remove the PDF.','risk');});
+    }
+  });
   host.querySelector('#fin-ct-submit').onclick=function(){
     var err=host.querySelector('#fin-ct-err'),btn=this;
     var title=host.querySelector('#fin-ct-title').value.trim();
     if(!title){err.textContent='Title is required.';return;}
     err.textContent='';btn.disabled=true;btn.textContent='Saving…';
-    postLegal({action:'upsert_contract',contract_id:(c&&c.id)||null,contract:{title:title,contract_type:host.querySelector('#fin-ct-type').value,status:host.querySelector('#fin-ct-status').value,model_id:host.querySelector('#fin-ct-model').value||null,company_id:host.querySelector('#fin-ct-company').value||null,effective_on:host.querySelector('#fin-ct-eff').value||null,expires_on:host.querySelector('#fin-ct-exp').value||null,internal_notes:host.querySelector('#fin-ct-notes').value.trim()||null}}).then(function(){toast(c&&c.id?'Contract updated.':'Contract created.');closeModal();loadLegal(true);}).catch(function(e){btn.disabled=false;btn.textContent=c&&c.id?'Save Contract':'Create Contract';err.textContent=(e&&e.message)||'Could not save contract.';});
+    postLegal({action:'upsert_contract',contract_id:(c&&c.id)||null,contract:{title:title,contract_type:host.querySelector('#fin-ct-type').value,status:host.querySelector('#fin-ct-status').value,model_id:host.querySelector('#fin-ct-model').value||null,company_id:host.querySelector('#fin-ct-company').value||null,effective_on:host.querySelector('#fin-ct-eff').value||null,expires_on:host.querySelector('#fin-ct-exp').value||null,internal_notes:host.querySelector('#fin-ct-notes').value.trim()||null}}).then(async function(saved){
+      var f=host.querySelector('#fin-ct-file'),file=f&&f.files&&f.files[0];
+      if(file&&window.MDV_CONTRACTS){
+        var cid=(saved&&saved.contract&&saved.contract.id)||(c&&c.id);
+        var doc=await window.MDV_CONTRACTS.upload(file,cid);await window.MDV_CONTRACTS.attach(cid,doc.id);
+      }
+      toast(c&&c.id?'Contract updated.':'Contract created.');closeModal();loadLegal(true);}).catch(function(e){btn.disabled=false;btn.textContent=c&&c.id?'Save Contract':'Create Contract';err.textContent=(e&&e.message)||'Could not save contract.';});
   };
 }
 
@@ -351,6 +366,7 @@ function onClick(e){
   if((b=e.target.closest('[data-fin-complete]'))){if(b.disabled)return;completeInvoice(b.dataset.finComplete,b);return;}
   if(e.target.closest('[data-fin-new-contract]')){openContractModal(null);return;}
   if((b=e.target.closest('[data-fin-edit-contract]'))){openContractModal(b.dataset.finEditContract);return;}
+  if((b=e.target.closest('[data-fin-view-pdf]'))){e.preventDefault();if(window.MDV_CONTRACTS)window.MDV_CONTRACTS.openDoc(b.dataset.finViewPdf);return;}
   if((b=e.target.closest('[data-fin-sign]'))){sendForSign(b.dataset.finSign,b);return;}
   if(e.target.closest('[data-fin-new-usage]')){openUsageModal();return;}
 }
@@ -359,8 +375,11 @@ function completeInvoice(id,btn){
   postFin({action:'complete_invoice',invoice_id:id}).then(function(){toast('Invoice completed.');loadFinance(true);}).catch(function(e){btn.disabled=false;btn.textContent=old;toast((e&&e.message)||'Could not complete invoice.','risk');});
 }
 function sendForSign(id,btn){
-  btn.disabled=true;var old=btn.textContent;btn.textContent='Sending…';
-  postLegal({action:'create_signature_request',contract_id:id,provider:'veux_sign'}).then(function(){toast('Signature request sent.');loadLegal(true);}).catch(function(e){btn.disabled=false;btn.textContent=old;toast((e&&e.message)||'Could not send for signature.','risk');});
+  var c=arr(S.legal&&S.legal.contracts).find(function(x){return String(x.id)===String(id);});
+  if(!c)return;
+  if(!window.MDV_CONTRACTS){toast('E-signature is still loading. Try again in a moment.','risk');return;}
+  var m=c.models&&c.models.display_name;
+  window.MDV_CONTRACTS.dialog({contract:c,signers:[{display_name:m||'',email:''}],onChange:function(){loadLegal(true);},onSent:function(){loadLegal(true);}});
 }
 
 /* ---------- entry point ---------- */

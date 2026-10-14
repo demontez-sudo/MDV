@@ -8,6 +8,7 @@
 /health https://maison-agent.netlify.app/health 200!
 
 /p/* https://maison-agent.netlify.app/p/:splat 200!
+/sign https://maison-agent.netlify.app/sign 200!
 /api/public/package https://maison-agent.netlify.app/api/public/package 200!
 /api/public/package/feedback https://maison-agent.netlify.app/api/public/package/feedback 200!
 /portal/* https://maison-models.netlify.app/:splat 200!

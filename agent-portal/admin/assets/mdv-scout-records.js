@@ -60,7 +60,7 @@ var WRAP_R=[['look','Look & market fit'],['comm','Communication'],['prof','Profe
 var MEASURE=[['height_cm','Height (cm)'],['bust_cm','Bust / chest (cm)'],['waist_cm','Waist (cm)'],['hips_cm','Hips (cm)'],['shoe','Shoe'],['dress','Dress / suit'],['hair','Hair'],['eyes','Eyes'],['skin','Skin'],['marks','Tattoos / piercings']];
 var RECS=['','Advance to test','Develop first','Hold','Pass'];
 
-var R={data:null,view:'board',q:'',flt:'all',id:null,tab:'profile',sc:null,dirty:{},timer:null,saving:false,saved:false,call:{i:0},busy:false};
+var R={legal:null,legalAt:0,data:null,view:'board',q:'',flt:'all',id:null,tab:'profile',sc:null,dirty:{},timer:null,saving:false,saved:false,call:{i:0},busy:false};
 
 /* ---------- small helpers ---------- */
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -260,7 +260,16 @@ function paintRecord(){
   var nm=m.querySelector('.sr-main');if(nm)nm.scrollTop=scroll;
   wireRecord(m,p);
 }
+function contractRec(){var id=(R.sc.contract||{}).contract_id;return id&&R.legal?arr(R.legal.contracts).filter(function(x){return x.id===id;})[0]||null:null;}
+function sigReq(){var id=(R.sc.contract||{}).contract_id;if(!id||!R.legal)return null;return arr(R.legal.signature_requests).filter(function(x){return x.contract_id===id;})[0]||null;}
+async function loadLegal(force){
+  if(!window.MDV_CONTRACTS)return;
+  if(!force&&R.legal&&Date.now()-R.legalAt<20000)return;
+  try{R.legal=await MDV_CONTRACTS.getLegal();R.legalAt=Date.now();}catch(e){return;}
+  if(R.tab==='deal'&&document.getElementById('sr-modal'))paintRecord();
+}
 function tabHtml(p){
+  if(R.tab==='deal'&&(R.sc.contract||{}).contract_id)loadLegal();
   if(R.tab==='outreach')return outreachHtml(p);
   if(R.tab==='call')return callTabHtml(p);
   if(R.tab==='deal')return dealHtml(p);
@@ -452,8 +461,33 @@ function dealHtml(p){
     +'<section class="sr-sec"><h3>Offer</h3><div class="sr-grid"><label><span>Offered on</span><input type="date" data-p="offer.offered_at" value="'+esc(of.offered_at||'')+'"></label><label><span>Commission %</span><input data-p="offer.commission" value="'+esc(of.commission||'')+'"></label>'
     +'<label><span>Term</span><input data-p="offer.term" value="'+esc(of.term||'')+'" placeholder="e.g. 3 years, exclusive in US"></label>'+sel('offer.response','Their answer',[['','Waiting'],['Accepted','Accepted'],['Negotiating','Negotiating'],['Declined','Declined']],of.response)
     +'<label class="wide"><span>Terms / notes</span><input data-p="offer.notes" value="'+esc(of.notes||'')+'"></label></div></section>'
-    +'<section class="sr-sec"><h3>Contract</h3><div class="sr-grid"><label><span>Sent on</span><input type="date" data-p="contract.sent_at" value="'+esc(ct.sent_at||'')+'"></label><label><span>Signed on</span><input type="date" data-p="contract.signed_at" value="'+esc(ct.signed_at||'')+'"></label>'
-    +'<label class="wide"><span>Document link</span><input data-p="contract.link" value="'+esc(ct.link||'')+'" placeholder="https://…"></label></div></section>'+merge;
+    +contractHtml(p)+merge;
+}
+function contractHtml(p){
+  var ct=R.sc.contract||{},rec=contractRec(),docs=rec?(window.MDV_CONTRACTS?MDV_CONTRACTS.docsOf(rec):[]):[],sig=sigReq();
+  var signers=sig?arr(sig.signature_signers):[];
+  var allSigned=sig&&/complete|signed/i.test(String(sig.status||''))||(signers.length&&signers.every(function(x){return /signed/i.test(String(x.status||''));}));
+  var h='<section class="sr-sec"><h3>Contract</h3>';
+  h+=docs.length?docs.map(function(d){return '<p class="sr-doc">📄 '+esc(d.name||'Contract.pdf')+' <button type="button" class="sr-link" data-do="view_pdf" data-doc="'+esc(d.id)+'">View</button><button type="button" class="sr-link" data-do="remove_pdf" data-doc="'+esc(d.id)+'">Remove</button></p>';}).join(''):'<p class="sr-hint">'+(ct.contract_id?'No PDF attached yet.':'Upload the agreement as a PDF, then send it for e-signature. They read and sign on a secure page, no account needed.')+'</p>';
+  if(signers.length)h+='<div class="sr-signers">'+signers.map(function(x){return '<span class="sr-sg '+(/signed/i.test(x.status||'')?'ok':/declin/i.test(x.status||'')?'bad':'')+'">'+esc(x.display_name||x.email||'Signer')+' · '+esc(x.status||'pending')+'</span>';}).join('')+'</div>';
+  if(sig&&!allSigned)h+='<p class="sr-hint">Signature request: '+esc(sig.status||'sent')+(sig.expires_at?' · link expires '+fmt(sig.expires_at):'')+'</p>';
+  if(allSigned)h+='<p class="sr-ok">✓ Everyone has signed.</p>';
+  h+='<div class="sr-grid"><label><span>Sent on</span><input type="date" data-p="contract.sent_at" value="'+esc(ct.sent_at||'')+'"></label><label><span>Signed on</span><input type="date" data-p="contract.signed_at" value="'+esc(ct.signed_at||'')+'"></label></div>';
+  h+='<div class="sr-actions"><label class="sr-btn">'+(docs.length?'Replace PDF':'Upload contract PDF')+'<input type="file" id="sr-pdf" accept="application/pdf,.pdf" hidden></label>'
+    +'<button type="button" class="sr-btn gold" data-do="send_sign">'+(sig&&!allSigned?'Resend for e-signature':'Send for e-signature')+'</button>'
+    +(ct.contract_id?'<button type="button" class="sr-btn" data-do="refresh_sign">Refresh status</button>':'')
+    +(allSigned&&stepOf(p)!=='signed'?'<button type="button" class="sr-btn gold" data-do="mark_signed">Mark as signed →</button>':'')+'</div></section>';
+  return h;
+}
+async function ensureContract(p){
+  var ct=R.sc.contract||{};
+  if(ct.contract_id)return ct.contract_id;
+  if(!window.MDV_CONTRACTS)throw new Error('Contracts are still loading. Try again in a moment.');
+  var out=await MDV_CONTRACTS.legal({action:'upsert_contract',contract:{title:'Representation agreement · '+p.display_name,contract_type:'representation',status:'draft',structured_terms:{scout_prospect_id:p.id}}});
+  var id=out&&out.contract&&out.contract.id;if(!id)throw new Error('The contract could not be created.');
+  setPath(R.sc,'contract.contract_id',id);R.dirty.contract=true;await flush(true);
+  await loadLegal(true);
+  return id;
 }
 function timelineHtml(p){
   var hist=arr(R.data&&R.data.stage_history).filter(function(x){return x.prospect_id===p.id;}).map(function(x){return {at:x.created_at,t:'Stage: '+String(x.from_stage||'new').replace(/_/g,' ')+' → '+String(x.to_stage).replace(/_/g,' '),s:x.reason||''};});
@@ -544,7 +578,7 @@ function addLog(text,type){
   var p=byId(R.id);if(!p||!text)return Promise.resolve();
   return post({action:'scout_save',prospect_id:p.id,scout:{},log_entry:{type:type||'note',text:text}}).then(function(out){if(out&&out.prospect){p.metadata=out.prospect.metadata;R.sc.log=clone(out.prospect.metadata.scout||{}).log||R.sc.log;}});
 }
-async function doAction(a){
+async function doAction(a,btn){
   var p=byId(R.id);if(!p)return;
   var o=R.sc.outreach||{},m=o.model||{},ma=o.ma||{};
   try{
@@ -594,6 +628,28 @@ async function doAction(a){
       await addLog('Merged into the model profile','step');
       await load();R.sc=clone(scoutOf(byId(p.id)));paintPage();paintRecord();
       toast('✓ Model profile created'+(link&&link.measurements_filled&&link.measurements_filled.length?' · measurements carried over':''));
+    }else if(a==='send_sign'){
+      var cid=await ensureContract(p);await loadLegal(true);
+      var rec=contractRec()||{id:cid,title:'Representation agreement · '+p.display_name,structured_terms:{}};
+      MDV_CONTRACTS.dialog({contract:rec,signers:[{display_name:p.display_name,email:p.email||''}],
+        onChange:function(){loadLegal(true);},
+        onSent:async function(){
+          setPath(R.sc,'contract.sent_at',nowIso().slice(0,10));R.dirty.contract=true;await flush(true);
+          await addLog('Contract sent for e-signature','step');
+          if(IDX[stepOf(p)]==null||IDX[stepOf(p)]<IDX.contract)await moveTo('contract',{note:'Contract sent for e-signature',quiet:true});
+          await loadLegal(true);paintRecord();
+        }});
+    }else if(a==='refresh_sign'){
+      await loadLegal(true);paintRecord();toast('Status updated');
+    }else if(a==='view_pdf'){
+      if(window.MDV_CONTRACTS&&btn)MDV_CONTRACTS.openDoc(btn.dataset.doc);
+    }else if(a==='remove_pdf'){
+      if(!btn||!window.confirm('Remove this PDF from the contract?'))return;
+      await MDV_CONTRACTS.detach((R.sc.contract||{}).contract_id,btn.dataset.doc);
+      await loadLegal(true);paintRecord();toast('PDF removed');
+    }else if(a==='mark_signed'){
+      setPath(R.sc,'contract.signed_at',nowIso().slice(0,10));R.dirty.contract=true;await flush(true);
+      await moveTo('signed',{note:'Contract signed by everyone'});
     }else if(a==='open_model'){
       var id=p.converted_model_id||(R.sc.linked&&R.sc.linked.model_id);
       if(id){closeModal();window._veuxV10ModelId=id;if(typeof window.navTo==='function')window.navTo('modelpage');}
@@ -604,7 +660,17 @@ function wireRecord(m,p){
   m.querySelectorAll('[data-x]').forEach(function(b){b.onclick=closeModal;});
   m.querySelectorAll('[data-tab]').forEach(function(b){b.onclick=function(){R.tab=b.dataset.tab;paintRecord();};});
   m.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){moveTo(b.dataset.go);};});
-  m.querySelectorAll('[data-do]').forEach(function(b){b.onclick=function(){doAction(b.dataset.do);};});
+  m.querySelectorAll('[data-do]').forEach(function(b){b.onclick=function(){doAction(b.dataset.do,b);};});
+  var pdf=m.querySelector('#sr-pdf');
+  if(pdf)pdf.onchange=async function(){
+    var file=pdf.files&&pdf.files[0];if(!file)return;
+    try{
+      var cid=await ensureContract(p);
+      var doc=await MDV_CONTRACTS.upload(file,cid);await MDV_CONTRACTS.attach(cid,doc.id);
+      await addLog('Contract PDF uploaded · '+file.name,'step');
+      await loadLegal(true);paintRecord();toast('✓ Contract PDF attached');
+    }catch(e){toast(msg(e),true);}
+  };
   wireInputs(m);
   var f=m.querySelector('#sr-files');
   if(f)f.onchange=async function(){

@@ -423,6 +423,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/sign"
+to = "/sign/index.html"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/public/signature"
 to = "/.netlify/functions/public-signature-data"
 status = 200

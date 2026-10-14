@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Sign your agreement · Maison de Veux</title>
+<style>
+:root{--ink:#1b1814;--mute:#6f665a;--line:#ddd3c3;--paper:#faf6ef;--card:#fff;--gold:#a9803a;--gold-d:#8c6a2f;--bad:#b24433;--ok:#2f7a4c}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 -apple-system,"Segoe UI",Inter,Helvetica,Arial,sans-serif}
+.wrap{max-width:880px;margin:0 auto;padding:28px 18px 60px}
+.brand{display:flex;align-items:center;justify-content:space-between;padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:22px}
+.brand b{font:500 18px Georgia,"Times New Roman",serif;letter-spacing:.32em;text-transform:uppercase}
+.brand span{font-size:12px;color:var(--mute);letter-spacing:.08em}
+h1{margin:0 0 4px;font:400 30px/1.15 Georgia,"Times New Roman",serif}
+.sub{margin:0 0 20px;color:var(--mute);font-size:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}
+.meta div small{display:block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.meta div b{font-weight:600}
+.doc{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#f0ebe1}
+.doc iframe{display:block;width:100%;height:70vh;min-height:420px;border:0;background:#fff}
+.docs a{display:inline-block;margin:10px 12px 0 0;color:var(--gold-d);font-size:14px}
+.empty{padding:18px;color:var(--mute);font-size:14px}
+label.chk{display:flex;gap:10px;align-items:flex-start;margin:10px 0;font-size:14.5px}
+label.chk input{margin-top:4px;width:18px;height:18px;accent-color:var(--gold)}
+.field{display:grid;gap:6px;margin:14px 0}
+.field span{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
+.field input,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font:inherit;background:#fff}
+.field input:focus,.field textarea:focus{outline:2px solid color-mix(in srgb,var(--gold) 50%,transparent);border-color:var(--gold)}
+.sigprev{min-height:64px;display:flex;align-items:center;padding:6px 14px;border-bottom:2px solid var(--ink);font:italic 400 34px/1.1 "Snell Roundhand","Segoe Script","Brush Script MT",cursive;color:#1a2a52;overflow:hidden;white-space:nowrap}
+.sigprev.ph{color:#b8b0a2;font-size:20px;font-family:inherit;font-style:normal}
+.btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+button{font:inherit;cursor:pointer;border-radius:10px;padding:13px 22px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+button.go{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600}
+button.go:disabled{opacity:.45;cursor:not-allowed}
+button.no{color:var(--bad)}
+.err{color:var(--bad);font-size:14px;margin:8px 0 0}
+.state{text-align:center;padding:60px 10px}
+.state .ic{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;margin:0 auto 14px;font-size:30px;color:#fff;background:var(--ok)}
+.state .ic.bad{background:var(--bad)}.state .ic.mute{background:var(--mute)}
+.fine{font-size:12.5px;color:var(--mute);margin-top:18px}
+@media(max-width:560px){h1{font-size:25px}.doc iframe{height:60vh}button{width:100%}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><b>Maison de Veux</b><span>SECURE SIGNING</span></div>
+  <div id="app"><div class="state"><p>Opening your document…</p></div></div>
+  <p class="fine">This link is personal to you. Your signature is recorded with the date and time, and everyone on the agreement is notified once it is complete.</p>
+</div>
+<script>
+(function(){
+'use strict';
+var app=document.getElementById('app');
+var token=(new URLSearchParams(location.search)).get('token')||'';
+var data=null,typed='';
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fmt(v){if(!v)return '—';var d=new Date(v);return isNaN(d)?'—':d.toLocaleDateString([],{year:'numeric',month:'long',day:'numeric'});}
+function state(kind,title,text){
+  app.innerHTML='<div class="card state"><div class="ic '+(kind==='ok'?'':kind==='bad'?'bad':'mute')+'">'+(kind==='ok'?'✓':kind==='bad'?'!':'•')+'</div><h1>'+esc(title)+'</h1><p class="sub">'+esc(text)+'</p></div>';
+}
+async function api(path,opts){
+  var r=await fetch(path,opts),j=null;try{j=await r.json();}catch(e){}
+  if(!r.ok){var e=new Error((j&&(j.error||j.message))||('Request failed ('+r.status+')'));e.status=r.status;throw e;}
+  return j;
+}
+function paint(){
+  var c=data.contract||{},s=data.signer||{},docs=data.documents||[];
+  var done=s.status==='signed',declined=s.status==='declined';
+  if(done){state('ok','You have signed','Thank you'+(s.display_name?', '+s.display_name:'')+'. Your signature on “'+(c.title||'this agreement')+'” is on record.');return;}
+  if(declined){state('mute','You declined this agreement','Your response has been recorded. If this was a mistake, please contact the agency.');return;}
+  var doc=docs.length?'<div class="doc"><iframe title="Agreement" src="'+esc(docs[0].url)+'"></iframe></div><div class="docs">'+docs.map(function(d){return '<a href="'+esc(d.url)+'" target="_blank" rel="noopener">Open “'+esc(d.name)+'” in a new tab</a>';}).join('')+'</div>':'<div class="doc"><p class="empty">The agency has not attached a PDF to this agreement. Please contact them if you need a copy before signing.</p></div>';
+  app.innerHTML='<h1>'+esc(c.title||'Agreement')+'</h1><p class="sub">Please read the agreement below, then sign at the bottom of the page.</p>'
+    +'<div class="card"><div class="meta"><div><small>Signing as</small><b>'+esc(s.display_name||s.email||'')+'</b></div><div><small>Type</small><b>'+esc(String(c.contract_type||'Agreement').replace(/_/g,' '))+'</b></div><div><small>Effective</small><b>'+esc(fmt(c.effective_on))+'</b></div><div><small>Link expires</small><b>'+esc(fmt(data.signature_request&&data.signature_request.expires_at))+'</b></div></div></div>'
+    +'<div class="card">'+doc+'</div>'
+    +'<div class="card"><label class="chk"><input type="checkbox" id="c1"><span>I have read the agreement above.</span></label>'
+    +'<label class="chk"><input type="checkbox" id="c2"><span>I agree that typing my name below is my legal signature, and that I am signing this agreement electronically.</span></label>'
+    +'<div class="field"><span>Type your full legal name</span><input id="nm" autocomplete="name" value="'+esc(typed)+'" placeholder="'+esc(s.display_name||'Full name')+'"></div>'
+    +'<div class="sigprev ph" id="prev">Your signature will appear here</div>'
+    +'<p class="err" id="err"></p>'
+    +'<div class="btns"><button class="go" id="sign" disabled>Sign agreement</button><button class="no" id="decline" type="button">Decline…</button></div></div>';
+  var c1=document.getElementById('c1'),c2=document.getElementById('c2'),nm=document.getElementById('nm'),prev=document.getElementById('prev'),btn=document.getElementById('sign'),err=document.getElementById('err');
+  function sync(){typed=nm.value;var ok=c1.checked&&c2.checked&&nm.value.trim().length>=2;btn.disabled=!ok;prev.textContent=nm.value.trim()||'Your signature will appear here';prev.classList.toggle('ph',!nm.value.trim());}
+  [c1,c2].forEach(function(x){x.onchange=sync;});nm.oninput=sync;sync();
+  btn.onclick=async function(){
+    err.textContent='';btn.disabled=true;btn.textContent='Signing…';
+    try{
+      var r=await api('/api/public/signature/action',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:token,action:'signed',typed_name:nm.value.trim()})});
+      state('ok','Signed. Thank you.',r&&r.all_signed?'Everyone has now signed “'+(c.title||'the agreement')+'”.':'Your signature is recorded. We will let you know once everyone has signed.');
+    }catch(e){err.textContent=e.message||'We could not record your signature. Please try again.';btn.disabled=false;btn.textContent='Sign agreement';sync();}
+  };
+  document.getElementById('decline').onclick=function(){
+    app.querySelector('.card:last-child').innerHTML='<h1 style="font-size:22px">Decline this agreement?</h1><p class="sub">Let the agency know why. They will follow up with you.</p><div class="field"><span>Reason (optional)</span><textarea id="why" rows="3"></textarea></div><p class="err" id="err2"></p><div class="btns"><button class="no" id="confirm-decline">Decline agreement</button><button id="back" type="button">Go back</button></div>';
+    document.getElementById('back').onclick=paint;
+    document.getElementById('confirm-decline').onclick=async function(){
+      var b=this;b.disabled=true;
+      try{await api('/api/public/signature/action',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({token:token,action:'declined',note:document.getElementById('why').value.trim()||null})});state('mute','You declined this agreement','Your response has been recorded and the agency has been told.');}
+      catch(e){document.getElementById('err2').textContent=e.message||'Could not record your response.';b.disabled=false;}
+    };
+  };
+}
+async function start(){
+  if(!token){state('bad','This link is incomplete','Please open the signing link exactly as it was sent to you.');return;}
+  try{
+    data=await api('/api/public/signature?token='+encodeURIComponent(token));
+    if(data.signature_request&&/cancel|void|expired/i.test(String(data.signature_request.status||''))){state('mute','This request is no longer open','Please ask the agency to send a new signing link.');return;}
+    paint();
+  }catch(e){
+    if(e.status===410)state('mute','This link has expired','Please ask the agency to send you a new signing link.');
+    else if(e.status===404)state('bad','This link is not active','It may already have been used, or a newer link was sent. Please check your email or contact the agency.');
+    else state('bad','We could not open this document',e.message||'Please try again in a moment.');
+  }
+}
+start();
+})();
+</script>
+</body>
+</html>

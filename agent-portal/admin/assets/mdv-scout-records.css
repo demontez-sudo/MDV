@@ -88,3 +88,7 @@
 }
 
 .sr-dlg *,.sr-dlg *::before,.sr-dlg *::after{box-sizing:border-box}
+
+.sr-doc{margin:0;font-size:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.sr-link{border:0;background:none;color:var(--g);cursor:pointer;font-size:13px;padding:0;text-decoration:underline}
+.sr-signers{display:flex;gap:8px;flex-wrap:wrap}.sr-sg{font-size:12px;border:1px solid var(--l2);border-radius:999px;padding:3px 10px;color:var(--mute)}.sr-sg.ok{border-color:#6fa58a;color:#8fc4a8}.sr-sg.bad{border-color:#d68a5c;color:#e5a07a}
+label.sr-btn{display:inline-block;cursor:pointer}
