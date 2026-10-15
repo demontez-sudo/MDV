@@ -444,7 +444,20 @@ function tick(){
     patchSheets();buildMenu();buildDock();masthead();skinOnce();tighten();
   }catch(e){}
 }
-setInterval(function(){if(!document.hidden)tick();},600);
+/* the menu, dock and spacing follow the page: re-check right after every navigation and on resize, and only sweep occasionally in between */
+setInterval(function(){if(!document.hidden)tick();},1800);
+window.addEventListener('resize',function(){clearTimeout(window.__wsRz);window.__wsRz=setTimeout(tick,120);},{passive:true});
+(function(){
+  function inChain(f,mark){var n=0;while(f&&n++<60){if(f[mark])return true;f=f.__orig||f.__previous;}return false;}
+  function hook(){
+    if(typeof window.navTo!=='function'||inChain(window.navTo,'__ws'))return;
+    var prev=window.navTo;
+    var w=function(){var r=prev.apply(this,arguments);setTimeout(tick,0);setTimeout(tick,250);return r;};
+    for(var k in prev){try{w[k]=prev[k];}catch(_e){}}
+    w.__ws=1;w.__orig=prev;window.navTo=w;
+  }
+  hook();window.addEventListener('veux:shell-ready',hook);setTimeout(hook,1500);setTimeout(hook,4000);
+})();
 /* polling only: observing the whole document made this script and the older top-bar scripts re-trigger each other on busy pages */
 window.addEventListener('hashchange',tick);window.addEventListener('popstate',tick);window.addEventListener('veux:agency-v16-session',tick);
 window.MDV_WORKSPACE={active:function(){return outlook()==='workspace'&&(isPhone()||!window.matchMedia||!window.matchMedia('(max-width:900px)').matches);},phone:isPhone,sections:function(){return SECTIONS;},settings:function(){return SETTINGS;},counts:function(){var p=window.VEUX_SMART_PORTAL&&VEUX_SMART_PORTAL.last,w=window.MDV_MAIL&&MDV_MAIL.widget&&MDV_MAIL.widget();return {tasks:p&&p.tasks?arr(p.tasks.open).length:0,mail:(w&&w.unread)||0};},home:home,get:outlook,set:function(v){try{localStorage.setItem(KEY,v);}catch(e){}apply(v);tick();if(window.VEUX_SMART_PORTAL&&VEUX_SMART_PORTAL.refresh&&String(window._currentPage||'')==='overview')VEUX_SMART_PORTAL.refresh();}};
