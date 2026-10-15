@@ -6,6 +6,8 @@
   var SUPABASE_URL='https://mogyngdhmzbjmcdqeoxu.supabase.co';
   var SUPABASE_PUBLISHABLE_KEY='sb_publishable_6fTsGxRRIDzjXaoUrT0XOg_yZWu21ql';
 
+  /* open the connections to the image hosts while the roster is still being fetched */
+  ['https://res.cloudinary.com','https://mogyngdhmzbjmcdqeoxu.supabase.co'].forEach(function(h){try{var l=document.createElement('link');l.rel='preconnect';l.href=h;l.crossOrigin='';document.head.appendChild(l);}catch(e){}});
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function loadFallbacks(){
     return new Promise(function(resolve){
@@ -26,10 +28,28 @@
     }catch(e){}
     return '#';
   }
-  function tile(row,pageKey){
+  /* Model photos are uploaded as large originals (2 to 4 MB). Ask the image host for a web-sized copy instead:
+     Cloudinary gets f_auto,q_auto at the width we need; Supabase storage uses its image resizer. Anything else is left alone. */
+  function sized(u,w){
+    u=String(u||'');
+    try{
+      if(/^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(u)){
+        var rest=u.split('/image/upload/')[1]||'';
+        if(/^(?:[a-z]{1,3}_[^/]+,?)+\//.test(rest))return u;           /* already transformed */
+        return u.replace('/image/upload/','/image/upload/f_auto,q_auto,w_'+w+',c_limit/');
+      }
+      if(/^https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\//.test(u)){
+        return u.replace('/storage/v1/object/public/','/storage/v1/render/image/public/')+(u.indexOf('?')>-1?'&':'?')+'width='+w+'&quality=75';
+      }
+    }catch(e){}
+    return u;
+  }
+  function tile(row,pageKey,i){
     var fb=((window.MDV_ROSTER_FALLBACKS||{})[pageKey]||{})[row.display_name]||'';
     var img=row.image_url||fb;
-    var visual=img?'<img src="'+esc(img)+'" alt="'+esc(row.display_name)+'" loading="lazy" decoding="async">':'<span class="placeholder-label">Image Pending</span>';
+    /* the first screenful loads right away, the rest as you scroll */
+    var first=i<4,attrs=(first?' loading="eager"'+(i<2?' fetchpriority="high"':''):' loading="lazy"')+' decoding="async"';
+    var visual=img?'<img src="'+esc(sized(img,800))+'" srcset="'+esc(sized(img,480))+' 480w, '+esc(sized(img,800))+' 800w, '+esc(sized(img,1200))+' 1200w" sizes="(max-width:760px) 50vw, 25vw" alt="'+esc(row.display_name)+'"'+attrs+'>':'<span class="placeholder-label">Image Pending</span>';
     return '<a class="roster-tile" href="'+esc(row.profile_path||profilePathFor(row.display_name)||'#')+'">'
       +'<div class="roster-image">'+visual+'</div>'
       +'<div class="roster-name">'+esc(row.display_name)+'</div></a>';
@@ -45,7 +65,7 @@
     if(!rows.length){
       root.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:48px 20px;font-family:\'Jost\',sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim)">'+esc(emptyMessage(view))+'</div>';
     }else{
-      root.innerHTML=rows.map(function(x){return tile(x,pageKey);}).join('');
+      root.innerHTML=rows.map(function(x,i){return tile(x,pageKey,i);}).join('');
     }
     root.setAttribute('data-mdv-roster-source',mode);
   }
@@ -76,9 +96,11 @@
     var root=document.getElementById('mdv-public-roster');
     if(!root) return;
     var market=root.dataset.market||'',view=root.dataset.view||'',pageKey=root.dataset.pageKey||'';
+    /* ask for the roster and the fallback list at the same time, instead of one after the other */
+    var rosterReq=fetchRoster(market,view);rosterReq.catch(function(){});
     await loadFallbacks();
     try{
-      var body=await fetchRoster(market,view);
+      var body=await rosterReq;
       var rows=Array.isArray(body.models)?body.models:[];
       renderRows(root,rows,pageKey,view,'live');
     }catch(e){

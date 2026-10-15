@@ -214,9 +214,18 @@
 <body>
 
 <div class="stage">
-  <video class="bg-video" autoplay muted loop playsinline preload="auto">
-    <source src="https://video.wixstatic.com/video/043cd4_f63acc41c6744a88905e5ac14b5d8c2d/1080p/mp4/file.mp4" type="video/mp4">
-  </video>
+  <video class="bg-video" autoplay muted loop playsinline preload="auto" id="bgv"></video>
+  <script>
+  /* the 1080p original is 19 MB: pick the size that fits the screen and the connection */
+  (function(){
+    var c=navigator.connection||{},slow=c.saveData||/(^|-)2g$/.test(c.effectiveType||'')||/3g/.test(c.effectiveType||'');
+    var w=Math.max(screen.width||0,window.innerWidth||0)*(window.devicePixelRatio||1);
+    var q=slow?'360p':(window.innerWidth<=760?'480p':(w<=1500?'720p':'1080p'));
+    var v=document.getElementById('bgv');
+    v.src='https://video.wixstatic.com/video/043cd4_f63acc41c6744a88905e5ac14b5d8c2d/'+q+'/mp4/file.mp4';
+    var p=v.play&&v.play();if(p&&p.catch)p.catch(function(){});
+  })();
+  </script>
 
   <div class="veil"></div>
   <div class="curtain"></div>
