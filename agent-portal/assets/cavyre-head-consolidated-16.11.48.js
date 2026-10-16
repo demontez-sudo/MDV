@@ -315,6 +315,9 @@ function rebuild(s){
   });
 
   html+='<div class="vx-select-empty" hidden>No matching options</div>';
+  /* same options as last time: leave the menu alone (rewriting it on every page change made pages flash) */
+  if(menu._vxHtml===html&&menu.firstChild)return;
+  menu._vxHtml=html;
   menu.innerHTML=html;
 
   menu.querySelectorAll('.vx-select-option').forEach(function(b){
