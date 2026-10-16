@@ -106,3 +106,9 @@ label.sr-btn{display:inline-block;cursor:pointer}
 html body .sr-steps button{white-space:normal;text-align:center;line-height:1.2;font-size:11px!important;letter-spacing:0!important;text-transform:none!important;padding:6px 2px;gap:5px}
 .sr-steps button span{display:block;max-width:100%;overflow-wrap:anywhere}
 @media(max-width:700px){.sr-steps{overflow-x:auto}.sr-steps li{flex:0 0 78px}}
+
+/* the header, steps and tabs keep their full height; only the form area scrolls */
+.sr-dlg>header,.sr-dlg>.sr-next-bar,.sr-dlg>.sr-steps,.sr-dlg>.sr-tabs,.sr-dlg>footer,.sr-dlg>.sr-dots{flex:0 0 auto}
+.sr-dlg>.sr-main,.sr-dlg>.sr-body{flex:1 1 auto;min-height:0}
+.sr-tabs{overflow-y:hidden}
+.sr-steps{min-height:max-content}
