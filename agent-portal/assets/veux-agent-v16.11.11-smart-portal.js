@@ -307,7 +307,8 @@ function claimOverview(){
   var p=document.getElementById('p-overview');
   if(!p)return;
   var active=p.classList.contains('on')||window._currentPage==='overview'||(!window._currentPage&&document.querySelector('.panel.on')===p);
-  if(active&&!p.querySelector('.vx17-command'))renderOverview(p);
+  /* the Home page is already drawn when it holds the command view or the workspace home: redrawing it on every click made it flash "Building agency intelligence…" */
+  if(active&&!p.querySelector('.vx17-command,.ws-home,.mh-home'))renderOverview(p);
 }
 function start(){
   window.renderOverview=renderOverview;
