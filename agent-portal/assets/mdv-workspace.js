@@ -366,7 +366,15 @@ document.addEventListener('click',function(e){
   }
 });
 document.addEventListener('submit',function(e){var f=e.target.closest&&e.target.closest('[data-ws-ask]');if(!f)return;e.preventDefault();var i=f.querySelector('input'),q=i.value.trim();i.value='';if(window.MDV_VERA_CHAT&&MDV_VERA_CHAT.open)MDV_VERA_CHAT.open(q||undefined);});
-window.addEventListener('mdv:mail-widget',function(){if(S.el&&S.el.isConnected&&S.p)paint();badges();});
+/* new mail only refreshes the Mail card, not the whole Home page (a full repaint looks like the page reloading) */
+function paintMail(){
+  if(!(S.el&&S.el.isConnected&&S.p&&S.el.classList.contains('on'))){S.stale=true;badges();return;}
+  var card=!isPhone()&&S.el.querySelector('.ws-mail');
+  if(card){var tmp=document.createElement('div');tmp.innerHTML=mailHtml();var fresh=tmp.firstElementChild;if(fresh&&card.outerHTML!==fresh.outerHTML){card.replaceWith(fresh);if(S.H&&S.H.bind)S.H.bind(fresh);S.last=null;}}
+  else paint();
+  badges();
+}
+window.addEventListener('mdv:mail-widget',paintMail);
 try{var mqp=window.matchMedia('(max-width:820px)');var mqf=function(){S.last=null;if(S.el&&S.el.isConnected&&S.p)paint();};if(mqp.addEventListener)mqp.addEventListener('change',mqf);}catch(e){}
 function home(el,p,H){S.el=el;S.p=p;S.H=H;if(!S.sday)S.sday=dkey(new Date());paint();badges();}
 

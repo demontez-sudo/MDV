@@ -773,6 +773,16 @@ function install(){
   }catch(e){window.renderScoutingRecords=render;}
   var map=window.VEUX_V15_ROUTE_RENDERERS;
   if(map&&typeof map==='object')map.scouting=function(el){return render(el);};
+  /* the older Scouting forms had empty market / board lists here: send them to the Scout Records forms instead */
+  [window.VEUX_V1686,window.VEUX_V153,window.VEUX_DESK&&window.VEUX_DESK.scouting].forEach(function(o){
+    if(!o||o.__srPatched)return;
+    try{
+      o.newProspect=function(){newProspect();};
+      if(o.editProspect)o.editProspect=function(id){byId(id)?openRecord(id,'profile'):load().then(function(){openRecord(id,'profile');});};
+      if(o.scoutDetail)o.scoutDetail=function(id){byId(id)?openRecord(id):load().then(function(){openRecord(id);});};
+      o.__srPatched=true;
+    }catch(e){}
+  });
 }
 install();
 var n=0,t=setInterval(function(){install();if(++n>40)clearInterval(t);},500);
