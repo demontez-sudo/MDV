@@ -9,6 +9,7 @@
   window.__VEUX_COLOR_WAVE_JS_LOADED__=true;
   window.__VEUX_DROPDOWN_JS_LOADED__=true;
   window.__VEUX_VERA_OFFICIAL_JS_LOADED__=true;
+  window.__CAVYRE_LOGIN_AUTHORITY_161051__=true; /* the login is built in the page itself */
 })();
 </script>
 
@@ -30,7 +31,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@200;300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script id="vx-color-wave-prepaint">
 (function(){
   try{
@@ -75,52 +76,93 @@ input,select,textarea{font-family:inherit;font-size:15px}
 a{color:var(--gold);text-decoration:none}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--line2)}
 
-#login{
-  min-height:100dvh;display:grid;grid-template-columns:minmax(0,1.02fr) minmax(460px,.98fr);
-  padding:0;background:#05050a;color:#f7f5fb;overflow:hidden;
+/* Login — dark split screen: cinematic scene + system statement on the left, sign-in on the right. */
+#login{position:fixed;inset:0;z-index:9000;display:grid;grid-template-columns:minmax(0,1fr) clamp(400px,34vw,560px);background:#050507;color:#f6f4fa;overflow:auto;-webkit-font-smoothing:antialiased}
+#login,#login *{font-family:'Montserrat','Inter',system-ui,sans-serif!important}
+#login *,#login *::before,#login *::after{box-sizing:border-box}
+
+/* left: scene + copy */
+#login .lg-brand{position:relative;min-height:660px;padding:clamp(34px,4.4vw,68px);display:flex;flex-direction:column;overflow:hidden;background:#07070a;border:0}
+#login .lg-scene{position:absolute;inset:0;z-index:0;pointer-events:none}
+#login .lg-scene svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+#login .lg-scene::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,4,6,.84) 0%,rgba(4,4,6,.5) 36%,rgba(4,4,6,0) 68%),linear-gradient(0deg,rgba(4,4,6,.82) 0%,rgba(4,4,6,0) 34%)}
+#login .lg-brand>:not(.lg-scene){position:relative;z-index:1}
+#login .lg-wordmark{font-size:clamp(28px,2.7vw,40px);font-weight:300;letter-spacing:.42em;line-height:1;color:#fff;margin:0}
+#login .lg-portal-title{margin-top:14px;font-size:clamp(11px,.95vw,13px);font-weight:400;letter-spacing:.5em;text-transform:uppercase;color:rgba(255,255,255,.78)}
+#login .lg-brand-copy{max-width:640px;margin:clamp(40px,9vh,120px) 0 auto}
+#login .lg-network{font-size:11px;font-weight:400;letter-spacing:.3em;line-height:1.9;text-transform:uppercase;color:rgba(255,255,255,.55)}
+#login .lg-divider{width:48px;height:1px;background:rgba(255,255,255,.5);margin:26px 0 30px}
+#login .lg-headline{font-size:clamp(38px,4.4vw,68px);font-weight:200;letter-spacing:.16em;line-height:1.2;text-transform:uppercase;color:#fff;margin:0}
+#login .lg-headline em{font-style:normal;color:#a98bff}
+#login .lg-lede{margin-top:34px;max-width:400px;font-size:clamp(14px,1.15vw,17px);font-weight:300;line-height:1.6;color:rgba(255,255,255,.82)}
+#login .lg-points{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));max-width:720px;margin-top:48px;gap:0;border:0;padding:0}
+#login .lg-point{padding:0 clamp(12px,1.5vw,22px);border-left:1px solid rgba(255,255,255,.14)}
+#login .lg-point:first-child{padding-left:0;border-left:0}
+#login .lg-point i{display:flex;align-items:center;gap:12px;font-style:normal;font-size:clamp(13px,1.1vw,16px);font-weight:300;letter-spacing:.14em;color:#fff;line-height:1;margin:0 0 18px}
+#login .lg-point i::after{content:'';flex:0 0 clamp(18px,2.2vw,34px);height:1px;background:rgba(255,255,255,.28)}
+#login .lg-point:first-child i::after{background:#9b6cff}
+#login .lg-point b{display:block;font-size:clamp(9px,.78vw,11px);font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:#fff;white-space:nowrap}
+#login .lg-point span{display:block;margin-top:9px;font-size:clamp(11px,.9vw,13px);font-weight:300;line-height:1.55;color:rgba(255,255,255,.6)}
+
+/* right: sign in */
+#login .lg-entry{position:relative;min-height:660px;padding:96px clamp(30px,4vw,64px) 56px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0a0a0e 0%,#060608 100%);border-left:1px solid rgba(255,255,255,.07)}
+#login .lg-language{position:absolute;top:38px;right:clamp(28px,3.4vw,52px);display:flex;align-items:center;gap:10px;padding:0;border:0;border-radius:0;background:none;font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.88)}
+#login .lg-language svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.4}
+#login .lg-card{width:100%;max-width:404px;padding:0;border:0;background:none;box-shadow:none}
+#login .lg-top{padding:0 0 30px;text-align:center;border:0}
+#login .lg-logo{display:block;width:78px;height:78px;margin:0 auto 22px;border:0;border-radius:0;box-shadow:none;background:none;font-size:0}
+#login .lg-logo svg{width:100%;height:100%;display:block;overflow:visible}
+#login .lg-mark-word{font-size:25px;font-weight:300;letter-spacing:.42em;text-indent:.42em;line-height:1;color:#fff}
+#login .lg-mark-sub{margin-top:10px;font-size:10px;font-weight:500;letter-spacing:.5em;text-indent:.5em;text-transform:uppercase;color:#a98bff}
+#login .lg-h1{margin-top:44px;font-size:34px;font-weight:300;letter-spacing:0;line-height:1.15;color:#fff;text-transform:none}
+#login .lg-h1 em{font-style:normal;color:inherit}
+#login .lg-sub{margin-top:12px;font-size:14px;font-weight:300;letter-spacing:0;line-height:1.5;color:rgba(255,255,255,.7);text-transform:none}
+#login .lg-eyebrow{display:none}
+#login .lg-body{padding:0}
+#login .lg-lbl{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+#login .lg-field{display:flex;align-items:center;gap:14px;height:58px;margin:0 0 14px;padding:0 16px 0 18px;border:1px solid rgba(255,255,255,.26);border-radius:10px;background:rgba(255,255,255,.02);transition:border-color .15s,box-shadow .15s}
+#login .lg-field:focus-within{border-color:#a97bff;box-shadow:0 0 0 3px rgba(150,95,255,.18)}
+#login .lg-field::before{content:'';display:block;flex:0 0 22px;width:22px;height:22px;background:rgba(255,255,255,.88);-webkit-mask:var(--lg-ico) center/contain no-repeat;mask:var(--lg-ico) center/contain no-repeat}
+#login .lg-field.email{--lg-ico:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round' stroke-linecap='round'><rect x='2.5' y='5' width='19' height='14' rx='1.5'/><path d='M3 6.5l9 7 9-7'/></svg>")}
+#login .lg-field.password{--lg-ico:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round' stroke-linecap='round'><rect x='4.5' y='10.5' width='15' height='10' rx='1.5'/><path d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/><circle cx='12' cy='15.5' r='1.2'/></svg>")}
+#login .lg-inp{flex:1 1 auto;min-width:0;height:100%;min-height:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;outline:none!important;color:#fff!important;font-size:15px!important;font-weight:300;letter-spacing:0}
+#login .lg-inp::placeholder{color:rgba(255,255,255,.55);opacity:1}
+#login .lg-inp:-webkit-autofill{-webkit-text-fill-color:#fff;caret-color:#fff;box-shadow:0 0 0 100px #101015 inset!important}
+#login .lg-eye{--lg-eye:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round' stroke-linecap='round'><path d='M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z'/><circle cx='12' cy='12' r='3'/></svg>");flex:0 0 28px;width:28px;height:28px;padding:0;border:0;background:none;cursor:pointer;position:relative;opacity:.85;transition:opacity .15s}
+#login .lg-eye::before{content:'';position:absolute;inset:3px;background:#fff;-webkit-mask:var(--lg-eye) center/contain no-repeat;mask:var(--lg-eye) center/contain no-repeat}
+#login .lg-eye.on{--lg-eye:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round' stroke-linecap='round'><path d='M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z'/><circle cx='12' cy='12' r='3'/><path d='M4 4l16 16'/></svg>")}
+#login .lg-eye:hover,#login .lg-eye:focus-visible{opacity:1}
+#login .lg-options{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:18px 2px 32px}
+#login .lg-remember{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:300;letter-spacing:0;text-transform:none;color:rgba(255,255,255,.85);cursor:pointer}
+#login .lg-remember input{-webkit-appearance:none!important;appearance:none!important;width:18px!important;height:18px!important;min-height:0!important;margin:0;border:1px solid rgba(255,255,255,.4)!important;border-radius:4px!important;background:transparent!important;cursor:pointer;flex:0 0 18px;padding:0!important}
+#login .lg-remember input:checked{border-color:#8b55f0!important;background:#8b55f0 url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>") center/12px no-repeat!important}
+#login #veuxForgotBtn{margin:0;padding:0;border:0;background:none;font-size:13px;font-weight:400;letter-spacing:0;text-transform:none;color:#a98bff;text-decoration:none;opacity:1;cursor:pointer}
+#login #veuxForgotBtn:hover{color:#c8b3ff}
+#login .lg-err{margin:0 0 18px;text-align:center;font-size:13px;font-weight:300;line-height:1.5;letter-spacing:0;color:#ff9fae}
+#login .lg-btn{display:block;position:relative;width:90px;height:90px;min-height:0;margin:0 auto;padding:0;border:0!important;border-radius:50%!important;font-size:0!important;line-height:0;color:transparent!important;letter-spacing:0;background:radial-gradient(circle at 34% 26%,#c9a2ff 0%,#8d52ec 42%,#5a22b6 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 12px 44px rgba(124,58,237,.38);transition:transform .15s,box-shadow .15s,filter .15s}
+#login .lg-btn::after{content:'';position:absolute;inset:0;margin:auto;width:34px;height:34px;background:#fff;-webkit-mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 12h15M13 6l6 6-6 6'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 12h15M13 6l6 6-6 6'/></svg>") center/contain no-repeat}
+#login .lg-btn:hover:not(:disabled){transform:scale(1.05);filter:brightness(1.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),0 14px 52px rgba(124,58,237,.5)}
+#login .lg-btn:focus-visible{outline:2px solid #c8b3ff;outline-offset:4px}
+#login .lg-btn:disabled{opacity:.5;cursor:wait;transform:none}
+#login .lg-btn.pill{width:100%;height:52px;border-radius:999px!important;font-size:12px!important;line-height:1;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#fff!important}
+#login .lg-btn.pill::after{display:none}
+#login .lg-secure{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:46px;font-size:12px;font-weight:300;letter-spacing:.04em;text-transform:none;color:rgba(255,255,255,.62)}
+#login .lg-secure::before{content:'';width:15px;height:15px;background:rgba(255,255,255,.62);-webkit-mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'><rect x='4.5' y='10.5' width='15' height='10' rx='1.5'/><path d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'><rect x='4.5' y='10.5' width='15' height='10' rx='1.5'/><path d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/></svg>") center/contain no-repeat}
+#login .lg-foot{display:none}
+
+@media(max-width:1180px){#login .lg-points{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:26px;max-width:420px}#login .lg-point:nth-child(3){padding-left:0;border-left:0}}
+@media(max-width:900px){
+  #login{grid-template-columns:1fr}
+  #login .lg-brand{position:fixed;inset:0;z-index:0;min-height:0;padding:0;pointer-events:none}
+  #login .lg-brand>:not(.lg-scene){display:none}
+  #login .lg-scene::after{background:linear-gradient(180deg,rgba(4,4,6,.7),rgba(4,4,6,.93))}
+  #login .lg-entry{z-index:1;min-height:100%;background:none;border:0;padding:88px 22px 40px}
+  #login .lg-language{top:26px;right:22px}
+  #login .lg-card{max-width:420px}
 }
-#login::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 76% 42%,rgba(151,73,255,.11),transparent 36%),radial-gradient(circle at 22% 16%,rgba(255,255,255,.05),transparent 28%)}
-.lg-brand{position:relative;min-height:100dvh;padding:clamp(42px,6vw,92px) clamp(42px,7vw,110px);display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid rgba(159,85,255,.58);overflow:hidden;background:linear-gradient(145deg,#07070a 0%,#050506 58%,#0d0912 100%)}
-.lg-brand::after{content:'';position:absolute;inset:29% 0 20% 0;background:linear-gradient(90deg,transparent,rgba(164,90,255,.13),transparent);filter:blur(28px);transform:skewY(-5deg);pointer-events:none}
-.lg-brand-copy{position:relative;z-index:2;max-width:620px;margin:auto 0}
-.lg-wordmark{font-family:var(--fB);font-size:clamp(48px,5.3vw,86px);font-weight:300;letter-spacing:.24em;line-height:.95;color:#fff;margin-left:.24em}
-.lg-network{margin-top:19px;font:500 12px var(--fM);letter-spacing:.52em;text-transform:uppercase;color:#b680ff}
-.lg-divider{width:74px;height:1px;background:#9d55ff;margin:38px 0 30px}
-.lg-portal-title{font:400 clamp(19px,1.7vw,28px) var(--fB);letter-spacing:.42em;text-transform:uppercase;color:#fff}
-.lg-portal-sub{margin-top:13px;font:500 9px var(--fM);letter-spacing:.30em;text-transform:uppercase;color:rgba(255,255,255,.68)}
-.lg-points{position:relative;z-index:2;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,.11);padding-top:24px;gap:0}
-.lg-point{padding:0 19px;border-left:1px solid rgba(255,255,255,.13)}.lg-point:first-child{padding-left:0;border-left:0}.lg-point:last-child{padding-right:0}
-.lg-point i{display:block;font-style:normal;color:#a75cff;font-size:24px;line-height:1;margin-bottom:12px}
-.lg-point b{display:block;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:#fff;font-weight:500;white-space:nowrap}
-.lg-point span{display:block;margin-top:7px;font-size:10px;line-height:1.65;color:rgba(255,255,255,.58)}
-.lg-entry{position:relative;min-height:100dvh;padding:34px clamp(38px,6vw,96px);display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 80% 48%,rgba(145,65,255,.08),transparent 38%),#080811}
-.lg-language{position:absolute;top:32px;right:38px;border:1px solid rgba(255,255,255,.20);border-radius:7px;padding:10px 14px;font:500 9px var(--fM);letter-spacing:.17em;text-transform:uppercase;color:rgba(255,255,255,.88)}
-.lg-card{width:min(100%,540px);background:transparent;border:0;padding:0;position:relative}
-.lg-card::before{display:none}
-.lg-top{padding:0 0 30px;text-align:center;border:0}
-.lg-logo{width:58px;height:58px;margin:0 auto 22px;display:grid;place-items:center;border:1px solid rgba(167,92,255,.62);border-radius:50%;font:300 35px/1 var(--fB);color:#fff;box-shadow:0 0 30px rgba(145,65,255,.13)}
-.lg-eyebrow{font:500 10px var(--fM);letter-spacing:.38em;text-transform:uppercase;color:#b77cff;margin-bottom:10px}
-.lg-h1{font:400 clamp(29px,2.3vw,37px) var(--fB);color:#f9f7fb;line-height:1.15;letter-spacing:-.025em}
-.lg-h1 em{font-style:normal;color:inherit}
-.lg-sub{font:400 11px var(--fB);letter-spacing:.02em;color:rgba(255,255,255,.48);margin-top:9px;text-transform:none}
-.lg-body{padding:0}
-.lg-lbl{font:600 9px var(--fM);letter-spacing:.24em;text-transform:uppercase;color:rgba(255,255,255,.75);display:block;margin:0 0 7px}
-.lg-field{position:relative;margin-bottom:22px;border-bottom:1px solid rgba(167,92,255,.72);display:flex;align-items:center;gap:12px;padding:0 1px}
-.lg-field::before{display:block;width:18px;flex:0 0 18px;text-align:center;color:rgba(255,255,255,.8);font-size:15px}.lg-field.email::before{content:'✉'}.lg-field.password::before{content:'⌑'}
-.lg-inp{width:100%;background:transparent!important;border:0!important;padding:12px 2px 13px!important;font-size:14px!important;color:#fff!important;outline:none;box-shadow:none!important;border-radius:0!important}
-.lg-inp::placeholder{color:rgba(255,255,255,.37)}
-.lg-field:focus-within{border-bottom-color:#cfafff;box-shadow:0 1px 0 rgba(207,175,255,.32)}
-.lg-options{display:flex;align-items:center;justify-content:space-between;margin:-3px 0 26px;gap:20px}
-.lg-remember{display:flex;align-items:center;gap:8px;font-size:11px;color:rgba(255,255,255,.78);cursor:pointer}.lg-remember input{accent-color:#9b56ff}
-#veuxForgotBtn{margin:0!important;font:500 10px var(--fB)!important;letter-spacing:0!important;text-transform:none!important;color:#b77cff!important;text-decoration:none!important;opacity:1!important}
-.lg-btn{width:100%;height:48px;border-radius:4px;padding:0 18px;background:linear-gradient(90deg,#631ab0,#9b38e8);color:white;font:600 10px var(--fM);letter-spacing:.31em;text-transform:uppercase;transition:filter .15s,transform .15s;box-shadow:0 7px 28px rgba(117,30,191,.16)}
-.lg-btn:hover{background:linear-gradient(90deg,#6f20bd,#a44bf0);color:#fff;filter:brightness(1.06);transform:translateY(-1px)}
-.lg-btn:disabled{opacity:.55;transform:none;cursor:wait}
-.lg-err{font:400 10px var(--fB);color:#f0a5a5;margin:0 0 13px;display:none;letter-spacing:0;line-height:1.45}
-.lg-foot{text-align:center;font:500 8px var(--fM);letter-spacing:.25em;color:rgba(255,255,255,.34);padding:23px 0 0;text-transform:uppercase}
-.lg-secure{margin-top:25px;text-align:center;font:500 8px var(--fM);letter-spacing:.30em;color:rgba(255,255,255,.37);text-transform:uppercase}
-@media(max-width:980px){#login{grid-template-columns:1fr}.lg-brand{display:none}.lg-entry{padding:90px 28px 34px}.lg-language{top:24px;right:24px}.lg-card{max-width:500px}}
-@media(max-width:560px){.lg-entry{padding-left:22px;padding-right:22px}.lg-language{font-size:8px;padding:8px 10px}.lg-h1{font-size:28px}.lg-card{max-width:440px}}
+@media(max-height:760px) and (min-width:901px){#login .lg-brand,#login .lg-entry{min-height:700px}#login .lg-h1{margin-top:30px}}
+@media(max-width:420px){#login .lg-h1{font-size:30px}#login .lg-entry{padding-left:18px;padding-right:18px}}
+@media(prefers-reduced-motion:reduce){#login *{transition:none!important}}
 
 #app{display:none;min-height:100dvh;flex-direction:column}
 #app.on{display:flex}
@@ -579,7 +621,7 @@ textarea.f-inp{resize:vertical;min-height:64px;line-height:1.6}
 <script>
 /* compatibility-marker: 16.8.6-agency-mobile-smart-talent-operations-20260817 */
 /* release lineage: 16.9.55-control-system-calendar-rail-20260820 · 16.9.56-smart-calendar-development-submissions-20260820 · 16.9.57-client-directory-2-20260820 · 16.9.58-intelligence-reliability-20260820 · 16.9.59-directory-search-focus-20260820 · 16.9.60-package-image-curator-20260820 · 16.9.61-ai-model-recovery-20260820 · 16.9.62-cross-portal-mobile-certification-20260820 · window.__VEUX_RELEASE__||'16.10.46' · retry=16.9.61 */
-window.__VEUX_RELEASE__="16.12.128-less-flicker";
+window.__VEUX_RELEASE__="16.12.129-login-redesign";
 /* carry-forward: 16.9.82-calendar-interactions-20260821 */
 /* carry-forward: 16.9.80-mobile-workspace-20260821 */
 /* carry-forward: 16.9.69-roster-hover-isolation-20260821 */
@@ -1444,44 +1486,89 @@ border-radius:7px!important;background:transparent!important;color:inherit!impor
 <body>
 
 <div id="login">
-  <section class="lg-brand" aria-label="CAVYRE Network Premium">
-    <div class="lg-brand-copy">
+  <section class="lg-brand" aria-label="CAVYRE Agent Portal">
+    <div class="lg-scene" aria-hidden="true">
+      <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMaxYMid slice" xmlns="http://www.w3.org/2000/svg" focusable="false">
+        <defs>
+          <linearGradient id="lgSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5c78"/><stop offset=".5" stop-color="#b7a590"/><stop offset=".8" stop-color="#e4bb8c"/><stop offset="1" stop-color="#a07a52"/></linearGradient>
+          <linearGradient id="lgWall" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0b0b0e"/><stop offset="1" stop-color="#1b1b20"/></linearGradient>
+          <linearGradient id="lgFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c231d"/><stop offset=".45" stop-color="#0e0d0f"/><stop offset="1" stop-color="#050506"/></linearGradient>
+          <linearGradient id="lgGlass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".17"/><stop offset="1" stop-color="#fff" stop-opacity=".04"/></linearGradient>
+          <linearGradient id="lgGold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f2c98f" stop-opacity="0"/><stop offset=".55" stop-color="#f2c98f"/><stop offset="1" stop-color="#ffe9c6"/></linearGradient>
+          <radialGradient id="lgGlow" cx=".72" cy=".78" r=".5"><stop offset="0" stop-color="#7c3aed" stop-opacity=".3"/><stop offset="1" stop-color="#7c3aed" stop-opacity="0"/></radialGradient>
+        </defs>
+        <rect width="1000" height="1000" fill="#07070a"/>
+        <rect width="520" height="830" fill="url(#lgWall)"/>
+        <rect x="630" y="95" width="370" height="565" fill="url(#lgSky)"/>
+        <path d="M630 470L700 440 770 462 850 418 930 458 1000 440V570H630Z" fill="#4b3b31" opacity=".92"/>
+        <path d="M630 524L720 502 800 514 900 482 1000 506V596H630Z" fill="#2d2420"/>
+        <rect x="630" y="596" width="370" height="64" fill="#8b6b4d" opacity=".5"/>
+        <path d="M500 0H1000V95H630Z" fill="#0b0a0b"/>
+        <path d="M630 95H1000" stroke="#c9a37a" stroke-opacity=".45"/>
+        <rect y="660" width="1000" height="340" fill="url(#lgFloor)"/>
+        <rect x="630" y="660" width="370" height="130" fill="url(#lgSky)" opacity=".2"/>
+        <path d="M0 830L1000 790M0 900L1000 860" stroke="#fff" stroke-opacity=".05"/>
+        <rect x="440" y="615" width="92" height="215" fill="#060607"/>
+        <rect x="905" y="610" width="95" height="150" fill="#09090b"/>
+        <circle cx="338" cy="262" r="135" fill="none" stroke="#fff" stroke-opacity=".11"/>
+        <path d="M652 372A206 206 0 0 1 846 484" fill="none" stroke="#08080a" stroke-width="44"/>
+        <path d="M652 351A227 227 0 0 1 862 470" fill="none" stroke="url(#lgGold)" stroke-width="2"/>
+        <path d="M478 648A205 205 0 0 0 846 676" fill="none" stroke="#08080a" stroke-width="40"/>
+        <path d="M486 622A228 228 0 0 0 862 650" fill="none" stroke="url(#lgGold)" stroke-width="1.5" opacity=".7"/>
+        <polygon points="500,0 662,105 662,778 500,800" fill="url(#lgGlass)" stroke="#fff" stroke-opacity=".3"/>
+        <g transform="translate(528 128) skewY(14)" fill="#fff" fill-opacity=".8" font-size="11" letter-spacing="3.2">
+          <text y="0">PEOPLE</text><text y="33">OPPORTUNITY</text><text y="66">MOVEMENT</text><text y="99">RELATIONSHIPS</text><text y="132">PERFORMANCE</text>
+          <rect y="152" width="40" height="1" fill="#fff"/>
+        </g>
+        <rect x="770" y="70" width="2" height="95" fill="#9b6cff"/>
+        <rect x="390" y="312" width="2" height="44" fill="#9b6cff"/>
+        <rect width="1000" height="1000" fill="url(#lgGlow)"/>
+      </svg>
+    </div>
+    <div class="lg-brand-top">
       <div class="lg-wordmark">CAVYRE</div>
-      <div class="lg-network">Network Premium</div>
-      <div class="lg-divider"></div>
       <div class="lg-portal-title">Agent Portal</div>
-      <div class="lg-portal-sub">Intelligence. Relationships. Performance.</div>
+    </div>
+    <div class="lg-brand-copy">
+      <div class="lg-network">Global Network<br>Est. 2026</div>
+      <div class="lg-divider"></div>
+      <h2 class="lg-headline">The<br>System<br>Behind<br><em>The Agency.</em></h2>
+      <p class="lg-lede">Talent. Clients. Castings. Bookings.<br>Finance. Travel. Everything connected<br>in one intelligent system.</p>
     </div>
     <div class="lg-points">
-      <div class="lg-point"><i>◎</i><b>Global Reach</b><span>New York · Paris<br>Worldwide Network</span></div>
-      <div class="lg-point"><i>▥</i><b>Smart Operations</b><span>Intelligent Workflow<br>Real-time Data</span></div>
-      <div class="lg-point"><i>♢</i><b>Relationships</b><span>Connected Clients<br>Stronger Network</span></div>
-      <div class="lg-point"><i>◇</i><b>Private Platform</b><span>Secure Access<br>Agency Control</span></div>
+      <div class="lg-point"><i>01</i><b>Models</b><span>Rosters, portfolios,<br>development</span></div>
+      <div class="lg-point"><i>02</i><b>Clients</b><span>Relationships,<br>communication</span></div>
+      <div class="lg-point"><i>03</i><b>Operations</b><span>Castings, bookings,<br>travel, visas</span></div>
+      <div class="lg-point"><i>04</i><b>Finance</b><span>Invoices, payments,<br>reporting</span></div>
     </div>
   </section>
   <section class="lg-entry">
-    <div class="lg-language">◎ &nbsp; English⌄</div>
+    <div class="lg-language" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.8 2.8 4 6 4 9.5s-1.2 6.700-4 9.500c-2.800-2.800-4-6-4-9.500s1.200-6.700 4-9.500z"/></svg><span>English</span><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;margin-left:12px"><path d="M6 9l6 6 6-6"/></svg></div>
     <div class="lg-card">
       <div class="lg-top">
-        <div class="lg-logo">C</div>
-        <div class="lg-eyebrow">Welcome Back</div>
-        <div class="lg-h1">Sign in to your account</div>
-        <div class="lg-sub">Secure access to the CAVYRE Agent Portal.</div>
+        <div class="lg-logo"><svg viewBox="0 0 80 80" fill="none" stroke-linecap="round"><path d="M69.400 23A34 34 0 1 0 57 69.400" stroke="#fff" stroke-width="2.600"/><path d="M57 69.400A34 34 0 0 0 73.500 34.100" stroke="#a46bff" stroke-width="2.600"/><circle cx="73.500" cy="34.100" r="2.600" fill="#c3a2ff" stroke="none"/></svg></div>
+        <div class="lg-mark-word">CAVYRE</div>
+        <div class="lg-mark-sub">Agent Portal</div>
+        <div class="lg-h1">Welcome back.</div>
+        <div class="lg-sub">Sign in to access your agency workspace.</div>
       </div>
       <form class="lg-body" onsubmit="return false;">
-        <label class="lg-lbl" for="veuxEmail">Email</label>
-        <div class="lg-field email"><input class="lg-inp" id="veuxEmail" type="email" autocomplete="username" placeholder="you@maisondeveux.com"></div>
+        <label class="lg-lbl" for="veuxEmail">Email address</label>
+        <div class="lg-field email"><input class="lg-inp" id="veuxEmail" type="email" autocomplete="username" placeholder="Email address"></div>
         <label class="lg-lbl" for="veuxPassword">Password</label>
-        <div class="lg-field password"><input class="lg-inp" id="veuxPassword" type="password" autocomplete="current-password" placeholder="Enter your password"></div>
-        <div class="lg-options"><label class="lg-remember"><input id="veuxRemember" type="checkbox" checked> Remember me</label><button type="button" id="veuxForgotBtn">Forgot password?</button></div>
+        <div class="lg-field password"><input class="lg-inp" id="veuxPassword" type="password" autocomplete="current-password" placeholder="Password"><button type="button" class="lg-eye" aria-label="Show password"></button></div>
+        <div class="lg-options"><label class="lg-remember"><input id="veuxRemember" type="checkbox" checked> Keep me signed in</label><button type="button" id="veuxForgotBtn">Forgot password?</button></div>
         <div class="lg-err" id="veuxLoginErr" style="display:block;color:rgba(255,255,255,.45)">Connecting securely…</div>
-        <button class="lg-btn" id="veuxLoginBtn" type="button" disabled>Connecting…</button>
+        <button class="lg-btn" id="veuxLoginBtn" type="button" aria-label="Sign in" disabled>Connecting…</button>
       </form>
       <div class="lg-secure">Secure · Private · Always</div>
-      <div class="lg-foot">© 2026 CAVYRE Network Premium</div>
     </div>
   </section>
 </div>
+<script>
+/* show / hide password */
+document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('#login .lg-eye');if(!b)return;var f=b.parentNode.querySelector('input');if(!f)return;var show=f.type==='password';f.type=show?'text':'password';b.classList.toggle('on',show);b.setAttribute('aria-label',show?'Hide password':'Show password');f.focus();});
+</script>
 <script>
 window.VEUX_TOPBAR_CONTEXT=function(){};
 </script>
