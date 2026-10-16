@@ -112,3 +112,8 @@ html body .sr-steps button{white-space:normal;text-align:center;line-height:1.2;
 .sr-dlg>.sr-main,.sr-dlg>.sr-body{flex:1 1 auto;min-height:0}
 .sr-tabs{overflow-y:hidden}
 .sr-steps{min-height:max-content}
+
+.sr-compose{border:1px solid var(--l2);border-radius:12px;padding:14px;display:grid;gap:10px;background:rgba(255,255,255,.02)}
+.sr-compose-h{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.sr-compose-h b{font-size:13px}.sr-compose-h .sr-hint{flex:1}
+.sr-compose textarea{min-height:220px;line-height:1.6}
+html body .sr-main label.chk,html body .sr-main label.chk span{text-transform:none!important;letter-spacing:0!important;font-size:14px!important}

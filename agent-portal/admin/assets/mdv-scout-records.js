@@ -358,19 +358,36 @@ function photosHtml(p){
 }
 
 /* --- outreach --- */
+function srcText(v){
+  v=String(v||'').trim();if(!v)return '';
+  if(/^website[_ ]?get[_ ]?scouted$/i.test(v)||/^website/i.test(v))return 'on our website';
+  if(/^[a-z0-9_]+$/.test(v)&&v.indexOf('_')>-1)return v.replace(/_/g,' ');
+  return v;
+}
 function tpl(p,kind){
   var sc=R.sc,ma=(sc.outreach&&sc.outreach.ma)||{},nm=first(p.display_name),agent=who();
   if(kind==='ma')return {subject:'Interest in '+p.display_name+' — Maison de Veux',body:'Hello '+first(ma.name||'')+',\n\nWe have been following '+p.display_name+(p.instagram?' ('+p.instagram+')':'')+' and would love to speak with them about representation with Maison de Veux in New York and Paris.\n\nCould you let us know '+nm+'\'s current status'+(ma.agency?' with '+ma.agency:'')+', and whether you are open to a conversation or a placement with us?\n\nThank you,\n'+agent};
-  return {subject:'Maison de Veux — we would love to get to know you',body:'Hi '+nm+',\n\nI am '+agent+' at Maison de Veux, a modeling agency in New York and Paris. We came across your profile'+(p.source?' ('+p.source+')':'')+' and think you could be a great fit.\n\nWould you be open to a short call this week to talk about modeling and what you are looking for? Reply with a couple of times that suit you and the best number to reach you.\n\nIf you already have an agent, tell us who they are. We always speak with your mother agent first.\n\nWarmly,\n'+agent};
+  return {subject:'Maison de Veux — we would love to get to know you',body:'Hi '+nm+',\n\nI am '+agent+' at Maison de Veux, a modeling agency in New York and Paris. We came across your profile'+(srcText(p.source)?' ('+srcText(p.source)+')':'')+' and think you could be a great fit.\n\nWould you be open to a short call this week to talk about modeling and what you are looking for? Reply with a couple of times that suit you and the best number to reach you.\n\nIf you already have an agent, tell us who they are. We always speak with your mother agent first.\n\nWarmly,\n'+agent};
+}
+/* what will actually be sent: the edited text if there is some, otherwise the suggestion */
+function mailFor(p,kind){
+  var t=tpl(p,kind),o=((R.sc.outreach||{})[kind==='ma'?'ma':'model'])||{};
+  return {subject:(o.subject!=null&&String(o.subject).trim()!=='')?o.subject:t.subject,body:(o.body!=null&&String(o.body).trim()!=='')?o.body:t.body,edited:!!(o.body||o.subject)};
 }
 function who(){var n=String((document.getElementById('tbName')||{}).textContent||'').trim();return n||'the Maison de Veux team';}
+function composerHtml(kind,m){
+  var base='outreach.'+(kind==='ma'?'ma':'model');
+  return '<div class="sr-compose"><div class="sr-compose-h"><b>'+(kind==='ma'?'Email to the MA':'Email to the model')+'</b><span class="sr-hint">'+(m.edited?'Edited by you':'Suggested. Change anything you like.')+'</span><button type="button" class="sr-link" data-do="reset_mail" data-kind="'+kind+'">Reset to suggested</button></div>'
+    +'<label><span>Subject</span><input data-p="'+base+'.subject" value="'+esc(m.subject)+'"></label>'
+    +'<label><span>Message</span><textarea rows="11" data-p="'+base+'.body">'+esc(m.body)+'</textarea></label></div>';
+}
 function outreachHtml(p){
   var o=R.sc.outreach||{},m=o.model||{},ma=o.ma||{},log=arr(R.sc.log).filter(function(x){return x.type==='outreach'||x.type==='note';}).slice(-8).reverse();
-  var tm=tpl(p,'model'),tma=tpl(p,'ma');
+  var tm=mailFor(p,'model'),tma=mailFor(p,'ma');
   var guard=isMinor(p)?'<section class="sr-sec warn"><h3>Guardian consent (under 18)</h3><div class="sr-grid"><label><span>Parent / guardian name</span><input data-p="profile.guardian_name" value="'+esc((R.sc.profile||{}).guardian_name||'')+'"></label><label><span>Guardian phone / email</span><input data-p="profile.guardian_contact" value="'+esc((R.sc.profile||{}).guardian_contact||'')+'"></label><label class="chk"><input type="checkbox" data-p="profile.guardian_consent"'+((R.sc.profile||{}).guardian_consent?' checked':'')+'> Guardian has agreed to us speaking with the model</label></div></section>':'';
   return guard
     +'<section class="sr-sec"><h3>1 · The model</h3><p class="sr-hint">'+esc([p.email,p.phone,p.instagram].filter(Boolean).join(' · ')||'No contact details yet. Add them on the Profile tab.')+'</p>'
-    +'<div class="sr-tpl"><b>Suggested email</b><pre>'+esc(tm.subject+'\n\n'+tm.body)+'</pre></div>'
+    +composerHtml('model',tm)
     +'<div class="sr-row2"><label><span>Status</span><select data-p="outreach.model.status">'+['Not contacted','Emailed','Replied','Interested','Not interested','No reply'].map(function(x){return '<option'+(((m.status||'Not contacted')===x)?' selected':'')+'>'+x+'</option>';}).join('')+'</select></label><label class="wide"><span>Notes</span><input data-p="outreach.model.notes" value="'+esc(m.notes||'')+'" placeholder="What they said, when they are free…"></label></div>'
     +'<div class="sr-actions">'+(p.email?'<button type="button" class="sr-btn gold" data-do="email_model">Email the model</button>':'')+'<button type="button" class="sr-btn" data-do="mark_model">Mark as emailed'+(m.emailed_at?' · '+fmt(m.emailed_at):'')+'</button></div></section>'
     +'<section class="sr-sec"><h3>2 · Mother agent (MA)</h3><div class="sr-grid">'
@@ -379,7 +396,7 @@ function outreachHtml(p){
     +'<label><span>Status</span><select data-p="outreach.ma.status">'+['Not contacted','Emailed','Replied','Open to a conversation','Placement possible','Declined','Exclusive elsewhere'].map(function(x){return '<option'+(((ma.status||'Not contacted')===x)?' selected':'')+'>'+x+'</option>';}).join('')+'</select></label>'
     +'<label><span>Replied on</span><input type="date" data-p="outreach.ma.replied_at" value="'+esc((ma.replied_at||'').slice(0,10))+'"></label>'
     +'<label class="wide"><span>Notes</span><input data-p="outreach.ma.notes" value="'+esc(ma.notes||'')+'" placeholder="Terms, split, conditions…"></label></div>'
-    +'<div class="sr-tpl"><b>Suggested email to the MA</b><pre>'+esc(tma.subject+'\n\n'+tma.body)+'</pre></div>'
+    +composerHtml('ma',tma)
     +'<div class="sr-actions">'+(ma.email?'<button type="button" class="sr-btn gold" data-do="email_ma">Email the MA</button>':'<span class="sr-hint">Add the MA email above to send from here.</span>')+'<button type="button" class="sr-btn" data-do="mark_ma">Mark MA as emailed'+(ma.emailed_at?' · '+fmt(ma.emailed_at):'')+'</button></div></section>'
     +'<section class="sr-sec"><h3>Contact log</h3><div class="sr-row2"><label class="wide"><span>Add a note</span><input id="sr-lognote" placeholder="e.g. Left voicemail, texted, DM’d on Instagram…"></label><button type="button" class="sr-btn" data-do="add_log">Add</button></div>'
     +(log.map(function(x){return '<p class="sr-log"><span>'+fmt(x.at,true)+'</span>'+esc(x.text)+'</p>';}).join('')||'<p class="sr-hint">Nothing logged yet.</p>')+'</section>';
@@ -669,10 +686,13 @@ async function doAction(a,btn){
       if(!out||out.verified!==true)throw new Error('The details were not confirmed as saved.');
       await flush();await load();paintPage();R.sc=clone(scoutOf(byId(p.id)));paintRecord();toast('✓ Details saved');
     }else if(a==='email_model'||a==='email_ma'){
-      var kind=a==='email_ma'?'ma':'model',t=tpl(p,kind),addr=kind==='ma'?ma.email:p.email;
+      var kind=a==='email_ma'?'ma':'model',t=mailFor(p,kind),addr=kind==='ma'?ma.email:p.email;
       if(!addr)throw new Error('There is no email address yet.');
       if(window.MDV_MAIL&&MDV_MAIL.emailTo){closeModal();window.MDV_MAIL.emailTo([addr],{subject:t.subject,text:t.body});}
       else window.location.href='mailto:'+addr+'?subject='+encodeURIComponent(t.subject)+'&body='+encodeURIComponent(t.body);
+    }else if(a==='reset_mail'){
+      var kk=btn&&btn.dataset.kind==='ma'?'ma':'model';
+      setPath(R.sc,'outreach.'+kk+'.subject','');setPath(R.sc,'outreach.'+kk+'.body','');R.dirty.outreach=true;await flush();paintRecord();toast('Back to the suggested email');
     }else if(a==='mark_model'){
       setPath(R.sc,'outreach.model.emailed_at',nowIso());if(!m.status||m.status==='Not contacted')setPath(R.sc,'outreach.model.status','Emailed');R.dirty.outreach=true;await flush();
       await addLog('Emailed the model','outreach');
