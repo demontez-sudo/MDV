@@ -65,3 +65,4 @@
   html body .f-pill span{padding:11px 16px}
 }
 .f-group:empty{display:none}
+.f-label .f-opt{opacity:.6;text-transform:none;letter-spacing:0;font-size:11px}

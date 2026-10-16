@@ -14,7 +14,7 @@ var HINT={
   instagram:{ac:'none',sp:false,ph:'@handle'},tiktok:{ac:'none',sp:false,ph:'@handle'},
   followers:{im:'numeric',ac:'none'},postal_code:{ac:'characters',sp:false},
   guardian_name:{ac:'words'},guardian_relationship:{ac:'words'},represented_agency:{ac:'words'},represented_notes:{ac:'sentences'},
-  height:{im:'text',ac:'none',sp:false},bust_chest:{im:'decimal',ac:'none',sp:false},waist:{im:'decimal',ac:'none',sp:false},hips:{im:'decimal',ac:'none',sp:false},
+  height:{im:'text',ac:'none',sp:false},inseam:{im:'decimal',ac:'none',sp:false},neck:{im:'decimal',ac:'none',sp:false},sleeve:{im:'decimal',ac:'none',sp:false},bust_chest:{im:'decimal',ac:'none',sp:false},waist:{im:'decimal',ac:'none',sp:false},hips:{im:'decimal',ac:'none',sp:false},
   shoe:{im:'text',ac:'none',sp:false},dress_suit:{im:'text',ac:'none',sp:false},cup:{ac:'characters',sp:false},
   story:{ac:'sentences',sp:true},goals:{ac:'sentences',sp:true}
 };

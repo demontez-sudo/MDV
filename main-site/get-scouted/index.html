@@ -710,6 +710,11 @@
           <div class="f-group"><label class="f-label" for="m_eyes">Eyes</label>
             <select class="f-select" id="m_eyes" name="eyes"><option value="">Select</option><option>Brown</option><option>Dark brown</option><option>Hazel</option><option>Green</option><option>Blue</option><option>Grey</option><option>Other</option></select></div>
         </div>
+        <div class="f-row three">
+          <div class="f-group"><label class="f-label" for="m_in">Inseam <span class="f-opt">(optional)</span></label><input class="f-input" id="m_in" type="text" name="inseam" inputmode="decimal" placeholder="32"></div>
+          <div class="f-group"><label class="f-label" for="m_nk">Neck <span class="f-opt">(optional)</span></label><input class="f-input" id="m_nk" type="text" name="neck" inputmode="decimal" placeholder="14"></div>
+          <div class="f-group"><label class="f-label" for="m_sl">Sleeve <span class="f-opt">(optional)</span></label><input class="f-input" id="m_sl" type="text" name="sleeve" inputmode="decimal" placeholder="33"></div>
+        </div>
       </div>
 
       <!-- 4 -->
@@ -771,7 +776,7 @@
   }
   function setUnits(){
     var cm=document.querySelector('input[name="units"]:checked').value==='cm';
-    var ph=cm?{m_h:'178',m_b:'86',m_w:'64',m_hp:'89'}:{m_h:'5\'10"',m_b:'34',m_w:'25',m_hp:'35'};
+    var ph=cm?{m_h:'178',m_b:'86',m_w:'64',m_hp:'89',m_in:'81',m_nk:'36',m_sl:'84'}:{m_h:'5\'10"',m_b:'34',m_w:'25',m_hp:'35',m_in:'32',m_nk:'14',m_sl:'33'};
     Object.keys(ph).forEach(function(id){$(id).placeholder=ph[id];});
   }
   /* ---- photos: resize on the device, then upload ---- */
@@ -824,7 +829,7 @@
   }
   function gather(form){
     var fd=new FormData(form),f={application_version:'2'};
-    ['first_name','last_name','email','phone','dob','gender','board','instagram','tiktok','followers','address','city','state','country','postal_code','story','goals','represented','represented_agency','represented_notes','experience','travel','passport','units','height','bust_chest','waist','hips','shoe','dress_suit','cup','hair','eyes','guardian_name','guardian_relationship','guardian_email','guardian_phone','website'].forEach(function(k){f[k]=String(fd.get(k)||'');});
+    ['first_name','last_name','email','phone','dob','gender','board','instagram','tiktok','followers','address','city','state','country','postal_code','story','goals','represented','represented_agency','represented_notes','experience','travel','passport','units','height','bust_chest','waist','hips','shoe','dress_suit','cup','hair','eyes','inseam','neck','sleeve','guardian_name','guardian_relationship','guardian_email','guardian_phone','website'].forEach(function(k){f[k]=String(fd.get(k)||'');});
     f.offices=fd.getAll('offices').map(String);
     f.confirm=$('f_confirm').checked?'yes':'';
     f.guardian_consent=$('g_consent').checked?'yes':'';

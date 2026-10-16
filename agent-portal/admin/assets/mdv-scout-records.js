@@ -111,7 +111,7 @@ function measOf(p){
   if(own&&typeof own==='object')return own;
   /* first time: bring over what they put on the application and anything entered on the old call form */
   var m={units:app.units==='in'||app.units==='imperial'?'in':'cm'};
-  var map={height:am.height,bust_chest:am.bust_chest,waist:am.waist,hips:am.hips,shoe:am.shoe,dress:am.dress_suit,cup:am.cup,hair:am.hair,eyes:am.eyes};
+  var map={height:am.height,bust_chest:am.bust_chest,waist:am.waist,hips:am.hips,shoe:am.shoe,dress:am.dress_suit,cup:am.cup,hair:am.hair,eyes:am.eyes,inseam:am.inseam,neck:am.neck,sleeve:am.sleeve};
   Object.keys(map).forEach(function(k){if(map[k])m[k]=map[k];});
   var legacy={height:c.height_cm,bust_chest:c.bust_cm,waist:c.waist_cm,hips:c.hips_cm,shoe:c.shoe,dress:c.dress,hair:c.hair,eyes:c.eyes,skin:c.skin,marks:c.marks};
   Object.keys(legacy).forEach(function(k){if(legacy[k]&&!m[k])m[k]=legacy[k];});
