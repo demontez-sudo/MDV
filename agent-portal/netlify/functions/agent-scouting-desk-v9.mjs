@@ -56,7 +56,12 @@ export const handler=async(event)=>{
       }
       if(action==='schedule_meeting'){
         if(!body.prospect_id||!body.starts_at)return json(400,{error:'prospect_id and starts_at are required'});
-        const {data,error}=await admin.from('scouting_meetings').insert({organization_id:organization.id,prospect_id:body.prospect_id,meeting_type:body.meeting_type||'intro',starts_at:body.starts_at,ends_at:body.ends_at||null,status:body.status||'scheduled',location:body.location||null,notes:body.notes||null,created_by:user.id}).select('*').single();if(error)throw error;return json(200,{ok:true,verified:true,meeting:data,persisted_at:data?.created_at||new Date().toISOString()});
+        const row={organization_id:organization.id,prospect_id:body.prospect_id,meeting_type:body.meeting_type||'intro',starts_at:body.starts_at,ends_at:body.ends_at||null,status:body.status||'scheduled',location:body.location||null,notes:body.notes||null};
+        /* some databases have no created_by on scouting_meetings: save without it rather than failing */
+        let {data,error}=await admin.from('scouting_meetings').insert({...row,created_by:user.id}).select('*').single();
+        if(error&&/created_by/i.test(String(error.message||''))){({data,error}=await admin.from('scouting_meetings').insert(row).select('*').single());}
+        if(error)throw error;
+        return json(200,{ok:true,verified:true,meeting:data,persisted_at:data?.created_at||new Date().toISOString()});
       }
       if(action==='move_stage'){
         const {data,error}=await client.rpc('move_scouting_prospect_stage',{target_org:organization.id,target_prospect:body.prospect_id,target_stage:body.stage,stage_reason:body.reason||null});if(error)throw error;return json(200,{ok:true,verified:true,prospect:data,persisted_at:data?.updated_at||data?.created_at||new Date().toISOString()});
