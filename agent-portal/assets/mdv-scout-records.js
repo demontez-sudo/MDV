@@ -687,7 +687,8 @@ async function doAction(a,btn){
     }else if(a==='schedule_call'){
       var c=R.sc.call||{};if(!c.scheduled_at)throw new Error('Pick a date and time first.');
       await flush();
-      await post({action:'schedule_meeting',prospect_id:p.id,meeting_type:'intro',starts_at:c.scheduled_at,location:[c.channel,c.link].filter(Boolean).join(' · ')||null,notes:'Interest call with '+p.display_name});
+      var linkText=String(c.link||'').trim(),url=(linkText.match(/https?:\/\/[^\s<>"']+/)||[])[0]||'',place=[c.channel,url||(linkText.length<=80?linkText:'')].filter(Boolean).join(' · ')||null;
+      await post({action:'schedule_meeting',prospect_id:p.id,meeting_type:'intro',starts_at:c.scheduled_at,location:place?place.slice(0,200):null,notes:('Interest call with '+p.display_name+(linkText&&linkText!==url?'\n'+linkText:'')).slice(0,1200)});
       await moveTo('call_scheduled',{note:'Interest call scheduled for '+fmt(c.scheduled_at,true)});
     }else if(a==='open_call'){
       openCall();

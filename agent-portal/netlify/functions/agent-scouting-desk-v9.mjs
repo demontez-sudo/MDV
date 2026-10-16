@@ -150,5 +150,9 @@ export const handler=async(event)=>{
     const prospectRows=prospects.map(x=>({...x,markets:marketMap.get(x.target_market_id)||null,divisions:divMap.get(x.target_division_id)||null,boards:boardMap.get(x.metadata?.preferred_board_id)||null,organization_members:memberMap.get(x.assigned_member_id)||null,scouting_media:med.get(x.id)||[]}));
     const prospectMap=new Map(prospectRows.map(x=>[x.id,x]));
     return json(200,{environment:'veux-desk-v16.8.6-scouting',organization,prospects:prospectRows,meetings:meetings.map(x=>({...x,scouting_prospects:prospectMap.get(x.prospect_id)?{id:x.prospect_id,display_name:prospectMap.get(x.prospect_id).display_name}:null})),stage_history:history,lookups:{markets,divisions,boards,members:[...memberMap.values()]}});
-  }catch(error){return errorResponse(error);}
+  }catch(error){
+    /* show staff what the database objected to, instead of a bare "500" */
+    if(!error.publicMessage&&(error.statusCode||500)>=500&&error.message)error.publicMessage='Scouting could not save this: '+String(error.message).replace(/\s+/g,' ').slice(0,160);
+    return errorResponse(error);
+  }
 };
