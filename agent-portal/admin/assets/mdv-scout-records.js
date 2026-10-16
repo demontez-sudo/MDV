@@ -270,7 +270,7 @@ function fld(label,id,val,type,cls,ph,attrs){return '<label class="'+(cls||'')+'
 function openRecord(id,tab){
   var p=byId(id);if(!p)return;
   flush();
-  R.id=id;R.sc=clone(scoutOf(p));R.dirty={};R.saved=false;
+  R.id=id;R.lead=0;R.sc=clone(scoutOf(p));R.dirty={};R.saved=false;
   var k=stepOf(p);var s=STEPS[IDX[k]];
   R.tab=tab||(s?s.tab:'profile');
   paintRecord();
@@ -285,13 +285,14 @@ function stepper(p){
 function paintRecord(){
   var p=byId(R.id);if(!p)return;
   var m=modalRoot(),body=m.querySelector('.sr-main'),scroll=body?body.scrollTop:0;
-  var k=stepOf(p),na=nextAction(p),media=arr(p.scouting_media),ph=media[0]&&media[0].url;
+  var k=stepOf(p),na=nextAction(p),media=arr(p.scouting_media),lead=Math.min(R.lead||0,Math.max(0,media.length-1)),ph=media[lead]&&media[lead].url;
   var idx=IDX[k]==null?(k==='transferred'?STEPS.length:-1):IDX[k];
   var tabs=TABS.filter(function(t){return t[0]!=='call'||idx>=IDX.emailed_model||R.tab==='call';});
   m.innerHTML='<section class="sr-dlg" role="dialog" aria-modal="true" aria-label="Scout record">'
-    +'<header class="sr-rh"><span class="sr-ph big'+(ph?'':' ph')+'"'+(ph?' style="background-image:url(\''+esc(ph).replace(/'/g,'%27')+'\')"':'')+'>'+(ph?'':esc(initials(p.display_name)))+'</span>'
-    +'<div class="sr-rt"><small>'+esc([p.city,p.country].filter(Boolean).join(', ')||'SCOUT RECORD')+'</small><h2>'+esc(p.display_name)+'</h2><p>'+esc([p.height_display,p.instagram,p.email].filter(Boolean).join(' · '))+'</p>'
+    +'<header class="sr-rh"><span class="sr-ph big'+(ph?'':' ph')+'"'+(ph?' style="background-image:url(\''+esc(String(ph).replace(/'/g,'%27'))+'\')"':'')+'>'+(ph?'':esc(initials(p.display_name)))+'</span>'
+    +'<div class="sr-rt"><small>'+esc([p.city,p.country].filter(Boolean).join(', ')||'SCOUT RECORD')+'</small><h2>'+esc(p.display_name)+'</h2><p>'+esc([ageOf(p)!=null?ageOf(p)+' years':'',p.instagram,p.email,p.phone].filter(Boolean).join(' · '))+'</p>'
     +'<span class="sr-chip">'+esc(stepLabel(k))+'</span>'+(isMinor(p)?'<span class="sr-chip warn">Under 18 · guardian consent</span>':'')+'</div><button type="button" class="sr-x" data-x aria-label="Close">×</button></header>'
+    +compCard(p)
     +'<div class="sr-next-bar"><span class="sr-next '+na.c+'">'+esc(na.t||'')+'</span><span class="sr-save" id="sr-save">'+(R.saving?'Saving…':R.saved?'Saved':'')+'</span></div>'
     +stepper(p)
     +'<nav class="sr-tabs">'+tabs.map(function(t){return '<button type="button" data-tab="'+t[0]+'" class="'+(R.tab===t[0]?'on':'')+'">'+esc(t[1])+'</button>';}).join('')+'</nav>'
@@ -320,7 +321,7 @@ function tabHtml(p){
 function profileHtml(p){
   var l=lookups(),pr=R.sc.profile||{};
   function sel(id,label,opts,val){return '<label><span>'+esc(label)+'</span><select id="'+id+'">'+opts.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(val||'')?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>';}
-  return '<div class="sr-grid">'
+  return '<div class="sr-prof"><aside class="sr-gal">'+galleryHtml(p)+'</aside><div class="sr-pcol"><section class="sr-sec"><h3>About</h3><div class="sr-grid">'
     +fld('Name','p_name',p.display_name,'text','wide')
     +fld('Email','p_email',p.email,'email')+fld('Phone','p_phone',p.phone)
     +fld('Instagram','p_ig',p.instagram)+fld('TikTok','p_tt',p.tiktok)
@@ -333,9 +334,8 @@ function profileHtml(p){
     +'<label class="wide"><span>First impression / notes</span><textarea id="p_notes" rows="3">'+esc(p.notes||'')+'</textarea></label>'
     +'<label><span>Languages</span><input data-p="profile.languages" value="'+esc(pr.languages||'')+'" placeholder="English, French…"></label>'
     +'<label><span>Referred by</span><input data-p="profile.referred_by" value="'+esc(pr.referred_by||'')+'"></label>'
-    +'</div><div class="sr-actions"><button type="button" class="sr-btn gold" data-do="save_profile">Save details</button></div>'
-    +measureHtml(p)
-    +photosHtml(p);
+    +'</div><div class="sr-actions"><button type="button" class="sr-btn gold" data-do="save_profile">Save details</button></div></section>'
+    +measureHtml(p)+'</div></div>';
 }
 function measFieldHtml(f,m,u){
   var v=m[f[0]]||'',conv=f[2]==='len'?convText(v,u):'';
@@ -355,11 +355,26 @@ function measureHtml(p,compact){
    +'<p class="sr-hint">Everything here carries over to the model profile when they sign. Lengths are saved in your chosen units and converted to cm for the profile.</p></section>';
   return h;
 }
-function photosHtml(p){
-  var m=arr(p.scouting_media);
-  return '<section class="sr-sec"><h3>Photos & digitals</h3><div class="sr-photos">'+m.map(function(x){return '<img src="'+esc(x.url)+'" alt="">';}).join('')+'<label class="sr-up">＋<input id="sr-files" type="file" accept="image/*" multiple hidden><span>Upload</span></label></div></section>';
+function compCard(p){
+  var m=measOf(p),u=m.units==='in'?'in':'cm';
+  function len(k){var v=String(m[k]||'').trim();if(!v)return '';return /^[\d.,]+$/.test(v)?v+' '+u:v;}
+  var tiles=[['Height',len('height')],['Bust',len('bust_chest')],['Waist',len('waist')],['Hips',len('hips')],['Shoe',m.shoe?m.shoe+(m.shoe_sys?' '+m.shoe_sys:''):''],['Hair',m.hair||''],['Eyes',m.eyes||'']];
+  return '<div class="sr-comp" aria-label="Measurements">'+tiles.map(function(x){return '<div'+(x[1]?'':' class="empty"')+'><small>'+esc(x[0])+'</small><b>'+esc(x[1]||'—')+'</b></div>';}).join('')
+    +'<button type="button" class="sr-link" data-tab-go="profile">Edit</button></div>';
 }
-
+function galleryHtml(p){
+  var m=arr(p.scouting_media),lead=Math.min(R.lead||0,Math.max(0,m.length-1)),cur=m[lead];
+  return '<div class="sr-gal-main'+(cur?'':' none')+'">'+(cur?'<img src="'+esc(cur.url)+'" alt="" data-zoom="'+lead+'">':'<span>'+esc(initials(p.display_name))+'</span>')+'</div>'
+    +'<div class="sr-photos">'+m.map(function(x,i){return '<button type="button" class="sr-th'+(i===lead?' on':'')+'" data-ph="'+i+'" aria-label="Photo '+(i+1)+'"><img src="'+esc(x.url)+'" alt=""></button>';}).join('')
+    +'<label class="sr-up">＋<input id="sr-files" type="file" accept="image/*" multiple hidden><span>Upload</span></label></div>'
+    +'<p class="sr-hint">'+(m.length?m.length+' photo'+(m.length===1?'':'s')+' · tap one to make it the lead':'Add digitals or Instagram screenshots.')+'</p>';
+}
+function lightbox(url){
+  var o=document.createElement('div');o.className='sr-lb';o.innerHTML='<img src="'+esc(url)+'" alt=""><button type="button" aria-label="Close">×</button>';
+  function close(){o.remove();document.removeEventListener('keydown',k,true);}
+  function k(e){if(e.key==='Escape'){e.stopPropagation();close();}}
+  o.onclick=close;document.addEventListener('keydown',k,true);document.body.appendChild(o);
+}
 /* --- outreach --- */
 function srcText(v){
   v=String(v||'').trim();if(!v)return '';
@@ -771,6 +786,9 @@ function wireRecord(m,p){
     }catch(e){toast(msg(e),true);}
   };
   wireInputs(m);
+  m.querySelectorAll('[data-ph]').forEach(function(b){b.onclick=function(){R.lead=+b.dataset.ph;paintRecord();};});
+  var zm=m.querySelector('[data-zoom]');if(zm)zm.onclick=function(){lightbox(zm.src);};
+  var tg=m.querySelector('[data-tab-go]');if(tg)tg.onclick=function(){R.tab=tg.dataset.tabGo;paintRecord();};
   var f=m.querySelector('#sr-files');
   if(f)f.onchange=async function(){
     var files=Array.from(f.files||[]);if(!files.length)return;
