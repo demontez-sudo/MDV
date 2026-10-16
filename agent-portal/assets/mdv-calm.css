@@ -19,7 +19,7 @@ html body .mm{overflow:hidden}
 html body :is(p,li,td){line-height:1.65}
 html body :is(.card,.v152-card,.vx-card,.ct-sec,.vx17-panel){box-shadow:0 10px 32px rgba(0,0,0,.16)}
 /* Slower, softer motion */
-html body *{scroll-behavior:smooth}
-@media(prefers-reduced-motion:reduce){html body *{scroll-behavior:auto}}
+/* scroll corrections must be instant: a smooth rule here made the page slide to a new position after you stopped scrolling */
+html body *{scroll-behavior:auto}
 /* Classic skin: a touch lighter and warmer so it is less stark */
 html[data-veux-wave="classic"]{--skin-0:#0c0a08;--skin-1:#12100d;--skin-2:#181510;--skin-3:#201b15;--skin-card:#1a1612;--skin-card2:#241e17;--skin-line:#3e3322}

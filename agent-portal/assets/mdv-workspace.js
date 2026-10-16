@@ -412,9 +412,9 @@ function tighten(){
   var inner=first.querySelector('.ws-home')||first;
   var cur=parseFloat(root.style.getPropertyValue('--ws-adj'))||0;
   var tbBottom=(tb.offsetTop||0)+tb.offsetHeight,want=tbBottom+14,have=docTop(first);
-  if(window.scrollY>2)return;
+  var se=document.scrollingElement;if(window.scrollY>2||document.body.scrollTop>2||(se&&se.scrollTop>2))return;
   var next=Math.max(-160,Math.min(60,Math.round(cur-(have-want))));
-  if(Math.abs(next-cur)>2)root.style.setProperty('--ws-adj',next+'px');
+  if(Math.abs(next-cur)>4)root.style.setProperty('--ws-adj',next+'px');
 }
 /* ---------- Compact size: keep viewport units honest ----------
    CSS zoom shrinks everything, including 100vh / 100vw, so full-screen backdrops and viewport-height layouts came out 16% short.
@@ -444,7 +444,12 @@ function patchSheets(){
     patched.add(sh);patchRules(rules);
   }
 }
+var lastScroll=0,lastW=window.innerWidth,wait=0;
+document.addEventListener('scroll',function(){lastScroll=Date.now();},{capture:true,passive:true});
+/* nothing on the page is measured or moved while it is scrolling or just after: that is what looked like the page adjusting itself when you stopped */
 function tick(){
+  var idle=Date.now()-lastScroll;
+  if(idle<700){if(!wait){wait=1;setTimeout(function(){wait=0;tick();},750-idle);}return;}
   try{
     layoutRow();
     if(S.stale&&S.el&&S.el.isConnected&&S.el.classList.contains('on'))paint();
@@ -454,7 +459,7 @@ function tick(){
 }
 /* the menu, dock and spacing follow the page: re-check right after every navigation and on resize, and only sweep occasionally in between */
 setInterval(function(){if(!document.hidden)tick();},1800);
-window.addEventListener('resize',function(){clearTimeout(window.__wsRz);window.__wsRz=setTimeout(tick,120);},{passive:true});
+window.addEventListener('resize',function(){if(window.innerWidth===lastW)return;lastW=window.innerWidth;clearTimeout(window.__wsRz);window.__wsRz=setTimeout(tick,120);},{passive:true});
 (function(){
   function inChain(f,mark){var n=0;while(f&&n++<60){if(f[mark])return true;f=f.__orig||f.__previous;}return false;}
   function hook(){
