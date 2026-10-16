@@ -299,10 +299,10 @@ async function replacePackageContent(admin,organization,pkg,body,user){
   const bulkRecipientContactIds=Array.isArray(body.bulk_recipient_contact_ids)?[...new Set(body.bulk_recipient_contact_ids.map(String).filter(Boolean))]:Array.isArray(currentMeta.bulk_recipient_contact_ids)?currentMeta.bulk_recipient_contact_ids:[];
   const approvedSectionsRaw=Array.isArray(body.approved_sections)?body.approved_sections:Array.isArray(currentMeta.approved_sections)?currentMeta.approved_sections:['book','digitals','motion'];
   const approvedSections=[...new Set(approvedSectionsRaw.map(String).map(x=>x.toLowerCase()).filter(x=>['book','digitals','motion'].includes(x)))];
+  const live=isLive(pkg);
   const editedAt=new Date().toISOString();
   const edits=live?[...(Array.isArray(currentMeta.edits)?currentMeta.edits:[]).slice(-19),{at:editedAt,by:user.id,models:modelIds.length}]:currentMeta.edits;
   const nextMeta={...currentMeta,...(live?{edits,last_edited_at:editedAt}:{}),updated_from:'agent_package_desk',package_type:String(body.package_type||currentMeta.package_type||'casting'),submission_date:body.submission_date||currentMeta.submission_date||null,asset_types:assetTypes,profile_fields:profileFields,approved_sections:approvedSections,bulk_recipient_contact_ids:bulkRecipientContactIds,subject_line:String(body.subject||currentMeta.subject_line||'').trim()||null,send_timing:String(body.send_timing||currentMeta.send_timing||'send_now'),scheduled_for:body.scheduled_for||currentMeta.scheduled_for||null};
-  const live=isLive(pkg);
   const status=live?pkg.status:(['draft','ready'].includes(String(body.status||''))?String(body.status):'draft');
 
   const mediaByModel=(body.media_by_model&&typeof body.media_by_model==='object')?body.media_by_model:{};
