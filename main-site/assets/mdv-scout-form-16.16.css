@@ -1,0 +1,67 @@
+/* Maison de Veux 16.16 — Get Scouted application: clearer fields, calmer type, easier typing. */
+.scout-wrap{max-width:760px}
+.scout-title{font-size:clamp(34px,5.6vw,54px);letter-spacing:-.005em}
+.scout-sub{font-size:15.5px;line-height:1.75;color:var(--ink)}
+.scout-sub,.f-sec-sub{opacity:.82}
+
+/* progress */
+.sf-progress{position:fixed;left:0;right:0;top:0;height:2px;z-index:60;background:transparent;pointer-events:none}
+.sf-progress i{display:block;height:100%;width:0;background:var(--brass);transition:width .35s ease}
+
+/* labels */
+.f-label{font-size:11px;letter-spacing:.14em;color:var(--ink);opacity:.78;margin-bottom:8px}
+.f-label .req{color:var(--brass);margin-left:2px}
+
+/* fields: a visible box you can tell is a field */
+.f-input,.f-select,.f-textarea{
+  width:100%;background:rgba(239,233,223,.045);border:1px solid rgba(239,233,223,.24);border-radius:3px;
+  padding:13px 14px;font-size:16px;line-height:1.4;color:var(--ink);transition:border-color .2s,background .2s,box-shadow .2s;
+  color-scheme:dark;
+}
+.f-input:hover,.f-select:hover,.f-textarea:hover{border-color:rgba(239,233,223,.42)}
+.f-input:focus,.f-select:focus,.f-textarea:focus{border-color:var(--brass);background:rgba(169,137,95,.08);box-shadow:0 0 0 3px rgba(169,137,95,.2)}
+.f-input::placeholder,.f-textarea::placeholder{color:rgba(239,233,223,.42);font-weight:300}
+.f-textarea{min-height:110px;font-size:16px;line-height:1.6}
+.f-select{padding-right:40px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23a9895f' stroke-width='1.4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
+.f-select option{background:#14110e;color:#efe9df}
+.f-input[type=date]{min-height:48px}
+.f-input:-webkit-autofill{-webkit-text-fill-color:var(--ink);box-shadow:0 0 0 100px #1a1612 inset;caret-color:var(--ink)}
+
+/* checking as you type */
+.f-input.bad,.f-select.bad,.f-textarea.bad{border-color:#e0907a;box-shadow:0 0 0 3px rgba(224,144,122,.16)}
+.f-input.ok{border-color:rgba(169,137,95,.55)}
+.sf-msg{font-size:12.5px;line-height:1.45;color:#e8a592;margin-top:7px;min-height:0}
+.sf-msg:empty{display:none}
+
+/* choices */
+.f-pill span{padding:12px 20px;min-height:44px;display:inline-flex;align-items:center;font-size:12px}
+.f-check{font-size:14px;line-height:1.65;color:var(--ink);opacity:.9}
+.f-check input{width:20px;height:20px;margin-top:2px;border-color:rgba(239,233,223,.5)}
+.f-check input:checked::after{left:6px;top:2px}
+
+/* sections */
+.f-sec{margin-top:56px}
+.f-sec-title{font-size:clamp(25px,3.6vw,34px);margin-bottom:8px}
+.f-sec-sub{max-width:600px;font-size:14.5px}
+.f-row{gap:20px 22px;margin-bottom:22px}
+.f-box{border-radius:3px;background:rgba(239,233,223,.03)}
+.ph-frame{border-radius:3px}
+.f-submit{display:block;width:100%;max-width:340px;padding:18px 30px;font-size:12.5px;border-radius:2px;margin-top:30px}
+.f-submit:disabled{opacity:.55;cursor:default}
+.f-note{font-size:12.5px}
+
+/* restore banner */
+.sf-restore{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin:0 0 28px;padding:12px 16px;border:1px solid rgba(169,137,95,.45);background:rgba(169,137,95,.08);font-size:13.5px;border-radius:3px}
+.sf-restore button{background:none;border:0;color:var(--brass);font:inherit;text-decoration:underline;cursor:pointer;padding:0}
+
+@media(max-width:760px){
+  html body .scout-wrap{padding-top:112px}
+  html body .scout-head{margin-bottom:34px}
+  html body .scout-sub{font-size:14.5px}
+  html body .f-input,html body .f-select,html body .f-textarea{padding:13px 13px;font-size:16px}
+  html body .f-label{font-size:10.5px;letter-spacing:.12em}
+  html body .f-sec{margin-top:44px}
+  html body .f-submit{max-width:none}
+  html body .f-pill span{padding:11px 16px}
+}
+.f-group:empty{display:none}
