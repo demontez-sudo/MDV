@@ -14,10 +14,11 @@ var STEPS=[
   {k:'emailed_ma',label:'Emailed MA',stage:'contacted',tab:'outreach',icon:'ti-building'},
   {k:'call_scheduled',label:'Interest call scheduled',stage:'meeting_scheduled',tab:'call',icon:'ti-phone-call'},
   {k:'call_done',label:'Interest call done',stage:'meeting_scheduled',tab:'call',icon:'ti-circle-check'},
-  {k:'test',label:'Test / go-see',stage:'test_requested',tab:'deal',icon:'ti-camera'},
   {k:'offer',label:'Offer',stage:'offer',tab:'deal',icon:'ti-file-description'},
   {k:'contract',label:'Contract sent',stage:'contract_sent',tab:'deal',icon:'ti-signature'},
-  {k:'signed',label:'Signed',stage:'signed',tab:'deal',icon:'ti-rosette-discount-check'}
+  {k:'signed',label:'Signed',stage:'signed',tab:'deal',icon:'ti-rosette-discount-check'},
+  /* the test / go-see happens once the contract is signed (it keeps the Signed stage in the database) */
+  {k:'test',label:'Test / go-see',stage:'signed',tab:'deal',icon:'ti-camera'}
 ];
 var IDX={};STEPS.forEach(function(s,i){IDX[s.k]=i;});
 var TERMINAL={development:'Transferred',roster:'Transferred',declined:'Declined'};
@@ -128,11 +129,13 @@ function isMinor(p){var a=ageOf(p);return a!=null&&a<18;}
 function stepOf(p){
   var st=String(p.stage||'new_lead');
   if(TERMINAL[st])return st==='declined'?'declined':'transferred';
+  if(st==='test_requested')return 'call_done';   /* older records that were put at "test" before the contract step */
   var s=scoutOf(p).step;
   if(s&&IDX[s]!=null&&STEPS[IDX[s]].stage===st)return s;
   for(var i=0;i<STEPS.length;i++)if(STEPS[i].stage===st)return STEPS[i].k;
   return 'scouted';
 }
+function isSigned(k){return IDX[k]!=null&&IDX[k]>=IDX.signed;}
 function stepLabel(k){return k==='transferred'?'Transferred':k==='declined'?'Declined':(STEPS[IDX[k]]||{}).label||k;}
 function avg(list){var n=list.filter(function(x){return typeof x==='number'&&x>0;});return n.length?Math.round(n.reduce(function(a,b){return a+b;},0)/n.length*10)/10:null;}
 function scores(sc){
@@ -165,10 +168,10 @@ function nextAction(p){
     return {t:'Call '+fmt(c.scheduled_at,true),c:'muted'};
   }
   if(k==='call_done'){var rec=c.wrap&&c.wrap.recommendation;return rec?{t:rec,c:/pass/i.test(rec)?'muted':'go'}:{t:'Add recommendation',c:'warn'};}
-  if(k==='test')return {t:'Review test',c:'go'};
+  if(k==='test')return {t:'Test / go-see in progress',c:'go'};
   if(k==='offer')return {t:'Send offer',c:'go'};
   if(k==='contract')return {t:'Chase signature',c:'warn'};
-  if(k==='signed')return {t:'Merge into model profile',c:'go'};
+  if(k==='signed')return {t:'Book the test or merge into profile',c:'go'};
   return {t:'',c:'muted'};
 }
 function quiet(p){var d=days(p.updated_at);return d!=null&&d>=10&&!TERMINAL[p.stage]&&p.stage!=='signed';}
@@ -542,14 +545,15 @@ function dealHtml(p){
       +sel('offer.division_id','Division',[['','Use scouting division']].concat(arr(l.divisions).map(function(x){return [x.id,x.name];})),of.division_id||p.target_division_id)
       +sel('offer.board_id','Board',[['','Use scouting board']].concat(arr(l.boards).map(function(x){return [x.id,x.name];})),of.board_id||(p.metadata&&p.metadata.preferred_board_id))
       +sel('offer.model_stage','Starts as',[['development','Development'],['new_face','New face'],['main_board','Main board']],of.model_stage||'development')+'</div>'
-      +'<div class="sr-actions"><button type="button" class="sr-btn gold" data-do="merge"'+(k==='signed'?'':' title="Available once they are marked Signed"')+'>'+(k==='signed'?'Create the model profile →':'Mark as signed first')+'</button></div>')+'</section>';
-  return '<section class="sr-sec"><h3>Test / go-see</h3><div class="sr-grid"><label><span>Date</span><input type="date" data-p="test.date" value="'+esc(t.date||'')+'"></label><label><span>Where / who</span><input data-p="test.where" value="'+esc(t.where||'')+'" placeholder="Studio, photographer…"></label>'
+      +'<div class="sr-actions"><button type="button" class="sr-btn gold" data-do="merge"'+(isSigned(k)?'':' title="Available once they are marked Signed"')+'>'+(isSigned(k)?'Create the model profile →':'Mark as signed first')+'</button></div>')+'</section>';
+  var testSec='<section class="sr-sec"><h3>Test / go-see <em class="sr-tag">after the contract is signed</em></h3><div class="sr-grid"><label><span>Date</span><input type="date" data-p="test.date" value="'+esc(t.date||'')+'"></label><label><span>Where / who</span><input data-p="test.where" value="'+esc(t.where||'')+'" placeholder="Studio, photographer…"></label>'
     +sel('test.result','Result',[['','Not yet'],['Strong','Strong'],['Promising','Promising'],['Needs work','Needs work'],['Pass','Pass']],t.result)
-    +'<label class="wide"><span>Notes</span><input data-p="test.notes" value="'+esc(t.notes||'')+'"></label></div></section>'
+    +'<label class="wide"><span>Notes</span><input data-p="test.notes" value="'+esc(t.notes||'')+'"></label></div></section>';
+  return ''
     +'<section class="sr-sec"><h3>Offer</h3><div class="sr-grid"><label><span>Offered on</span><input type="date" data-p="offer.offered_at" value="'+esc(of.offered_at||'')+'"></label><label><span>Commission %</span><input data-p="offer.commission" value="'+esc(of.commission||'')+'"></label>'
     +'<label><span>Term</span><input data-p="offer.term" value="'+esc(of.term||'')+'" placeholder="e.g. 3 years, exclusive in US"></label>'+sel('offer.response','Their answer',[['','Waiting'],['Accepted','Accepted'],['Negotiating','Negotiating'],['Declined','Declined']],of.response)
     +'<label class="wide"><span>Terms / notes</span><input data-p="offer.notes" value="'+esc(of.notes||'')+'"></label></div></section>'
-    +contractHtml(p)+merge;
+    +contractHtml(p)+testSec+merge;
 }
 function contractHtml(p){
   var ct=R.sc.contract||{},rec=contractRec(),docs=rec?(window.MDV_CONTRACTS?MDV_CONTRACTS.docsOf(rec):[]):[],sig=sigReq();
@@ -564,7 +568,7 @@ function contractHtml(p){
   h+='<div class="sr-actions"><label class="sr-btn">'+(docs.length?'Replace PDF':'Upload contract PDF')+'<input type="file" id="sr-pdf" accept="application/pdf,.pdf" hidden></label>'
     +'<button type="button" class="sr-btn gold" data-do="send_sign">'+(sig&&!allSigned?'Resend for e-signature':'Send for e-signature')+'</button>'
     +(ct.contract_id?'<button type="button" class="sr-btn" data-do="refresh_sign">Refresh status</button>':'')
-    +(allSigned&&stepOf(p)!=='signed'?'<button type="button" class="sr-btn gold" data-do="mark_signed">Mark as signed →</button>':'')+'</div></section>';
+    +(allSigned&&!isSigned(stepOf(p))?'<button type="button" class="sr-btn gold" data-do="mark_signed">Mark as signed →</button>':'')+'</div></section>';
   return h;
 }
 async function ensureContract(p){
@@ -713,7 +717,7 @@ async function doAction(a,btn){
     }else if(a==='open_call'){
       openCall();
     }else if(a==='merge'){
-      if(stepOf(p)!=='signed'){await moveTo('signed',{note:'Signed'});p=byId(R.id);}
+      if(!isSigned(stepOf(p))){await moveTo('signed',{note:'Signed'});p=byId(R.id);}
       await flush();
       var of=R.sc.offer||{};
       var res=await post({action:'convert_to_model',prospect_id:p.id,market_id:of.market_id||null,division_id:of.division_id||null,board_id:of.board_id||null,model_stage:of.model_stage||'development'});
