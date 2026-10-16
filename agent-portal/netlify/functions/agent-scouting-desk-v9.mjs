@@ -104,7 +104,7 @@ export const handler=async(event)=>{
         if(!mm)return json(404,{error:'Model not found'});
         const incoming=body.measurements&&typeof body.measurements==='object'?body.measurements:{};
         const numKeys=['height_cm','bust_cm','chest_cm','waist_cm','hips_cm'],textKeys=['height_display','bust_display','chest_display','waist_display','hips_display','dress','suit','shoe','hair','eyes','skin'];
-        const want={};for(const k of numKeys){const v=num(incoming[k]);if(v!==null)want[k]=v;}for(const k of textKeys){const v=clean(incoming[k]);if(v)want[k]=String(v).slice(0,40);}
+        const want={};for(const k of numKeys){const v=num(incoming[k]);if(v!==null)want[k]=v;}for(const k of textKeys){const v=clean(incoming[k]);if(v)want[k]=String(v).slice(0,40);}{const nt=clean(incoming.notes);if(nt)want.notes=String(nt).slice(0,480);}
         const existing=await one(admin.from('model_measurements').select('*').eq('organization_id',organization.id).eq('model_id',body.model_id).maybeSingle());
         const patch={};for(const [k,v] of Object.entries(want)){if(existing?.[k]==null||existing[k]==='')patch[k]=v;}
         let measured=[];

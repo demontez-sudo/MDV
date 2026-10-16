@@ -57,7 +57,11 @@ var POSE_R=[['stance','Neutral stance'],['hands','Hand & arm placement'],['angle
 var POSES=[['neutral','Neutral stand'],['three','3/4 turn'],['profile','Profile'],['hands','Hands in pockets / on hips'],['seated','Seated'],['editorial','Editorial mood'],['commercial','Commercial / smiling']];
 var DIGITALS=[['front','Full length front'],['side','Full length side'],['back','Full length back'],['close','Close-up, no makeup'],['three','3/4 portrait'],['profile','Profile']];
 var WRAP_R=[['look','Look & market fit'],['comm','Communication'],['prof','Professionalism'],['coach','Coachability']];
-var MEASURE=[['height_cm','Height (cm)'],['bust_cm','Bust / chest (cm)'],['waist_cm','Waist (cm)'],['hips_cm','Hips (cm)'],['shoe','Shoe'],['dress','Dress / suit'],['hair','Hair'],['eyes','Eyes'],['skin','Skin'],['marks','Tattoos / piercings']];
+/* Full measurements. Stored once on the record (profile.measurements) and shared by the Profile tab, the interest call and the merge into the model profile. */
+var MEAS_CORE=[['height','Height','len'],['bust_chest','Bust / chest','len'],['waist','Waist','len'],['hips','Hips','len'],['inseam','Inseam','len'],['neck','Neck','len'],['sleeve','Sleeve','len'],['shoulder','Shoulder width','len']];
+var MEAS_SIZE=[['dress','Dress size',''],['suit','Suit / jacket',''],['shoe','Shoe size',''],['cup','Cup / bra',''],['collar','Collar','']];
+var MEAS_LOOK=[['hair','Hair colour',''],['hair_length','Hair length',''],['eyes','Eye colour',''],['skin','Skin tone',''],['marks','Tattoos / piercings / scars','']];
+var MEASURE=MEAS_CORE.concat(MEAS_SIZE,MEAS_LOOK);
 var RECS=['','Advance to test','Develop first','Hold','Pass'];
 
 var R={legal:null,legalAt:0,data:null,view:'board',q:'',flt:'all',id:null,tab:'profile',sc:null,dirty:{},timer:null,saving:false,saved:false,call:{i:0},busy:false};
@@ -84,6 +88,38 @@ function scoutOf(p){return (p&&p.metadata&&p.metadata.scout)||{};}
 function clone(o){try{return JSON.parse(JSON.stringify(o||{}));}catch(e){return {};}}
 function getPath(o,path){return path.split('.').reduce(function(a,k){return a==null?undefined:a[k];},o);}
 function setPath(o,path,v){var ks=path.split('.'),a=o;for(var i=0;i<ks.length-1;i++){if(a[ks[i]]==null||typeof a[ks[i]]!=='object')a[ks[i]]={};a=a[ks[i]];}a[ks[ks.length-1]]=v;}
+/* ---- measurements ---- */
+function num(v){var m=String(v==null?'':v).replace(',','.').match(/-?\d+(\.\d+)?/);return m?Number(m[0]):null;}
+function toCm(v,units){
+  var t=String(v==null?'':v).trim();if(!t)return null;
+  var ft=t.match(/(\d+)\s*(?:'|′|ft|feet|foot)\s*(\d+(?:\.\d+)?)?/i);
+  if(ft)return Math.round((Number(ft[1])*12+Number(ft[2]||0))*2.54*10)/10;
+  var n=num(t);if(n==null)return null;
+  if(/cm/i.test(t))return n;
+  if(/\bin\b|inch|"|″/i.test(t))return Math.round(n*2.54*10)/10;
+  return units==='in'?Math.round(n*2.54*10)/10:n;
+}
+function convText(v,units){
+  var cm=toCm(v,units);if(cm==null||cm<=0)return '';
+  if(units==='in'){return cm.toFixed(1).replace(/\.0$/,'')+' cm';}
+  var totalIn=cm/2.54,ft=Math.floor(totalIn/12),inch=Math.round((totalIn-ft*12)*10)/10;
+  return (cm>=120?ft+'\u2032'+String(inch).replace(/\.0$/,'')+'\u2033 · ':'')+(Math.round(totalIn*10)/10)+' in';
+}
+function measOf(p){
+  var sc=R.sc||{},pf=sc.profile||{},own=pf.measurements,c=(sc.call||{}).measurements||{};
+  var app=(p.metadata&&p.metadata.application)||{},am=app.measurements||{};
+  if(own&&typeof own==='object')return own;
+  /* first time: bring over what they put on the application and anything entered on the old call form */
+  var m={units:app.units==='in'||app.units==='imperial'?'in':'cm'};
+  var map={height:am.height,bust_chest:am.bust_chest,waist:am.waist,hips:am.hips,shoe:am.shoe,dress:am.dress_suit,cup:am.cup,hair:am.hair,eyes:am.eyes};
+  Object.keys(map).forEach(function(k){if(map[k])m[k]=map[k];});
+  var legacy={height:c.height_cm,bust_chest:c.bust_cm,waist:c.waist_cm,hips:c.hips_cm,shoe:c.shoe,dress:c.dress,hair:c.hair,eyes:c.eyes,skin:c.skin,marks:c.marks};
+  Object.keys(legacy).forEach(function(k){if(legacy[k]&&!m[k])m[k]=legacy[k];});
+  if(!m.height&&p.height_display)m.height=p.height_display;
+  if(c.how)m.how=c.how;
+  m.__seeded=Object.keys(am).length?'application':'';
+  return m;
+}
 function ageOf(p){
   if(p.date_of_birth){var d=new Date(p.date_of_birth);if(!isNaN(d)){var n=new Date(),a=n.getFullYear()-d.getFullYear();if(n<new Date(n.getFullYear(),d.getMonth(),d.getDate()))a--;return a;}}
   return p.age_reported!=null?Number(p.age_reported):null;
@@ -107,7 +143,7 @@ function scores(sc){
 function answeredCount(sc){
   var c=(sc&&sc.call)||{},a=c.answers||{},n=0,t=0;
   CALL.forEach(function(s){arr(s.qs).forEach(function(q){t++;if(a[q.k]!=null&&String(a[q.k]).trim()!==''&&a[q.k]!==0)n++;});});
-  var m=c.measurements||{};MEASURE.forEach(function(x){t++;if(m[x[0]])n++;});
+  var m=measOf(R.id?byId(R.id)||{}:{});['height','bust_chest','waist','hips','shoe'].forEach(function(k){t++;if(m[k])n++;});
   var sc2=scores(sc);[sc2.walk,sc2.pose,sc2.wrap].forEach(function(x){t++;if(x)n++;});
   return {done:n,total:t};
 }
@@ -295,7 +331,26 @@ function profileHtml(p){
     +'<label><span>Languages</span><input data-p="profile.languages" value="'+esc(pr.languages||'')+'" placeholder="English, French…"></label>'
     +'<label><span>Referred by</span><input data-p="profile.referred_by" value="'+esc(pr.referred_by||'')+'"></label>'
     +'</div><div class="sr-actions"><button type="button" class="sr-btn gold" data-do="save_profile">Save details</button></div>'
+    +measureHtml(p)
     +photosHtml(p);
+}
+function measFieldHtml(f,m,u){
+  var v=m[f[0]]||'',conv=f[2]==='len'?convText(v,u):'';
+  var ph=f[2]==='len'?(u==='in'?'in':'cm'):'';
+  return '<label><span>'+esc(f[1])+(f[2]==='len'?' <i>('+u+')</i>':'')+'</span><input data-p="profile.measurements.'+f[0]+'" data-meas="'+(f[2]||'')+'" value="'+esc(v)+'"'+(ph?' placeholder="'+ph+'"':'')+' autocomplete="off"'+(f[2]==='len'?' inputmode="decimal"':'')+'>'+(f[2]==='len'?'<small class="sr-conv">'+esc(conv)+'</small>':'')+'</label>';
+}
+function measureHtml(p,compact){
+  var m=measOf(p),u=m.units==='in'?'in':'cm';
+  var h='<section class="sr-sec sr-meas"><h3>Measurements'+(m.__seeded==='application'&&!(R.sc.profile||{}).measurements?' <em class="sr-tag">filled from their application</em>':'')+'</h3>'
+   +'<div class="sr-grid"><label><span>Units for lengths</span><select data-p="profile.measurements.units"><option value="cm"'+(u==='cm'?' selected':'')+'>Centimetres (cm)</option><option value="in"'+(u==='in'?' selected':'')+'>Inches (in)</option></select></label>'
+   +'<label><span>How were these taken?</span><select data-p="profile.measurements.how"><option value=""></option>'+['Stated by model','Measured on video','Measured in person'].map(function(o){return '<option'+(m.how===o?' selected':'')+'>'+o+'</option>';}).join('')+'</select></label></div>'
+   +'<h4>Body</h4><div class="sr-grid sr-g3">'+MEAS_CORE.map(function(f){return measFieldHtml(f,m,u);}).join('')+'</div>'
+   +'<h4>Sizes</h4><div class="sr-grid sr-g3">'+MEAS_SIZE.map(function(f){return measFieldHtml(f,m,u);}).join('')
+   +'<label><span>Shoe system</span><select data-p="profile.measurements.shoe_sys"><option value=""></option>'+['US','EU','UK'].map(function(o){return '<option'+(m.shoe_sys===o?' selected':'')+'>'+o+'</option>';}).join('')+'</select></label></div>'
+   +'<h4>Look</h4><div class="sr-grid sr-g3">'+MEAS_LOOK.map(function(f){return measFieldHtml(f,m,u);}).join('')+'</div>'
+   +'<div class="sr-grid"><label><span>Measured on</span><input type="date" data-p="profile.measurements.measured_on" value="'+esc(m.measured_on||'')+'"></label><label><span>Measurement notes</span><input data-p="profile.measurements.notes" value="'+esc(m.notes||'')+'" placeholder="e.g. measured over light clothing"></label></div>'
+   +'<p class="sr-hint">Everything here carries over to the model profile when they sign. Lengths are saved in your chosen units and converted to cm for the profile.</p></section>';
+  return h;
 }
 function photosHtml(p){
   var m=arr(p.scouting_media);
@@ -369,8 +424,7 @@ function sectionBody(sec,p){
     var qs=sec.qs;
     h+='<div class="sr-grid">'+qs.map(function(q){return qHtml(q,a);}).join('')+(sec.id==='logi'&&isMinor(p)?'<label class="wide chk"><input type="checkbox" data-p="profile.guardian_consent"'+((R.sc.profile||{}).guardian_consent?' checked':'')+'> Guardian knows about this call and agrees</label>':'')+'</div>';
   }else if(sec.measure){
-    var m=c.measurements||{};
-    h+='<div class="sr-grid">'+MEASURE.map(function(x){return '<label><span>'+esc(x[1])+'</span><input data-p="call.measurements.'+x[0]+'" value="'+esc(m[x[0]]||'')+'"'+(x[0]==='height_cm'&&p.height_cm?' placeholder="'+esc(p.height_cm)+'"':'')+'></label>';}).join('')+'<label><span>Stated or measured?</span><select data-p="call.measurements.how"><option value="">—</option>'+['Stated by model','Measured on video','Measured in person'].map(function(o){return '<option'+(m.how===o?' selected':'')+'>'+o+'</option>';}).join('')+'</select></label></div>';
+    h+=measureHtml(p,true);
   }else if(sec.walk){
     var w=c.walk||{},r=w.ratings||{};
     h+='<div class="sr-rates">'+WALK_R.map(function(x){return ratingRow('call.walk.ratings.'+x[0],x[1],r[x[0]]);}).join('')+'</div>'
@@ -429,10 +483,27 @@ async function completeCall(){
 }
 
 /* --- deal: test → offer → contract → merge --- */
+function measurementsForModel(p){
+  var m=measOf(p),u=m.units==='in'?'in':'cm',men=/^m(en|ale)?$/i.test(String((p.metadata&&p.metadata.application&&p.metadata.application.gender)||'')),out={};
+  var cm=function(k){var v=toCm(m[k],u);return v==null?null:v;};
+  var h=cm('height');if(h)out.height_cm=h;else if(p.height_cm)out.height_cm=p.height_cm;
+  if(m.height)out.height_display=String(m.height);else if(p.height_display)out.height_display=p.height_display;
+  var bc=cm('bust_chest');if(bc)out[men?'chest_cm':'bust_cm']=bc;
+  var w=cm('waist');if(w)out.waist_cm=w;var hp=cm('hips');if(hp)out.hips_cm=hp;
+  if(m.dress)out.dress=String(m.dress);if(m.suit)out.suit=String(m.suit);
+  if(m.shoe)out.shoe=String(m.shoe)+(m.shoe_sys&&!/[a-z]/i.test(String(m.shoe))?' '+m.shoe_sys:'');
+  if(m.hair)out.hair=String(m.hair);if(m.eyes)out.eyes=String(m.eyes);if(m.skin)out.skin=String(m.skin);
+  var extra=[];
+  [['cup','Cup'],['inseam','Inseam'],['neck','Neck'],['sleeve','Sleeve'],['shoulder','Shoulder'],['collar','Collar'],['hair_length','Hair length'],['marks','Marks']].forEach(function(x){if(m[x[0]])extra.push(x[1]+': '+m[x[0]]+(['inseam','neck','sleeve','shoulder'].indexOf(x[0])>-1&&!/[a-z]/i.test(String(m[x[0]]))?' '+u:''));});
+  if(m.notes)extra.push(m.notes);
+  if(extra.length)out.notes=('From scouting'+(m.how?' ('+m.how.toLowerCase()+')':'')+': '+extra.join(' · ')).slice(0,480);
+  return out;
+}
 function summaryNote(p){
   var sc=R.sc,c=sc.call||{},a=c.answers||{},s=scores(sc),lines=[];
   lines.push('SCOUTING SUMMARY · '+p.display_name);
   lines.push('Found: '+(p.source||'—')+(p.created_at?' · '+fmt(p.created_at):''));
+  var mm0=measOf(p);if(mm0.height||mm0.waist||mm0.hips)lines.push('Measurements ('+(mm0.units==='in'?'in':'cm')+'): '+MEASURE.filter(function(x){return mm0[x[0]];}).slice(0,12).map(function(x){return x[1]+' '+mm0[x[0]];}).join(', '));
   var o=sc.outreach||{};if(o.ma&&(o.ma.name||o.ma.agency))lines.push('Mother agent: '+[o.ma.name,o.ma.agency].filter(Boolean).join(' · ')+(o.ma.status?' ('+o.ma.status+')':''));
   if(c.completed_at||c.scheduled_at)lines.push('Interest call: '+fmt(c.completed_at||c.scheduled_at)+(c.wrap&&c.wrap.recommendation?' · '+c.wrap.recommendation:'')+(s.overall?' · overall '+s.overall+'/5':''));
   CALL.forEach(function(sec){arr(sec.qs).forEach(function(q){var v=a[q.k];if(v!=null&&String(v).trim()&&q.t!=='rate')lines.push(q.l+': '+v);});});
@@ -445,11 +516,11 @@ function dealHtml(p){
   var t=R.sc.test||{},of=R.sc.offer||{},ct=R.sc.contract||{},l=lookups(),k=stepOf(p),c=R.sc.call||{};
   function sel(path,label,opts,val){return '<label><span>'+esc(label)+'</span><select data-p="'+path+'">'+opts.map(function(o){return '<option value="'+esc(o[0])+'"'+(String(o[0])===String(val||'')?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>';}
   var merged=p.converted_model_id||(R.sc.linked&&R.sc.linked.model_id);
-  var mm=c.measurements||{},fill=MEASURE.filter(function(x){return mm[x[0]]&&x[0]!=='marks';});
+  var mm=measOf(p),u2=mm.units==='in'?'in':'cm',fill=MEASURE.filter(function(x){return mm[x[0]]&&x[0]!=='marks';});
   var merge='<section class="sr-sec merge"><h3>Merge into the model profile</h3>'
     +(merged?'<p class="sr-ok">✓ Connected to the model profile'+(R.sc.linked&&R.sc.linked.at?' on '+fmt(R.sc.linked.at):'')+'. '+(R.sc.linked&&arr(R.sc.linked.measurements).length?'Measurements filled: '+esc(R.sc.linked.measurements.join(', '))+'. ':'')+(R.sc.linked&&R.sc.linked.note?'Scouting summary pinned as a note.':'')+'</p><div class="sr-actions"><button type="button" class="sr-btn gold" data-do="open_model">Open Model 360 →</button></div>'
      :'<p class="sr-hint">When they sign, everything below carries over to the new model profile. Nothing is typed twice.</p>'
-      +'<ul class="sr-mapl"><li><b>Contact</b> '+esc([p.email,p.phone].filter(Boolean).join(' · ')||'—')+'</li><li><b>Social</b> '+esc([p.instagram,p.tiktok].filter(Boolean).join(' · ')||'—')+'</li><li><b>Measurements</b> '+(fill.length?fill.map(function(x){return esc(x[1]+': '+mm[x[0]]);}).join(' · '):(p.height_display?esc('Height: '+p.height_display):'—'))+'</li><li><b>Photos</b> '+arr(p.scouting_media).length+' scouting image'+(arr(p.scouting_media).length===1?'':'s')+'</li><li><b>Scouting summary</b> pinned to the profile as an internal note</li></ul>'
+      +'<ul class="sr-mapl"><li><b>Contact</b> '+esc([p.email,p.phone].filter(Boolean).join(' · ')||'—')+'</li><li><b>Social</b> '+esc([p.instagram,p.tiktok].filter(Boolean).join(' · ')||'—')+'</li><li><b>Measurements</b> '+(fill.length?fill.slice(0,9).map(function(x){return esc(x[1]+': '+mm[x[0]]+(x[2]==='len'&&!/[a-z\u2032\u2033'"]/i.test(String(mm[x[0]]))?' '+u2:''));}).join(' · '):(p.height_display?esc('Height: '+p.height_display):'—'))+'</li><li><b>Photos</b> '+arr(p.scouting_media).length+' scouting image'+(arr(p.scouting_media).length===1?'':'s')+'</li><li><b>Scouting summary</b> pinned to the profile as an internal note</li></ul>'
       +'<div class="sr-grid">'+sel('offer.market_id','Market',[['','Use scouting market']].concat(arr(l.markets).map(function(x){return [x.id,x.name];})),of.market_id||p.target_market_id)
       +sel('offer.division_id','Division',[['','Use scouting division']].concat(arr(l.divisions).map(function(x){return [x.id,x.name];})),of.division_id||p.target_division_id)
       +sel('offer.board_id','Board',[['','Use scouting board']].concat(arr(l.boards).map(function(x){return [x.id,x.name];})),of.board_id||(p.metadata&&p.metadata.preferred_board_id))
@@ -497,15 +568,23 @@ function timelineHtml(p){
 }
 
 /* ---------- wiring inside the record ---------- */
+function ensureMeas(){
+  if(!R.id)return;var pp=byId(R.id);if(!pp)return;
+  if(!R.sc.profile)R.sc.profile={};
+  if(!R.sc.profile.measurements){var b=Object.assign({},measOf(pp));delete b.__seeded;R.sc.profile.measurements=b;}
+}
 function wireInputs(root){
   root.querySelectorAll('[data-p]').forEach(function(inp){
     var path=inp.dataset.p;
     var handler=function(){
+      if(/^profile\.measurements\./.test(path))ensureMeas();
       var v=inp.type==='checkbox'?inp.checked:inp.value;
       if(inp.dataset.iso){setPath(R.sc,inp.dataset.iso,v?new Date(v).toISOString():null);}
       else setPath(R.sc,path,v);
       markDirty(path);
     };
+    if(inp.dataset.meas==='len'){inp.addEventListener('input',function(){var u=(getPath(R.sc,'profile.measurements.units')||(measOf(byId(R.id)||{}).units)||'cm'),sm=inp.parentNode.querySelector('.sr-conv');if(sm)sm.textContent=convText(inp.value,u);});}
+    if(path==='profile.measurements.units'){inp.addEventListener('change',function(){if(document.getElementById('sr-call'))paintCall();else paintRecord();});}
     inp.addEventListener(inp.tagName==='SELECT'||inp.type==='checkbox'||inp.type==='date'||inp.type==='datetime-local'?'change':'input',handler);
   });
   root.querySelectorAll('[data-rate]').forEach(function(b){b.onclick=function(){
@@ -618,12 +697,7 @@ async function doAction(a,btn){
       var of=R.sc.offer||{};
       var res=await post({action:'convert_to_model',prospect_id:p.id,market_id:of.market_id||null,division_id:of.division_id||null,board_id:of.board_id||null,model_stage:of.model_stage||'development'});
       if(!res||res.verified!==true)throw new Error('The transfer was not confirmed.');
-      var mm=Object.assign({},(R.sc.call||{}).measurements||{});delete mm.marks;delete mm.how;
-      var meas={};
-      ['height_cm','bust_cm','waist_cm','hips_cm','shoe','dress','hair','eyes','skin'].forEach(function(k){if(mm[k])meas[k]=mm[k];});
-      if(mm.dress)meas.dress=mm.dress;
-      if(p.height_display)meas.height_display=p.height_display;
-      if(p.height_cm&&!meas.height_cm)meas.height_cm=p.height_cm;
+      var meas=measurementsForModel(p);
       var link=await post({action:'link_to_model',prospect_id:p.id,model_id:res.model_id||(res.model&&res.model.id),measurements:meas,note:summaryNote(p)});
       await addLog('Merged into the model profile','step');
       await load();R.sc=clone(scoutOf(byId(p.id)));paintPage();paintRecord();

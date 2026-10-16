@@ -92,3 +92,10 @@
 .sr-doc{margin:0;font-size:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.sr-link{border:0;background:none;color:var(--g);cursor:pointer;font-size:13px;padding:0;text-decoration:underline}
 .sr-signers{display:flex;gap:8px;flex-wrap:wrap}.sr-sg{font-size:12px;border:1px solid var(--l2);border-radius:999px;padding:3px 10px;color:var(--mute)}.sr-sg.ok{border-color:#6fa58a;color:#8fc4a8}.sr-sg.bad{border-color:#d68a5c;color:#e5a07a}
 label.sr-btn{display:inline-block;cursor:pointer}
+
+.sr-g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.sr-meas h4{margin:4px 0 0}
+.sr-meas label>span i{font-style:normal;text-transform:none;letter-spacing:0;opacity:.7}
+.sr-conv{font-size:11.5px;color:var(--mute);min-height:14px}
+.sr-tag{font-style:normal;font-weight:400;font-size:11.5px;color:var(--g);border:1px solid var(--g);border-radius:999px;padding:1px 8px;margin-left:8px}
+@media(max-width:700px){.sr-g3{grid-template-columns:repeat(2,minmax(0,1fr))}}
