@@ -585,7 +585,7 @@
         <div class="f-row">
           <div class="f-group"><label class="f-label" for="f_dob">Date of birth *</label><input class="f-input" id="f_dob" type="date" name="dob" autocomplete="bday" required onchange="updateScoutAge()"></div>
           <div class="f-group"><label class="f-label" for="scoutGender">Gender *</label>
-            <select class="f-select" name="gender" id="scoutGender" required onchange="updateScoutBoards()">
+            <select class="f-select" name="gender" id="scoutGender" required>
               <option value="">Select one</option><option value="Women">Women</option><option value="Men">Men</option>
             </select></div>
         </div>
@@ -593,23 +593,6 @@
           <div class="f-group"><label class="f-label" for="f_ig">Instagram</label><input class="f-input" id="f_ig" type="text" name="instagram" placeholder="@handle"></div>
           <div class="f-group"><label class="f-label" for="f_tt">TikTok</label><input class="f-input" id="f_tt" type="text" name="tiktok" placeholder="@handle"></div>
         </div>
-        <div class="f-row">
-          <div class="f-group"><label class="f-label" for="f_foll">Followers (approximate)</label><input class="f-input" id="f_foll" type="text" name="followers" placeholder="e.g. 4,500"></div>
-          <div class="f-group"></div>
-        </div>
-
-        <div class="f-row">
-          <div class="f-group full"><label class="f-label" for="f_addr">Street address</label><input class="f-input" id="f_addr" type="text" name="address" autocomplete="street-address"></div>
-        </div>
-        <div class="f-row">
-          <div class="f-group"><label class="f-label" for="f_city">City *</label><input class="f-input" id="f_city" type="text" name="city" autocomplete="address-level2" required></div>
-          <div class="f-group"><label class="f-label" for="f_state">State / region</label><input class="f-input" id="f_state" type="text" name="state" autocomplete="address-level1"></div>
-        </div>
-        <div class="f-row">
-          <div class="f-group"><label class="f-label" for="f_country">Country *</label><input class="f-input" id="f_country" type="text" name="country" autocomplete="country-name" required></div>
-          <div class="f-group"><label class="f-label" for="f_zip">Zip / postal code</label><input class="f-input" id="f_zip" type="text" name="postal_code" autocomplete="postal-code"></div>
-        </div>
-
         <div class="f-row">
           <div class="f-group full">
             <span class="f-label">Which office(s) are you interested in?</span>
@@ -619,12 +602,6 @@
             </div>
           </div>
         </div>
-        <div class="f-row">
-          <div class="f-group"><label class="f-label" for="scoutBoard">Board interest</label>
-            <select class="f-select" name="board" id="scoutBoard" disabled><option value="">Select gender first</option></select></div>
-          <div class="f-group"></div>
-        </div>
-
         <div class="f-box" id="guardianBox">
           <div class="f-box-title">Parent or guardian</div>
           <p>Because you are under 18, we need a parent or legal guardian's details and consent before we can review your application.</p>
@@ -642,46 +619,7 @@
 
       <!-- 2 -->
       <div class="f-sec">
-        <div class="f-sec-no">02 &mdash; Your story</div>
-        <h2 class="f-sec-title">Tell us more</h2>
-        <p class="f-sec-sub">There are no wrong answers. We would like to know who you are and where you want to go.</p>
-
-        <div class="f-row">
-          <div class="f-group full"><label class="f-label" for="f_story">Briefly tell us about yourself. Where are you from? *</label>
-            <textarea class="f-textarea" id="f_story" name="story" rows="4" required placeholder="A few sentences is plenty."></textarea></div>
-        </div>
-        <div class="f-row">
-          <div class="f-group full"><label class="f-label" for="f_goals">What are your goals in modeling?</label>
-            <textarea class="f-textarea" id="f_goals" name="goals" rows="3" placeholder="Runway, editorial, commercial, building a career, trying it out&hellip;"></textarea></div>
-        </div>
-        <div class="f-row">
-          <div class="f-group full">
-            <span class="f-label">Do you already have representation? *</span>
-            <div class="f-pills">
-              <label class="f-pill"><input type="radio" name="represented" value="no" onchange="toggleRep()"><span>No</span></label>
-              <label class="f-pill"><input type="radio" name="represented" value="yes" onchange="toggleRep()"><span>Yes</span></label>
-            </div>
-          </div>
-        </div>
-        <div class="f-box" id="repBox">
-          <div class="f-row" style="margin-bottom:0">
-            <div class="f-group"><label class="f-label" for="f_repag">Agency / mother agency</label><input class="f-input" id="f_repag" type="text" name="represented_agency"></div>
-            <div class="f-group"><label class="f-label" for="f_repn">Contract status</label><input class="f-input" id="f_repn" type="text" name="represented_notes" placeholder="e.g. non-exclusive, expires 2027"></div>
-          </div>
-        </div>
-        <div class="f-row three">
-          <div class="f-group"><label class="f-label" for="f_exp">Experience</label>
-            <select class="f-select" id="f_exp" name="experience"><option value="">Select</option><option>None yet</option><option>Some (tests, local work)</option><option>Professional (agency or paid work)</option></select></div>
-          <div class="f-group"><label class="f-label" for="f_trav">Open to travel</label>
-            <select class="f-select" id="f_trav" name="travel"><option value="">Select</option><option>Yes</option><option>Maybe</option><option>No</option></select></div>
-          <div class="f-group"><label class="f-label" for="f_pass">Passport</label>
-            <select class="f-select" id="f_pass" name="passport"><option value="">Select</option><option>Valid passport</option><option>Applying</option><option>None</option></select></div>
-        </div>
-      </div>
-
-      <!-- 3 -->
-      <div class="f-sec">
-        <div class="f-sec-no">03 &mdash; Measurements</div>
+        <div class="f-sec-no">02 &mdash; Measurements</div>
         <h2 class="f-sec-title">Your measurements</h2>
         <p class="f-sec-sub">For the most accurate numbers, wear fitted clothing and have someone you are comfortable with measure you using a soft measuring tape. Chest or bust: around the fullest part. Waist: about an inch above your belly button. Hips: around the fullest part of your hips. Honest numbers are all we need.</p>
         <div class="f-row">
@@ -717,9 +655,9 @@
         </div>
       </div>
 
-      <!-- 4 -->
+      <!-- 3 -->
       <div class="f-sec">
-        <div class="f-sec-no">04 &mdash; Photos</div>
+        <div class="f-sec-no">03 &mdash; Photos</div>
         <h2 class="f-sec-title">Your photos</h2>
         <p class="f-sec-sub">Phone photos are perfect. Use natural light, a plain background and fitted clothing. No makeup, filters or editing. No sunglasses, hats or large accessories, and wear your hair back for the close-ups. We need the first two; the rest help us see you better.</p>
         <div class="ph-grid" id="photoGrid"></div>
@@ -754,12 +692,6 @@
   ];
   var photos={};
   function $(id){return document.getElementById(id);}
-  function updateScoutBoards(){
-    var gender=$('scoutGender').value,board=$('scoutBoard');
-    var choices=gender==='Women'?['Women','Development','Creator']:gender==='Men'?['Men','Creator']:[];
-    board.innerHTML=choices.length?'<option value="">Select one</option>'+choices.map(function(x){return '<option value="'+x+'">'+x+'</option>';}).join(''):'<option value="">Select gender first</option>';
-    board.disabled=!choices.length;
-  }
   function scoutAge(){
     var v=$('f_dob').value;if(!/^\d{4}-\d{2}-\d{2}$/.test(v))return null;
     var d=new Date(v+'T00:00:00'),n=new Date(),a=n.getFullYear()-d.getFullYear(),m=n.getMonth()-d.getMonth();
@@ -769,10 +701,6 @@
     var a=scoutAge(),minor=a!=null&&a<18;
     $('guardianBox').classList.toggle('show',minor);
     ['g_name','g_email'].forEach(function(id){$(id).required=minor;});
-  }
-  function toggleRep(){
-    var r=document.querySelector('input[name="represented"]:checked');
-    $('repBox').classList.toggle('show',!!r&&r.value==='yes');
   }
   function setUnits(){
     var cm=document.querySelector('input[name="units"]:checked').value==='cm';
@@ -829,7 +757,7 @@
   }
   function gather(form){
     var fd=new FormData(form),f={application_version:'2'};
-    ['first_name','last_name','email','phone','dob','gender','board','instagram','tiktok','followers','address','city','state','country','postal_code','story','goals','represented','represented_agency','represented_notes','experience','travel','passport','units','height','bust_chest','waist','hips','shoe','dress_suit','cup','hair','eyes','inseam','neck','sleeve','guardian_name','guardian_relationship','guardian_email','guardian_phone','website'].forEach(function(k){f[k]=String(fd.get(k)||'');});
+    ['first_name','last_name','email','phone','dob','gender','instagram','tiktok','units','height','bust_chest','waist','hips','shoe','dress_suit','cup','hair','eyes','inseam','neck','sleeve','guardian_name','guardian_relationship','guardian_email','guardian_phone','website'].forEach(function(k){f[k]=String(fd.get(k)||'');});
     f.offices=fd.getAll('offices').map(String);
     f.confirm=$('f_confirm').checked?'yes':'';
     f.guardian_consent=$('g_consent').checked?'yes':'';
@@ -840,7 +768,6 @@
     var form=e.target,btn=form.querySelector('.f-submit'),err=$('scoutErr');err.textContent='';
     try{
       if(!form.checkValidity()){form.reportValidity();return false;}
-      if(!document.querySelector('input[name="represented"]:checked'))throw new Error('Please tell us whether you already have representation.');
       var a=scoutAge();if(a==null||a<13)throw new Error('Please check your date of birth.');
       if(a<18&&!$('g_consent').checked)throw new Error('A parent or guardian must give consent for applicants under 18.');
       var need=PHOTO_SLOTS.filter(function(s){return s.req&&!photos[s.key];});

@@ -49,14 +49,13 @@ export function validateFields(fields){
   if(!['Women','Men'].includes(gender))throw bad('Select Women or Men for gender');
   const allowed=gender==='Women'?['Women','Development','Creator']:['Men','Creator'];
   if(board&&!allowed.includes(board))throw bad('Board selection does not match the selected gender');
-  if(!city||!country)throw bad('City and country are required');
   const units=fields.units==='cm'?'cm':'in';
   const m={height:clean(fields.height,40),bust_chest:clean(fields.bust_chest,20),waist:clean(fields.waist,20),hips:clean(fields.hips,20),shoe:clean(fields.shoe,20),dress_suit:clean(fields.dress_suit,20),cup:clean(fields.cup,10),hair:clean(fields.hair,40),eyes:clean(fields.eyes,40),inseam:clean(fields.inseam,20),neck:clean(fields.neck,20),sleeve:clean(fields.sleeve,20)};
   if(!m.height)throw bad('Height is required');
   if(!m.bust_chest||!m.waist||!m.hips)throw bad('Bust / chest, waist and hips are required');
-  const story=clean(fields.story,3000);if(story.length<20)throw bad('Tell us a little about yourself (a few sentences)');
+  /* city, address, story, goals, experience, representation, travel and passport are asked on the model call, not on the application */
+  const story=clean(fields.story,3000);
   const represented=yes(fields.represented)?'yes':(String(fields.represented||'')==='no'?'no':'');
-  if(!represented)throw bad('Tell us whether you already have representation');
   if(!yes(fields.confirm))throw bad('Please confirm the information and photos are your own');
   const offices=(Array.isArray(fields.offices)?fields.offices:String(fields.offices||'').split(',')).map(x=>clean(x,40)).filter(x=>OFFICES.includes(x)).filter((x,i,arr)=>arr.indexOf(x)===i);
   const guardian={name:clean(fields.guardian_name,160),relationship:clean(fields.guardian_relationship,60),email:clean(fields.guardian_email,240).toLowerCase(),phone:clean(fields.guardian_phone,80),consent:yes(fields.guardian_consent)};
@@ -70,8 +69,8 @@ export function validateFields(fields){
     story,goals:clean(fields.goals,2000),experience:clean(fields.experience,80),represented,represented_agency:clean(fields.represented_agency,160),represented_notes:clean(fields.represented_notes,500),
     travel:clean(fields.travel,40),passport:clean(fields.passport,40),guardian:age<18?guardian:null,confirmed:true,submitted_at:new Date().toISOString()};
   const meas=`height ${m.height}, bust/chest ${m.bust_chest}, waist ${m.waist}, hips ${m.hips}${m.shoe?`, shoe ${m.shoe}`:''}${m.dress_suit?`, size ${m.dress_suit}`:''}${m.cup?`, cup ${m.cup}`:''}${m.hair?`, hair ${m.hair}`:''}${m.eyes?`, eyes ${m.eyes}`:''}${m.inseam?`, inseam ${m.inseam}`:''}${m.neck?`, neck ${m.neck}`:''}${m.sleeve?`, sleeve ${m.sleeve}`:''}`;
-  const message=[`About: ${story}`,app.goals&&`Goals: ${app.goals}`,`Representation: ${represented==='yes'?`Yes${app.represented_agency?` (${app.represented_agency})`:''}${app.represented_notes?` — ${app.represented_notes}`:''}`:'No'}`,app.experience&&`Experience: ${app.experience}`,`Measurements (${units}): ${meas}`,app.travel&&`Open to travel: ${app.travel}`,app.passport&&`Passport: ${app.passport}`,offices.length&&`Offices: ${offices.join(' + ')}`,app.followers&&`Followers: ${app.followers}`,age<18?`UNDER 18. Guardian: ${guardian.name}${guardian.relationship?` (${guardian.relationship})`:''}, ${guardian.email}${guardian.phone?`, ${guardian.phone}`:''}. Consent given.`:''].filter(Boolean).join('\n').slice(0,5000);
-  return {name:`${first} ${last}`,email,location:`${city}, ${country}`,dob,gender,board,phone,instagram:app.instagram,height:m.height,message,market:offices.length===2?'New York + Paris':(offices[0]||''),application:app};
+  const message=[story&&`About: ${story}`,app.goals&&`Goals: ${app.goals}`,represented&&`Representation: ${represented==='yes'?`Yes${app.represented_agency?` (${app.represented_agency})`:''}${app.represented_notes?` — ${app.represented_notes}`:''}`:'No'}`,app.experience&&`Experience: ${app.experience}`,`Measurements (${units}): ${meas}`,app.travel&&`Open to travel: ${app.travel}`,app.passport&&`Passport: ${app.passport}`,offices.length&&`Offices: ${offices.join(' + ')}`,app.followers&&`Followers: ${app.followers}`,age<18?`UNDER 18. Guardian: ${guardian.name}${guardian.relationship?` (${guardian.relationship})`:''}, ${guardian.email}${guardian.phone?`, ${guardian.phone}`:''}. Consent given.`:''].filter(Boolean).join('\n').slice(0,5000);
+  return {name:`${first} ${last}`,email,location:[city,country].filter(Boolean).join(', ')||'Not provided',dob,gender,board,phone,instagram:app.instagram,height:m.height,message,market:offices.length===2?'New York + Paris':(offices[0]||''),application:app};
 }
 export function validateFiles(files){
   if(!Array.isArray(files)||files.length<MIN_FILES||files.length>MAX_FILES)throw bad(`Upload ${MIN_FILES}–${MAX_FILES} photos`);
@@ -92,8 +91,8 @@ export function validateFiles(files){
 export function buildProspectUpdate(app,existingMeta){
   if(!app||app.version!==2)return null;
   const m=app.measurements||{},cm=parseHeightCm(m.height,app.units);
-  const q={...(existingMeta?.questionnaire||{}),why_modeling:app.story,...(app.goals?{career_goals:app.goals}:{}),...(app.experience?{experience:app.experience}:{}),...(app.travel?{travel_ready:app.travel}:{}),...(app.passport?{passport_status:app.passport}:{}),representation_history:app.represented==='yes'?`Yes${app.represented_agency?` — ${app.represented_agency}`:''}${app.represented_notes?` (${app.represented_notes})`:''}`:'No',...(app.followers||app.instagram?{social_presence:[app.instagram,app.followers&&`${app.followers} followers`].filter(Boolean).join(' · ')}:{})};
-  return {row:{first_name:app.first_name,last_name:app.last_name,city:app.city,country:app.country,...(app.tiktok?{tiktok:app.tiktok}:{}),age_reported:app.age,...(cm?{height_cm:cm}:{}),height_display:m.height?`${m.height}${app.units==='cm'&&!/cm/i.test(m.height)?' cm':''}`:null,
+  const q={...(existingMeta?.questionnaire||{}),...(app.story?{why_modeling:app.story}:{}),...(app.goals?{career_goals:app.goals}:{}),...(app.experience?{experience:app.experience}:{}),...(app.travel?{travel_ready:app.travel}:{}),...(app.passport?{passport_status:app.passport}:{}),...(app.represented?{representation_history:app.represented==='yes'?`Yes${app.represented_agency?` — ${app.represented_agency}`:''}${app.represented_notes?` (${app.represented_notes})`:''}`:'No'}:{}),...(app.followers||app.instagram?{social_presence:[app.instagram,app.followers&&`${app.followers} followers`].filter(Boolean).join(' · ')}:{})};
+  return {row:{first_name:app.first_name,last_name:app.last_name,city:app.city||null,country:app.country||null,...(app.tiktok?{tiktok:app.tiktok}:{}),age_reported:app.age,...(cm?{height_cm:cm}:{}),height_display:m.height?`${m.height}${app.units==='cm'&&!/cm/i.test(m.height)?' cm':''}`:null,
     tags:['website-application',...(app.age<18?['minor']:[]),...(app.offices||[]).map(o=>`office:${o.toLowerCase().replace(/\s+/g,'-')}`)]},
     metadata:{...(existingMeta||{}),application:app,questionnaire:q}};
 }

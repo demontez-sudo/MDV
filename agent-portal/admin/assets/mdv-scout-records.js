@@ -27,6 +27,7 @@ var TABS=[['profile','Profile'],['outreach','Outreach'],['call','Interest call']
 /* ---------- the interest call (questions to ask, walk and posing included) ---------- */
 var CALL=[
   {id:'warm',title:'Warm-up & motivation',say:'Introduce yourself and the agency, thank them for their time and keep it relaxed. Let them talk.',qs:[
+    {k:'from',t:'ta',l:'Tell us about yourself: where are you from, and where do you live now?'},
     {k:'why',t:'ta',l:'Why modeling, and why now?'},
     {k:'goals',t:'ta',l:'Where do they want to be in 12–24 months?'},
     {k:'know_us',t:'ta',l:'What do they know about Maison de Veux, and what made them reply?'},
@@ -47,6 +48,7 @@ var CALL=[
     {k:'travel',t:'sel',o:['Local only','Open to travel','Ready to relocate','Needs discussion'],l:'Travel & relocation'},
     {k:'passport',t:'sel',o:['Valid passport','Expired','No passport','Applying'],l:'Passport'},
     {k:'visa',t:'tx',l:'Work authorization / visa (US, UK, EU)'},
+    {k:'address',t:'tx',l:'Mailing address (for contracts and travel documents)'},
     {k:'support',t:'ta',l:'Who supports them (family, partner, friends)? Any concerns?'}]},
   {id:'body',title:'Measurements (as stated)',say:'Ask them to measure standing straight, no shoes. Note “approximate” if they are guessing.',measure:true},
   {id:'walk',title:'Walk',say:'Ask them to walk 5–6 steps toward the camera, turn, and walk back, in the shoes they would normally wear. Ask what their walk feels like to them first.',walk:true},
