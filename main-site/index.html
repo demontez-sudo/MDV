@@ -46,7 +46,7 @@
     min-height: 100%;
     width: auto;
     height: auto;
-    transform: translate(-50%, -50%);
+    transform: translate(calc(-50% + var(--px, 0px)), calc(-50% + var(--py, 0px))) scale(1.05);
     object-fit: cover;
     z-index: 0;
     filter: saturate(0.92) contrast(1.03);
@@ -197,6 +197,33 @@
     }
   }
 
+
+  /* ---- 16.17: letters, drift, local time, faces ---- */
+  .wordmark{ translate: var(--wx, 0px) var(--wy, 0px); will-change: translate; }
+  .wordmark.split{ animation: none; opacity: 1; }
+  .wordmark .ch{ display: inline-block; opacity: 0; transform: translateY(.45em) rotate(2deg); filter: blur(6px);
+    animation: letterIn 1.15s cubic-bezier(.16,1,.3,1) forwards; animation-delay: calc(.4s + var(--k) * .05s); }
+  .wordmark .sp{ display: inline-block; width: .28em; }
+  @keyframes letterIn{ to{ opacity: 1; transform: none; filter: blur(0); } }
+
+  .city-link{ display: inline-flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 10px 14px; }
+  .city-link .cl-time{ font-size: 10px; letter-spacing: .26em; font-weight: 400; color: var(--ink-dim); opacity: .72; transition: opacity .4s ease, color .4s ease; min-height: 12px; }
+  .city-link:hover .cl-time{ opacity: 1; color: var(--ink); }
+  .city-link::after{ display: none; }
+  .city-link .cl-name{ position: relative; }
+  .city-link .cl-name::after{ content: ""; position: absolute; left: 0; right: 0; bottom: -7px; height: 1px; background: var(--brass); transform: scaleX(0); transform-origin: left; transition: transform .5s cubic-bezier(.4,0,.2,1); }
+  .city-link:hover .cl-name::after{ transform: scaleX(1); }
+
+  .preview{ position: fixed; left: 0; top: 0; z-index: 4; width: clamp(120px, 11vw, 168px); aspect-ratio: 3 / 4.2; pointer-events: none; opacity: 0;
+    transform: translate3d(-300px, -300px, 0); transition: opacity .5s ease; overflow: hidden; border: 1px solid rgba(239,233,223,.35); background: #0a0908; }
+  .preview.on{ opacity: 1; }
+  .preview img{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; opacity: 0; transition: opacity .55s ease; filter: grayscale(.2); }
+  .preview img.show{ opacity: 1; }
+  .preview span{ position: absolute; left: 10px; bottom: 9px; z-index: 2; font: italic 400 15px 'Cormorant Garamond', serif; color: #efe9df; text-shadow: 0 1px 8px rgba(0,0,0,.6); }
+  .preview::after{ content: ""; position: absolute; inset: 0; background: linear-gradient(0deg, rgba(10,9,8,.55), rgba(10,9,8,0) 45%); }
+  @media (hover: none), (pointer: coarse){ .preview{ display: none; } }
+  @media (prefers-reduced-motion: reduce){ .wordmark .ch{ animation: none; opacity: 1; transform: none; filter: none; } .preview{ display: none; } }
+
   /* Disable image drag / drag-ghost across the site */
   img{
     -webkit-user-drag: none;
@@ -210,7 +237,8 @@
 <link rel="stylesheet" href="/assets/mdv-mobile-certification-16.9.29.css?v=16.9.29">
 <link rel="stylesheet" href="/assets/mdv-main-mobile-16.15.css?v=16.15">
 <link rel="stylesheet" href="/assets/mdv-interaction-system-16.9.30.css?v=16.9.30">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261006"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=20261006"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261006"><meta name="theme-color" content="#0a0908"></head>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261006"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=20261006"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261006"><meta name="theme-color" content="#0a0908"><link rel="stylesheet" href="/assets/mdv-cursor.css?v=16.17">
+</head>
 <body>
 
 <div class="stage">
@@ -228,20 +256,113 @@
   </script>
 
   <div class="veil"></div>
+  <div class="preview" id="preview" aria-hidden="true"><img alt="" id="pvA"><img alt="" id="pvB"><span id="pvName"></span></div>
   <div class="curtain"></div>
 
   <div class="content">
     <h1 class="wordmark">Maison <em>de</em> Veux</h1>
 
     <nav class="gateway" aria-label="Select region">
-      <a class="city-link" href="/newyork">New York</a>
+      <a class="city-link" href="/newyork" data-city="New York" data-tz="America/New_York" data-cursor="Enter"><span class="cl-name">New York</span><span class="cl-time" aria-hidden="true"></span></a>
       <div class="rule"></div>
-      <a class="city-link" href="/paris">Paris</a>
+      <a class="city-link" href="/paris" data-city="Paris" data-tz="Europe/Paris" data-cursor="Enter"><span class="cl-name">Paris</span><span class="cl-time" aria-hidden="true"></span></a>
     </nav>
   </div>
 
 </div>
 
+
+<script>
+/* 16.17: the letters, the drift with the pointer, local time in each city, and real faces beside the cursor over a city */
+(function(){
+  var reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var fine=window.matchMedia&&matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  /* wordmark: every letter rises on its own */
+  var w=document.querySelector('.wordmark');
+  if(w&&!reduce){
+    var k=0;
+    (function split(node){
+      [].slice.call(node.childNodes).forEach(function(n){
+        if(n.nodeType===3){
+          var frag=document.createDocumentFragment();
+          n.textContent.split('').forEach(function(c){
+            var s=document.createElement('span');
+            if(c===' '){s.className='sp';s.innerHTML='&nbsp;';}else{s.className='ch';s.textContent=c;s.style.setProperty('--k',k++);}
+            s.setAttribute('aria-hidden','true');frag.appendChild(s);
+          });
+          n.parentNode.replaceChild(frag,n);
+        }else if(n.nodeType===1)split(n);
+      });
+    })(w);
+    w.classList.add('split');w.setAttribute('aria-label',(w.textContent||'').replace(/\s+/g,' ').trim());
+  }
+
+  /* local time in each city */
+  function clocks(){
+    [].forEach.call(document.querySelectorAll('.city-link[data-tz]'),function(a){
+      try{a.querySelector('.cl-time').textContent=new Date().toLocaleTimeString('en-US',{timeZone:a.dataset.tz,hour:'numeric',minute:'2-digit'}).toUpperCase();}catch(e){}
+    });
+  }
+  clocks();setInterval(clocks,20000);
+
+  if(!fine||reduce)return;
+
+  /* drift: the film and the title move a few pixels against the pointer */
+  var bg=document.getElementById('bgv'),root=document.documentElement,tx=0,ty=0,cx=0,cy=0,px=-300,py=-300,hx=-300,hy=-300;
+  document.addEventListener('mousemove',function(e){
+    var nx=(e.clientX/innerWidth-.5),ny=(e.clientY/innerHeight-.5);tx=nx;ty=ny;px=e.clientX;py=e.clientY;
+  },{passive:true});
+
+  /* faces: portraits from the live roster, shown beside the cursor while a city is hovered */
+  var URL_='https://mogyngdhmzbjmcdqeoxu.supabase.co',KEY='sb_publishable_6fTsGxRRIDzjXaoUrT0XOg_yZWu21ql';
+  var faces={'New York':[],'Paris':[]};
+  function sized(u,wd){
+    u=String(u||'');
+    if(/^https:\/\/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(u))return u.replace('/image/upload/','/image/upload/f_auto,q_auto,w_'+wd+',c_limit/');
+    if(/^https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\//.test(u))return u.replace('/storage/v1/object/public/','/storage/v1/render/image/public/')+'?width='+wd+'&resize=contain&quality=70';
+    return u;
+  }
+  function loadFaces(){
+    ['New York','Paris'].forEach(function(city){
+      ['women','men'].forEach(function(view){
+        fetch(URL_+'/rest/v1/rpc/website_public_roster',{method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+KEY,'content-type':'application/json'},body:JSON.stringify({target_market:city,target_view:view}),credentials:'omit'})
+          .then(function(r){return r.ok?r.json():{};}).then(function(b){
+            (b.models||[]).forEach(function(m){if(m.image_url)faces[city].push({n:m.display_name,u:sized(m.image_url,360)});});
+            faces[city].sort(function(){return Math.random()-.5;});
+          }).catch(function(){});
+      });
+    });
+  }
+  window.addEventListener('load',function(){setTimeout(loadFaces,1400);});
+
+  var pv=document.getElementById('preview'),A=document.getElementById('pvA'),B=document.getElementById('pvB'),nm=document.getElementById('pvName'),cur='',idx=0,timer=null,front=A;
+  function show(city){
+    var list=faces[city]||[];if(!list.length)return;
+    var f=list[idx%list.length];idx++;
+    var back=front===A?B:A;
+    back.onload=function(){back.classList.add('show');front.classList.remove('show');front=back;nm.textContent=f.n;};
+    back.src=f.u;
+  }
+  [].forEach.call(document.querySelectorAll('.city-link'),function(a){
+    a.addEventListener('mouseenter',function(){
+      cur=a.dataset.city;idx=0;if(!(faces[cur]||[]).length)return;
+      pv.classList.add('on');show(cur);clearInterval(timer);timer=setInterval(function(){show(cur);},900);
+    });
+    a.addEventListener('mouseleave',function(){pv.classList.remove('on');clearInterval(timer);});
+  });
+
+  (function loop(){
+    cx+=(tx-cx)*.06;cy+=(ty-cy)*.06;
+    root.style.setProperty('--px',(-cx*26).toFixed(1)+'px');root.style.setProperty('--py',(-cy*18).toFixed(1)+'px');
+    root.style.setProperty('--wx',(cx*10).toFixed(1)+'px');root.style.setProperty('--wy',(cy*7).toFixed(1)+'px');
+    hx+=(px-hx)*.14;hy+=(py-hy)*.14;
+    /* below the cursor, where the picture is quiet, so it never covers the title or the other city */
+    pv.style.transform='translate3d('+(hx-pv.offsetWidth/2).toFixed(1)+'px,'+(hy+62).toFixed(1)+'px,0)';
+    requestAnimationFrame(loop);
+  })();
+})();
+</script>
 
 <script>
   // Disable right-click save and image dragging across the site
@@ -250,5 +371,7 @@
   });
   document.querySelectorAll('img').forEach(function(img){ img.setAttribute('draggable', 'false'); });
 </script>
+<script src="/assets/mdv-cursor.js?v=16.17" defer></script>
+<script src="/assets/mdv-halo.js?v=16.17" defer></script>
 </body>
 </html>

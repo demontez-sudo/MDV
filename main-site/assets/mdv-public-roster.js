@@ -44,15 +44,32 @@
     }catch(e){}
     return u;
   }
+  function pad(n){return n<10?'0'+n:String(n);}
   function tile(row,pageKey,i){
     var fb=((window.MDV_ROSTER_FALLBACKS||{})[pageKey]||{})[row.display_name]||'';
     var img=row.image_url||fb;
     /* the first screenful loads right away, the rest as you scroll */
     var first=i<4,attrs=(first?' loading="eager"'+(i<2?' fetchpriority="high"':''):' loading="lazy"')+' decoding="async"';
     var visual=img?'<img src="'+esc(sized(img,800))+'" srcset="'+esc(sized(img,480))+' 480w, '+esc(sized(img,800))+' 800w, '+esc(sized(img,1200))+' 1200w" sizes="(max-width:760px) 50vw, 25vw" alt="'+esc(row.display_name)+'"'+attrs+'>':'<span class="placeholder-label">Image Pending</span>';
-    return '<a class="roster-tile" href="'+esc(row.profile_path||profilePathFor(row.display_name)||'#')+'">'
-      +'<div class="roster-image">'+visual+'</div>'
-      +'<div class="roster-name">'+esc(row.display_name)+'</div></a>';
+    return '<a class="roster-tile" data-cursor="View" style="--d:'+((i%4)*.09).toFixed(2)+'s" href="'+esc(row.profile_path||profilePathFor(row.display_name)||'#')+'">'
+      +'<div class="roster-image">'+visual+'<i class="rt-c a"></i><i class="rt-c b"></i><i class="rt-c c"></i><i class="rt-c d"></i></div>'
+      +'<div class="roster-cap"><span class="roster-name">'+esc(row.display_name)+'</span><span class="roster-no">'+pad(i+1)+'</span></div></a>';
+  }
+  /* the board's name and a count, above the grid */
+  var VIEW_LABEL={women:'Women',men:'Men',development:'Development',creator:'Creator'};
+  function meta(root,n){
+    var m=document.getElementById('mdv-roster-meta');
+    if(!m){m=document.createElement('div');m.id='mdv-roster-meta';m.className='roster-meta';root.parentNode.insertBefore(m,root);}
+    var v=String(root.dataset.view||'').toLowerCase();
+    m.innerHTML='<h1>'+esc(VIEW_LABEL[v]||root.dataset.view||'Roster')+'</h1><span class="rm-city">'+esc(root.dataset.market||'')+'</span><span class="rm-count">'+pad(n)+' '+(n===1?'model':'models')+'</span>';
+  }
+  /* portraits open as they scroll into view */
+  function reveal(root){
+    var tiles=[].slice.call(root.querySelectorAll('.roster-tile'));
+    if(!('IntersectionObserver' in window)){tiles.forEach(function(t){t.classList.add('in');});return;}
+    var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -6% 0px',threshold:.05});
+    tiles.forEach(function(t){io.observe(t);});
+    setTimeout(function(){tiles.forEach(function(t){t.classList.add('in');});},6000);
   }
   function staticRows(pageKey){
     var map=(window.MDV_ROSTER_FALLBACKS||{})[pageKey]||{};
@@ -66,6 +83,7 @@
       root.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:48px 20px;font-family:\'Jost\',sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim)">'+esc(emptyMessage(view))+'</div>';
     }else{
       root.innerHTML=rows.map(function(x,i){return tile(x,pageKey,i);}).join('');
+      meta(root,rows.length);reveal(root);
     }
     root.setAttribute('data-mdv-roster-source',mode);
   }
