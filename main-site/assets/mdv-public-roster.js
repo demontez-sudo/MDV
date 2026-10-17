@@ -29,7 +29,7 @@
     return '#';
   }
   /* Model photos are uploaded as large originals (2 to 4 MB). Ask the image host for a web-sized copy instead:
-     Cloudinary gets f_auto,q_auto at the width we need; Supabase storage uses its image resizer. Anything else is left alone. */
+     Cloudinary gets f_auto,q_auto at the width we need; Supabase storage uses its image resizer (resize=contain keeps the whole picture; without it the resizer crops the sides off). Anything else is left alone. */
   function sized(u,w){
     u=String(u||'');
     try{
@@ -39,7 +39,7 @@
         return u.replace('/image/upload/','/image/upload/f_auto,q_auto,w_'+w+',c_limit/');
       }
       if(/^https:\/\/[^/]+\.supabase\.co\/storage\/v1\/object\/public\//.test(u)){
-        return u.replace('/storage/v1/object/public/','/storage/v1/render/image/public/')+(u.indexOf('?')>-1?'&':'?')+'width='+w+'&quality=75';
+        return u.replace('/storage/v1/object/public/','/storage/v1/render/image/public/')+(u.indexOf('?')>-1?'&':'?')+'width='+w+'&resize=contain&quality=75';
       }
     }catch(e){}
     return u;
