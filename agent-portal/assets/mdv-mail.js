@@ -534,7 +534,7 @@ var EMAIL_RE=/^[^\s@<>()",;:]+@[^\s@<>()",;:]+\.[A-Za-z]{2,}$/;
 async function emailTo(list,o){
   o=o||{};
   var addrs=(Array.isArray(list)?list:String(list||'').split(/[,;]/)).map(function(x){return String(x||'').trim();}).filter(function(x,i,a){return EMAIL_RE.test(x)&&a.indexOf(x)===i;});
-  if(!addrs.length)return false;
+  if(!addrs.length&&!o.blank)return false;
   var fallback=function(){window.location.href='mailto:'+addrs.join(',')+(o.subject?'?subject='+encodeURIComponent(o.subject):'');return false;};
   try{
     if(!S.status||S.status.connected===undefined){var st=await status();S.status=Object.assign({},S.status,st);}
@@ -543,6 +543,7 @@ async function emailTo(list,o){
       setTimeout(fallback,900);return false;
     }
   }catch(e){return fallback();}
+  if(!addrs.length){compose({to:'',subject:o.subject||'',text:o.text||''});return true;}
   if(addrs.length>1&&!o.to_all){
     /* Several people: send to yourself and Bcc everyone so clients never see each other. */
     compose({to:String(S.status.email||''),bcc:addrs.join(', '),subject:o.subject||'',text:o.text||''});
@@ -634,7 +635,7 @@ async function refreshWidget(){
 /* ---------- page entry + wiring into the portal ---------- */
 function render(host){W.at=0;S.host=host;S.status=null;S.err='';S.sel=null;S.detail=null;S.readerOpen=false;S.search='';S.unreadOnly=false;return boot();}
 window.renderMail=render;
-window.MDV_MAIL={render:render,state:S,emailTo:emailTo,crm:crm,widget:function(){return W.data;},refreshWidget:function(){return refreshWidget();}};
+window.MDV_MAIL={render:render,state:S,emailTo:emailTo,newMessage:function(o){return emailTo([],Object.assign({},o||{},{blank:true}));},crm:crm,widget:function(){return W.data;},refreshWidget:function(){return refreshWidget();}};
 
 function registerRoute(){
   var map=window.VEUX_V15_ROUTE_RENDERERS;

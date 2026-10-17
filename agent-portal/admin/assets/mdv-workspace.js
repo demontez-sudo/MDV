@@ -361,7 +361,7 @@ document.addEventListener('click',function(e){
   var c=e.target.closest('[data-ws-create]');if(c){c.closest('.ws-create').classList.toggle('open');return;}
   var n=e.target.closest('[data-ws-new]');if(n){
     n.closest('.ws-create').classList.remove('open');var k=n.dataset.wsNew;
-    if(k==='mail'){if(window.MDV_MAIL&&MDV_MAIL.emailTo)try{MDV_MAIL.emailTo([]);return;}catch(x){}go('mail');}
+    if(k==='mail'){if(window.MDV_MAIL&&MDV_MAIL.newMessage)try{MDV_MAIL.newMessage();return;}catch(x){}go('mail');}
     else if(k==='task')go('tasksconsolidated');else if(k==='roster')go('roster');
     else if(window.VEUX_V152&&VEUX_V152.createOnDate)VEUX_V152.createOnDate(dkey(new Date()));else go('calendar');
   }

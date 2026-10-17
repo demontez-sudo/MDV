@@ -47,10 +47,14 @@ function inDays(n){var d=new Date();d.setDate(d.getDate()+n);d.setHours(9,0,0,0)
 
 /* ---------- data ---------- */
 async function load(force){
-  if(S.loading)return;if(!force&&S.data&&Date.now()-S.at<20000)return;
-  S.loading=true;
-  try{S.data=await get();S.at=Date.now();S.err='';}catch(e){S.err=msg(e);}
-  S.loading=false;
+  if(S.loading){if(force)S.again=true;return S.loading;}
+  if(!force&&S.data&&Date.now()-S.at<20000)return;
+  S.loading=(async function(){
+    try{S.data=await get();S.at=Date.now();S.err='';}catch(e){S.err=msg(e);}
+    S.loading=false;
+    if(S.again){S.again=false;return load(true);}
+  })();
+  return S.loading;
 }
 function list(){return arr(S.data&&S.data.outreach);}
 function people(){return arr(S.data&&S.data.people);}
@@ -204,7 +208,7 @@ async function mutate(p,okMsg){
 }
 function wire(el,sig){
   el.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){
-    var a=b.dataset.a;if(a==='log')openLog();else if(a==='mail'){if(window.MDV_MAIL&&MDV_MAIL.emailTo)MDV_MAIL.emailTo([]);else if(typeof window.navTo==='function')window.navTo('mail');}else if(a==='refresh'){load(true).then(paint);}};});
+    var a=b.dataset.a;if(a==='log')openLog();else if(a==='mail'){if(window.MDV_MAIL&&MDV_MAIL.newMessage)MDV_MAIL.newMessage();else if(typeof window.navTo==='function')window.navTo('mail');}else if(a==='refresh'){load(true).then(paint);}};});
   el.querySelectorAll('[data-view]').forEach(function(b){b.onclick=function(){S.view=b.dataset.view;S.q='';paint();};});
   el.querySelectorAll('[data-kgo]').forEach(function(b){b.onclick=function(){var p=b.dataset.kgo.split(':');S.view=p[0];S.pf=p[1]||'all';S.q='';paint();};});
   el.querySelectorAll('[data-sig]').forEach(function(b){b.onclick=function(){var s=sig[+b.dataset.sig];S.view=s.go;if(s.pf)S.pf=s.pf;S.q='';paint();};});
@@ -329,6 +333,36 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape'){if(document
 /* ---------- page entry ---------- */
 function active(){return String(window._currentPage||'')==='outreach'&&S.host&&document.body.contains(S.host);}
 function tick(){clearInterval(S.timer);S.timer=setInterval(function(){if(!active()){clearInterval(S.timer);return;}if(document.hidden||document.getElementById('ot-log')||document.getElementById('ot-co'))return;load(true).then(function(){if(active()&&!document.getElementById('ot-log'))paint();});},45000);}
+/* keep the log current without a page refresh: reload when the page is opened, when the window is shown again, and right after anything is sent from Mail or Packages */
+var wasActive=false,hooked=false;
+function hookApi(){
+  var b=window.VEUX_AGENT_V4;if(!b||typeof b.api!=='function')return;if(b.api.__ot){hooked=true;return;}
+  var orig=b.api;
+  var w=function(path,opts){
+    var p=orig.apply(this,arguments);
+    try{
+      if(opts&&String(opts.method||'').toUpperCase()==='POST'&&/\/api\/agent\/(mail|packages?)/i.test(String(path))){
+        var act=JSON.parse(opts.body||'{}').action;
+        if(/^(send|reply|bulk_send)$/.test(act)&&p&&p.then)p.then(function(){S.dirty=Date.now();},function(){});
+      }
+    }catch(e){}
+    return p;
+  };
+  w.__ot=1;for(var k in orig){try{w[k]=orig[k];}catch(e){}}
+  try{b.api=w;hooked=true;}catch(e){}
+}
+function watch(){
+  if(!hooked)hookApi();
+  var el=document.getElementById('p-outreach'),on=!!el&&String(window._currentPage||'')==='outreach';
+  if(on){
+    if(el!==S.host||!el.firstChild){S.host=el;paint();}
+    if(!wasActive||(S.dirty&&Date.now()-S.dirty>700)){S.dirty=0;load(true).then(function(){if(active()&&!document.getElementById('ot-log'))paint();});}
+  }
+  wasActive=on;
+}
+setInterval(watch,1000);
+document.addEventListener('visibilitychange',function(){if(!document.hidden&&active())load(true).then(function(){if(!document.getElementById('ot-log'))paint();});});
+window.addEventListener('focus',function(){if(active())load(true).then(function(){if(!document.getElementById('ot-log'))paint();});});
 window.renderOutreach=function(el){
   S.host=el;paint();tick();
   return load(true).then(paint);
