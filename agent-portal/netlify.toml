@@ -465,6 +465,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/outreach"
+to = "/.netlify/functions/agent-outreach-desk"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/crm/v9"
 to = "/.netlify/functions/agent-crm-desk-v9"
 status = 200

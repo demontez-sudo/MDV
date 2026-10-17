@@ -32,6 +32,7 @@ var SECTIONS=[
  {cap:'Agency',items:[
   {id:'roster',label:'Roster',icon:'ti-users',page:'roster'},
   {id:'clients',label:'Clients',icon:'ti-user-circle',page:'industrydirectory'},
+  {id:'outreach',label:'Outreach',icon:'ti-send',page:'outreach'},
   {id:'modeltools',label:'Model Tools',icon:'ti-heart-handshake',sub:[['multipackage','Packages'],['packageresponses','Package Responses'],['modelevaluations','Evaluations'],['modelsubmissions','Submissions']]},
   {id:'scouting',label:'Scouting',icon:'ti-user-search',page:'scouting'},
   {id:'season',label:'Season',icon:'ti-layout-grid',page:'seasonmanagement'},
@@ -44,7 +45,7 @@ var SECTIONS=[
   {id:'files',label:'Files & Forms',icon:'ti-file-text',page:'filesforms'}]}
 ];
 var SETTINGS={id:'settings',label:'Settings',icon:'ti-settings',sub:[['systemsettings','Portal Settings'],['releaseaudit','Release Audit']]};
-var ALWAYS={overview:1,calendar:1,inbox:1,mail:1,systemsettings:1};
+var ALWAYS={overview:1,calendar:1,inbox:1,mail:1,outreach:1,systemsettings:1};
 var LINKED={visa:'globalmobility',agentcommissions:'financelegal'};
 function groups(){return (window.NAV_AGENT||window.VEUX_V15_NAV_FULL||[]).filter(function(g){return g&&g.items&&g.items.length;});}
 function allowed(){var ok=Object.assign({},ALWAYS);groups().forEach(function(g){g.items.forEach(function(i){ok[i[0]]=1;});});Object.keys(LINKED).forEach(function(k){if(ok[LINKED[k]])ok[k]=1;});return ok;}

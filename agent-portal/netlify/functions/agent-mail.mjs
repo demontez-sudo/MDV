@@ -5,6 +5,7 @@ import {
   buildSendPayload, parseAddresses, textToHtml, mapSummary, mapMessage, FOLDERS, SUMMARY_SELECT, GRAPH, LIMITS
 } from './_lib/mail-graph.mjs';
 import { cleanSignature, signatureHtml, signatureText } from './_lib/mail-signature.mjs';
+import { logSent } from './_lib/outreach-log.mjs';
 import { resendReady, shouldUseResend, sendViaResend, quoteHtml, copyTarget, saveCopy } from './_lib/mail-resend.mjs';
 
 /* Team-member mailbox (Microsoft 365). Every call is scoped to the signed-in staff member's OWN
@@ -36,6 +37,14 @@ export const handler = async event => {
     const p = event.queryStringParameters || {}, body = event.httpMethod === 'POST' ? parseBody(event) : {};
     const { organization } = await requireStaffOrganization({ user, client, organizationSlug: body.organization_slug || p.organization || 'maison-de-veux' });
     const admin = adminClient(), cfg = mailConfig();
+    /* every email that goes out is written to the Outreach log (who, when, to whom), and the recipient is locked in as a contact */
+    const autoLog = async (list, subject, text) => {
+      try {
+        const recipients = (list || []).map(r => ({ email: r?.emailAddress?.address || r?.address || '', name: r?.emailAddress?.name || r?.name || '' }));
+        const key = 'mail:' + user.id + ':' + Math.floor(Date.now() / 60000) + ':' + String(subject || '').slice(0, 60);
+        await Promise.race([logSent(admin, { orgId: organization.id, user, channel: 'email', recipients, subject, summary: String(text || '').replace(/\s+/g, ' ').trim().slice(0, 400), source: 'mail', dedupeBase: key }), new Promise(r => setTimeout(r, 3500))]);
+      } catch (e) { console.warn('[mail→outreach]', e?.message || e); }
+    };
 
     /* ---- status (also tells the UI whether the admin setup is done) ---- */
     if (event.httpMethod === 'GET') {
@@ -166,9 +175,12 @@ export const handler = async event => {
         const ct = copyTarget(body);
         const r = await sendViaResend({ conn, to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, text: String(body.text ?? body.body ?? '') + sigT, attachments: m.attachments || [], copyInbox: ct === 'inbox' });
         const copy = await saveCopy(G, conn, ct, { to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, attachments: m.attachments });
+        await autoLog(m.toRecipients, m.subject, body.text ?? body.body);
+        await autoLog(to, subj, text);
         return json(200, { ok: true, verified: true, sent: true, via: 'resend', copy, id: r?.providerMessageId || null });
       }
       await G('/me/sendMail', { method: 'POST', body: payload });
+      await autoLog(m.toRecipients, m.subject, body.text ?? body.body);
       return json(200, { ok: true, verified: true, sent: true, via: 'microsoft' });
     }
 
@@ -208,6 +220,7 @@ export const handler = async event => {
         try { await G(`/me/messages/${encodeURIComponent(draft.id)}`, { method: 'DELETE' }); } catch (_x) { /* best effort */ }
         throw e;
       }
+      await autoLog(to, clean(body.subject) || (mode === 'forward' ? 'Fwd' : 'Re'), text);
       return json(200, { ok: true, verified: true, sent: true, via: 'microsoft' });
     }
 

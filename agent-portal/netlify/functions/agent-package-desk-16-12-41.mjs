@@ -1,3 +1,4 @@
+import { logSent } from './_lib/outreach-log.mjs';
 import crypto from 'node:crypto';
 import { requireUser, parseBody, json, errorResponse, assertPermission } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
@@ -420,6 +421,10 @@ async function sendExistingPackage({admin,organization,user,event,pkg,body,recip
     const {data:finalized,error:finalizeError}=await admin.rpc('finalize_package_delivery_v1',{target_org:organization.id,target_package:pkg.id,target_recipient:recipient.id,target_share_link:link.id,target_email_message:msg.id,target_actor:user.email||'VEUX staff'});
     if(finalizeError)throw finalizeError;if(!finalized?.verified){const e=new Error('Package delivery database finalization could not be verified.');e.statusCode=500;throw e;}
     recipient=finalized.recipient||recipient;
+    /* a package that went out is an outreach: log it with the time, and lock the recipient in as a contact */
+    try{
+      await logSent(admin,{orgId:organization.id,user,channel:'package',recipients:[{email:recipientEmail,name:recipient.display_name,contact_id:recipient.contact_id||null,company_id:recipient.company_id||null}],subject:pkg.title,summary:'Model package sent',source:'package',extra:{package_id:pkg.id,package_title:pkg.title},dedupeBase:'pkg:'+recipient.id+':'+Math.floor(Date.now()/60000)});
+    }catch(e){console.warn('[package→outreach]',e&&e.message||e);}
     return {recipient,sharePath,emailResult,publicUrl:canonicalClientUrl,brandedUrl:canonicalClientUrl,directFallbackUrl,persisted_at:finalized.persisted_at};
   }catch(e){
     // Failed delivery must not leave a usable external link behind or retain the bearer URL at rest.
