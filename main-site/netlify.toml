@@ -122,12 +122,6 @@
 # already proven working for the Creators page.
 
 [[redirects]]
-  from = "/adenike"
-  to = "https://maison-adenike.netlify.app"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/aidan"
   to = "https://maison-aidan.netlify.app"
   status = 200
@@ -136,12 +130,6 @@
 [[redirects]]
   from = "/akvile"
   to = "https://maison-akvile.netlify.app"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/alex"
-  to = "https://maison-alex.netlify.app"
   status = 200
   force = true
 
@@ -158,20 +146,8 @@
   force = true
 
 [[redirects]]
-  from = "/chol"
-  to = "https://maison-chol.netlify.app"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/clara"
   to = "https://maison-clara.netlify.app"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/david"
-  to = "https://maison-david.netlify.app"
   status = 200
   force = true
 
@@ -184,12 +160,6 @@
 [[redirects]]
   from = "/dorcas"
   to = "https://maison-dorcas.netlify.app"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/enica"
-  to = "https://maison-enica.netlify.app"
   status = 200
   force = true
 
@@ -213,12 +183,6 @@
 [[redirects]]
   from = "/krishita"
   to = "https://maison-krishita.netlify.app"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/lance"
-  to = "https://maison-lance.netlify.app"
   status = 200
   force = true
 
@@ -247,12 +211,6 @@
   force = true
 
 [[redirects]]
-  from = "/mikhail"
-  to = "https://maison-mikhail.netlify.app"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/natalia"
   to = "https://maison-natalia.netlify.app"
   status = 200
@@ -261,12 +219,6 @@
 [[redirects]]
   from = "/olubiyi"
   to = "https://maison-olubiyi.netlify.app"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/oshioyeme"
-  to = "https://maison-oshioyeme.netlify.app"
   status = 200
   force = true
 
@@ -283,12 +235,6 @@
   force = true
 
 [[redirects]]
-  from = "/rachel"
-  to = "https://maison-rachel.netlify.app"
-  status = 200
-  force = true
-
-[[redirects]]
   from = "/richard"
   to = "https://maison-richard.netlify.app"
   status = 200
@@ -297,18 +243,6 @@
 [[redirects]]
   from = "/sae"
   to = "https://maison-sae.netlify.app"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/samuel"
-  to = "https://maison-samuel.netlify.app"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/samueljob"
-  to = "https://maison-samueljob.netlify.app"
   status = 200
   force = true
 
@@ -341,13 +275,6 @@
   to = "https://maison-yorgelis.netlify.app"
   status = 200
   force = true
-
-[[redirects]]
-  from = "/yudai"
-  to = "https://maison-yudai.netlify.app"
-  status = 200
-  force = true
-
 
 [[redirects]]
   from = "/tosin"
