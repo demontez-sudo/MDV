@@ -2,7 +2,7 @@
    The system arrow is hidden (only once the circles are running, and only on devices with a real mouse).
    Text fields, resize handles and the like keep the system cursor, and the circles step aside there. */
 html.mdv-cur,html.mdv-cur body{cursor:none}
-html.mdv-cur [data-mdv-cur]{cursor:none!important}
+html.mdv-cur [data-mdv-cur]:not([data-mdv-cur="nat"]){cursor:none!important}
 html.mdv-cur [data-mdv-cur] *:not(input):not(textarea):not([data-mdv-cur="nat"]){cursor:none!important}
 
 .mdv-cr{position:fixed;left:0;top:0;width:0;height:0;z-index:2147483000;pointer-events:none;opacity:0;transition:opacity .3s ease;mix-blend-mode:difference}
