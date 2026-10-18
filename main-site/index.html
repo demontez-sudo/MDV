@@ -237,7 +237,7 @@
 <link rel="stylesheet" href="/assets/mdv-mobile-certification-16.9.29.css?v=16.9.29">
 <link rel="stylesheet" href="/assets/mdv-main-mobile-16.15.css?v=16.15">
 <link rel="stylesheet" href="/assets/mdv-interaction-system-16.9.30.css?v=16.9.30">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261006"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=20261006"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261006"><meta name="theme-color" content="#0a0908"><link rel="stylesheet" href="/assets/mdv-cursor.css?v=16.17cb">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg?v=20261006"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=20261006"><link rel="apple-touch-icon" href="/apple-touch-icon.png?v=20261006"><meta name="theme-color" content="#0a0908"><link rel="stylesheet" href="/assets/mdv-cursor.css?v=16.17eb">
 </head>
 <body>
 
@@ -352,15 +352,17 @@
     a.addEventListener('mouseleave',function(){pv.classList.remove('on');clearInterval(timer);});
   });
 
-  (function loop(){
-    cx+=(tx-cx)*.06;cy+=(ty-cy)*.06;
+  var run=false;
+  function frame(){
+    cx+=(tx-cx)*.07;cy+=(ty-cy)*.07;
     root.style.setProperty('--px',(-cx*26).toFixed(1)+'px');root.style.setProperty('--py',(-cy*18).toFixed(1)+'px');
     root.style.setProperty('--wx',(cx*10).toFixed(1)+'px');root.style.setProperty('--wy',(cy*7).toFixed(1)+'px');
-    hx+=(px-hx)*.14;hy+=(py-hy)*.14;
+    hx+=(px-hx)*.16;hy+=(py-hy)*.16;
     /* below the cursor, where the picture is quiet, so it never covers the title or the other city */
     pv.style.transform='translate3d('+(hx-pv.offsetWidth/2).toFixed(1)+'px,'+(hy+62).toFixed(1)+'px,0)';
-    requestAnimationFrame(loop);
-  })();
+    if(Math.abs(tx-cx)>.0008||Math.abs(ty-cy)>.0008||Math.abs(px-hx)>.3||Math.abs(py-hy)>.3)requestAnimationFrame(frame);else run=false;
+  }
+  document.addEventListener('mousemove',function(){if(!run){run=true;requestAnimationFrame(frame);}},{passive:true});
 })();
 </script>
 
@@ -371,6 +373,6 @@
   });
   document.querySelectorAll('img').forEach(function(img){ img.setAttribute('draggable', 'false'); });
 </script>
-<script src="/assets/mdv-cursor.js?v=16.17bb" defer></script>
+<script src="/assets/mdv-cursor.js?v=16.17eb" defer></script>
 </body>
 </html>

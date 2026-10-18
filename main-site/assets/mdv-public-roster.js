@@ -64,6 +64,8 @@
   }
   /* portraits open as they scroll into view */
   function reveal(root){
+    /* once a portrait has opened, drop its clip so the browser is not masking every photo while you scroll */
+    root.addEventListener('transitionend',function(e){if(e.propertyName==='clip-path'){var t=e.target.closest&&e.target.closest('.roster-tile');if(t)t.classList.add('done');}});
     var tiles=[].slice.call(root.querySelectorAll('.roster-tile'));
     if(!('IntersectionObserver' in window)){tiles.forEach(function(t){t.classList.add('in');});return;}
     var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -6% 0px',threshold:.05});

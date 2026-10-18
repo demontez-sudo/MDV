@@ -26,6 +26,7 @@
 .roster-grid .roster-image{border:0;overflow:visible;background:transparent;clip-path:none}
 .roster-grid .roster-image img{clip-path:inset(0 0 100% 0);transition:clip-path 1.15s cubic-bezier(.77,0,.18,1) var(--d,0s),transform .9s cubic-bezier(.16,1,.3,1),filter .6s ease;filter:grayscale(.4) contrast(1.02)}
 .roster-grid .roster-tile.in .roster-image img{clip-path:inset(0)}
+.roster-grid .roster-tile.done .roster-image img{clip-path:none;transition:transform .9s cubic-bezier(.16,1,.3,1),filter .6s ease}
 .roster-grid .roster-tile:hover .roster-image img{transform:scale(1.035);filter:grayscale(0) contrast(1)}
 .roster-image{background:linear-gradient(155deg,var(--panel,#14110f) 0%,var(--black) 100%)}
 .roster-image .placeholder-label{position:relative;z-index:1}
