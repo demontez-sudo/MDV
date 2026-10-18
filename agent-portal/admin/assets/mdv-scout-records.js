@@ -830,5 +830,5 @@ function install(){
 }
 install();
 var n=0,t=setInterval(function(){install();if(++n>40)clearInterval(t);},500);
-window.MDV_SCOUT_RECORDS={render:render,open:openRecord,steps:STEPS};
+window.MDV_SCOUT_RECORDS={render:render,open:openRecord,steps:STEPS,current:function(){return document.getElementById('sr-modal')?R.id:null;}};
 })();
