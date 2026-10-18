@@ -76,6 +76,15 @@ async function fallbackRoster(admin,organizationId,filter){
   return models;
 }
 
+/* boards share names across markets and divisions (Main Board in New York and in Paris…): give each a label that tells them apart */
+function labelBoards(boards,markets,divisions){
+  const mName=new Map((markets||[]).map(m=>[m.id,m.name||m.city||m.code])),dName=new Map((divisions||[]).map(d=>[d.id,d.name]));
+  const count=new Map();(boards||[]).forEach(b=>count.set(b.name,(count.get(b.name)||0)+1));
+  const out=(boards||[]).map(b=>({...b,label:count.get(b.name)>1?[b.name,mName.get(b.market_id)].filter(Boolean).join(' · '):b.name}));
+  const again=new Map();out.forEach(b=>again.set(b.label,(again.get(b.label)||0)+1));
+  out.forEach(b=>{if(again.get(b.label)>1&&dName.get(b.division_id))b.label+=' · '+dName.get(b.division_id);});
+  return out;
+}
 export const handler=async(event)=>{
   if(!['GET','POST'].includes(event.httpMethod)) return json(405,{error:'Method not allowed'});
   try{
@@ -153,6 +162,6 @@ export const handler=async(event)=>{
       rows(admin.from('boards').select('id,name,market_id,division_id').eq('organization_id',organization.id).eq('active',true).order('sort_order')),
       rows(admin.from('saved_roster_searches').select('*').eq('organization_id',organization.id).or(`shared.eq.true,member_id.eq.${member.id}`).order('pinned',{ascending:false}).order('updated_at',{ascending:false}))
     ]);
-    const canWrite=await assertPermission(admin,user.id,organization.id,'models.write');const canSaved=await assertPermission(admin,user.id,organization.id,'roster.saved_searches');return json(200,{environment:'veux-saas-v10',organization,filters:filter,roster:roster||[],tags:tagRows,skills:skillRows,markets,divisions,boards,saved_searches:saved,access:{write:canWrite,saved_searches:canSaved}});
+    const canWrite=await assertPermission(admin,user.id,organization.id,'models.write');const canSaved=await assertPermission(admin,user.id,organization.id,'roster.saved_searches');return json(200,{environment:'veux-saas-v10',organization,filters:filter,roster:roster||[],tags:tagRows,skills:skillRows,markets,divisions,boards:labelBoards(boards,markets,divisions),saved_searches:saved,access:{write:canWrite,saved_searches:canSaved}});
   }catch(error){ return errorResponse(error); }
 };
