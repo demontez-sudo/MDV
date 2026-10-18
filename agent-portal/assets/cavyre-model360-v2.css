@@ -333,3 +333,31 @@ html body .m360 .m360-crumb b{font-weight:600!important;color:#ece8f7!important}
 .m360-gpwrap .cvygp-subhead{margin:24px 0 12px;padding-top:16px;border-top:1px solid var(--line,rgba(150,120,255,.2))}
 .m360-gpwrap .cvygp-actions{margin-top:20px}
 @media(max-width:820px){.m360-gpwrap .v155-form-grid{grid-template-columns:1fr}.m360-gpwrap .cvygp-card,.m360-gpwrap .v155-card{padding:18px}}
+
+/* ---- calendar tab ---- */
+.m360 .mc-filters{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.m360 .mc-f{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--bg2);color:var(--ink);font-size:12px}
+.m360 .mc-f em{font-style:normal;color:var(--mu);font-size:11px}
+.m360 .mc-f.off{opacity:.4;text-decoration:line-through}
+.m360 .mc-f.k-booking i{color:var(--ok)}.m360 .mc-f.k-casting i{color:var(--acc)}.m360 .mc-f.k-event i{color:var(--gold)}.m360 .mc-f.k-travel i{color:#6fb7ff}.m360 .mc-f.k-availability i{color:var(--bad)}.m360 .mc-f.k-task i{color:var(--warn)}
+.m360 .mc-sum{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 12px;min-height:6px}.m360 .mc-none{color:var(--mu);font-size:12.5px}
+.m360 .mc-month{min-width:150px;text-align:center;font:500 18px "Cormorant Garamond",serif;letter-spacing:0;color:var(--ink)}
+.m360 .mc-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.m360 .mc-h{padding:4px 6px;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}
+.m360 .mc-d{min-height:104px;display:flex;flex-direction:column;align-items:stretch;gap:3px;text-align:left;padding:6px;border-radius:10px;border:1px solid var(--line);background:var(--bg2);transition:border-color .15s,background .15s}
+.m360 .mc-d:hover{border-color:var(--line2);background:rgba(255,255,255,.06)}
+.m360 .mc-d>b{font-weight:500;font-size:12.5px;color:var(--ink);align-self:flex-start;min-width:22px;height:22px;display:grid;place-items:center;border-radius:50%}
+.m360 .mc-d.out{opacity:.38}.m360 .mc-d.today>b{background:var(--acc);color:#14102c}
+.m360 .mc-d.sel{border-color:var(--acc);box-shadow:0 0 0 1px var(--acc) inset}
+.m360 .mc-d.un{background:repeating-linear-gradient(135deg,rgba(242,107,124,.11) 0 6px,rgba(242,107,124,.03) 6px 12px)}
+.m360 .mc-p{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:11px;line-height:1.35;padding:2px 6px;border-radius:5px;background:rgba(255,255,255,.08);border-left:2px solid var(--acc)}
+.m360 .mc-p em{font-style:normal;opacity:.7}
+.m360 .mc-p.k-booking{border-color:var(--ok);background:rgba(95,211,154,.12)}.m360 .mc-p.k-casting{border-color:var(--acc);background:rgba(185,161,255,.14)}.m360 .mc-p.k-event{border-color:var(--gold);background:rgba(201,166,107,.14)}.m360 .mc-p.k-travel{border-color:#6fb7ff;background:rgba(111,183,255,.13)}.m360 .mc-p.k-availability{border-color:var(--bad);background:rgba(242,107,124,.14);color:#ffd0d6}.m360 .mc-p.k-task{border-color:var(--warn);background:rgba(240,179,90,.13)}
+.m360 .mc-more{font-size:10.5px;color:var(--mu);padding-left:4px}
+.m360 .mc-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.m360 .mc-list li{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:10px;align-items:start;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--bg2)}
+.m360 .mc-list.up li{cursor:pointer}.m360 .mc-list.up li:hover{border-color:var(--line2)}
+.m360 .mc-ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.07);color:var(--acc)}
+.m360 .mc-list li.k-booking .mc-ic{color:var(--ok)}.m360 .mc-list li.k-event .mc-ic{color:var(--gold)}.m360 .mc-list li.k-travel .mc-ic{color:#6fb7ff}.m360 .mc-list li.k-availability .mc-ic{color:var(--bad)}.m360 .mc-list li.k-task .mc-ic{color:var(--warn)}
+.m360 .mc-list li b{font-weight:500;font-size:13.5px}.m360 .mc-list li p{color:var(--mu);font-size:12px;margin-top:2px}.m360 .mc-list li time{font-size:12px;color:var(--mu);white-space:nowrap}
+@media(max-width:900px){.m360 .mc-d{min-height:64px;padding:4px}.m360 .mc-p{font-size:0;height:6px;padding:0;border-left-width:0;border-radius:3px}.m360 .mc-p em{display:none}.m360 .mc-more{font-size:9px}.m360-t-calendar .m360-cols{grid-template-columns:1fr}}

@@ -3,10 +3,10 @@
 'use strict';
 if(window.__CAVYRE_M360__)return;window.__CAVYRE_M360__=1;
 
-var TABS=[['overview','Overview','ti-layout-grid'],['work','Work','ti-briefcase'],['materials','Materials','ti-photo'],['development','Development','ti-trending-up'],['logistics','Logistics','ti-plane'],['record','Record','ti-lock']];
+var TABS=[['overview','Overview','ti-layout-grid'],['work','Work','ti-briefcase'],['calendar','Calendar','ti-calendar'],['materials','Materials','ti-photo'],['development','Development','ti-trending-up'],['logistics','Logistics','ti-plane'],['record','Record','ti-lock']];
 var LEGACY={portfolio:'materials',polaroids:'materials',measurements:'materials',documents:'materials',history:'record',gameplan:'development',travel:'logistics',visa:'logistics'};
 var KIND_ICON={media:'ti-photo',package:'ti-package',task:'ti-checkbox',profile:'ti-file-text',note:'ti-note',travel:'ti-plane',visa:'ti-id',development:'ti-target',booking:'ti-calendar-event',casting:'ti-video',event:'ti-calendar',availability:'ti-calendar-off'};
-var M={tab:'overview',id:null,d:null,p:null,docs:null,intel:null,gp:null,gpLoading:false,el:null,prompts:[],week:0,day:null,mat:{cat:'All',view:'grid',sort:'recent'},rec:{q:'',type:'',src:'',range:'all'},collapsed:{},composer:false,menu:false,error:null};
+var M={tab:'overview',id:null,d:null,p:null,docs:null,intel:null,gp:null,gpLoading:false,el:null,prompts:[],week:0,day:null,cal:{m:0,day:null,off:{}},mat:{cat:'All',view:'grid',sort:'recent'},rec:{q:'',type:'',src:'',range:'all'},collapsed:{},composer:false,menu:false,error:null};
 
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function arr(v){return Array.isArray(v)?v:[];}
@@ -33,7 +33,7 @@ function link(label,fn){return '<button type="button" class="m360-link" onclick=
 function load(force){
   var id=modelId();
   if(!id)return Promise.reject(new Error('No model selected'));
-  if(M.id!==id||force){M.d=M.p=M.docs=M.intel=M.gp=null;M.id=id;M.week=0;M.day=null;M.composer=false;M.menu=false;}
+  if(M.id!==id||force){M.d=M.p=M.docs=M.intel=M.gp=null;M.id=id;M.week=0;M.day=null;M.cal={m:0,day:null,off:{}};M.composer=false;M.menu=false;}
   var q='?organization='+encodeURIComponent(org())+'&model_id='+encodeURIComponent(id);
   return Promise.all([
     get('/api/agent/model-360'+q),
@@ -258,8 +258,61 @@ function tRecord(){
   return '<div class="m360-cols rec"><div class="m360-main">'+main+'</div><div class="m360-side">'+side+'</div></div>';
 }
 
+/* ---------- CALENDAR ---------- */
+var CAL_KINDS=[['booking','Bookings','ti-calendar-event'],['casting','Castings','ti-video'],['event','Events','ti-calendar'],['travel','Travel','ti-plane'],['availability','Unavailable','ti-calendar-off'],['task','Tasks','ti-checkbox']];
+function dkey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function sod(d){var x=new Date(d);x.setHours(0,0,0,0);return x;}
+/* the days an item covers (a trip or a block can run for weeks) */
+function spanDays(x){
+  var a=ts(x.starts_at);if(a==null)return [];var s=sod(a),b=ts(x.ends_at);var e=b!=null&&b>a?new Date(b):new Date(a);
+  var end=sod(e);if(b!=null&&b>a&&e.getTime()===end.getTime()&&end>s)end.setDate(end.getDate()-1);
+  var out=[],c=new Date(s),n=0;while(c<=end&&n<62){out.push(dkey(c));c.setDate(c.getDate()+1);n++;}
+  return out;
+}
+function calItems(){
+  var it=M.intel||{},c=arr(it.calendar&&it.calendar.items);
+  return (c.length?c:arr(it.week&&it.week.items)).filter(function(x){return ts(x.starts_at)!=null;});
+}
+function calMeta(k){return CAL_KINDS.filter(function(c){return c[0]===k;})[0]||['other','Other','ti-circle'];}
+function timeOf(x){var a=ts(x.starts_at);if(a==null||x.kind==='availability')return '';var d=new Date(a);if(d.getHours()===0&&d.getMinutes()===0&&x.kind!=='casting'&&x.kind!=='booking')return '';return fmtTime(x.starts_at);}
+function tCalendar(){
+  var items=calItems(),off=M.cal.off,now=new Date(),todayK=dkey(now);
+  var base=new Date(now.getFullYear(),now.getMonth()+M.cal.m,1),lead=(base.getDay()+6)%7,dim=new Date(base.getFullYear(),base.getMonth()+1,0).getDate(),weeks=Math.ceil((lead+dim)/7);
+  var gs=new Date(base);gs.setDate(1-lead);
+  var by={};items.forEach(function(x){if(off[x.kind])return;spanDays(x).forEach(function(k){(by[k]=by[k]||[]).push(x);});});
+  Object.keys(by).forEach(function(k){by[k].sort(function(a,b){return (a.kind==='availability'?-1:0)-(b.kind==='availability'?-1:0)||ts(a.starts_at)-ts(b.starts_at);});});
+  var inMonth=base.getFullYear()===now.getFullYear()&&base.getMonth()===now.getMonth();
+  var sel=M.cal.day||(inMonth?todayK:dkey(base));
+  /* counts for the month on screen */
+  var mk=base.getFullYear()+'-'+String(base.getMonth()+1).padStart(2,'0'),cnt={};
+  items.forEach(function(x){var k=dkey(new Date(ts(x.starts_at)));if(k.slice(0,7)===mk)cnt[x.kind]=(cnt[x.kind]||0)+1;});
+  var unavailDays=Object.keys(by).filter(function(k){return k.slice(0,7)===mk&&by[k].some(function(x){return x.kind==='availability';});}).length;
+  var heads=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(function(d){return '<div class="mc-h">'+d+'</div>';}).join('');
+  var cells='';
+  for(var i=0;i<weeks*7;i++){
+    var d=new Date(gs);d.setDate(gs.getDate()+i);var k=dkey(d),list=by[k]||[],out=d.getMonth()!==base.getMonth();
+    var pills=list.slice(0,3).map(function(x){var t=timeOf(x);return '<span class="mc-p k-'+esc(x.kind)+'" title="'+esc(x.title)+'">'+(x.kind==='availability'?'Unavailable':(t?'<em>'+esc(t.replace(/\s?(AM|PM)/i,function(m){return m.trim().toLowerCase()[0];}))+'</em> ':'')+esc(x.title))+'</span>';}).join('');
+    var more=list.length>3?'<span class="mc-more">+'+(list.length-3)+' more</span>':'';
+    cells+='<button type="button" class="mc-d'+(out?' out':'')+(k===todayK?' today':'')+(k===sel?' sel':'')+(list.some(function(x){return x.kind==='availability';})?' un':'')+'" onclick="CAVYRE_M360.calPick(\''+k+'\')"><b>'+d.getDate()+'</b>'+pills+more+'</button>';
+  }
+  var filters='<div class="mc-filters">'+CAL_KINDS.map(function(c){return '<button type="button" class="mc-f k-'+c[0]+(off[c[0]]?' off':'')+'" onclick="CAVYRE_M360.calKind(\''+c[0]+'\')">'+ic(c[2])+c[1]+(cnt[c[0]]?' <em>'+cnt[c[0]]+'</em>':'')+'</button>';}).join('')+'</div>';
+  var nav='<div class="m360-weeknav"><button type="button" onclick="CAVYRE_M360.calNav(-1)" aria-label="Previous month">'+ic('ti-chevron-left')+'</button><span class="mc-month">'+esc(base.toLocaleDateString([],{month:'long',year:'numeric'}))+'</span><button type="button" onclick="CAVYRE_M360.calNav(1)" aria-label="Next month">'+ic('ti-chevron-right')+'</button><button type="button" class="m360-pill" onclick="CAVYRE_M360.calNav(0)">Today</button></div>';
+  var grid='<div class="mc-grid">'+heads+cells+'</div>';
+  var summary='<div class="mc-sum">'+(cnt.booking?chip(cnt.booking+' booking'+(cnt.booking===1?'':'s'),'ok'):'')+(cnt.casting?chip(cnt.casting+' casting'+(cnt.casting===1?'':'s')):'')+(cnt.travel?chip(cnt.travel+' trip'+(cnt.travel===1?'':'s')):'')+(unavailDays?chip(unavailDays+' unavailable day'+(unavailDays===1?'':'s'),'bad'):'')+(arr(M.intel&&M.intel.conflicts).length?chip(arr(M.intel.conflicts).length+' conflict'+(arr(M.intel.conflicts).length===1?'':'s'),'warn'):'')+(!items.length?'<span class="mc-none">Nothing scheduled yet.</span>':'')+'</div>';
+  var main=card('Calendar','Bookings, castings, travel and availability for '+(model().display_name||'the model')+'.',nav+'<button type="button" class="m360-link" onclick="navTo(\'calendar\')">Open full calendar '+ic('ti-arrow-right')+'</button>',filters+summary+grid);
+  /* the picked day */
+  var sd=new Date(sel+'T00:00:00'),dl=by[sel]||[];
+  var dayHtml=dl.length?'<ul class="mc-list">'+dl.map(function(x){var m=calMeta(x.kind),t=timeOf(x),e=ts(x.ends_at);return '<li class="k-'+esc(x.kind)+'"><span class="mc-ic">'+ic(m[2])+'</span><div><b>'+esc(x.kind==='availability'?x.title:x.title)+'</b><p>'+esc(m[1].replace(/s$/,''))+(x.location?' · '+esc(x.location):'')+(e!=null&&dkey(new Date(e))!==dkey(new Date(ts(x.starts_at)))?' · until '+esc(fmtDate(x.ends_at,{month:'short',day:'numeric'})):'')+'</p>'+(x.status?'<div>'+chip(String(x.status).replace(/_/g,' '),statusTone(x.status))+'</div>':'')+'</div><time>'+esc(t)+'</time></li>';}).join('')+'</ul>':empty(sel<todayK?'Nothing was scheduled that day.':'Free day. No bookings, castings or travel.');
+  var day=card(sd.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'}),dl.length?dl.length+' item'+(dl.length===1?'':'s'):'','',dayHtml);
+  /* what is coming up */
+  var up=items.filter(function(x){return x.kind!=='task'&&x.kind!=='availability'&&ts(x.starts_at)>=sod(now).getTime();}).sort(function(a,b){return ts(a.starts_at)-ts(b.starts_at);}).slice(0,8);
+  var upHtml=up.length?'<ul class="mc-list up">'+up.map(function(x){var m=calMeta(x.kind),dd=Math.round((sod(ts(x.starts_at))-sod(now))/864e5);return '<li class="k-'+esc(x.kind)+'" onclick="CAVYRE_M360.calJump(\''+dkey(new Date(ts(x.starts_at)))+'\')"><span class="mc-ic">'+ic(m[2])+'</span><div><b>'+esc(x.title)+'</b><p>'+esc(fmtDate(x.starts_at,{weekday:'short',month:'short',day:'numeric'}))+(x.location?' · '+esc(x.location):'')+'</p></div><time>'+(dd===0?'Today':dd===1?'Tomorrow':'in '+dd+'d')+'</time></li>';}).join('')+'</ul>':empty('Nothing coming up.');
+  var upc=card('Coming up','The next commitments, in order.','',upHtml);
+  return '<div class="m360-cols"><div class="m360-main">'+main+'</div><div class="m360-side">'+day+upc+'</div></div>';
+}
+
 /* ---------- paint ---------- */
-var BUILD={overview:tOverview,work:tWork,materials:tMaterials,development:tDevelopment,logistics:tLogistics,record:tRecord};
+var BUILD={overview:tOverview,work:tWork,calendar:tCalendar,materials:tMaterials,development:tDevelopment,logistics:tLogistics,record:tRecord};
 function paint(){
   var el=M.el&&M.el.isConnected?M.el:document.getElementById('p-modelpage');if(!el)return;M.el=el;
   if(M.error){el.innerHTML='<div class="m360"><div class="m360-fail"><h3>Unable to load Model 360</h3><p>'+esc(M.error)+'</p><button type="button" class="m360-btn" onclick="CAVYRE_M360.refresh()">Try again</button></div></div>';return;}
@@ -353,7 +406,11 @@ window.CAVYRE_M360={
   sharePackage:function(){var b=document.createElement('button');b.textContent='Add to Package';b.style.display='none';(M.el||document.body).appendChild(b);b.click();setTimeout(function(){b.remove();},50);},
   openDesk:openDesk,
   viewer:openViewer,lbClose:lbClose,lbNav:lbNav,lbGo:function(i){LB.i=i;lbRender();},lbSave:lbSave,lbMain:function(){var it=lbCur();if(it)setMain(it.id);},lbCopy:function(){var it=lbCur();if(!it)return;try{navigator.clipboard.writeText(it.url).then(function(){toast('✓ Link copied');});}catch(e){toast(it.url);}},setMain:setMain,delMedia:delMedia,
-  pickDay:function(k){M.day=k;paint();},weekNav:function(n){if(n===0){M.week=0;M.day=new Date().toDateString();}else{M.week+=n;M.day=null;}paint();},
+  pickDay:function(k){M.day=k;paint();},
+  calNav:function(n){if(n===0){M.cal.m=0;M.cal.day=null;}else{M.cal.m+=n;M.cal.day=null;}paint();},
+  calPick:function(k){M.cal.day=k;paint();},
+  calJump:function(k){var d=new Date(k+'T00:00:00'),n=new Date();M.cal.m=(d.getFullYear()-n.getFullYear())*12+d.getMonth()-n.getMonth();M.cal.day=k;paint();},
+  calKind:function(k){M.cal.off[k]=!M.cal.off[k];paint();},weekNav:function(n){if(n===0){M.week=0;M.day=new Date().toDateString();}else{M.week+=n;M.day=null;}paint();},
   matCat:function(c){M.mat.cat=c;paint();},matSort:function(v){M.mat.sort=v;paint();},matView:function(v){M.mat.view=v;paint();},
   recSet:function(k,v){M.rec[k]=v;var pos=document.activeElement&&document.activeElement.selectionStart;paint();if(k==='q'){var i=document.querySelector('.m360-search input');if(i){i.focus();try{i.setSelectionRange(pos,pos);}catch(e){}}}},
   toggleMonth:function(k){M.collapsed[k]=!M.collapsed[k];paint();},

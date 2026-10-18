@@ -194,6 +194,7 @@ export const handler=async event=>{
       environment:'veux-model-360-intel-v1',model_id:modelId,generated_at:new Date(now).toISOString(),
       readiness,signals,recommendation,conflicts,readiness_items,next_trip_id:nextTrip?.id||null,
       week:{items:weekItems.filter(x=>ts(x.starts_at)>=now-2*DAY&&ts(x.starts_at)<=now+30*DAY)},
+      calendar:{items:weekItems.filter(x=>ts(x.starts_at)>=now-400*DAY&&ts(x.starts_at)<=now+400*DAY)},
       next_up,commitments,market_plan,
       package_activity:pkgActivity.slice(0,30),activity,
       logging_enabled:logged.length>0
