@@ -30,24 +30,27 @@ function load(){
 /* every picture of every story for this city, hero first */
 function pictures(){
   var c=cityKey(),out=[];
-  (posts||[]).forEach(function(p){
-    if(!(p.city===c||p.city==='both'))return;
+  function add(p,only){
+    if(only&&!(p.city===c||p.city==='both'))return;
     var imgs=[p.heroImage].concat(Array.isArray(p.gallery)?p.gallery:[]).filter(Boolean);
-    imgs.forEach(function(u){out.push({u:sized(u,720),n:p.modelName||'',t:(p.brand&&String(p.brand).length<=20)?('For '+p.brand):'Editorial',slug:p.slug||p.id||''});});
-  });
+    imgs.forEach(function(u){out.push({u:sized(u,720),n:p.modelName||'',t:(p.brand&&String(p.brand).length<=20)?('For '+p.brand):'Editorial',slug:p.slug||p.id||'',c:p.city==='both'?c:(p.city||c)});});
+  }
+  (posts||[]).forEach(function(p){add(p,true);});
+  /* a city with no stories of its own yet shows the house's other stories, so the menu is never bare */
+  if(!out.length)(posts||[]).forEach(function(p){add(p,false);});
   return out;
 }
 function show(f){
   var back=front===A?B:A;
   back.onload=function(){back.classList.add('show');front.classList.remove('show');front=back;nameEl.textContent=f.n;tagEl.textContent=f.t;};
   back.src=f.u;
-  stage.href='https://www.maisondeveux.com/'+cityKey()+'/news/'+(f.slug?'#'+encodeURIComponent(f.slug):'');
+  stage.href='https://www.maisondeveux.com/'+(f.c==='paris'?'paris':'newyork')+'/news/'+(f.slug?'#'+encodeURIComponent(f.slug):'');
 }
 function tick(){
   var list=pictures();
   stage.style.display=list.length?'':'none';
   if(!list.length)return;
-  var s=cityKey()+list.length;if(s!==sig){sig=s;idx=0;}
+  var s=cityKey()+list.length+(list[0]&&list[0].c);if(s!==sig){sig=s;idx=0;}
   show(list[idx%list.length]);idx++;
 }
 function open(){return menu.classList.contains('open');}
