@@ -1,0 +1,43 @@
+/* Menu: the boards are set large and left-aligned; a portrait stage on the right answers what you hover.
+   No numbers. Hovering one board quietly dims the rest and draws a line in front of it. */
+.menu-overlay{padding-bottom:clamp(26px,5vh,54px)}
+.menu-overlay .menu-city-switch{margin:clamp(26px,6vh,64px) 0 0;align-self:flex-start;justify-self:start;width:max-content}
+.menu-overlay .menu-body{align-items:flex-start;justify-content:center;gap:clamp(28px,5vh,56px);padding:clamp(18px,4vh,40px) 0 0;position:relative;z-index:2}
+.menu-overlay .menu-primary{text-align:left;counter-reset:none}
+.menu-overlay .menu-primary li{margin:0;padding:clamp(2px,.8vh,10px) 0;transition:opacity .7s ease,transform .8s cubic-bezier(.16,1,.3,1)}
+.menu-overlay .menu-primary li::before{content:none!important;display:none}
+.menu-overlay .menu-primary a{display:inline-flex;align-items:center;gap:0;font-weight:300;font-size:clamp(46px,8.4vw,128px);line-height:1;letter-spacing:-.012em;transition:color .45s ease,transform .6s cubic-bezier(.16,1,.3,1),opacity .45s ease,gap .6s cubic-bezier(.16,1,.3,1),font-style .2s}
+.menu-overlay .menu-primary a::after{display:none}
+.menu-overlay .menu-primary a::before{content:"";display:block;height:1px;width:0;background:var(--brass);transition:width .6s cubic-bezier(.16,1,.3,1),margin .6s cubic-bezier(.16,1,.3,1);margin-right:0}
+.menu-overlay .menu-primary:hover li a{opacity:.28}
+.menu-overlay .menu-primary li:hover a{opacity:1;color:var(--ink);font-style:italic;transform:translateX(6px)}
+.menu-overlay .menu-primary li:hover a::before{width:clamp(34px,6vw,96px);margin-right:clamp(14px,2vw,28px)}
+.menu-overlay .menu-primary li:hover a{color:var(--ink)}
+.menu-overlay .menu-secondary{justify-content:flex-start;max-width:none;width:auto;gap:clamp(18px,2.4vw,34px);padding-top:26px}
+
+/* portrait stage */
+.menu-stage{display:none}
+@media(min-width:900px){
+  .menu-overlay{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);grid-template-rows:auto auto 1fr;column-gap:clamp(30px,6vw,110px);padding-left:clamp(28px,6vw,96px);padding-right:clamp(28px,6vw,96px)}
+  .menu-overlay>.menu-top{grid-column:1/-1}
+  .menu-overlay>.menu-city-switch{grid-column:1;grid-row:2}
+  .menu-overlay>.menu-body{grid-column:1;grid-row:3}
+  .menu-stage{display:block;grid-column:2;grid-row:2/4;align-self:center;justify-self:end;width:min(100%,clamp(260px,26vw,400px));aspect-ratio:3/4.2;position:relative;opacity:0;transform:translateY(24px);transition:opacity .9s ease .35s,transform 1s cubic-bezier(.16,1,.3,1) .35s}
+  .menu-overlay.open .menu-stage{opacity:1;transform:none}
+  .menu-stage .ms-frame{position:absolute;inset:0;overflow:hidden;background:linear-gradient(155deg,var(--panel,#14110f),var(--black))}
+  .menu-stage img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 15%;opacity:0;transform:scale(1.06);transition:opacity .7s ease,transform 1.4s cubic-bezier(.16,1,.3,1);filter:grayscale(.25)}
+  .menu-stage img.show{opacity:1;transform:none}
+  .menu-stage .ms-cap{position:absolute;left:0;right:0;bottom:-34px;display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .menu-stage .ms-name{font:400 italic 22px/1 'Cormorant Garamond',serif;color:var(--ink)}
+  .menu-stage .ms-board{font:500 10px 'Jost',sans-serif;letter-spacing:.28em;text-transform:uppercase;color:var(--brass)}
+  .menu-stage .ms-c{position:absolute;width:16px;height:16px;border:0 solid var(--ink);opacity:.85;pointer-events:none;z-index:2}
+  .menu-stage .ms-c.a{left:-9px;top:-9px;border-width:1px 0 0 1px}.menu-stage .ms-c.b{right:-9px;top:-9px;border-width:1px 1px 0 0}
+  .menu-stage .ms-c.c{left:-9px;bottom:-9px;border-width:0 0 1px 1px}.menu-stage .ms-c.d{right:-9px;bottom:-9px;border-width:0 1px 1px 0}
+}
+@media(max-width:899px){
+  .menu-overlay .menu-city-switch{align-self:center;justify-self:center}
+  .menu-overlay .menu-body{align-items:center}
+  .menu-overlay .menu-primary,.menu-overlay .menu-secondary{text-align:center;justify-content:center}
+  .menu-overlay .menu-primary a{font-size:clamp(40px,12vw,64px)}
+}
+@media(prefers-reduced-motion:reduce){.menu-stage,.menu-stage img{transition:none}}

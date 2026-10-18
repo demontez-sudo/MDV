@@ -44,7 +44,6 @@
     }catch(e){}
     return u;
   }
-  function pad(n){return n<10?'0'+n:String(n);}
   function tile(row,pageKey,i){
     var fb=((window.MDV_ROSTER_FALLBACKS||{})[pageKey]||{})[row.display_name]||'';
     var img=row.image_url||fb;
@@ -53,15 +52,15 @@
     var visual=img?'<img src="'+esc(sized(img,800))+'" srcset="'+esc(sized(img,480))+' 480w, '+esc(sized(img,800))+' 800w, '+esc(sized(img,1200))+' 1200w" sizes="(max-width:760px) 50vw, 25vw" alt="'+esc(row.display_name)+'"'+attrs+'>':'<span class="placeholder-label">Image Pending</span>';
     return '<a class="roster-tile" data-cursor="View" style="--d:'+((i%4)*.09).toFixed(2)+'s" href="'+esc(row.profile_path||profilePathFor(row.display_name)||'#')+'">'
       +'<div class="roster-image">'+visual+'<i class="rt-c a"></i><i class="rt-c b"></i><i class="rt-c c"></i><i class="rt-c d"></i></div>'
-      +'<div class="roster-cap"><span class="roster-name">'+esc(row.display_name)+'</span><span class="roster-no">'+pad(i+1)+'</span></div></a>';
+      +'<div class="roster-cap"><span class="roster-name">'+esc(row.display_name)+'</span></div></a>';
   }
-  /* the board's name and a count, above the grid */
+  /* the board's name, above the grid */
   var VIEW_LABEL={women:'Women',men:'Men',development:'Development',creator:'Creator'};
   function meta(root,n){
     var m=document.getElementById('mdv-roster-meta');
     if(!m){m=document.createElement('div');m.id='mdv-roster-meta';m.className='roster-meta';root.parentNode.insertBefore(m,root);}
     var v=String(root.dataset.view||'').toLowerCase();
-    m.innerHTML='<h1>'+esc(VIEW_LABEL[v]||root.dataset.view||'Roster')+'</h1><span class="rm-city">'+esc(root.dataset.market||'')+'</span><span class="rm-count">'+pad(n)+' '+(n===1?'model':'models')+'</span>';
+    m.innerHTML='<h1>'+esc(VIEW_LABEL[v]||root.dataset.view||'Roster')+'</h1><span class="rm-city">'+esc(root.dataset.market||'')+'</span>';
   }
   /* portraits open as they scroll into view */
   function reveal(root){
