@@ -435,8 +435,17 @@ function whenText(p,iso,withTheirs){
   return out+' '+extra.join(', ')+')';
 }
 function hostName(){var c=R.sc.call||{},m=arr(lookups().members).filter(function(x){return x.id===c.host_member_id;})[0];return m?m.display_name:who();}
+/* A pasted Zoom invitation is long: keep the link, meeting ID and passcode, drop the rest */
+function joinText(v){
+  var s=String(v||'').replace(/\s+/g,' ').trim();if(!s)return '';
+  var url=(s.match(/https?:\/\/[^\s<>"']+/)||[])[0];
+  if(!url)return s.length>140?s.slice(0,137)+'…':s;
+  url=url.replace(/[.,;)]+$/,'');
+  var id=(s.match(/Meeting ID:?\s*([\d ]{6,})/i)||[])[1],pw=(s.match(/Pass(?:code|word):?\s*([A-Za-z0-9]+)/i)||[])[1];
+  return url+(id?' · Meeting ID '+id.trim():'')+(pw?' · Passcode '+pw:'');
+}
 function callTpl(p,kind){
-  var c=R.sc.call||{},ma=(R.sc.outreach&&R.sc.outreach.ma)||{},nm=first(p.display_name),host=hostName(),how=[c.channel||'Phone',String(c.link||'').trim()].filter(Boolean).join(' · ');
+  var c=R.sc.call||{},ma=(R.sc.outreach&&R.sc.outreach.ma)||{},nm=first(p.display_name),host=hostName(),how=[c.channel||'Phone',joinText(c.link)].filter(Boolean).join(' · ');
   var mins=Number(c.minutes)||30,minor=isMinor(p);
   if(kind==='ma')return {subject:'Interest call with '+p.display_name+' — '+dayTz(c.scheduled_at)+' — Maison de Veux',body:'Hello '+first(ma.name||'')+',\n\nThank you for speaking with us about '+p.display_name+'. We would like to set up an interest call with '+nm+' so we can get to know '+nm+' and talk about representation in New York and Paris.\n\n• When: '+whenText(p,c.scheduled_at,false)+'\n• How: '+how+'\n• With: '+host+', Maison de Veux\n• Length: about '+mins+' minutes\n\nCould you confirm that this time works for '+nm+' and let us know if you would like to join? If another time is better, send two options and we will fit one.'+(minor?'\n\nAs '+nm+' is under 18, a parent or guardian should be on the call.':'')+'\n\nThank you,\n'+host+'\nMaison de Veux'};
   return {subject:'Your call with Maison de Veux — '+dayTz(c.scheduled_at),body:'Hi '+nm+',\n\nThank you for your interest in Maison de Veux. We are looking forward to speaking with you.\n\nYour interest call:\n• When: '+whenText(p,c.scheduled_at,true)+'\n• How: '+how+'\n• With: '+host+', Maison de Veux\n• Length: about '+mins+' minutes\n\nIt helps to have ready: a few recent photos, your measurements, when you are free to travel, and your passport status.'+(minor?'\n\nBecause you are under 18, please have a parent or guardian join the call.':'')+'\n\nPlease reply to confirm this time works. If it does not, send me a couple of times that suit you and I will change it.\n\nSee you soon,\n'+host+'\nMaison de Veux'};

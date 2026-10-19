@@ -176,7 +176,6 @@ export const handler = async event => {
         const r = await sendViaResend({ conn, to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, text: String(body.text ?? body.body ?? '') + sigT, attachments: m.attachments || [], copyInbox: ct === 'inbox' });
         const copy = await saveCopy(G, conn, ct, { to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, attachments: m.attachments });
         await autoLog(m.toRecipients, m.subject, body.text ?? body.body);
-        await autoLog(to, subj, text);
         return json(200, { ok: true, verified: true, sent: true, via: 'resend', copy, id: r?.providerMessageId || null });
       }
       await G('/me/sendMail', { method: 'POST', body: payload });
