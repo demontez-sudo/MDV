@@ -93,3 +93,5 @@ html.hm-lock{overflow:hidden}
 .hm-seg button.on{background:var(--g);color:#14110c}
 .hm-newcall{white-space:nowrap}
 @media(max-width:620px){.hm-fgrid{grid-template-columns:1fr}.hm-mcard footer .hm-fine{max-width:none;flex:1 1 100%}}
+
+button.hm-s{cursor:pointer;font-family:inherit}.hm-s.go{border-color:rgba(212,176,119,.55);color:var(--g2);background:rgba(212,176,119,.1)}

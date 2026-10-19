@@ -70,16 +70,14 @@ function buildEvents(d){
 function memberById(id){return H.members.filter(function(m){return String(m.id)===String(id);})[0]||null;}
 function buildScoutCalls(d){
   if(!d)return [];var out=[];
-  arr(d.prospects).forEach(function(p){
-    var sc=(p.metadata&&p.metadata.scout)||{},c=sc.call||{};if(!c.scheduled_at)return;
+  arr(d.calls).forEach(function(c){
     var st=new Date(c.scheduled_at);if(isNaN(st))return;
-    var step=String(sc.step||'').toLowerCase();if(step!=='call_scheduled'&&step!=='call_done')return;   /* only records that are at the interest-call step; a leftover time on an earlier or later step is not a call */
     var host=c.host_member_id?memberById(c.host_member_id):null,name=host?memberName(host):'';
-    if(!name&&p.organization_members&&p.organization_members.display_name)name=first(p.organization_members.display_name);
-    if(!name&&p.created_by){var cm=H.members.filter(function(m){return m.user_id===p.created_by;})[0];if(cm)name=memberName(cm);}
+    if(!name&&c.assigned_member_id){var am=memberById(c.assigned_member_id);if(am)name=memberName(am);}
+    if(!name&&c.created_by){var cm=H.members.filter(function(m){return m.user_id===c.created_by;})[0];if(cm)name=memberName(cm);}
     if(!name)name=myName();if(!name)return;
-    var link=String(c.link||'').trim(),nm=p.display_name||'Prospect',done=step==='call_done';
-    out.push({kind:'scout',id:p.id,title:nm+' · interest call',cand:nm,start:st,end:new Date(st.getTime()+(Number(c.minutes)||30)*60000),allDay:false,label:'Interest call',type:'meeting',status:done?'completed':'scheduled',location:[c.channel,link].filter(Boolean).join(' · '),notes:[p.instagram&&('Instagram '+p.instagram),[p.city,p.country].filter(Boolean).join(', '),p.height_display&&('Height '+p.height_display)].filter(Boolean).join(' · '),people:[name],models:[],meta:{category:'scout_call',step:step},conflict:'',cat:'calls',fromScout:true});
+    var link=String(c.link||'').trim(),nm=c.name||'Prospect',done=c.step==='call_done';
+    out.push({kind:'scout',id:c.id,title:nm+' · interest call',cand:nm,start:st,end:new Date(st.getTime()+(Number(c.minutes)||30)*60000),allDay:false,label:'Interest call',type:'meeting',status:done?'completed':'scheduled',location:[c.channel,link].filter(Boolean).join(' · '),notes:[c.instagram&&('Instagram '+c.instagram),[c.city,c.country].filter(Boolean).join(', '),c.height&&('Height '+c.height)].filter(Boolean).join(' · '),people:[name],models:[],meta:{category:'scout_call',step:c.step},conflict:'',cat:'calls',fromScout:true});
   });
   return out;
 }
@@ -108,13 +106,14 @@ async function load(force){
     var s=addDays(monday(H.day),-1),e=addDays(monday(H.day),8);
     var res=await Promise.all([
       get('/api/agent/calendar/v9?organization='+encodeURIComponent(org())+'&start='+encodeURIComponent(s.toISOString())+'&end='+encodeURIComponent(e.toISOString())+'&_t='+Date.now()),
-      get('/api/agent/tasks/v11?organization='+encodeURIComponent(org())+'&_t='+Date.now()),
-      get('/api/agent/scouting/v9?organization='+encodeURIComponent(org())+'&_t='+Date.now()).catch(function(){return null;})
+      get('/api/agent/tasks/v11?organization='+encodeURIComponent(org())+'&_t='+Date.now())
     ]);
-    H.members=arr(res[1].members);H.myUid=uid();H.events=buildEvents(res[0]||{});H.tasks=arr(res[1].tasks);H.scout=buildScoutCalls(res[2]);H.week=wk;H.loaded=true;H.err='';
+    H.members=arr(res[1].members);H.myUid=uid();H.events=buildEvents(res[0]||{});H.tasks=arr(res[1].tasks);H.scout=buildScoutCalls(H.scoutRaw);H.week=wk;H.loaded=true;H.err='';
     if(H.person==='me'&&!myName())H.person='all';
   }catch(err){H.err=msg(err);}
   H.loading=false;paint();
+  /* Scouting calls arrive a moment later and never hold the calendar up */
+  get('/api/agent/scouting/calls?organization='+encodeURIComponent(org())+'&_t='+Date.now()).then(function(d){H.scoutRaw=d;H.scout=buildScoutCalls(d);paint();}).catch(function(){});
 }
 async function reloadTasks(){try{var r=await get('/api/agent/tasks/v11?organization='+encodeURIComponent(org())+'&_t='+Date.now());H.members=arr(r.members);H.tasks=arr(r.tasks);}catch(e){}paint();}
 
@@ -153,10 +152,12 @@ function signals(who){
   if(over.length)out.push(['risk',over.length+' overdue task'+(over.length===1?'':'s')]);
   if(calls)out.push(['',calls+' call'+(calls===1?'':'s')+' '+(isToday?'today':'this day')]);
   var conflict=d.timed.concat(d.whole).filter(function(x){return x.conflict;})[0];if(conflict)out.push(['risk','Flagged: '+conflict.title]);
+  if(isToday){var tm=addDays(H.day,1),tn=itemsFor(tm,who),tc=tn.timed.concat(tn.whole).filter(function(x){return x.cat==='calls';}).sort(function(a,b){return a.start-b.start;});
+    if(tc.length)out.push(['go','Tomorrow: '+tc.length+' call'+(tc.length===1?'':'s')+' from '+tlabel(tc[0].start),dkey(tm)]);}
   if(who||true){var f=freeMinutes(H.day,who);if(d.timed.length||isToday)out.push(['ok',(f>=60?Math.floor(f/60)+'h'+(f%60?' '+f%60+'m':''):f+'m')+' free in the working day']);}
   var unsched=allTasks.filter(function(t){return !t.start||t.allDay&&dkey(t.start)===k;}).length;
   if(unsched&&who)out.push(['',unsched+' task'+(unsched===1?'':'s')+' without a time']);
-  return '<div class="hm-sig"><span class="hm-vera">✦ Helm</span>'+(out.length?out.map(function(s){return '<span class="hm-s '+s[0]+'">'+esc(s[1])+'</span>';}).join(''):'<span class="hm-s">Nothing needs attention.</span>')+'</div>';
+  return '<div class="hm-sig"><span class="hm-vera">✦ Helm</span>'+(out.length?out.map(function(s){return s[2]?'<button type="button" class="hm-s '+s[0]+'" data-hm-goto="'+esc(s[2])+'">'+esc(s[1])+' →</button>':'<span class="hm-s '+s[0]+'">'+esc(s[1])+'</span>';}).join(''):'<span class="hm-s">Nothing needs attention.</span>')+'</div>';
 }
 function layout(list){
   var items=list.map(function(it){var s=Math.max(mins(it.start),START_H*60),e=it.end&&dkey(it.end)===dkey(it.start)?mins(it.end):s+30;e=Math.min(Math.max(e,s+20),END_H*60);return{it:it,s:s,e:e,col:0,cols:1};}).sort(function(a,b){return a.s-b.s||b.e-a.e;});
