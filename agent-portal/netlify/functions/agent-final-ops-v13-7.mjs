@@ -57,38 +57,53 @@ export const handler=async(event)=>{
       if(action==='save_story'){
         const allowed=await canAny(admin,user.id,organization.id,['crm.write','communications.send']);
         if(!allowed)return json(403,{error:'Editorial publishing permission required'});
-        const city=cleanText(body.city).toLowerCase();
+        const choice=cleanText(body.city).toLowerCase();
         const status=cleanText(body.status||'draft').toLowerCase();
-        if(!['newyork','paris'].includes(city))return json(400,{error:'Market must be New York or Paris'});
+        if(!['newyork','paris','both'].includes(choice))return json(400,{error:'Market must be New York, Paris or both'});
         if(!['draft','published','archived'].includes(status))return json(400,{error:'Invalid story status'});
         const modelName=cleanText(body.modelName);
         const brand=cleanText(body.brand);
         if(!modelName&&!brand)return json(400,{error:'Model name or story title is required'});
         const existing=await editorialStories(admin);
-        const id=cleanText(body.id)||storyId();
-        const prior=existing.stories.find(x=>x&&x.id===id)||{};
-        const now=new Date().toISOString();
-        const story={
-          ...prior,
-          id,
-          city,
-          slug:slugify(body.slug||modelName||brand)||id,
-          brand,
-          status,
-          caption:cleanText(body.caption),
-          credits:Array.isArray(body.credits)?body.credits:prior.credits||[],
-          gallery:galleryList(body.gallery),
-          createdAt:prior.createdAt||now,
-          heroImage:cleanText(body.heroImage),
-          modelName,
-          publishedAt:status==='published'?(prior.status==='published'&&prior.publishedAt?prior.publishedAt:now):null,
-          brandInstagram:cleanText(body.brandInstagram),
-          modelInstagram:cleanText(body.modelInstagram),
-          updatedAt:now
-        };
-        const {data:saved,error:saveError}=await admin.rpc('save_editorial_story_v1',{target_org:organization.id,target_key:EDITORIAL_SYNC_KEY,target_story:story,target_actor:user.id,target_archive:false});
-        if(saveError)throw saveError;if(saved?.verified!==true)throw new Error('Editorial story save could not be verified');
-        return json(200,{ok:true,verified:true,story:saved.story,blog_path:saved.blog_path,persisted_at:saved.persisted_at});
+        const cities=choice==='both'?['newyork','paris']:[choice];
+        const baseId=cleanText(body.id),base=baseId?existing.stories.find(x=>x&&x.id===baseId):null;
+        if(baseId&&!base)return json(404,{error:'Story not found'});
+        /* One story per blog: "both" saves a New York story and a Paris story that share a pair id, so each blog lists, edits and archives its own copy. */
+        const pairId=cities.length>1?(base?.pairId||'pair_'+(baseId||storyId())):(base?.pairId||null);
+        const now=new Date().toISOString(),savedStories=[];let blogPath=null,persistedAt=null;
+        for(const city of cities){
+          let id,prior={};
+          if(base&&base.city===city){id=baseId;prior=base;}
+          else{
+            const sibling=pairId&&existing.stories.find(x=>x&&x.pairId===pairId&&x.city===city);
+            if(sibling){id=sibling.id;prior=sibling;}
+            else if(base&&cities.length===1){id=baseId;prior=base;}
+            else id=storyId();
+          }
+          const story={
+            ...prior,
+            id,
+            city,
+            pairId,
+            slug:slugify(body.slug||modelName||brand)||id,
+            brand,
+            status,
+            caption:cleanText(body.caption),
+            credits:Array.isArray(body.credits)?body.credits:prior.credits||[],
+            gallery:galleryList(body.gallery),
+            createdAt:prior.createdAt||now,
+            heroImage:cleanText(body.heroImage),
+            modelName,
+            publishedAt:status==='published'?(prior.status==='published'&&prior.publishedAt?prior.publishedAt:now):null,
+            brandInstagram:cleanText(body.brandInstagram),
+            modelInstagram:cleanText(body.modelInstagram),
+            updatedAt:now
+          };
+          const {data:saved,error:saveError}=await admin.rpc('save_editorial_story_v1',{target_org:organization.id,target_key:EDITORIAL_SYNC_KEY,target_story:story,target_actor:user.id,target_archive:false});
+          if(saveError)throw saveError;if(saved?.verified!==true)throw new Error('Editorial story save could not be verified');
+          savedStories.push(saved.story);blogPath=blogPath||saved.blog_path;persistedAt=saved.persisted_at;
+        }
+        return json(200,{ok:true,verified:true,story:savedStories[0],stories:savedStories,blog_path:blogPath,persisted_at:persistedAt});
       }
       if(action==='archive_story'){
         const allowed=await canAny(admin,user.id,organization.id,['crm.write','communications.send']);
@@ -127,6 +142,7 @@ export const handler=async(event)=>{
       partner_agencies:partners.map(x=>({...x,company:cm.get(x.company_id)||null})),
       placements:placements.map(x=>({...x,model:mm.get(x.model_id)||null,market:mk.get(x.market_id)||null})),
       press_activity:press.map(x=>({...x,company:cm.get(x.company_id)||null,contact:contactMap.get(x.contact_id)||null})),
+      models:models.map(x=>({id:x.id,display_name:x.display_name,public_slug:x.public_slug})),
       editorial_stories:editorial.stories,editorial_updated_at:editorial.updated_at,
       editorial_blogs:{newyork:'/newyork/news',paris:'/paris/news'},
       access:{crm:!!canCrm,crm_write:await assertPermission(admin,user.id,organization.id,'crm.write'),editorial:!!canEditorial}

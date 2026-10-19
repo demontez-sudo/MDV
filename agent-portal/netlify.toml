@@ -734,6 +734,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/editorial/upload-url"
+to = "/.netlify/functions/agent-story-media-upload-url"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/model-media/upload-url"
 to = "/.netlify/functions/agent-model-media-upload-url"
 status = 200
