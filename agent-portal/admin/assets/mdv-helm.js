@@ -9,7 +9,7 @@ var CATS=[['calls','Interest calls & check-ins'],['meetings','Meetings'],['dutie
 var START_H=6,END_H=22,HH=56,SNAP=15;
 var KEY='mdv.helm.v1';
 var H={mode:'full',day:today(),view:'day',person:'me',cats:{calls:true,meetings:true,duties:true,models:true,tasks:true},events:[],scout:[],tasks:[],members:[],myUid:null,week:'',loading:false,err:'',host:null,sel:null,loaded:false};
-try{var sv=JSON.parse(localStorage.getItem(KEY)||'{}');if(sv.view==='week'||sv.view==='day')H.view=sv.view;if(typeof sv.person==='string'&&sv.person)H.person=sv.person;if(sv.cats&&typeof sv.cats==='object')Object.keys(H.cats).forEach(function(k){if(sv.cats[k]===false)H.cats[k]=false;});}catch(e){}
+try{var sv=JSON.parse(localStorage.getItem(KEY)||'{}');if(sv.view==='week'||sv.view==='day'||sv.view==='month')H.view=sv.view;if(typeof sv.person==='string'&&sv.person)H.person=sv.person;if(sv.cats&&typeof sv.cats==='object')Object.keys(H.cats).forEach(function(k){if(sv.cats[k]===false)H.cats[k]=false;});}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify({view:H.view,person:H.person,cats:H.cats}));}catch(e){}}
 
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -98,12 +98,17 @@ function taskItems(){return H.tasks.filter(function(t){return !t.parent_task_id&
 
 /* ---------- loading ---------- */
 function uid(){try{var st=bridge().state;return (st.user&&st.user.id)||(st.session&&st.session.user&&st.session.user.id)||(st.profile&&st.profile.user_id)||null;}catch(e){return null;}}
+function rangeKey(){return H.view==='month'?'m'+H.day.getFullYear()+'-'+(H.day.getMonth()+1):'w'+dkey(monday(H.day));}
+function loadRange(){
+  if(H.view==='month'){var f=new Date(H.day.getFullYear(),H.day.getMonth(),1),l=new Date(H.day.getFullYear(),H.day.getMonth()+1,0);return [addDays(monday(f),-1),addDays(addDays(monday(l),6),2)];}
+  return [addDays(monday(H.day),-1),addDays(monday(H.day),8)];
+}
 async function load(force){
-  if(H.loading)return;var wk=dkey(monday(H.day));
+  if(H.loading)return;var wk=rangeKey();
   if(!force&&H.loaded&&H.week===wk){paint();return;}
   H.loading=true;paint();
   try{
-    var s=addDays(monday(H.day),-1),e=addDays(monday(H.day),8);
+    var rg=loadRange(),s=rg[0],e=rg[1];
     var res=await Promise.all([
       get('/api/agent/calendar/v9?organization='+encodeURIComponent(org())+'&start='+encodeURIComponent(s.toISOString())+'&end='+encodeURIComponent(e.toISOString())+'&_t='+Date.now()),
       get('/api/agent/tasks/v11?organization='+encodeURIComponent(org())+'&_t='+Date.now())
@@ -138,10 +143,10 @@ function fmtDay(d){return d.toLocaleDateString([],{weekday:'long',month:'long',d
 function header(who){
   var names=peopleList(),me=myName();
   var opts='<option value="all"'+(H.person==='all'?' selected':'')+'>Everyone</option>'+(me?'<option value="me"'+(H.person==='me'?' selected':'')+'>Me ('+esc(me)+')</option>':'')+names.filter(function(n){return n!==me;}).map(function(n){return '<option value="'+esc(n)+'"'+(H.person===n?' selected':'')+'>'+esc(n)+'</option>';}).join('');
-  var label=H.view==='week'?(monday(H.day).toLocaleDateString([],{month:'short',day:'numeric'})+' – '+addDays(monday(H.day),6).toLocaleDateString([],{month:'short',day:'numeric'})):fmtDay(H.day);
+  var label=H.view==='month'?H.day.toLocaleDateString([],{month:'long',year:'numeric'}):H.view==='week'?(monday(H.day).toLocaleDateString([],{month:'short',day:'numeric'})+' – '+addDays(monday(H.day),6).toLocaleDateString([],{month:'short',day:'numeric'})):fmtDay(H.day);
   return '<header class="hm-head"><div class="hm-title"><small>'+(H.mode==='calendar'?'Agent calendar':'Smart agenda')+'</small><h1>'+(H.mode==='calendar'?'Helm Calendar':'Helm')+'</h1></div>'
    +'<div class="hm-nav"><button type="button" data-hm="prev" aria-label="Previous">‹</button><button type="button" data-hm="today">Today</button><button type="button" data-hm="next" aria-label="Next">›</button><strong>'+esc(label)+'</strong></div>'
-   +'<div class="hm-tools">'+(H.mode==='calendar'?'<div class="hm-seg hm-calsw" role="group" aria-label="Calendar"><button type="button" data-hm-go="calendar">Agency</button><button type="button" class="on">Helm</button></div>':'')+'<div class="hm-seg"><button type="button" data-hm-view="day" class="'+(H.view==='day'?'on':'')+'">Day</button><button type="button" data-hm-view="week" class="'+(H.view==='week'?'on':'')+'">Week</button></div><button type="button" class="hm-btn hm-newcall" data-hm-newcall>+ Interest call</button><label class="hm-who"><span>Agenda for</span><select data-hm-person>'+opts+'</select></label></div></header>';
+   +'<div class="hm-tools">'+(H.mode==='calendar'?'<div class="hm-seg hm-calsw" role="group" aria-label="Calendar"><button type="button" data-hm-go="calendar">Agency</button><button type="button" class="on">Helm</button></div>':'')+'<div class="hm-seg"><button type="button" data-hm-view="day" class="'+(H.view==='day'?'on':'')+'">Day</button><button type="button" data-hm-view="week" class="'+(H.view==='week'?'on':'')+'">Week</button><button type="button" data-hm-view="month" class="'+(H.view==='month'?'on':'')+'">Month</button></div><div class="hm-addwrap"><button type="button" class="hm-btn hm-add" data-hm-add aria-haspopup="true">+ Add</button><div class="hm-addmenu" role="menu"><button type="button" role="menuitem" data-hm-new="event"><b>Event</b><small>A meeting, call, block of time or trip</small></button><button type="button" role="menuitem" data-hm-new="task"><b>Task</b><small>Something to do, with a due date and time</small></button><button type="button" role="menuitem" data-hm-new="call"><b>Interest call</b><small>A call with a prospective model or mother agency</small></button></div></div><label class="hm-who"><span>Agenda for</span><select data-hm-person>'+opts+'</select></label></div></header>';
 }
 function chips(){return '<div class="hm-cats" role="group" aria-label="Show">'+CATS.map(function(c){return '<button type="button" class="hm-cat c-'+c[0]+(H.cats[c[0]]===false?' off':'')+'" data-hm-cat="'+c[0]+'" aria-pressed="'+(H.cats[c[0]]!==false)+'"><i></i>'+esc(c[1])+'</button>';}).join('')+'</div>';}
 function signals(who){
@@ -180,7 +185,7 @@ function timeline(who){
   for(var h=START_H;h<END_H;h++)rows+='<div class="hm-hr" style="top:'+(h-START_H)*HH+'px"><span>'+clock(h*60)+'</span></div>';
   var nowLine=isToday&&mins(now)>=START_H*60&&mins(now)<END_H*60?'<div class="hm-now" style="top:'+((mins(now)-START_H*60)/60*HH)+'px"><i></i></div>':'';
   var whole=d.whole.length?'<div class="hm-whole">'+d.whole.map(function(it){return '<button type="button" class="hm-w c-'+it.cat+'" data-hm-pick="'+esc(it.kind)+'|'+esc(it.id)+'">'+(it.kind==='task'?'☐ ':'')+esc(it.title)+'</button>';}).join('')+'</div>':'';
-  return whole+'<div class="hm-tl" data-hm-drop="'+k+'" style="height:'+(END_H-START_H)*HH+'px">'+rows+'<div class="hm-lane">'+layout(d.timed).map(block).join('')+'</div>'+nowLine+'</div>'+(d.timed.length||d.whole.length?'':'<p class="hm-empty">Nothing on this agenda for '+esc(fmtDay(H.day))+'.</p>');
+  return whole+'<div class="hm-tl" data-hm-drop="'+k+'" data-hm-slot="'+k+'" style="height:'+(END_H-START_H)*HH+'px">'+rows+'<div class="hm-lane">'+layout(d.timed).map(block).join('')+'</div>'+nowLine+'</div>'+(d.timed.length||d.whole.length?'':'<p class="hm-empty">Nothing on this agenda for '+esc(fmtDay(H.day))+'.</p>');
 }
 function detail(){
   if(!H.sel)return '';
@@ -189,8 +194,14 @@ function detail(){
   var cat=CATS.filter(function(c){return c[0]===it.cat;})[0];
   return '<section class="hm-card hm-detail c-'+it.cat+'"><header><small>'+esc(cat?cat[1]:'')+'</small><button type="button" data-hm-close aria-label="Close">×</button></header><h3>'+esc(it.title)+'</h3><p class="hm-when">'+esc(when)+'</p>'
    +(it.people.length?'<p><b>With</b> '+esc(it.people.join(', '))+'</p>':'')+(it.models.length?'<p><b>Models</b> '+esc(it.models.join(', '))+'</p>':'')+(it.location?'<p><b>Where</b> '+esc(it.location)+'</p>':'')
-   +(it.conflict?'<p class="hm-risk">'+esc(it.conflict)+'</p>':'')+(it.notes&&it.kind!=='task'?'<p class="hm-note">'+esc(it.notes)+'</p>':'')+interestBlock(it)
+   +(it.conflict?'<p class="hm-risk">'+esc(it.conflict)+'</p>':'')+(it.notes&&it.kind!=='task'?'<p class="hm-note">'+esc(it.notes)+'</p>':'')+interestBlock(it)+rescheduleBlock(it)
    +'<footer>'+(it.kind==='task'?'<button type="button" class="hm-btn" data-hm-done="'+esc(it.id)+'">Mark done</button><button type="button" class="hm-ghost" data-hm-tasks>Open in Tasks</button>':(it.kind==='scout'?'<button type="button" class="hm-ghost" data-hm-scout>Open in Scouting</button>':'<button type="button" class="hm-ghost" data-hm-cal>Open in Calendar</button>'))+'</footer></section>';
+}
+function rescheduleBlock(it){
+  if(it.kind==='scout'||(it.kind!=='event'&&it.kind!=='task')||!it.start)return '';
+  var b=(it.allDay?[]:[['30','+30 min'],['60','+1 hour']]).concat([['d1','Tomorrow'],['d7','Next week']]);
+  var del=it.kind==='event'&&it.meta&&it.meta.created_in==='helm'?'<button type="button" class="hm-ghost sm bad" data-hm-del="one" data-hm-delid="'+esc(it.id)+'">Delete</button>'+(it.meta.series?'<button type="button" class="hm-ghost sm bad" data-hm-del="series" data-hm-delid="'+esc(it.id)+'">Delete this and later</button>':''):'';
+  return '<div class="hm-ic"><h5>Reschedule</h5><div class="hm-seg hm-resched">'+b.map(function(x){return '<button type="button" data-hm-rs="'+x[0]+'" data-hm-kind="'+esc(it.kind)+'" data-hm-rsid="'+esc(it.id)+'">'+x[1]+'</button>';}).join('')+'</div>'+(del?'<div class="hm-delrow">'+del+'</div>':'')+'</div>';
 }
 var OUTCOMES=[['sign','Sign'],['develop','Develop'],['pass','Pass'],['no_show','No show'],['reschedule','Reschedule']];
 function interestBlock(it){
@@ -213,14 +224,28 @@ function taskRail(who){
   return '<section class="hm-card hm-tasks"><header><h3>Tasks</h3><span>'+list.length+' open</span><button type="button" class="hm-ghost sm" data-hm-tasks>Open Tasks →</button></header>'
    +'<form class="hm-add" data-hm-add><input type="text" maxlength="200" placeholder="Add a task for '+esc(H.day.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}))+'…" aria-label="New task"><button type="submit">Add</button></form><div class="hm-tlist">'+body+'</div><p class="hm-tip">Drag a task onto the timeline, or press Schedule to place it in the next free slot.</p></section>';
 }
-function weekView(who){
-  var m=monday(H.day),cols='';
+function weekGrid(who){
+  var m=monday(H.day),todayK=dkey(new Date()),now=new Date(),heads='',whole='',cols='',gut='';
+  for(var h=START_H;h<END_H;h++)gut+='<div class="hm-gh" style="top:'+(h-START_H)*HH+'px"><span>'+clock(h*60)+'</span></div>';
   for(var i=0;i<7;i++){
-    var d=addDays(m,i),it=itemsFor(d,who),all=it.whole.concat(it.timed),isToday=dkey(d)===dkey(new Date()),ov=overlaps(it.timed).length;
-    cols+='<section class="hm-col'+(isToday?' today':'')+(dkey(d)===dkey(H.day)?' cur':'')+'"><button type="button" class="hm-colh" data-hm-goto="'+dkey(d)+'"><small>'+d.toLocaleDateString([],{weekday:'short'})+'</small><b>'+d.getDate()+'</b>'+(all.length?'<em>'+all.length+'</em>':'')+(ov?'<i class="risk" title="'+ov+' overlap(s)"></i>':'')+'</button><div class="hm-colb">'
-     +(all.length?all.slice(0,9).map(function(x){return '<button type="button" class="hm-li c-'+x.cat+'" data-hm-goto="'+dkey(d)+'" data-hm-pick="'+esc(x.kind)+'|'+esc(x.id)+'"><span>'+(x.allDay?'All day':tlabel(x.start))+'</span>'+esc(x.title)+'</button>';}).join('')+(all.length>9?'<p class="hm-more">+ '+(all.length-9)+' more</p>':''):'<p class="hm-free">Free</p>')+'</div></section>';
+    var d=addDays(m,i),k=dkey(d),it=itemsFor(d,who),isT=k===todayK;
+    heads+='<button type="button" class="hm-wh'+(isT?' today':'')+(k===dkey(H.day)?' cur':'')+'" data-hm-goto="'+k+'"><small>'+d.toLocaleDateString([],{weekday:'short'})+'</small><b>'+d.getDate()+'</b></button>';
+    whole+='<div class="hm-wwd">'+it.whole.slice(0,3).map(function(x){return '<button type="button" class="hm-w c-'+x.cat+'" data-hm-pick="'+esc(x.kind)+'|'+esc(x.id)+'">'+(x.kind==='task'?'☐ ':'')+esc(x.title)+'</button>';}).join('')+(it.whole.length>3?'<p class="hm-more">+ '+(it.whole.length-3)+' more</p>':'')+'</div>';
+    var nowLine=isT&&mins(now)>=START_H*60&&mins(now)<END_H*60?'<div class="hm-now" style="top:'+((mins(now)-START_H*60)/60*HH)+'px"><i></i></div>':'';
+    cols+='<div class="hm-wcol'+(isT?' today':'')+'" data-hm-slot="'+k+'" style="height:'+(END_H-START_H)*HH+'px"><div class="hm-lane">'+layout(it.timed).map(block).join('')+'</div>'+nowLine+'</div>';
   }
-  return '<div class="hm-week">'+cols+'</div>';
+  return '<div class="hm-wk"><div class="hm-wk-h"><span class="hm-gut"></span>'+heads+'</div><div class="hm-wk-w"><span class="hm-gut"></span>'+whole+'</div><div class="hm-wk-b"><div class="hm-gutcol" style="height:'+(END_H-START_H)*HH+'px">'+gut+'</div>'+cols+'</div></div>';
+}
+function monthGrid(who){
+  var y=H.day.getFullYear(),mo=H.day.getMonth(),first=new Date(y,mo,1),start=monday(first),todayK=dkey(new Date()),days=new Date(y,mo+1,0).getDate(),weeks=Math.ceil(((first.getDay()+6)%7+days)/7),cells='';
+  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(function(n){cells+='<div class="hm-mdow">'+n+'</div>';});
+  for(var i=0;i<weeks*7;i++){
+    var d=addDays(start,i),k=dkey(d),out=d.getMonth()!==mo,it=itemsFor(d,who),all=it.whole.concat(it.timed);
+    cells+='<div class="hm-mc'+(out?' out':'')+(k===todayK?' today':'')+'" data-hm-goto="'+k+'"><div class="hm-mh"><button type="button" class="hm-mn" data-hm-goto="'+k+'">'+d.getDate()+'</button><i class="hm-madd" data-hm-addon="'+k+'" title="Add on '+esc(d.toLocaleDateString([],{month:'short',day:'numeric'}))+'">+</i></div>'
+     +all.slice(0,3).map(function(x){return '<button type="button" class="hm-mi c-'+x.cat+(x.kind==='task'?' task':'')+'" data-hm-goto="'+k+'" data-hm-pick="'+esc(x.kind)+'|'+esc(x.id)+'"><span>'+(x.allDay?'':tlabel(x.start).replace(/(\d)(am|pm)$/,'$1$2'))+'</span>'+esc(x.title)+'</button>';}).join('')
+     +(all.length>3?'<button type="button" class="hm-mmore" data-hm-goto="'+k+'">+ '+(all.length-3)+' more</button>':'')+'</div>';
+  }
+  return '<div class="hm-month">'+cells+'</div>';
 }
 function paint(){
   var el=H.host;if(!el)return;
@@ -228,10 +253,10 @@ function paint(){
   if(H.loading&&!H.loaded){el.innerHTML='<div class="hm">'+header(who)+'<div class="hm-state"><i></i><span>Loading your agenda…</span></div></div>';return;}
   if(H.err&&!H.loaded){el.innerHTML='<div class="hm">'+header(who)+'<div class="hm-state bad"><span>'+esc(H.err)+'</span><button type="button" class="hm-btn" data-hm="retry">Try again</button></div></div>';return;}
   var scroller=el.querySelector('.hm-tlwrap'),sy=scroller?scroller.scrollTop:null;
-  var main=H.view==='week'?weekView(who):'<div class="hm-tlwrap" data-hm-scroll>'+timeline(who)+'</div>';
+  var main=H.view==='month'?monthGrid(who):H.view==='week'?'<div class="hm-tlwrap hm-wkwrap" data-hm-scroll>'+weekGrid(who)+'</div>':'<div class="hm-tlwrap" data-hm-scroll>'+timeline(who)+'</div>';
   el.innerHTML='<div class="hm'+(H.loading?' busy':'')+'">'+header(who)+signals(who)+chips()+'<div class="hm-grid'+(H.mode==='calendar'&&!H.sel?' solo':'')+'"><div class="hm-main">'+main+'</div>'+(H.mode==='calendar'&&!H.sel?'':'<aside class="hm-rail">'+detail()+(H.mode==='calendar'?'':taskRail(who))+'</aside>')+'</div></div>';
   var sc=el.querySelector('.hm-tlwrap');
-  if(sc){if(sy!=null)sc.scrollTop=sy;else{var n=new Date(),target=dkey(H.day)===dkey(n)?Math.max(0,(mins(n)-START_H*60)/60*HH-120):(8-START_H)*HH-10;sc.scrollTop=target;}}
+  if(sc){if(sy!=null)sc.scrollTop=sy;else{var n=new Date(),target=(H.view==='week'||dkey(H.day)===dkey(n))?Math.max(0,(mins(n)-START_H*60)/60*HH-120):(8-START_H)*HH-10;sc.scrollTop=target;}}
 }
 
 /* ---------- actions ---------- */
@@ -254,12 +279,23 @@ function addTask(title){
   var body={action:'create_task',title:title,priority:'normal',category:null,member_ids:m?[m.id]:[],due_at:new Date(H.day.getFullYear(),H.day.getMonth(),H.day.getDate(),12,0,0).toISOString()};
   return post('/api/agent/tasks/v11',body).then(function(r){if(!r||r.verified!==true)throw new Error('Not confirmed');toast('Task added');return reloadTasks();});
 }
-function nav(n){H.day=addDays(H.day,H.view==='week'?n*7:n);H.sel=null;load();}
+function nav(n){if(H.view==='month')H.day=new Date(H.day.getFullYear(),H.day.getMonth()+n,1);else H.day=addDays(H.day,H.view==='week'?n*7:n);H.sel=null;load();}
 function goto(path){if(typeof window.navTo==='function')window.navTo(path);}
 
 document.addEventListener('click',function(e){
   var host=H.host;if(!host||!host.contains(e.target))return;
-  var t=e.target.closest('[data-hm-scout],[data-hm-newcall],[data-hm-outcome],[data-hm],[data-hm-view],[data-hm-cat],[data-hm-done],[data-hm-pick],[data-hm-slot],[data-hm-goto],[data-hm-close],[data-hm-tasks],[data-hm-cal]');if(!t)return;
+  var openMenu=host.querySelector('.hm-addmenu.open');if(openMenu&&!e.target.closest('.hm-addwrap'))openMenu.classList.remove('open');
+  var slot=e.target.closest('[data-hm-slot]');
+  if(slot&&!e.target.closest('.hm-blk,.hm-w,button,.hm-chk,i')){
+    var r=slot.getBoundingClientRect(),zoom=r.height/(slot.offsetHeight||1)||1,y=(e.clientY-r.top)/zoom,mn=START_H*60+Math.floor(y/HH*60/30)*30;
+    openEvent({date:slot.getAttribute('data-hm-slot'),start:hhmm(mn),end:hhmm(mn+60)});return;
+  }
+  var t=e.target.closest('[data-hm-add],[data-hm-new],[data-hm-addon],[data-hm-rs],[data-hm-del],[data-hm-scout],[data-hm-newcall],[data-hm-outcome],[data-hm],[data-hm-view],[data-hm-cat],[data-hm-done],[data-hm-pick],[data-hm-slot],[data-hm-goto],[data-hm-close],[data-hm-tasks],[data-hm-cal]');if(!t)return;
+  if(t.hasAttribute('data-hm-add')){var mn2=host.querySelector('.hm-addmenu');if(mn2)mn2.classList.toggle('open');return;}
+  if(t.hasAttribute('data-hm-new')){var kk=t.getAttribute('data-hm-new'),m3=host.querySelector('.hm-addmenu');if(m3)m3.classList.remove('open');if(kk==='event')openEvent();else if(kk==='task')openTask();else openCall();return;}
+  if(t.hasAttribute('data-hm-addon')){e.stopPropagation();openEvent({date:t.getAttribute('data-hm-addon')});return;}
+  if(t.hasAttribute('data-hm-rs')){reschedule(t.getAttribute('data-hm-kind'),t.getAttribute('data-hm-rsid'),t.getAttribute('data-hm-rs'));return;}
+  if(t.hasAttribute('data-hm-del')){deleteEvent(t.getAttribute('data-hm-delid'),t.getAttribute('data-hm-del')==='series');return;}
   if(t.hasAttribute('data-hm-newcall')){openCall();return;}
   if(t.hasAttribute('data-hm-outcome')){setOutcome(t.getAttribute('data-hm-event'),t.getAttribute('data-hm-outcome'));return;}
   if(t.hasAttribute('data-hm-done')){e.stopPropagation();complete(t.getAttribute('data-hm-done'));return;}
@@ -270,7 +306,7 @@ document.addEventListener('click',function(e){
   if(t.hasAttribute('data-hm-tasks')){goto('tasksconsolidated');return;}
   if(t.hasAttribute('data-hm-cal')){goto('calendar');return;}
   if(t.hasAttribute('data-hm-scout')){goto('scouting');return;}
-  if(t.hasAttribute('data-hm-view')){H.view=t.getAttribute('data-hm-view');save();H.sel=null;paint();return;}
+  if(t.hasAttribute('data-hm-view')){H.view=t.getAttribute('data-hm-view');save();H.sel=null;if(H.view==='month'&&H.day.getDate()!==1&&false)H.day=new Date(H.day);load();return;}
   if(t.hasAttribute('data-hm-cat')){var c=t.getAttribute('data-hm-cat');H.cats[c]=H.cats[c]===false;save();paint();return;}
   var a=t.getAttribute('data-hm');if(a==='prev')nav(-1);else if(a==='next')nav(1);else if(a==='today'){H.day=today();H.sel=null;load();}else if(a==='retry'){H.err='';load(true);}
 });
@@ -367,13 +403,94 @@ document.addEventListener('click',function(e){
 });
 document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('hm-callmodal')&&!CALL.busy)closeCall();});
 
+/* ---------- add: event and task (the interest call form is above) ---------- */
+var EV_TYPES=[['connect','Meeting or call'],['focus','Deep work'],['move','Training'],['recharge','Meal or rest'],['travel','Travel'],['close','Personal']],EV_REPEAT=[['','Once'],['w','Every week'],['wd','Every weekday'],['d','Every day']];
+function closeAdd(){var m=document.getElementById('hm-addmodal');if(m)m.remove();document.documentElement.classList.remove('hm-lock');}
+function pad2(n){return String(n).padStart(2,'0');}
+function hhmm(m){m=Math.max(0,Math.min(m,24*60-1));return pad2(Math.floor(m/60))+':'+pad2(m%60);}
+function hostChoice(){var hosts=peopleList(),me=myName();return {list:hosts.length?hosts:[me].filter(Boolean),def:viewing()||me||hosts[0]||''};}
+function addShell(title,sub,body,goLabel,kind){
+  closeAdd();var m=document.createElement('div');m.id='hm-addmodal';m.className='hm-modal';
+  m.innerHTML='<div class="hm-mcard" role="dialog" aria-modal="true" aria-label="'+esc(title)+'"><header><div><small>'+esc(sub)+'</small><h2>'+esc(title)+'</h2></div><button type="button" class="hm-x" data-hm-aclose aria-label="Close">×</button></header><div class="hm-mbody">'+body+'<p class="hm-cmsg" data-hm-amsg></p></div><footer><span class="hm-fine" data-hm-ahint></span><button type="button" class="hm-ghost" data-hm-aclose>Cancel</button><button type="button" class="hm-btn" data-hm-ago="'+kind+'">'+esc(goLabel)+'</button></footer></div>';
+  document.documentElement.appendChild(m);document.documentElement.classList.add('hm-lock');
+  var c=m.querySelector('.hm-mcard');c.style.maxHeight=Math.max(360,innerHeight-40)+'px';
+  var f=m.querySelector('[name=title]');if(f)f.focus({preventScroll:true});return m;
+}
+function openEvent(pre){
+  pre=pre||{};var hc=hostChoice();
+  var m=addShell('Add an event','Agent calendar',
+   '<div class="hm-fgrid">'+fld('What *','<input name="title" type="text" maxlength="200" placeholder="Call with Erica, casting prep, dinner with a designer" autocomplete="off">',true)
+   +fld('Date *','<input name="date" type="date" value="'+esc(pre.date||dkey(H.day))+'">')+fld('Type',sel('type',EV_TYPES,pre.type||'connect'))
+   +fld('Starts','<input name="start" type="time" value="'+esc(pre.start||'')+'">')+fld('Ends','<input name="end" type="time" value="'+esc(pre.end||'')+'">')
+   +fld('For',sel('host',hc.list,hc.def))+fld('Also with','<input name="with" type="text" maxlength="200" placeholder="e.g. Erica; Emma">')
+   +fld('Repeats',sel('repeat',EV_REPEAT,''))+fld('Where','<input name="where" type="text" maxlength="300" placeholder="Zoom, studio, address">')
+   +fld('Notes','<textarea name="notes" rows="3" maxlength="1000" placeholder="Anything to remember"></textarea>',true)+'</div>','Add event','event');
+  var hint=m.querySelector('[data-hm-ahint]'),ty=m.querySelector('[name=type]');
+  function upd(){hint.textContent=/^(move|recharge|close)$/.test(ty.value)?'Only you can see this one.':'Leave the times empty for an all-day event.';}
+  ty.addEventListener('change',upd);upd();
+}
+function openTask(pre){
+  pre=pre||{};var hc=hostChoice();
+  addShell('Add a task','Tasks',
+   '<div class="hm-fgrid">'+fld('Task *','<input name="title" type="text" maxlength="200" placeholder="What needs to be done?" autocomplete="off">',true)
+   +fld('Due date','<input name="date" type="date" value="'+esc(pre.date||dkey(H.day))+'">')+fld('Due time (optional)','<input name="time" type="time" value="'+esc(pre.time||'')+'">')
+   +fld('Priority',sel('priority',[['normal','Normal'],['high','High'],['urgent','Urgent']],'normal'))+fld('For',sel('host',hc.list,hc.def))
+   +fld('Notes','<textarea name="notes" rows="3" maxlength="1000" placeholder="Details"></textarea>',true)+'</div>','Add task','task').querySelector('[data-hm-ahint]').textContent='It shows on this calendar at its due time, and in Tasks.';
+}
+function amsg(t,bad){var e=document.querySelector('#hm-addmodal [data-hm-amsg]');if(e){e.textContent=t||'';e.className='hm-cmsg'+(bad?' bad':'');}}
+function readAdd(m){var o={};m.querySelectorAll('[name]').forEach(function(e){o[e.name]=e.type==='checkbox'?e.checked:String(e.value||'').trim();});return o;}
+var ADDING=false;
+async function submitAdd(kind){
+  var m=document.getElementById('hm-addmodal');if(!m||ADDING)return;var v=readAdd(m);
+  if(!v.title){amsg('Add a title first.',true);return;}
+  if(kind==='event'&&!v.date){amsg('Pick a date.',true);return;}
+  ADDING=true;amsg('Adding…');var go=m.querySelector('[data-hm-ago]');if(go)go.disabled=true;
+  try{
+    if(kind==='event'){
+      var r=await post('/api/agent/helm/events',{action:'create',event:v});
+      if(!r||r.verified!==true)throw new Error('The calendar did not confirm it');
+      closeAdd();toast((r.created>1?r.created+' events':'Event')+' added'+(r.warning?'. '+r.warning:''));
+      var d=new Date(v.date+'T12:00:00');d.setHours(0,0,0,0);H.day=d;H.loaded=false;await load(true);
+    }else{
+      var mem=H.members.filter(function(x){return memberName(x).toLowerCase()===String(v.host||'').toLowerCase();})[0],due=null;
+      if(v.date){var t=v.time||'12:00',pr=t.split(':');var dd=new Date(v.date+'T12:00:00');dd.setHours(+pr[0]||12,+pr[1]||0,0,0);due=dd.toISOString();}
+      var r2=await post('/api/agent/tasks/v11',{action:'create_task',title:v.title,description:v.notes||null,priority:v.priority||'normal',category:null,member_ids:mem?[mem.id]:[],due_at:due});
+      if(!r2||r2.verified!==true)throw new Error('The task was not confirmed');
+      closeAdd();toast('Task added');await reloadTasks();
+    }
+  }catch(err){amsg(msg(err),true);if(go)go.disabled=false;}
+  finally{ADDING=false;}
+}
+/* move or remove things from the detail card */
+async function reschedule(kind,id,how){
+  var all=H.events.concat(taskItems()),it=all.filter(function(x){return x.kind===kind&&String(x.id)===String(id);})[0];if(!it||!it.start)return;
+  var d=new Date(it.start);if(how==='30')d=new Date(d.getTime()+30*60000);else if(how==='60')d=new Date(d.getTime()+60*60000);else if(how==='d1')d=addDays(d,1);else if(how==='d7')d=addDays(d,7);
+  try{
+    if(kind==='task'){var t=taskById(id);await updateDue(t,d.toISOString());t.due_at=d.toISOString();}
+    else{var r=await post('/api/agent/calendar/v9',{action:'move_event',event_id:id,starts_at:d.toISOString()});if(!r||r.ok!==true)throw new Error('The calendar did not confirm the move');}
+    toast('Moved to '+d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})+(it.allDay?'':' at '+tlabel(d)));
+    H.sel=null;H.loaded=false;await load(true);
+  }catch(e){toast('Could not move it: '+msg(e),true);}
+}
+async function deleteEvent(id,series){
+  if(!window.confirm(series?'Delete this and every later event in the series?':'Delete this event?'))return;
+  try{var r=await post('/api/agent/helm/events',{action:'delete',event_id:id,series:!!series});if(!r||r.verified!==true)throw new Error('Not confirmed');toast(r.deleted>1?r.deleted+' events deleted':'Event deleted');H.sel=null;H.loaded=false;await load(true);}
+  catch(e){toast('Could not delete: '+msg(e),true);}
+}
+document.addEventListener('click',function(e){
+  var t=e.target&&e.target.closest&&e.target.closest('#hm-addmodal [data-hm-aclose],#hm-addmodal [data-hm-ago]');if(!t)return;
+  if(t.hasAttribute('data-hm-aclose')){if(!ADDING)closeAdd();return;}
+  submitAdd(t.getAttribute('data-hm-ago'));
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('hm-addmodal')&&!ADDING)closeAdd();});
+
 /* ---------- page + route ---------- */
-window.renderHelm=function(el){H.mode='full';H.host=el;H.loaded=H.loaded&&H.week===dkey(monday(H.day));paint();return load(true);};
+window.renderHelm=function(el){H.mode='full';H.host=el;H.loaded=H.loaded&&H.week===rangeKey();paint();return load(true);};
 (function register(){
   function put(){var m=window.VEUX_V15_ROUTE_RENDERERS;if(m&&typeof m==='object'){m.helm=function(el){return window.renderHelm(el);};m.helmcalendar=function(el){return window.renderHelmCalendar(el);};return true;}return false;}
   if(put())return;var n=0,t=setInterval(function(){if(put()||++n>400)clearInterval(t);},150);
   ['veux:shell-ready','veux:assets-ready','veux:auth-ready'].forEach(function(ev){window.addEventListener(ev,put);});
 })();
-window.renderHelmCalendar=function(el){H.mode='calendar';H.host=el;H.loaded=H.loaded&&H.week===dkey(monday(H.day));paint();return load(true);};
+window.renderHelmCalendar=function(el){H.mode='calendar';H.host=el;H.loaded=H.loaded&&H.week===rangeKey();paint();return load(true);};
 window.MDV_HELM={render:window.renderHelm,calendar:window.renderHelmCalendar,state:H,findSlot:findSlot,catOf:catOf};
 })();

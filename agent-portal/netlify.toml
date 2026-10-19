@@ -459,6 +459,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/helm/events"
+to = "/.netlify/functions/agent-helm-events"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/interest-calls"
 to = "/.netlify/functions/agent-interest-calls"
 status = 200
