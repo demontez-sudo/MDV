@@ -10,23 +10,71 @@ html.mdv-cur a,html.mdv-cur button:not(:disabled),html.mdv-cur [role="button"]:n
 .mdv-cr.on{opacity:1}
 .mdv-cr.off{opacity:0!important}
 .mdv-cr i{position:absolute;left:0;top:0;border-radius:50%;display:grid;place-items:center;backface-visibility:hidden}
-/* The circles take their colour from the skin that is on (the wave behind the portal), so the pointer belongs to the background instead of sitting on it in plain white.
-   Without a skin (the public site) the variables fall back to the original ivory and brass. */
-.mdv-cr{--cr-rgb:var(--wave-rgb,239,233,223);--cr-hi:color-mix(in srgb,rgb(var(--cr-rgb)) 58%,#fff);--cr-ink:#0a0908}
-/* the highlighted ring: glass tinted with the skin colour */
-.mdv-cr .mdv-cr-r{width:44px;height:44px;margin:-22px 0 0 -22px;border:1.5px solid rgba(var(--cr-rgb),.92);
-  background:radial-gradient(circle at 50% 50%,rgba(var(--cr-rgb),.22),rgba(var(--cr-rgb),.07) 62%,rgba(var(--cr-rgb),0) 100%);
-  box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 20px rgba(var(--cr-rgb),.34),inset 0 0 12px rgba(var(--cr-rgb),.18);
+/* The circles belong to the background that is on. Colour comes from the skin (--wave is set for every skin; without one the public site keeps ivory),
+   and each skin has its own shape below. Decorations live on ::before so the pointer maths never changes. */
+.mdv-cr{--cr:var(--wave,#efe9df);--cr-hi:color-mix(in srgb,var(--cr) 58%,#fff);--cr-ink:#0a0908;
+  --c14:color-mix(in srgb,var(--cr) 14%,transparent);--c22:color-mix(in srgb,var(--cr) 22%,transparent);--c34:color-mix(in srgb,var(--cr) 34%,transparent);--c50:color-mix(in srgb,var(--cr) 50%,transparent);--c75:color-mix(in srgb,var(--cr) 75%,transparent);--c92:color-mix(in srgb,var(--cr) 92%,transparent)}
+.mdv-cr .mdv-cr-r{width:44px;height:44px;margin:-22px 0 0 -22px;border:1.5px solid var(--c92);
+  background:radial-gradient(circle at 50% 50%,var(--c22),var(--c14) 55%,transparent 100%);
+  box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 20px var(--c34),inset 0 0 12px var(--c22);
   transition:width .45s cubic-bezier(.16,1,.3,1),height .45s cubic-bezier(.16,1,.3,1),margin .45s cubic-bezier(.16,1,.3,1),background .3s ease,border-color .3s ease,box-shadow .3s ease,transform .18s ease}
-/* the bright centre */
-.mdv-cr .mdv-cr-d{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:var(--cr-hi);box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 14px 2px rgba(var(--cr-rgb),.75);transition:width .3s ease,height .3s ease,margin .3s ease,opacity .25s ease}
-/* over something you can click: the ring opens and fills with the skin colour, the dot shrinks */
-.mdv-cr.link .mdv-cr-r{width:70px;height:70px;margin:-35px 0 0 -35px;border-color:var(--cr-hi);background:radial-gradient(circle,rgba(var(--cr-rgb),.34),rgba(var(--cr-rgb),.10) 65%,rgba(var(--cr-rgb),0));box-shadow:0 0 0 1.5px rgba(10,9,8,.45),0 0 26px rgba(var(--cr-rgb),.5),inset 0 0 16px rgba(var(--cr-rgb),.28)}
+.mdv-cr .mdv-cr-r::before,.mdv-cr .mdv-cr-d::before,.mdv-cr .mdv-cr-d::after{content:"";position:absolute;pointer-events:none;border-radius:50%;opacity:0}
+.mdv-cr .mdv-cr-d{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:var(--cr-hi);box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 14px 2px var(--c75);transition:width .3s ease,height .3s ease,margin .3s ease,opacity .25s ease}
+/* over something you can click: the ring opens and fills, the dot shrinks */
+.mdv-cr.link .mdv-cr-r{width:70px;height:70px;margin:-35px 0 0 -35px;border-color:var(--cr-hi);background:radial-gradient(circle,var(--c34),var(--c14) 65%,transparent);box-shadow:0 0 0 1.5px rgba(10,9,8,.45),0 0 26px var(--c50),inset 0 0 16px var(--c34)}
 .mdv-cr.link .mdv-cr-d{width:5px;height:5px;margin:-2.5px 0 0 -2.5px}
-/* over a model or a gateway: a filled disc in the skin colour with a word in it */
-.mdv-cr.label .mdv-cr-r{width:98px;height:98px;margin:-49px 0 0 -49px;border-color:transparent;background:rgba(var(--cr-rgb),.96);box-shadow:0 8px 26px rgba(0,0,0,.38),0 0 28px rgba(var(--cr-rgb),.35)}
+/* over a model or a gateway: a filled disc with a word in it */
+.mdv-cr.label .mdv-cr-r{width:98px;height:98px;margin:-49px 0 0 -49px;border-color:transparent;border-style:solid;background:var(--c92);box-shadow:0 8px 26px rgba(0,0,0,.38),0 0 28px var(--c34)}
 .mdv-cr.label .mdv-cr-r::after{content:attr(data-label);font:500 9px/1 'Jost',system-ui,sans-serif;letter-spacing:.26em;text-indent:.26em;text-transform:uppercase;color:var(--cr-ink)}
 .mdv-cr.label .mdv-cr-d{opacity:0}
+.mdv-cr.label .mdv-cr-r::before,.mdv-cr.label .mdv-cr-d::before,.mdv-cr.label .mdv-cr-d::after{display:none}
+
+/* ---- Classic: brass instrument. A second hairline ring inside the first ---- */
+html[data-veux-wave="classic"] .mdv-cr .mdv-cr-r::before,html:not([data-veux-wave]) .mdv-cr .mdv-cr-r::before{inset:5px;border:1px solid var(--c50);opacity:1}
+/* ---- Burnt orange: warm copper, a heavier ring and an ember glow ---- */
+html[data-veux-wave="burntOrange"] .mdv-cr .mdv-cr-r{border-width:2px;box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 28px var(--c50),inset 0 0 16px var(--c34)}
+html[data-veux-wave="burntOrange"] .mdv-cr .mdv-cr-d{box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 18px 4px var(--c75)}
+html[data-veux-wave="burntOrange"] .mdv-cr .mdv-cr-d::before{inset:-6px;background:radial-gradient(circle,var(--c50),transparent 70%);opacity:1;animation:mdvCrEmber 2.4s ease-in-out infinite}
+/* ---- Red: crosshair ticks around the ring ---- */
+html[data-veux-wave="red"] .mdv-cr .mdv-cr-r::before{inset:-8px;opacity:1;background:conic-gradient(var(--cr-hi) 0 3deg,transparent 3deg 87deg,var(--cr-hi) 87deg 93deg,transparent 93deg 177deg,var(--cr-hi) 177deg 183deg,transparent 183deg 267deg,var(--cr-hi) 267deg 273deg,transparent 273deg 357deg,var(--cr-hi) 357deg 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));border-radius:0}
+html[data-veux-wave="red"] .mdv-cr .mdv-cr-r{border-radius:50%}
+/* ---- Green: a slow breath moving outward ---- */
+html[data-veux-wave="green"] .mdv-cr .mdv-cr-r::before{inset:0;border:1px solid var(--c75);opacity:1;animation:mdvCrBreath 2.8s ease-out infinite}
+/* ---- Blue: a double ring ---- */
+html[data-veux-wave="blue"] .mdv-cr .mdv-cr-r::before{inset:-6px;border:1px solid var(--c50);opacity:1}
+html[data-veux-wave="blue"] .mdv-cr .mdv-cr-r{background:radial-gradient(circle,var(--c14),transparent 70%)}
+/* ---- Purple: a shimmer travelling round the ring ---- */
+html[data-veux-wave="purple"] .mdv-cr .mdv-cr-r::before{inset:-4px;opacity:1;background:conic-gradient(from 0deg,transparent 0 55%,var(--cr-hi) 78%,transparent 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));animation:mdvCrSpin 2.6s linear infinite}
+/* ---- Turquoise: soft ripples ---- */
+html[data-veux-wave="turquoise"] .mdv-cr .mdv-cr-r::before,html[data-veux-wave="waterfall"] .mdv-cr .mdv-cr-r::before{inset:0;border:1px solid var(--c75);opacity:1;animation:mdvCrRipple 2.4s ease-out infinite}
+html[data-veux-wave="turquoise"] .mdv-cr .mdv-cr-d::before,html[data-veux-wave="waterfall"] .mdv-cr .mdv-cr-d::before{inset:-5px;border:1px solid var(--c75);opacity:1;animation:mdvCrRipple 2.4s ease-out .9s infinite}
+/* ---- Waterfall: ripples and a droplet centre ---- */
+html[data-veux-wave="waterfall"] .mdv-cr .mdv-cr-d{background:radial-gradient(circle at 35% 30%,#fff 0 14%,var(--cr-hi) 15%,var(--cr) 100%)}
+/* ---- Galaxy: a star centre with a shimmering ring ---- */
+html[data-veux-wave="galaxy"] .mdv-cr .mdv-cr-r::before{inset:-4px;opacity:1;background:conic-gradient(from 0deg,#6fd3ff,var(--cr-hi),#ff8ad8,#6fd3ff);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));animation:mdvCrSpin 7s linear infinite}
+html[data-veux-wave="galaxy"] .mdv-cr .mdv-cr-d::before{left:50%;top:50%;width:26px;height:1.5px;margin:-.75px 0 0 -13px;border-radius:1px;background:linear-gradient(90deg,transparent,#fff,transparent);opacity:.95;animation:mdvCrTwinkle 2.2s ease-in-out infinite}
+html[data-veux-wave="galaxy"] .mdv-cr .mdv-cr-d::after{left:50%;top:50%;width:1.5px;height:26px;margin:-13px 0 0 -.75px;border-radius:1px;background:linear-gradient(180deg,transparent,#fff,transparent);opacity:.95;animation:mdvCrTwinkle 2.2s ease-in-out .5s infinite}
+/* ---- Christmas: a stitched wreath ring and a bauble centre ---- */
+html[data-veux-wave="christmas"] .mdv-cr .mdv-cr-r{border-style:dashed;border-width:2px}
+html[data-veux-wave="christmas"] .mdv-cr .mdv-cr-r::before{inset:6px;border:1px solid var(--c50);opacity:1}
+html[data-veux-wave="christmas"] .mdv-cr .mdv-cr-d{width:11px;height:11px;margin:-5.5px 0 0 -5.5px;background:radial-gradient(circle at 35% 30%,#fff 0 12%,var(--cr-hi) 13%,var(--cr) 72%)}
+/* ---- Earth: a small moon circling the ring ---- */
+html[data-veux-wave="earth"] .mdv-cr .mdv-cr-r::before{inset:-5px;opacity:1;background:radial-gradient(circle at 50% 0,var(--cr-hi) 0 3.5px,transparent 4.5px);animation:mdvCrSpin 5s linear infinite}
+/* ---- White: crisp and monochrome ---- */
+html[data-veux-wave="white"] .mdv-cr .mdv-cr-r{border-width:2px;border-color:#fff;background:transparent;box-shadow:0 0 0 1.5px rgba(10,9,8,.7),0 0 10px rgba(255,255,255,.25)}
+html[data-veux-wave="white"] .mdv-cr .mdv-cr-d{background:#fff;box-shadow:0 0 0 1.5px rgba(10,9,8,.7)}
+/* ---- The nudes: quiet, a thin ring with no fill ---- */
+html[data-veux-wave="blueNude"] .mdv-cr .mdv-cr-r,html[data-veux-wave="greenNude"] .mdv-cr .mdv-cr-r{border-width:1px;border-color:var(--c75);background:transparent;box-shadow:0 0 0 1px rgba(10,9,8,.4),0 0 12px var(--c22)}
+html[data-veux-wave="blueNude"] .mdv-cr .mdv-cr-d,html[data-veux-wave="greenNude"] .mdv-cr .mdv-cr-d{width:7px;height:7px;margin:-3.5px 0 0 -3.5px;background:var(--cr);box-shadow:0 0 0 1px rgba(10,9,8,.4),0 0 8px var(--c50)}
+
+@keyframes mdvCrSpin{to{transform:rotate(360deg)}}
+@keyframes mdvCrBreath{0%{transform:scale(.8);opacity:.7}100%{transform:scale(1.7);opacity:0}}
+@keyframes mdvCrRipple{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.9);opacity:0}}
+@keyframes mdvCrTwinkle{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.1)}}
+@keyframes mdvCrEmber{0%,100%{opacity:.55;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
+.mdv-cr:not(.on) *{animation-play-state:paused!important}
+.mdv-cr.off *{animation-play-state:paused!important}
+@media(prefers-reduced-motion:reduce){.mdv-cr *,.mdv-cr *::before,.mdv-cr *::after{animation:none!important}}
 .mdv-cr.down .mdv-cr-r{transform:scale(.82)}
 @media(prefers-reduced-motion:reduce){.mdv-cr i{transition:none!important}}
 @media(hover:none),(pointer:coarse){.mdv-cr{display:none}}
