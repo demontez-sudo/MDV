@@ -68,14 +68,14 @@ export const handler=async(event)=>{
         const cities=choice==='both'?['newyork','paris']:[choice];
         const baseId=cleanText(body.id),base=baseId?existing.stories.find(x=>x&&x.id===baseId):null;
         if(baseId&&!base)return json(404,{error:'Story not found'});
-        /* One story per blog: "both" saves a New York story and a Paris story that share a pair id, so each blog lists, edits and archives its own copy. */
-        const pairId=cities.length>1?(base?.pairId||'pair_'+(baseId||storyId())):(base?.pairId||null);
+        /* One story per blog: "both" saves a New York story and a Paris story. The two are linked by sharing a creation time (no new fields are added to a story, so the editorial store accepts it exactly as before). */
         const now=new Date().toISOString(),savedStories=[];let blogPath=null,persistedAt=null;
+        const createdAt=base?.createdAt||now;
         for(const city of cities){
           let id,prior={};
           if(base&&base.city===city){id=baseId;prior=base;}
           else{
-            const sibling=pairId&&existing.stories.find(x=>x&&x.pairId===pairId&&x.city===city);
+            const sibling=base&&existing.stories.find(x=>x&&x.id!==baseId&&x.city===city&&x.createdAt===base.createdAt&&x.status!=='archived');
             if(sibling){id=sibling.id;prior=sibling;}
             else if(base&&cities.length===1){id=baseId;prior=base;}
             else id=storyId();
@@ -84,14 +84,13 @@ export const handler=async(event)=>{
             ...prior,
             id,
             city,
-            pairId,
             slug:slugify(body.slug||modelName||brand)||id,
             brand,
             status,
             caption:cleanText(body.caption),
             credits:Array.isArray(body.credits)?body.credits:prior.credits||[],
             gallery:galleryList(body.gallery),
-            createdAt:prior.createdAt||now,
+            createdAt:prior.createdAt||createdAt,
             heroImage:cleanText(body.heroImage),
             modelName,
             publishedAt:status==='published'?(prior.status==='published'&&prior.publishedAt?prior.publishedAt:now):null,
@@ -100,7 +99,7 @@ export const handler=async(event)=>{
             updatedAt:now
           };
           const {data:saved,error:saveError}=await admin.rpc('save_editorial_story_v1',{target_org:organization.id,target_key:EDITORIAL_SYNC_KEY,target_story:story,target_actor:user.id,target_archive:false});
-          if(saveError)throw saveError;if(saved?.verified!==true)throw new Error('Editorial story save could not be verified');
+          if(saveError){if(String(saveError.code)==='23514')return json(400,{error:'The editorial store rejected this story: '+String(saveError.message||saveError.details||'a value is not allowed')+(saveError.details?' ('+saveError.details+')':'')});throw saveError;}if(saved?.verified!==true)throw new Error('Editorial story save could not be verified');
           savedStories.push(saved.story);blogPath=blogPath||saved.blog_path;persistedAt=saved.persisted_at;
         }
         return json(200,{ok:true,verified:true,story:savedStories[0],stories:savedStories,blog_path:blogPath,persisted_at:persistedAt});
