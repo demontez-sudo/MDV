@@ -245,7 +245,14 @@ document.addEventListener('click',function(e){
 
 /* ---------- new prospect: basic details only ---------- */
 function modalRoot(){var m=document.getElementById('sr-modal');if(!m){m=document.createElement('div');m.id='sr-modal';m.className='sr-back';document.body.appendChild(m);}return m;}
-function closeModal(){var m=document.getElementById('sr-modal');if(m)m.remove();var c=document.getElementById('sr-call');if(c)c.remove();flush();R.id=null;}
+function closeModal(){
+  /* read the About fields while they are still on screen, then save everything before the record is forgotten */
+  var pending=[];
+  if(R.profDirty){pending.push(saveProfile(true).catch(function(){}));}
+  var m=document.getElementById('sr-modal');if(m)m.remove();var c=document.getElementById('sr-call');if(c)c.remove();
+  var id=R.id;pending.push(flush());R.id=null;
+  Promise.all(pending).then(function(){if(R.failed&&Object.keys(R.dirty).length){toast('Some changes to this record were not saved: '+R.failed,true);}}).catch(function(){});
+}
 function newProspect(){
   var m=modalRoot();
   m.innerHTML='<section class="sr-dlg sr-small" role="dialog" aria-modal="true" aria-label="New prospect"><header><div><small>SCOUT RECORDS</small><h2>New prospect</h2></div><button type="button" data-x aria-label="Close">×</button></header>'
@@ -680,23 +687,48 @@ function wireInputs(root){
 }
 function markDirty(path){
   var top=path.split('.')[0];R.dirty[top]=true;R.saved=false;
-  var s=document.getElementById('sr-save'),s2=document.getElementById('sr-save2');if(s)s.textContent='';if(s2)s2.textContent='';
+  setSaveText('Unsaved changes…');
   clearTimeout(R.timer);R.timer=setTimeout(function(){flush();},900);
 }
+/* Saves go through one line, so an edit to the call time or a measurement can never be overwritten by a detail save that started a moment earlier */
+function serial(fn){var run=(R.q2||Promise.resolve()).then(fn,fn);R.q2=run.catch(function(){});return run;}
+function setSaveText(t,bad){
+  ['sr-save','sr-save2'].forEach(function(id){var e=document.getElementById(id);if(!e)return;e.textContent=t;e.classList.toggle('bad',!!bad);e.style.cursor=bad?'pointer':'';e.title=bad?'Tap to try again':'';});
+}
+document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('.sr-save.bad');if(t&&document.getElementById('sr-modal')){flush();if(R.profDirty)saveProfile(true).catch(function(){});}});
 async function flush(wait){
   clearTimeout(R.timer);
   var keys=Object.keys(R.dirty);if(!keys.length||!R.id)return;
   var id=R.id,body={};keys.forEach(function(k){body[k]=R.sc[k];});R.dirty={};R.saving=true;
   var s=document.getElementById('sr-save'),s2=document.getElementById('sr-save2');if(s)s.textContent='Saving…';if(s2)s2.textContent='Saving…';
   try{
-    var out=await post({action:'scout_save',prospect_id:id,scout:body});
+    var out=await serial(function(){return post({action:'scout_save',prospect_id:id,scout:body});});
     if(!out||out.verified!==true)throw new Error('Not confirmed');
     var p=byId(id);if(p&&out.prospect)p.metadata=out.prospect.metadata;
     R.saved=true;
-  }catch(e){keys.forEach(function(k){R.dirty[k]=true;});toast('Could not save: '+msg(e),true);}
-  R.saving=false;
+  }catch(e){keys.forEach(function(k){R.dirty[k]=true;});R.failed=msg(e);toast('Could not save: '+msg(e),true);R.saving=false;setSaveText('Not saved · tap to retry',true);return;}
+  R.failed=null;R.saving=false;
   s=document.getElementById('sr-save');s2=document.getElementById('sr-save2');
   if(s)s.textContent=R.saved?'Saved':'';if(s2)s2.textContent=R.saved?'Saved':'';
+}
+/* About details (name, contact, notes…) are saved as you type, a moment after you stop, and always before the tab changes or the record closes */
+function markProfile(){R.profDirty=true;setSaveText('Unsaved changes…');clearTimeout(R.pt);R.pt=setTimeout(function(){saveProfile(true).catch(function(){});},1200);}
+async function saveProfile(quiet){
+  clearTimeout(R.pt);
+  var p=byId(R.id);if(!p||!document.getElementById('p_name'))return false;
+  var g=function(id){var e=document.getElementById(id);return e?String(e.value||'').trim():'';};
+  var name=g('p_name');
+  if(!name){if(quiet){setSaveText('Name is empty · not saved',true);return false;}throw new Error('The name cannot be empty.');}
+  var h=g('p_height'),cm=null,mt=h.match(/(\d{3})\s*cm/i);if(mt)cm=Number(mt[1]);
+  var patch={display_name:name,email:g('p_email')||null,phone:g('p_phone')||null,instagram:g('p_ig')||null,tiktok:g('p_tt')||null,city:g('p_city')||null,country:g('p_country')||null,date_of_birth:g('p_dob')||null,height_display:h||null,height_cm:cm!=null?cm:p.height_cm,source:g('p_source')||null,target_market_id:g('p_market')||null,target_division_id:g('p_div')||null,assigned_member_id:g('p_agent')||null,notes:g('p_notes')||null};
+  R.profDirty=false;setSaveText('Saving…');
+  try{
+    var out=await serial(function(){return post(fullPayload(p,patch));});
+    if(!out||out.verified!==true)throw new Error('The details were not confirmed as saved.');
+    if(out.prospect){var keep={};['scouting_media','organization_members','markets','divisions','boards'].forEach(function(k){keep[k]=p[k];});Object.assign(p,out.prospect,keep);}
+    if(quiet){R.saved=true;R.failed=null;setSaveText('Saved');}
+    return true;
+  }catch(e){R.profDirty=true;R.failed=msg(e);setSaveText('Not saved · tap to retry',true);toast('Could not save: '+msg(e),true);throw e;}
 }
 function fullPayload(p,patch){
   var md=p.metadata||{};
@@ -706,6 +738,7 @@ async function moveTo(stepKey,opts){
   opts=opts||{};
   var p=byId(R.id);if(!p)return;
   var step=STEPS[IDX[stepKey]];if(!step)return;
+  if(R.profDirty){try{await saveProfile(true);}catch(e){return;}}
   if(R.busy)return;R.busy=true;
   try{
     await flush();
@@ -745,13 +778,10 @@ function addLog(text,type){
 async function doAction(a,btn){
   var p=byId(R.id);if(!p)return;
   var o=R.sc.outreach||{},m=o.model||{},ma=o.ma||{};
+  if(R.profDirty&&a!=='save_profile'){try{await saveProfile(true);}catch(e){return;}}
   try{
     if(a==='save_profile'){
-      var g=function(id){var e=document.getElementById(id);return e?String(e.value||'').trim():'';};
-      var name=g('p_name');if(!name)throw new Error('The name cannot be empty.');
-      var h=g('p_height'),cm=null,mt=h.match(/(\d{3})\s*cm/i);if(mt)cm=Number(mt[1]);
-      var out=await post(fullPayload(p,{display_name:name,email:g('p_email')||null,phone:g('p_phone')||null,instagram:g('p_ig')||null,tiktok:g('p_tt')||null,city:g('p_city')||null,country:g('p_country')||null,date_of_birth:g('p_dob')||null,height_display:h||null,height_cm:cm!=null?cm:p.height_cm,source:g('p_source')||null,target_market_id:g('p_market')||null,target_division_id:g('p_div')||null,assigned_member_id:g('p_agent')||null,notes:g('p_notes')||null}));
-      if(!out||out.verified!==true)throw new Error('The details were not confirmed as saved.');
+      await saveProfile(false);
       await flush();await load();paintPage();R.sc=clone(scoutOf(byId(p.id)));paintRecord();toast('✓ Details saved');
     }else if(a==='email_model'||a==='email_ma'){
       var kind=a==='email_ma'?'ma':'model',t=mailFor(p,kind),addr=kind==='ma'?ma.email:p.email;
@@ -833,7 +863,7 @@ async function doAction(a,btn){
 }
 function wireRecord(m,p){
   m.querySelectorAll('[data-x]').forEach(function(b){b.onclick=closeModal;});
-  m.querySelectorAll('[data-tab]').forEach(function(b){b.onclick=function(){R.tab=b.dataset.tab;paintRecord();};});
+  m.querySelectorAll('[data-tab]').forEach(function(b){b.onclick=async function(){try{if(R.profDirty)await saveProfile(true);await flush();}catch(e){return;}R.tab=b.dataset.tab;paintRecord();};});
   m.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){moveTo(b.dataset.go);};});
   m.querySelectorAll('[data-do]').forEach(function(b){b.onclick=function(){doAction(b.dataset.do,b);};});
   var pdf=m.querySelector('#sr-pdf');
@@ -847,6 +877,7 @@ function wireRecord(m,p){
     }catch(e){toast(msg(e),true);}
   };
   wireInputs(m);
+  m.querySelectorAll('[id^="p_"]').forEach(function(e){var h=function(){markProfile();};e.addEventListener(e.tagName==='SELECT'||e.type==='date'?'change':'input',h);if(e.tagName!=='SELECT'&&e.type!=='date')e.addEventListener('change',h);});
   m.querySelectorAll('[data-ph]').forEach(function(b){b.onclick=function(){R.lead=+b.dataset.ph;paintRecord();};});
   var zm=m.querySelector('[data-zoom]');if(zm)zm.onclick=function(){lightbox(zm.src);};
   var tg=m.querySelector('[data-tab-go]');if(tg)tg.onclick=function(){R.tab=tg.dataset.tabGo;paintRecord();};

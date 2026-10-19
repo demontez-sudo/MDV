@@ -148,3 +148,4 @@ html body .sr-main label.chk,html body .sr-main label.chk span{text-transform:no
 /* Save details lives at the bottom of the Profile tab and stays in reach while you scroll */
 .sr-savebar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:12px -4px 0;padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,rgba(18,14,12,.82),rgba(18,14,12,.97));backdrop-filter:blur(8px);border-radius:0 0 18px 18px}
 .sr-savebar .sr-hint{margin:0;flex:1 1 260px}
+.sr-save.bad{color:#e9a07c!important;font-weight:600}
