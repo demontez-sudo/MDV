@@ -1,5 +1,6 @@
 import { requireUser, parseBody, json, errorResponse, adminClient } from './_lib/auth.mjs';
 import { requireStaffOrganization } from './_lib/agent-bridge.mjs';
+import { notify } from './_lib/push.mjs';
 
 /* Smart Notes. One table, attached to anything through `links`: [{type,id,label}].
    Read: every active staff member sees team notes; private notes only their author. */
@@ -69,6 +70,9 @@ export const handler = async event => {
         };
         const { data, error } = await admin.from('smart_notes').insert(row).select('*').single();
         if (error) throw error;
+        /* a teammate who is @mentioned gets an alert on their devices */
+        const men = row.mentions.map(m => m.user_id).filter(id => id && id !== user.id);
+        if (men.length && row.visibility !== 'private') await notify(admin, { orgId, userIds: men, title: me.name + ' mentioned you', body: (row.title || row.body).replace(/\s+/g, ' ').slice(0, 140), url: '?page=notes', category: 'mentions', tag: 'note-' + data.id });
         return json(200, { ok: true, verified: true, note: shape(data) });
       }
 

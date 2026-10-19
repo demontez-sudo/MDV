@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { notify } from './_lib/push.mjs';
 import { adminClient, parseBody, json, errorResponse } from './_lib/auth.mjs';
 
 const headers={'Cache-Control':'no-store, private','X-Robots-Tag':'noindex, nofollow'};
@@ -20,6 +21,16 @@ export const handler=async event=>{
       if(!pm)return json(404,{error:'Model is not available in this package'},headers);
     }
     const {data:row,error:ae}=await admin.from('package_activity').insert({organization_id:link.organization_id,package_id:link.package_id,recipient_id:link.recipient_id||null,share_link_id:link.id,event_type:eventType,actor_label:'Package recipient',metadata:{model_id:modelId}}).select('id,created_at').single();if(ae)throw ae;
+    try{
+      /* the first look in an hour is worth an alert; every click after that is not */
+      const since=new Date(Date.now()-3600*1000).toISOString();
+      const {count}=await admin.from('package_activity').select('id',{count:'exact',head:true}).eq('share_link_id',link.id).gte('created_at',since).neq('id',row.id);
+      if(!count){
+        const {data:pk}=await admin.from('packages').select('title').eq('id',link.package_id).maybeSingle();
+        let who='A client';if(link.recipient_id){const {data:rc}=await admin.from('package_recipients').select('display_name,email').eq('id',link.recipient_id).maybeSingle();who=rc?.display_name||rc?.email||who;}
+        await notify(admin,{orgId:link.organization_id,title:who+' is looking at a package',body:pk?.title||'Model package',url:'?page=packageresponses',category:'packages',tag:'pkgview-'+link.id});
+      }
+    }catch(e){console.warn('[push] package view alert skipped',e&&e.message||e);}
     return json(201,{ok:true,verified:true,activity_id:row.id,persisted_at:row.created_at},headers);
   }catch(error){const r=errorResponse(error);r.headers={...r.headers,...headers};return r;}
 };

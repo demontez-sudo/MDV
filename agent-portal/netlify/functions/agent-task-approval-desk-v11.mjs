@@ -1,4 +1,5 @@
 import { requireUser, parseBody, json, errorResponse, assertPermission } from './_lib/auth.mjs';
+import { notify } from './_lib/push.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 
 // PostgREST returns at most 1000 rows per request, so page through with range() until exhausted.
@@ -41,6 +42,13 @@ export const handler=async(event)=>{
           data=ins.data;
           if(memberIds.length){try{await admin.from('task_assignments').insert([...new Set(memberIds.map(String))].map(member_id=>({organization_id:organization.id,task_id:data.id,member_id,assignment_role:'assignee',assigned_by:user.id})));}catch(_e){}}
         }
+        try{
+          if(memberIds.length&&data){
+            const {data:ms}=await admin.from('organization_members').select('user_id').in('id',memberIds);
+            const ids=(ms||[]).map(m=>m.user_id).filter(x=>x&&x!==user.id);
+            if(ids.length)await notify(admin,{orgId:organization.id,userIds:ids,title:'New task for you',body:String(data.title||body.title||'').slice(0,140)+(data.due_at?' · due '+new Date(data.due_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''),url:'?page=tasksconsolidated',category:'tasks',tag:'task-'+data.id});
+          }
+        }catch(e){console.warn('[push] task alert skipped',e&&e.message||e);}
         return json(200,{ok:true,verified:true,task:data,persisted_at:new Date().toISOString()});
       }
       if(action==='update_task'){

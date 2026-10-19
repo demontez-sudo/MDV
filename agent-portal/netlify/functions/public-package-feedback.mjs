@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { adminClient, parseBody, json, errorResponse } from './_lib/auth.mjs';
+import { notify } from './_lib/push.mjs';
 
 const hashToken = token => crypto.createHash('sha256').update(String(token || '')).digest('hex');
 const types=new Set(['interested','shortlist','remove_shortlist','pass','note','request_more_info','request_availability','request_casting','request_option']);
@@ -46,6 +47,12 @@ export const handler=async event=>{
       inserted.push({...feedback,model_id:modelId});
       await admin.from('package_activity').insert({organization_id:link.organization_id,package_id:link.package_id,recipient_id:link.recipient_id||null,share_link_id:link.id,event_type:eventMap[feedbackType],actor_label:'Package recipient',metadata:{model_id:modelId,feedback_id:feedback.id,batch_size:requestedIds.length}}).then(()=>{}).catch(()=>{});
     }
+    try{
+      const {data:pk}=await admin.from('packages').select('title').eq('id',link.package_id).maybeSingle();
+      let who='A client';if(link.recipient_id){const {data:rc}=await admin.from('package_recipients').select('display_name,email').eq('id',link.recipient_id).maybeSingle();who=rc?.display_name||rc?.email||who;}
+      const label={interested:'is interested in',shortlist:'shortlisted',pass:'passed on',note:'left a note on',request_more_info:'asked for more info on',request_availability:'asked about availability for',request_casting:'wants to cast from',request_option:'asked for an option on'}[feedbackType]||'responded to';
+      await notify(admin,{orgId:link.organization_id,title:who+' '+label+' '+(requestedIds.length>1?requestedIds.length+' models':'a model'),body:(pk?.title?pk.title+(note?' · ':''):'')+(note?String(note).slice(0,140):''),url:'?page=packageresponses',category:'packages',tag:'pkgfb-'+link.package_id});
+    }catch(e){console.warn('[push] package reply alert skipped',e&&e.message||e);}
     return json(201,{ok:true,verified:true,feedback:inserted[0]||null,feedback_rows:inserted,persisted_at:inserted[0]?.created_at||new Date().toISOString()},headers);
   }catch(error){const r=errorResponse(error);r.headers={...r.headers,...headers};return r;}
 };

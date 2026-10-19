@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import { notify } from './_lib/push.mjs';
 import { adminClient, json, errorResponse, parseBody } from './_lib/auth.mjs';
 
 const PROD_SUPABASE_URL='https://mogyngdhmzbjmcdqeoxu.supabase.co';
@@ -142,6 +143,10 @@ export const handler=async event=>{
       if(finalizeError)throw finalizeError;
       const prospectId=finalized?.prospect_id||null;
       if(prospectId){try{await enrichProspect(admin,organization.id,prospectId,submission.payload?.application,fileRows);}catch(e){console.warn('[get-scouted] profile enrichment skipped',e?.message||e);}}
+      try{
+        const ap=submission.payload?.application||{},nm=[ap.first_name,ap.last_name].filter(Boolean).join(' ')||submission.payload?.fields?.name||'Someone new';
+        await notify(admin,{orgId:organization.id,title:'New application: '+nm,body:[ap.age?ap.age+' years':'',ap.gender,ap.measurements?.height].filter(Boolean).join(' · ')||'From Get Scouted',url:'?page=scouting',category:'applications',tag:'application-'+(prospectId||submission.id)});
+      }catch(e){console.warn('[push] application alert skipped',e&&e.message||e);}
       return json(201,{ok:true,submission_id:finalized?.submission_id||submission.id,prospect_id:prospectId,status:finalized?.status||'new'},noStore);
     }
     return json(400,{error:'Unsupported form action'},noStore);

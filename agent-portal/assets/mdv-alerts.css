@@ -1,0 +1,31 @@
+/* Alerts & devices */
+.al,#al-offer,.al-toast{--g:var(--mdv-gold,#d4b077);--g2:var(--mdv-gold-2,#f0d19a);--ink:var(--mdv-ink,#f3efe8);--mute:var(--mdv-mute,#a89f92);--l2:var(--mdv-line-2,rgba(255,255,255,.1));--panel:var(--mdv-panel,#15130f)}
+.al{color:var(--ink);max-width:820px;margin:0 auto;padding:22px clamp(14px,2.4vw,30px) 70px;display:grid;gap:14px}
+.al *,.al *::before,.al *::after{box-sizing:border-box}
+.al-head small{font-size:10px;letter-spacing:.2em;color:var(--g)}
+.al-head h1{margin:4px 0 6px;font:500 clamp(24px,3vw,34px) var(--fD,Georgia,serif);letter-spacing:0}
+.al-head p{margin:0;color:var(--mute);font-size:13.5px;line-height:1.55;max-width:560px}
+.al-card{border:1px solid var(--l2);border-radius:20px;background:rgba(255,255,255,.025);padding:16px 18px;display:grid;gap:12px;position:relative}
+.al-card.big{padding:20px}.al-card h3{margin:0;font:600 13px var(--fB,Inter,sans-serif);letter-spacing:.04em}
+.al-state{display:flex;gap:16px;align-items:flex-start}.al-state>i{font-size:30px;color:var(--g);flex:none;margin-top:2px}
+.al-state h3{margin:0 0 6px;font:500 22px var(--fD,Georgia,serif);letter-spacing:0}
+.al-state p{margin:0 0 12px;color:var(--mute);font-size:13.5px;line-height:1.6}
+.al-state.ok>i{color:#8fc4a8}.al-state.warn>i{color:#e5a07a}
+.al-steps{margin:0 0 14px;padding-left:20px;color:var(--ink);font-size:13.5px;line-height:1.7}.al-steps code,.al-state code{background:rgba(255,255,255,.07);padding:2px 7px;border-radius:7px;font-size:12px}
+.al-row{display:flex;gap:8px;flex-wrap:wrap}
+.al-btn{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:0 20px;border-radius:999px;border:1px solid var(--l2);background:rgba(255,255,255,.045);color:var(--ink);font-size:13px;cursor:pointer;transition:transform .15s,border-color .15s}
+.al-btn:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--g) 55%,transparent)}
+.al-btn.gold{background:linear-gradient(135deg,var(--g2),var(--g));border-color:transparent;color:#12100c;font-weight:600}
+.al-busy{position:absolute;inset:0;border-radius:20px;background:rgba(10,9,8,.55);display:grid;place-items:center;font-size:13px;color:var(--ink)}
+.al-prefs{display:grid;gap:8px}.al-pref{display:flex;gap:12px;align-items:center;padding:10px 14px;border:1px solid var(--l2);border-radius:14px;cursor:pointer;font-size:14px}.al-pref:hover{border-color:var(--g)}
+.al-mute{margin:0;color:var(--mute);font-size:12.5px}
+.al-dev{list-style:none;margin:0;padding:0;display:grid;gap:8px}.al-dev li{display:flex;gap:12px;align-items:center;padding:10px 14px;border:1px solid var(--l2);border-radius:14px}
+.al-dev li>i{font-size:22px;color:var(--g)}.al-dev li>div{flex:1;min-width:0;display:grid}.al-dev small{color:var(--mute);font-size:12px}.al-dev em{font-style:normal;font-size:10.5px;color:var(--g);border:1px solid var(--g);border-radius:999px;padding:1px 8px;margin-left:6px}
+.al-link{border:0;background:none;color:var(--g);cursor:pointer;font-size:12.5px;text-decoration:underline;text-underline-offset:3px}
+.al-list{margin:0;padding:0;list-style:none;display:grid;gap:8px;font-size:13.5px;color:var(--mute)}.al-list b{color:var(--ink);font-weight:600;margin-right:8px}
+.al-err{color:#e5a07a;margin:0;font-size:13px}
+#al-offer{position:fixed;left:18px;bottom:18px;z-index:6950;display:flex;align-items:center;gap:14px;max-width:min(460px,calc(100vw - 36px));padding:14px 16px;border-radius:20px;border:1px solid color-mix(in srgb,var(--g) 40%,transparent);background:color-mix(in srgb,var(--panel) 94%,#000);color:var(--ink);box-shadow:0 18px 50px rgba(0,0,0,.5);font-family:var(--fB,Inter,sans-serif)}
+#al-offer>i{font-size:24px;color:var(--g)}#al-offer div{display:grid;gap:2px;flex:1;min-width:0}#al-offer b{font-size:14px;font-weight:600}#al-offer span{font-size:12.5px;color:var(--mute);line-height:1.4}
+#al-offer .al-btn{min-height:36px;padding:0 16px;flex:none}.al-x{border:0;background:none;color:var(--mute);font-size:22px;cursor:pointer;line-height:1;flex:none}
+.al-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:10095;background:#1a1712;color:#f3efe8;border:1px solid rgba(212,176,119,.45);padding:11px 18px;font-size:13px;border-radius:14px;max-width:92vw}.al-toast.bad{border-color:#d9786b}
+@media(max-width:820px){.al{padding:14px 14px 90px}#al-offer{left:12px;right:12px;bottom:84px;max-width:none}}

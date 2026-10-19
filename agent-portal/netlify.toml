@@ -465,6 +465,18 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/push"
+to = "/.netlify/functions/agent-push-desk"
+status = 200
+force = true
+
+[[redirects]]
+from = "/api/public/push/inbox"
+to = "/.netlify/functions/public-push-inbox"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/notes"
 to = "/.netlify/functions/agent-notes-desk"
 status = 200
