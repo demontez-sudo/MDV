@@ -422,6 +422,43 @@ function outreachHtml(p){
     +(log.map(function(x){return '<p class="sr-log"><span>'+fmt(x.at,true)+'</span>'+esc(x.text)+'</p>';}).join('')||'<p class="sr-hint">Nothing logged yet.</p>')+'</section>';
 }
 
+/* --- sending the interest call details to the model or the mother agency --- */
+var ZONES={brazil:'America/Sao_Paulo',italy:'Europe/Rome',france:'Europe/Paris','united kingdom':'Europe/London',uk:'Europe/London',england:'Europe/London',germany:'Europe/Berlin',spain:'Europe/Madrid',nigeria:'Africa/Lagos','south africa':'Africa/Johannesburg',kenya:'Africa/Nairobi',ghana:'Africa/Accra',japan:'Asia/Tokyo','south korea':'Asia/Seoul',china:'Asia/Shanghai',india:'Asia/Kolkata',australia:'Australia/Sydney',canada:'America/Toronto',mexico:'America/Mexico_City',colombia:'America/Bogota',argentina:'America/Argentina/Buenos_Aires',chile:'America/Santiago',germany2:'Europe/Berlin',sweden:'Europe/Stockholm',denmark:'Europe/Copenhagen',netherlands:'Europe/Amsterdam',poland:'Europe/Warsaw',ukraine:'Europe/Kyiv',russia:'Europe/Moscow',turkey:'Europe/Istanbul',uae:'Asia/Dubai','united arab emirates':'Asia/Dubai'};
+function atTz(iso,tz,long){try{return new Date(iso).toLocaleString('en-US',long?{timeZone:tz,weekday:'long',month:'long',day:'numeric',hour:'numeric',minute:'2-digit'}:{timeZone:tz,hour:'numeric',minute:'2-digit'});}catch(e){return '';}}
+function dayTz(iso){try{return new Date(iso).toLocaleDateString('en-US',{timeZone:'America/New_York',weekday:'long',month:'long',day:'numeric'});}catch(e){return '';}}
+function whenText(p,iso,withTheirs){
+  var paris=atTz(iso,'Europe/Paris'),own=withTheirs?ZONES[String(p.country||'').trim().toLowerCase()]:'';
+  var out=dayTz(iso)+' at '+atTz(iso,'America/New_York')+' New York time';
+  var extra=['('+paris+' in Paris'];
+  if(own&&atTz(iso,own)!==paris&&atTz(iso,own)!==atTz(iso,'America/New_York'))extra.push(atTz(iso,own)+' where you are');
+  return out+' '+extra.join(', ')+')';
+}
+function hostName(){var c=R.sc.call||{},m=arr(lookups().members).filter(function(x){return x.id===c.host_member_id;})[0];return m?m.display_name:who();}
+function callTpl(p,kind){
+  var c=R.sc.call||{},ma=(R.sc.outreach&&R.sc.outreach.ma)||{},nm=first(p.display_name),host=hostName(),how=[c.channel||'Phone',String(c.link||'').trim()].filter(Boolean).join(' · ');
+  var mins=Number(c.minutes)||30,minor=isMinor(p);
+  if(kind==='ma')return {subject:'Interest call with '+p.display_name+' — '+dayTz(c.scheduled_at)+' — Maison de Veux',body:'Hello '+first(ma.name||'')+',\n\nThank you for speaking with us about '+p.display_name+'. We would like to set up an interest call with '+nm+' so we can get to know '+nm+' and talk about representation in New York and Paris.\n\n• When: '+whenText(p,c.scheduled_at,false)+'\n• How: '+how+'\n• With: '+host+', Maison de Veux\n• Length: about '+mins+' minutes\n\nCould you confirm that this time works for '+nm+' and let us know if you would like to join? If another time is better, send two options and we will fit one.'+(minor?'\n\nAs '+nm+' is under 18, a parent or guardian should be on the call.':'')+'\n\nThank you,\n'+host+'\nMaison de Veux'};
+  return {subject:'Your call with Maison de Veux — '+dayTz(c.scheduled_at),body:'Hi '+nm+',\n\nThank you for your interest in Maison de Veux. We are looking forward to speaking with you.\n\nYour interest call:\n• When: '+whenText(p,c.scheduled_at,true)+'\n• How: '+how+'\n• With: '+host+', Maison de Veux\n• Length: about '+mins+' minutes\n\nIt helps to have ready: a few recent photos, your measurements, when you are free to travel, and your passport status.'+(minor?'\n\nBecause you are under 18, please have a parent or guardian join the call.':'')+'\n\nPlease reply to confirm this time works. If it does not, send me a couple of times that suit you and I will change it.\n\nSee you soon,\n'+host+'\nMaison de Veux'};
+}
+function callMailFor(p,kind){
+  var t=callTpl(p,kind),o=(((R.sc.call||{}).send||{})[kind])||{};
+  return {subject:(o.subject!=null&&String(o.subject).trim()!=='')?o.subject:t.subject,body:(o.body!=null&&String(o.body).trim()!=='')?o.body:t.body,edited:!!(o.body||o.subject)};
+}
+var CONFIRM=['Not sent','Sent','Confirmed','Wants another time','No reply'];
+function sendBlock(p,kind){
+  var c=R.sc.call||{},ma=(R.sc.outreach&&R.sc.outreach.ma)||{},m=callMailFor(p,kind),base='call.send.'+kind,addr=kind==='ma'?ma.email:p.email,st=((c.confirm||{})[kind])||'Not sent',sentAt=(c.sent||{})[kind+'_at'];
+  var title=kind==='ma'?'Send to the mother agency'+(ma.name?' · '+esc(ma.name):''):'Send to the model';
+  return '<div class="sr-compose"><div class="sr-compose-h"><b>'+title+'</b><span class="sr-hint">'+(addr?esc(addr):(kind==='ma'?'Add the MA email on the Outreach tab.':'No email yet. Add it on the Profile tab.'))+(m.edited?' · Edited by you':'')+'</span><button type="button" class="sr-link" data-do="reset_call_mail" data-kind="'+kind+'">Reset to suggested</button></div>'
+    +'<label><span>Subject</span><input data-p="'+base+'.subject" value="'+esc(m.subject)+'"></label>'
+    +'<label><span>Message</span><textarea rows="12" data-p="'+base+'.body">'+esc(m.body)+'</textarea></label>'
+    +'<div class="sr-row2"><label><span>Confirmation</span><select data-p="call.confirm.'+kind+'">'+CONFIRM.map(function(x){return '<option'+(st===x?' selected':'')+'>'+x+'</option>';}).join('')+'</select></label>'
+    +'<div class="sr-actions">'+(addr?'<button type="button" class="sr-btn gold" data-do="email_call" data-kind="'+kind+'">Email the call details</button>':'')+(sentAt?'<span class="sr-hint">Sent '+esc(fmt(sentAt,true))+'</span>':'')+'</div></div></div>';
+}
+function sendSection(p){
+  var c=R.sc.call||{};
+  if(!c.scheduled_at)return '<section class="sr-sec"><h3>Send the call details</h3><p class="sr-hint">Pick a date and time above, schedule the call, then send the details to the model or the mother agency.</p></section>';
+  return '<section class="sr-sec"><h3>Send the call details</h3><p class="sr-hint">The email has the date and time (New York, Paris and the model’s own time where known), how to join, who hosts, and what to have ready. It opens in your portal mail so you can read it before it goes. Opening it marks the call as Sent; change Confirmation when they reply.</p>'+sendBlock(p,'model')+sendBlock(p,'ma')+'</section>';
+}
 /* --- interest call: schedule + summary, with the questionnaire in its own pop-up --- */
 function callTabHtml(p){
   var c=R.sc.call||{},cnt=answeredCount(R.sc),s=scores(R.sc),k=stepOf(p);
@@ -438,7 +475,7 @@ function callTabHtml(p){
     +(c.wrap&&c.wrap.recommendation?'<p class="sr-rec">Recommendation: <b>'+esc(c.wrap.recommendation)+'</b></p>':'')
     +(c.wrap&&c.wrap.summary?'<p class="sr-sumtxt">'+esc(c.wrap.summary)+'</p>':'')
     +'<div class="sr-actions"><button type="button" class="sr-btn gold" data-do="open_call">'+(cnt.done?'Open the questionnaire':'Start the questionnaire')+'</button></div></section>';
-  return sched+sum;
+  return sched+sendSection(p)+sum;
 }
 
 /* --- the questionnaire pop-up, one section at a time --- */
@@ -711,6 +748,18 @@ async function doAction(a,btn){
       if(!addr)throw new Error('There is no email address yet.');
       if(window.MDV_MAIL&&MDV_MAIL.emailTo){closeModal();window.MDV_MAIL.emailTo([addr],{subject:t.subject,text:t.body});}
       else window.location.href='mailto:'+addr+'?subject='+encodeURIComponent(t.subject)+'&body='+encodeURIComponent(t.body);
+    }else if(a==='email_call'){
+      var ck=btn&&btn.dataset.kind==='ma'?'ma':'model',cm=callMailFor(p,ck),ca=ck==='ma'?ma.email:p.email;
+      if(!ca)throw new Error('There is no email address yet.');
+      if(!(R.sc.call||{}).scheduled_at)throw new Error('Pick a date and time first.');
+      var cur=((R.sc.call||{}).confirm||{})[ck];if(!cur||cur==='Not sent')setPath(R.sc,'call.confirm.'+ck,'Sent');
+      setPath(R.sc,'call.sent.'+ck+'_at',nowIso());R.dirty.call=true;await flush();
+      await addLog('Sent the interest call details to the '+(ck==='ma'?'mother agent':'model'),'outreach');
+      if(window.MDV_MAIL&&MDV_MAIL.emailTo){closeModal();window.MDV_MAIL.emailTo([ca],{subject:cm.subject,text:cm.body});}
+      else window.location.href='mailto:'+ca+'?subject='+encodeURIComponent(cm.subject)+'&body='+encodeURIComponent(cm.body);
+    }else if(a==='reset_call_mail'){
+      var rk=btn&&btn.dataset.kind==='ma'?'ma':'model';
+      setPath(R.sc,'call.send.'+rk+'.subject','');setPath(R.sc,'call.send.'+rk+'.body','');R.dirty.call=true;await flush();paintRecord();toast('Back to the suggested email');
     }else if(a==='reset_mail'){
       var kk=btn&&btn.dataset.kind==='ma'?'ma':'model';
       setPath(R.sc,'outreach.'+kk+'.subject','');setPath(R.sc,'outreach.'+kk+'.body','');R.dirty.outreach=true;await flush();paintRecord();toast('Back to the suggested email');

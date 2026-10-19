@@ -77,7 +77,7 @@ function buildScoutCalls(d){
     if(!name&&c.created_by){var cm=H.members.filter(function(m){return m.user_id===c.created_by;})[0];if(cm)name=memberName(cm);}
     if(!name)name=myName();if(!name)return;
     var link=String(c.link||'').trim(),nm=c.name||'Prospect',done=c.step==='call_done';
-    out.push({kind:'scout',id:c.id,title:nm+' · interest call',cand:nm,start:st,end:new Date(st.getTime()+(Number(c.minutes)||30)*60000),allDay:false,label:'Interest call',type:'meeting',status:done?'completed':'scheduled',location:[c.channel,link].filter(Boolean).join(' · '),notes:[c.instagram&&('Instagram '+c.instagram),[c.city,c.country].filter(Boolean).join(', '),c.height&&('Height '+c.height)].filter(Boolean).join(' · '),people:[name],models:[],meta:{category:'scout_call',step:c.step},conflict:'',cat:'calls',fromScout:true});
+    out.push({kind:'scout',id:c.id,title:nm+' · interest call',cand:nm,start:st,end:new Date(st.getTime()+(Number(c.minutes)||30)*60000),allDay:false,label:'Interest call',type:'meeting',status:done?'completed':'scheduled',location:[c.channel,link].filter(Boolean).join(' · '),notes:[c.confirm&&(c.confirm.model||c.confirm.ma)&&('Confirmation: model '+(c.confirm.model||'Not sent')+' · MA '+(c.confirm.ma||'Not sent')),c.instagram&&('Instagram '+c.instagram),[c.city,c.country].filter(Boolean).join(', '),c.height&&('Height '+c.height)].filter(Boolean).join(' · '),people:[name],models:[],meta:{category:'scout_call',step:c.step},conflict:'',cat:'calls',fromScout:true});
   });
   return out;
 }

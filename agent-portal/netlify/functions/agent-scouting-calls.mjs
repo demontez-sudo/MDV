@@ -8,12 +8,14 @@ export const handler = async event => {
     const { user, client } = await requireUser(event), p = event.queryStringParameters || {};
     const { organization } = await requireStaffOrganization({ user, client, organizationSlug: p.organization || 'maison-de-veux' });
     const admin = await requirePermission(user.id, organization.id, 'scouting.read');
-    const { data, error } = await admin.from('scouting_prospects').select('id,display_name,instagram,city,country,height_display,created_by,assigned_member_id,metadata,updated_at').eq('organization_id', organization.id).order('updated_at', { ascending: false }).limit(800);
+    const { data, error } = await admin.from('scouting_prospects').select('id,display_name,instagram,city,country,height_display,created_by,assigned_member_id,stage,metadata,updated_at').eq('organization_id', organization.id).order('updated_at', { ascending: false }).limit(800);
     if (error) throw error;
     const calls = (data || []).map(x => {
-      const sc = x.metadata?.scout || {}, c = sc.call || {}, step = String(sc.step || '').toLowerCase();
-      if (!c.scheduled_at || (step !== 'call_scheduled' && step !== 'call_done')) return null;
-      return { id: x.id, name: x.display_name, instagram: x.instagram || '', city: x.city || '', country: x.country || '', height: x.height_display || '', scheduled_at: c.scheduled_at, minutes: Number(c.minutes) || 30, channel: c.channel || '', link: c.link || '', host_member_id: c.host_member_id || null, assigned_member_id: x.assigned_member_id || null, created_by: x.created_by || null, step };
+      const sc = x.metadata?.scout || {}, c = sc.call || {};
+      /* same rule as the scout board: the record is at the interest-call step when its stage is meeting_scheduled (or the older test_requested) */
+      if (!c.scheduled_at || !['meeting_scheduled', 'test_requested'].includes(String(x.stage || ''))) return null;
+      const step = x.stage === 'test_requested' || String(sc.step || '').toLowerCase() === 'call_done' ? 'call_done' : 'call_scheduled';
+      return { id: x.id, name: x.display_name, instagram: x.instagram || '', city: x.city || '', country: x.country || '', height: x.height_display || '', scheduled_at: c.scheduled_at, minutes: Number(c.minutes) || 30, channel: c.channel || '', link: c.link || '', host_member_id: c.host_member_id || null, assigned_member_id: x.assigned_member_id || null, created_by: x.created_by || null, step, confirm: c.confirm || {} };
     }).filter(Boolean);
     return json(200, { ok: true, calls });
   } catch (error) { return errorResponse(error); }
