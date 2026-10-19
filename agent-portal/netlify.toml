@@ -459,6 +459,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/interest-calls"
+to = "/.netlify/functions/agent-interest-calls"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/calendar/import"
 to = "/.netlify/functions/agent-schedule-import"
 status = 200

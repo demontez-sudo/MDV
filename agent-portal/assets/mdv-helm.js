@@ -54,7 +54,7 @@ function buildEvents(d){
   var out=[];
   function push(kind,x,modelsKey){
     if(!x.starts_at)return;var meta=x.metadata||{};
-    var it={kind:kind,id:x.id,title:x.title||(kind==='booking'?'Booking':kind==='casting'?'Casting':'Event'),start:new Date(x.starts_at),end:x.ends_at?new Date(x.ends_at):null,allDay:!!x.all_day,label:meta.calendar_event_type||(kind==='event'?String(x.event_type||'').replace(/_/g,' '):kind),type:String(x.event_type||kind),status:x.status||'',location:x.location||'',notes:x.notes||'',people:peopleOf(x,kind),models:modelNames(x[modelsKey]),conflict:meta.conflict||'',onOutlook:!!meta.on_outlook};
+    var it={kind:kind,id:x.id,title:x.title||(kind==='booking'?'Booking':kind==='casting'?'Casting':'Event'),start:new Date(x.starts_at),end:x.ends_at?new Date(x.ends_at):null,allDay:!!x.all_day,label:meta.calendar_event_type||(kind==='event'?String(x.event_type||'').replace(/_/g,' '):kind),type:String(x.event_type||kind),status:x.status||'',location:x.location||'',notes:x.notes||'',meta:meta,people:peopleOf(x,kind),models:modelNames(x[modelsKey]),conflict:meta.conflict||'',onOutlook:!!meta.on_outlook};
     if(!it.allDay&&it.end&&it.end-it.start>=20*3600e3)it.allDay=true;
     if(!it.allDay&&it.end&&dkey(it.end)!==dkey(it.start)&&mins(it.start)===0)it.allDay=true;
     if(!it.people.length)return;
@@ -113,7 +113,7 @@ function header(who){
   var label=H.view==='week'?(monday(H.day).toLocaleDateString([],{month:'short',day:'numeric'})+' – '+addDays(monday(H.day),6).toLocaleDateString([],{month:'short',day:'numeric'})):fmtDay(H.day);
   return '<header class="hm-head"><div class="hm-title"><small>'+(H.mode==='calendar'?'Agent calendar':'Smart agenda')+'</small><h1>'+(H.mode==='calendar'?'Helm Calendar':'Helm')+'</h1></div>'
    +'<div class="hm-nav"><button type="button" data-hm="prev" aria-label="Previous">‹</button><button type="button" data-hm="today">Today</button><button type="button" data-hm="next" aria-label="Next">›</button><strong>'+esc(label)+'</strong></div>'
-   +'<div class="hm-tools">'+(H.mode==='calendar'?'<div class="hm-seg hm-calsw" role="group" aria-label="Calendar"><button type="button" data-hm-go="calendar">Agency</button><button type="button" class="on">Helm</button></div>':'')+'<div class="hm-seg"><button type="button" data-hm-view="day" class="'+(H.view==='day'?'on':'')+'">Day</button><button type="button" data-hm-view="week" class="'+(H.view==='week'?'on':'')+'">Week</button></div><label class="hm-who"><span>Agenda for</span><select data-hm-person>'+opts+'</select></label></div></header>';
+   +'<div class="hm-tools">'+(H.mode==='calendar'?'<div class="hm-seg hm-calsw" role="group" aria-label="Calendar"><button type="button" data-hm-go="calendar">Agency</button><button type="button" class="on">Helm</button></div>':'')+'<div class="hm-seg"><button type="button" data-hm-view="day" class="'+(H.view==='day'?'on':'')+'">Day</button><button type="button" data-hm-view="week" class="'+(H.view==='week'?'on':'')+'">Week</button></div><button type="button" class="hm-btn hm-newcall" data-hm-newcall>+ Interest call</button><label class="hm-who"><span>Agenda for</span><select data-hm-person>'+opts+'</select></label></div></header>';
 }
 function chips(){return '<div class="hm-cats" role="group" aria-label="Show">'+CATS.map(function(c){return '<button type="button" class="hm-cat c-'+c[0]+(H.cats[c[0]]===false?' off':'')+'" data-hm-cat="'+c[0]+'" aria-pressed="'+(H.cats[c[0]]!==false)+'"><i></i>'+esc(c[1])+'</button>';}).join('')+'</div>';}
 function signals(who){
@@ -159,8 +159,14 @@ function detail(){
   var cat=CATS.filter(function(c){return c[0]===it.cat;})[0];
   return '<section class="hm-card hm-detail c-'+it.cat+'"><header><small>'+esc(cat?cat[1]:'')+'</small><button type="button" data-hm-close aria-label="Close">×</button></header><h3>'+esc(it.title)+'</h3><p class="hm-when">'+esc(when)+'</p>'
    +(it.people.length?'<p><b>With</b> '+esc(it.people.join(', '))+'</p>':'')+(it.models.length?'<p><b>Models</b> '+esc(it.models.join(', '))+'</p>':'')+(it.location?'<p><b>Where</b> '+esc(it.location)+'</p>':'')
-   +(it.conflict?'<p class="hm-risk">'+esc(it.conflict)+'</p>':'')+(it.notes&&it.kind!=='task'?'<p class="hm-note">'+esc(it.notes)+'</p>':'')
+   +(it.conflict?'<p class="hm-risk">'+esc(it.conflict)+'</p>':'')+(it.notes&&it.kind!=='task'?'<p class="hm-note">'+esc(it.notes)+'</p>':'')+interestBlock(it)
    +'<footer>'+(it.kind==='task'?'<button type="button" class="hm-btn" data-hm-done="'+esc(it.id)+'">Mark done</button><button type="button" class="hm-ghost" data-hm-tasks>Open in Tasks</button>':'<button type="button" class="hm-ghost" data-hm-cal>Open in Calendar</button>')+'</footer></section>';
+}
+var OUTCOMES=[['sign','Sign'],['develop','Develop'],['pass','Pass'],['no_show','No show'],['reschedule','Reschedule']];
+function interestBlock(it){
+  var ic=it.meta&&it.meta.category==='interest_call'?(it.meta.interest_call||{}):null;if(!ic)return '';
+  var done=ic.outcome;
+  return '<div class="hm-ic"><h5>Interest call outcome</h5><div class="hm-seg hm-outcomes">'+OUTCOMES.map(function(o){return '<button type="button" class="'+(done===o[0]?'on':'')+'" data-hm-outcome="'+o[0]+'" data-hm-event="'+esc(it.id)+'">'+o[1]+'</button>';}).join('')+'</div>'+(ic.outcome_note?'<p class="hm-note">'+esc(ic.outcome_note)+'</p>':'')+'</div>';
 }
 function taskRail(who){
   var me=who||'',list=taskItems().filter(function(t){return matches(t,who);}),todayK=dkey(new Date()),dayK=dkey(H.day);
@@ -223,7 +229,9 @@ function goto(path){if(typeof window.navTo==='function')window.navTo(path);}
 
 document.addEventListener('click',function(e){
   var host=H.host;if(!host||!host.contains(e.target))return;
-  var t=e.target.closest('[data-hm],[data-hm-view],[data-hm-cat],[data-hm-done],[data-hm-pick],[data-hm-slot],[data-hm-goto],[data-hm-close],[data-hm-tasks],[data-hm-cal]');if(!t)return;
+  var t=e.target.closest('[data-hm-newcall],[data-hm-outcome],[data-hm],[data-hm-view],[data-hm-cat],[data-hm-done],[data-hm-pick],[data-hm-slot],[data-hm-goto],[data-hm-close],[data-hm-tasks],[data-hm-cal]');if(!t)return;
+  if(t.hasAttribute('data-hm-newcall')){openCall();return;}
+  if(t.hasAttribute('data-hm-outcome')){setOutcome(t.getAttribute('data-hm-event'),t.getAttribute('data-hm-outcome'));return;}
   if(t.hasAttribute('data-hm-done')){e.stopPropagation();complete(t.getAttribute('data-hm-done'));return;}
   if(t.hasAttribute('data-hm-slot')){var tk=taskById(t.getAttribute('data-hm-slot')),who=viewing()||myName(),slot=findSlot(H.day,who,30,tk&&tk.id);if(slot==null){toast('No free 30-minute slot left on '+fmtDay(H.day)+'. Try another day.',true);return;}moveTask(tk.id,slot,H.day);return;}
   if(t.hasAttribute('data-hm-goto')&&!t.hasAttribute('data-hm-pick')){H.day=new Date(t.getAttribute('data-hm-goto')+'T12:00:00');H.day.setHours(0,0,0,0);H.view='day';save();H.sel=null;load();return;}
@@ -244,6 +252,89 @@ document.addEventListener('dragstart',function(e){var r=e.target&&e.target.close
 document.addEventListener('dragover',function(e){var tl=e.target&&e.target.closest&&e.target.closest('[data-hm-drop]');if(tl&&H.host&&H.host.contains(tl)){e.preventDefault();tl.classList.add('drop');}});
 document.addEventListener('dragleave',function(e){var tl=e.target&&e.target.closest&&e.target.closest('[data-hm-drop]');if(tl)tl.classList.remove('drop');});
 document.addEventListener('drop',function(e){var tl=e.target&&e.target.closest&&e.target.closest('[data-hm-drop]');if(!tl||!H.host||!H.host.contains(tl))return;e.preventDefault();tl.classList.remove('drop');var id='';try{id=e.dataTransfer.getData('text/plain');}catch(x){}if(!id||!taskById(id))return;var r=tl.getBoundingClientRect(),zoom=r.height/tl.offsetHeight||1,y=(e.clientY-r.top)/zoom,m=START_H*60+Math.round(y/HH*60/SNAP)*SNAP;m=Math.min(Math.max(m,START_H*60),END_H*60-SNAP);moveTask(id,m,H.day);});
+
+/* ---------- interest calls: one format, added to the agent calendar and to tasks ---------- */
+var CALL_CHANNELS=['Zoom','Phone','In person','Teams','WhatsApp','FaceTime','Other'],CALL_TEMPLATE='candidate,instagram,market,date,time,minutes,channel,link,host,with,source,notes\nThanh Tran,@thanh.tran,New York,2026-10-20,08:00,30,Zoom,https://zoom.us/j/0000000000,Demontez,,Instagram,Tall and Paris-facing\nRoberta Silva,roberta@example.com,Paris,2026-10-20,09:30,30,Zoom,,Demontez,Erica,Scout referral,Mother agency in Milan\n';
+var CALL={tab:'one',busy:false,checked:null};
+function callApi(b){return post('/api/agent/interest-calls',b);}
+function closeCall(){var m=document.getElementById('hm-callmodal');if(m)m.remove();document.documentElement.classList.remove('hm-lock');}
+function sel(name,opts,val){return '<select name="'+name+'">'+opts.map(function(o){var v=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:o;return '<option value="'+esc(v)+'"'+(String(v)===String(val)?' selected':'')+'>'+esc(l)+'</option>';}).join('')+'</select>';}
+function fld(label,inner,wide){return '<label class="hm-f'+(wide?' wide':'')+'"><span>'+esc(label)+'</span>'+inner+'</label>';}
+function callForm(){
+  var hosts=peopleList(),me=myName()||hosts[0]||'',d=dkey(H.day);
+  return '<div class="hm-fgrid">'
+   +fld('Candidate name *','<input name="candidate" type="text" maxlength="120" placeholder="Full name" autocomplete="off">',true)
+   +fld('Instagram or contact','<input name="instagram" type="text" maxlength="120" placeholder="@handle, email or phone">')
+   +fld('Market',sel('market',['New York','Paris','Other'],'New York'))
+   +fld('Date *','<input name="date" type="date" value="'+d+'">')
+   +fld('Start time (Eastern) *','<input name="time" type="time" value="10:00">')
+   +fld('Length',sel('minutes',[[15,'15 min'],[20,'20 min'],[30,'30 min'],[45,'45 min'],[60,'60 min']],30))
+   +fld('How',sel('channel',CALL_CHANNELS,'Zoom'))
+   +fld('Link or place','<input name="link" type="text" maxlength="300" placeholder="Meeting link, number or address">',true)
+   +fld('Host',sel('host',hosts.length?hosts:[me],me))
+   +fld('Also on the call','<input name="with" type="text" maxlength="200" placeholder="e.g. Erica; Emma">')
+   +fld('Where we found them','<input name="source" type="text" maxlength="120" placeholder="Instagram, TikTok, scout, referral, open call">',true)
+   +fld('Notes for the call','<textarea name="notes" rows="3" maxlength="1000" placeholder="Anything to know before the call"></textarea>',true)
+   +'<div class="hm-checks wide"><label><input type="checkbox" name="prep_task" checked> Add a task: prepare one hour before</label><label><input type="checkbox" name="decide_task" checked> Add a task: decide to sign, develop or pass after the call</label></div></div>';
+}
+function callList(){
+  return '<div class="hm-list"><p>Paste one call per row, in this format. The first row must be the column names.</p><div class="hm-fmt"><code>'+esc(CALL_TEMPLATE.split('\n')[0])+'</code></div>'
+   +'<textarea name="csv" rows="9" placeholder="'+esc(CALL_TEMPLATE.split('\n').slice(0,2).join('\n'))+'"></textarea>'
+   +'<div class="hm-listbar"><button type="button" class="hm-ghost" data-hm-dl>Download the format</button><button type="button" class="hm-ghost" data-hm-check>Check the list</button></div><div class="hm-checked" data-hm-checked></div></div>';
+}
+function callModal(){
+  var m=document.createElement('div');m.id='hm-callmodal';m.className='hm-modal';
+  m.innerHTML='<div class="hm-mcard" role="dialog" aria-modal="true" aria-label="Add interest calls"><header><div><small>Agent calendar + tasks</small><h2>Add interest calls</h2></div><button type="button" class="hm-x" data-hm-callclose aria-label="Close">×</button></header>'
+   +'<div class="hm-mbody"><div class="hm-seg hm-ctabs"><button type="button" class="on" data-hm-ctab="one">One call</button><button type="button" data-hm-ctab="list">Paste a list</button></div><div data-hm-cpane="one">'+callForm()+'</div><div data-hm-cpane="list" hidden>'+callList()+'</div><p class="hm-cmsg" data-hm-cmsg></p></div>'
+   +'<footer><span class="hm-fine">Each call goes on the agent calendar as an Interest call (Helm) and adds prep and decision tasks for the host.</span><button type="button" class="hm-ghost" data-hm-callclose>Cancel</button><button type="button" class="hm-btn" data-hm-callgo>Add to calendar and tasks</button></footer></div>';
+  return m;
+}
+function openCall(){
+  closeCall();var m=callModal();document.documentElement.appendChild(m);document.documentElement.classList.add('hm-lock');CALL.tab='one';CALL.checked=null;
+  var card=m.querySelector('.hm-mcard');card.style.maxHeight=Math.max(360,innerHeight-40)+'px';var f=m.querySelector('[name=candidate]');if(f)f.focus({preventScroll:true});
+}
+function cmsg(t,bad){var e=document.querySelector('#hm-callmodal [data-hm-cmsg]');if(e){e.textContent=t||'';e.className='hm-cmsg'+(bad?' bad':'');}}
+function readOne(m){
+  function v(n){var e=m.querySelector('[name="'+n+'"]');return e?e.value.trim():'';}
+  function c(n){var e=m.querySelector('[name="'+n+'"]');return !!(e&&e.checked);}
+  return {candidate:v('candidate'),instagram:v('instagram'),market:v('market'),date:v('date'),time:v('time'),minutes:Number(v('minutes'))||30,channel:v('channel'),link:v('link'),host:v('host'),with:v('with'),source:v('source'),notes:v('notes'),prep_task:c('prep_task'),decide_task:c('decide_task')};
+}
+function resultsHtml(res){
+  return '<table><thead><tr><th>Candidate</th><th>When (ET)</th><th>Host</th><th></th></tr></thead><tbody>'+res.results.map(function(r){var cls=r.status==='error'?'bad':'';return '<tr class="'+cls+'"><td>'+esc(r.candidate||'—')+'</td><td>'+esc((r.date||'')+' '+(r.time||''))+'</td><td>'+esc(r.host||'')+'</td><td>'+(r.status==='error'?esc(r.errors.join('; ')):esc(({create:'New',update:'Update',created:'Added',updated:'Updated'})[r.status]||r.status)+(r.warnings&&r.warnings.length?' · '+esc(r.warnings.join('; ')):''))+'</td></tr>';}).join('')+'</tbody></table>';
+}
+async function submitCalls(check){
+  var m=document.getElementById('hm-callmodal');if(!m||CALL.busy)return;
+  var body=CALL.tab==='one'?{calls:[readOne(m)]}:{csv:(m.querySelector('[name=csv]')||{}).value||''};
+  if(CALL.tab==='list'&&!body.csv.trim()){cmsg('Paste your list first.',true);return;}
+  body.action=check?'check':'schedule';CALL.busy=true;cmsg(check?'Checking…':'Adding…');
+  var go=m.querySelector('[data-hm-callgo]');if(go)go.disabled=true;
+  try{
+    var r;try{r=await callApi(body);}catch(e){if(e&&e.payload&&e.payload.results)r=e.payload;else throw e;}
+    if(check){var box=m.querySelector('[data-hm-checked]');if(box)box.innerHTML=resultsHtml(r);cmsg(r.summary.errors?r.summary.errors+' row'+(r.summary.errors===1?' has':'s have')+' a problem. Fix them, then check again.':r.summary.total+' ready to add.',!!r.summary.errors);CALL.checked=r;return;}
+    var made=r.summary.created+r.summary.updated;
+    if(r.summary.errors&&!made){cmsg(r.results.filter(function(x){return x.status==='error';}).map(function(x){return (x.candidate||'Row')+': '+x.errors.join('; ');}).join(' | '),true);return;}
+    var first=r.results.filter(function(x){return x.event_id;})[0];
+    closeCall();toast((made===1?'Call':made+' calls')+' added to the agent calendar'+(r.results.some(function(x){return x.tasks;})?' and tasks':'')+(r.summary.errors?' ('+r.summary.errors+' skipped)':''));
+    if(first&&first.date){H.day=new Date(first.date+'T12:00:00');H.day.setHours(0,0,0,0);}
+    H.loaded=false;load(true);
+  }catch(err){cmsg(msg(err),true);}
+  finally{CALL.busy=false;if(go)go.disabled=false;}
+}
+async function setOutcome(eventId,outcome){
+  var it=H.events.filter(function(x){return String(x.id)===String(eventId);})[0],note='';
+  if(outcome==='no_show'||outcome==='pass'){try{note=window.prompt('Add a short note (optional)','')||'';}catch(e){}}
+  try{var r=await callApi({action:'set_outcome',event_id:eventId,outcome:outcome,note:note});if(!r||r.verified!==true)throw new Error('Not confirmed');toast('Outcome saved: '+(OUTCOMES.filter(function(o){return o[0]===outcome;})[0]||[,outcome])[1]+(it?' · '+it.title:''));H.loaded=false;await load(true);}
+  catch(e){toast('Could not save the outcome: '+msg(e),true);}
+}
+document.addEventListener('click',function(e){
+  var t=e.target&&e.target.closest&&e.target.closest('#hm-callmodal [data-hm-callclose],#hm-callmodal [data-hm-ctab],#hm-callmodal [data-hm-callgo],#hm-callmodal [data-hm-check],#hm-callmodal [data-hm-dl]');if(!t)return;
+  if(t.hasAttribute('data-hm-callclose')){if(!CALL.busy)closeCall();return;}
+  if(t.hasAttribute('data-hm-ctab')){CALL.tab=t.getAttribute('data-hm-ctab');var m=document.getElementById('hm-callmodal');m.querySelectorAll('[data-hm-ctab]').forEach(function(b){b.classList.toggle('on',b===t);});m.querySelectorAll('[data-hm-cpane]').forEach(function(p){p.hidden=p.getAttribute('data-hm-cpane')!==CALL.tab;});cmsg('');return;}
+  if(t.hasAttribute('data-hm-callgo')){submitCalls(false);return;}
+  if(t.hasAttribute('data-hm-check')){submitCalls(true);return;}
+  if(t.hasAttribute('data-hm-dl')){try{var b=new Blob([CALL_TEMPLATE],{type:'text/csv'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='interest-calls-format.csv';document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},500);}catch(x){}return;}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&document.getElementById('hm-callmodal')&&!CALL.busy)closeCall();});
 
 /* ---------- page + route ---------- */
 window.renderHelm=function(el){H.mode='full';H.host=el;H.loaded=H.loaded&&H.week===dkey(monday(H.day));paint();return load(true);};

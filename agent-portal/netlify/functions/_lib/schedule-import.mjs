@@ -122,20 +122,26 @@ const rpcUnavailable = error => {
   return code === 'PGRST202' || code === '42883' || msg.includes('could not find the function') || (msg.includes('function') && msg.includes('does not exist')) || msg.includes('schema cache');
 };
 
-async function saveOne(admin, orgId, userId, row, now) {
-  const payload = { organization_id: orgId, ...row.payload, metadata: { ...row.payload.metadata, imported_at: now } };
-  const rpc = await admin.rpc('save_event_full_v1', { target_org: orgId, target_event: row.existing_id || null, target_payload: payload, target_model_ids: row.model_ids, target_user: userId });
+/* Saves one event (and its model links) the same way the Calendar does: the save function first, direct writes if it is not installed. Returns the saved event row. */
+export async function saveEvent(admin, orgId, userId, payload, modelIds = [], existingId = null) {
+  const full = { organization_id: orgId, ...payload };
+  const rpc = await admin.rpc('save_event_full_v1', { target_org: orgId, target_event: existingId || null, target_payload: full, target_model_ids: modelIds, target_user: userId });
   if (!rpc.error) {
     if (!rpc.data?.verified || !rpc.data?.event) throw new Error('The calendar did not confirm the save');
-    return rpc.data.event.id;
+    return rpc.data.event;
   }
   if (!rpcUnavailable(rpc.error)) throw rpc.error;
   let saved;
-  if (row.existing_id) { const r = await admin.from('events').update(payload).eq('organization_id', orgId).eq('id', row.existing_id).select('*').single(); if (r.error) throw r.error; saved = r.data; }
-  else { const r = await admin.from('events').insert(payload).select('*').single(); if (r.error) throw r.error; saved = r.data; }
+  if (existingId) { const r = await admin.from('events').update(full).eq('organization_id', orgId).eq('id', existingId).select('*').single(); if (r.error) throw r.error; saved = r.data; }
+  else { const r = await admin.from('events').insert(full).select('*').single(); if (r.error) throw r.error; saved = r.data; }
   const del = await admin.from('event_models').delete().eq('organization_id', orgId).eq('event_id', saved.id); if (del.error) throw del.error;
-  if (row.model_ids.length) { const ins = await admin.from('event_models').insert(row.model_ids.map(model_id => ({ organization_id: orgId, event_id: saved.id, model_id }))); if (ins.error) throw ins.error; }
-  return saved.id;
+  if (modelIds.length) { const ins = await admin.from('event_models').insert(modelIds.map(model_id => ({ organization_id: orgId, event_id: saved.id, model_id }))); if (ins.error) throw ins.error; }
+  return saved;
+}
+
+async function saveOne(admin, orgId, userId, row, now) {
+  const ev = await saveEvent(admin, orgId, userId, { ...row.payload, metadata: { ...row.payload.metadata, imported_at: now } }, row.model_ids, row.existing_id);
+  return ev.id;
 }
 
 /* Writes the next slice of what is still to do. Rows already saved read back as unchanged on the next call, so the client simply
