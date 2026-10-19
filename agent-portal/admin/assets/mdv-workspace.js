@@ -25,9 +25,9 @@ function dayDiff(iso){if(!iso)return null;var d=new Date(iso);if(isNaN(d))return
 var SECTIONS=[
  {cap:'Daily',items:[
   {id:'home',label:'Home',icon:'ti-home-2',page:'overview'},
-  {id:'tasks',label:'Tasks',icon:'ti-checkbox',page:'tasksconsolidated',badge:'tasks',sub:[['tasksconsolidated','Tasks'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
+  {id:'helm',label:'Helm',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','Helm'],['tasksconsolidated','Tasks'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
   {id:'inbox',label:'Inbox',icon:'ti-inbox',page:'inbox',badge:'inbox',sub:[['inbox','Messages'],['mail','Mail'],['notes','Notes']]},
-  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Calendar'],['helm','Helm'],['availability','Availability']]}]},
+  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Calendar'],['availability','Availability']]}]},
  {cap:'Agency',items:[
   {id:'roster',label:'Roster',icon:'ti-users',page:'roster',sub:[['roster','Roster'],['scouting','Scouting'],['seasonmanagement','Season'],['modeldevelopment','Development'],['modelevaluations','Evaluations'],['modelsubmissions','Submissions']]},
   {id:'clients',label:'Clients',icon:'ti-user-circle',page:'industrydirectory',sub:[['industrydirectory','Clients'],['outreach','Outreach']]},
@@ -56,14 +56,14 @@ function visible(){
 }
 function pagesOf(it){return [it.page].concat(arr(it.sub).map(function(s){return s[0];}));}
 var sig='',openId='';
-var DOCK=[['tasksconsolidated','Tasks','ti-checkbox'],['multipackage','Packages','ti-package'],['mail','Mail','ti-mail'],['financelegal','Finance','ti-chart-bar'],['globalmobility','Travel','ti-plane']];
+var DOCK=[['helm','Helm','ti-compass'],['multipackage','Packages','ti-package'],['mail','Mail','ti-mail'],['financelegal','Finance','ti-chart-bar'],['globalmobility','Travel','ti-plane']];
 function buildDock(){
   var app=document.getElementById('app');if(!app)return;
   var ok=allowed(),items=DOCK.filter(function(d){return ok[d[0]];}),dk=document.getElementById('ws-dock');
   if(!dk){dk=document.createElement('nav');dk.id='ws-dock';dk.setAttribute('aria-label','Shortcuts');app.appendChild(dk);}
   var s=items.map(function(d){return d[0];}).join();
-  if(dk.dataset.sig!==s){dk.dataset.sig=s;dk.innerHTML=items.map(function(d){return '<button type="button" class="ws-dk" data-dock="'+d[0]+'"><i class="ti '+d[2]+'"></i><span>'+d[1]+'</span>'+(d[0]==='tasksconsolidated'||d[0]==='mail'?'<em class="ws-dkb" data-badge="'+(d[0]==='mail'?'mail':'tasks')+'" hidden></em>':'')+'</button>';}).join('');}
-  var cur=current();dk.querySelectorAll('.ws-dk').forEach(function(b){b.classList.toggle('on',b.dataset.dock===cur||(b.dataset.dock==='globalmobility'&&cur==='visa')||(b.dataset.dock==='financelegal'&&['modelaccounts','agentcommissions'].indexOf(cur)>-1));});
+  if(dk.dataset.sig!==s){dk.dataset.sig=s;dk.innerHTML=items.map(function(d){return '<button type="button" class="ws-dk" data-dock="'+d[0]+'"><i class="ti '+d[2]+'"></i><span>'+d[1]+'</span>'+(d[0]==='helm'||d[0]==='mail'?'<em class="ws-dkb" data-badge="'+(d[0]==='mail'?'mail':'tasks')+'" hidden></em>':'')+'</button>';}).join('');}
+  var cur=current();dk.querySelectorAll('.ws-dk').forEach(function(b){b.classList.toggle('on',b.dataset.dock===cur||(b.dataset.dock==='helm'&&['tasksconsolidated','approvals','escalations','changecontrol'].indexOf(cur)>-1)||(b.dataset.dock==='globalmobility'&&cur==='visa')||(b.dataset.dock==='financelegal'&&['modelaccounts','agentcommissions'].indexOf(cur)>-1));});
 }
 function itemHtml(it){
   var has=it.sub&&it.sub.length;
