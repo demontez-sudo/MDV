@@ -8,7 +8,7 @@ if(window.MDV_HELM)return;
 var CATS=[['calls','Interest calls & check-ins'],['meetings','Meetings'],['duties','Duties & desk'],['models','Model items on the schedule'],['tasks','Tasks']];
 var START_H=6,END_H=22,HH=56,SNAP=15;
 var KEY='mdv.helm.v1';
-var H={mode:'full',day:today(),view:'day',person:'me',cats:{calls:true,meetings:true,duties:true,models:true,tasks:true},events:[],tasks:[],members:[],myUid:null,week:'',loading:false,err:'',host:null,sel:null,loaded:false};
+var H={mode:'full',day:today(),view:'day',person:'me',cats:{calls:true,meetings:true,duties:true,models:true,tasks:true},events:[],scout:[],tasks:[],members:[],myUid:null,week:'',loading:false,err:'',host:null,sel:null,loaded:false};
 try{var sv=JSON.parse(localStorage.getItem(KEY)||'{}');if(sv.view==='week'||sv.view==='day')H.view=sv.view;if(typeof sv.person==='string'&&sv.person)H.person=sv.person;if(sv.cats&&typeof sv.cats==='object')Object.keys(H.cats).forEach(function(k){if(sv.cats[k]===false)H.cats[k]=false;});}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify({view:H.view,person:H.person,cats:H.cats}));}catch(e){}}
 
@@ -65,6 +65,34 @@ function buildEvents(d){
   arr(d.castings).forEach(function(x){push('casting',x,'casting_models');});
   return out;
 }
+/* Interest calls scheduled in Scouting (Scout Records) belong on the agent calendar too. They are read straight from the scout records, so they are always current.
+   A call that is already on the calendar as an event (same candidate, same day) is not shown twice; if the two disagree on the time, both are shown and the difference is flagged. */
+function memberById(id){return H.members.filter(function(m){return String(m.id)===String(id);})[0]||null;}
+function buildScoutCalls(d){
+  if(!d)return [];var out=[];
+  arr(d.prospects).forEach(function(p){
+    var sc=(p.metadata&&p.metadata.scout)||{},c=sc.call||{};if(!c.scheduled_at)return;
+    var st=new Date(c.scheduled_at);if(isNaN(st))return;
+    var step=String(sc.step||'').toLowerCase();if(step!=='call_scheduled'&&step!=='call_done')return;   /* only records that are at the interest-call step; a leftover time on an earlier or later step is not a call */
+    var host=c.host_member_id?memberById(c.host_member_id):null,name=host?memberName(host):'';
+    if(!name&&p.organization_members&&p.organization_members.display_name)name=first(p.organization_members.display_name);
+    if(!name&&p.created_by){var cm=H.members.filter(function(m){return m.user_id===p.created_by;})[0];if(cm)name=memberName(cm);}
+    if(!name)name=myName();if(!name)return;
+    var link=String(c.link||'').trim(),nm=p.display_name||'Prospect',done=step==='call_done';
+    out.push({kind:'scout',id:p.id,title:nm+' · interest call',cand:nm,start:st,end:new Date(st.getTime()+(Number(c.minutes)||30)*60000),allDay:false,label:'Interest call',type:'meeting',status:done?'completed':'scheduled',location:[c.channel,link].filter(Boolean).join(' · '),notes:[p.instagram&&('Instagram '+p.instagram),[p.city,p.country].filter(Boolean).join(', '),p.height_display&&('Height '+p.height_display)].filter(Boolean).join(' · '),people:[name],models:[],meta:{category:'scout_call',step:step},conflict:'',cat:'calls',fromScout:true});
+  });
+  return out;
+}
+function scoutItems(){
+  return H.scout.filter(function(sc){
+    var tok=norm(sc.cand).split(' ')[0],k=dkey(sc.start);
+    var twin=H.events.filter(function(e){return e.people.length&&dkey(e.start)===k&&tok&&norm(e.title).indexOf(tok)>=0;})[0];
+    if(!twin)return true;
+    if(Math.abs(twin.start-sc.start)<=15*60000)return false;
+    sc.conflict='Scouting says '+tlabel(sc.start)+'; the calendar has '+tlabel(twin.start)+' ('+twin.title+')';return true;
+  });
+}
+function norm(s){return String(s||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();}
 function taskOpen(t){var s=String(t.status||'open').toLowerCase();return !/^(completed|done|complete|cancelled|canceled)$/.test(s);}
 function taskPeople(t){var ids=arr(t.assignments).map(function(a){return a.member_id;});return H.members.filter(function(m){return ids.indexOf(m.id)>=0;}).map(memberName).filter(Boolean);}
 function dayOnly(iso){var d=new Date(iso);return d.getHours()===12&&d.getMinutes()===0;}   /* tasks made from the Calendar page carry a 12:00 placeholder; treat as "due that day" */
@@ -80,9 +108,10 @@ async function load(force){
     var s=addDays(monday(H.day),-1),e=addDays(monday(H.day),8);
     var res=await Promise.all([
       get('/api/agent/calendar/v9?organization='+encodeURIComponent(org())+'&start='+encodeURIComponent(s.toISOString())+'&end='+encodeURIComponent(e.toISOString())+'&_t='+Date.now()),
-      get('/api/agent/tasks/v11?organization='+encodeURIComponent(org())+'&_t='+Date.now())
+      get('/api/agent/tasks/v11?organization='+encodeURIComponent(org())+'&_t='+Date.now()),
+      get('/api/agent/scouting/v9?organization='+encodeURIComponent(org())+'&_t='+Date.now()).catch(function(){return null;})
     ]);
-    H.members=arr(res[1].members);H.myUid=uid();H.events=buildEvents(res[0]||{});H.tasks=arr(res[1].tasks);H.week=wk;H.loaded=true;H.err='';
+    H.members=arr(res[1].members);H.myUid=uid();H.events=buildEvents(res[0]||{});H.tasks=arr(res[1].tasks);H.scout=buildScoutCalls(res[2]);H.week=wk;H.loaded=true;H.err='';
     if(H.person==='me'&&!myName())H.person='all';
   }catch(err){H.err=msg(err);}
   H.loading=false;paint();
@@ -91,7 +120,7 @@ async function reloadTasks(){try{var r=await get('/api/agent/tasks/v11?organizat
 
 /* ---------- what is on the agenda for a day ---------- */
 function itemsFor(day,who){
-  var k=dkey(day),all=H.events.concat(taskItems()).filter(function(it){return it.start&&dkey(it.start)===k&&H.cats[it.cat]!==false&&matches(it,who);});
+  var k=dkey(day),all=H.events.concat(scoutItems(),taskItems()).filter(function(it){return it.start&&dkey(it.start)===k&&H.cats[it.cat]!==false&&matches(it,who);});
   var timed=all.filter(function(it){return !it.allDay;}).sort(function(a,b){return a.start-b.start;}),whole=all.filter(function(it){return it.allDay;});
   return{timed:timed,whole:whole};
 }
@@ -154,13 +183,13 @@ function timeline(who){
 }
 function detail(){
   if(!H.sel)return '';
-  var all=H.events.concat(taskItems()),it=all.filter(function(x){return x.kind===H.sel.kind&&String(x.id)===String(H.sel.id);})[0];if(!it)return '';
+  var all=H.events.concat(scoutItems(),taskItems()),it=all.filter(function(x){return x.kind===H.sel.kind&&String(x.id)===String(H.sel.id);})[0];if(!it)return '';
   var when=it.start?(it.allDay?'All day · '+fmtDay(it.start):tlabel(it.start)+(it.end&&it.kind!=='task'?' – '+tlabel(it.end):'')+' · '+it.start.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})):'No date';
   var cat=CATS.filter(function(c){return c[0]===it.cat;})[0];
   return '<section class="hm-card hm-detail c-'+it.cat+'"><header><small>'+esc(cat?cat[1]:'')+'</small><button type="button" data-hm-close aria-label="Close">×</button></header><h3>'+esc(it.title)+'</h3><p class="hm-when">'+esc(when)+'</p>'
    +(it.people.length?'<p><b>With</b> '+esc(it.people.join(', '))+'</p>':'')+(it.models.length?'<p><b>Models</b> '+esc(it.models.join(', '))+'</p>':'')+(it.location?'<p><b>Where</b> '+esc(it.location)+'</p>':'')
    +(it.conflict?'<p class="hm-risk">'+esc(it.conflict)+'</p>':'')+(it.notes&&it.kind!=='task'?'<p class="hm-note">'+esc(it.notes)+'</p>':'')+interestBlock(it)
-   +'<footer>'+(it.kind==='task'?'<button type="button" class="hm-btn" data-hm-done="'+esc(it.id)+'">Mark done</button><button type="button" class="hm-ghost" data-hm-tasks>Open in Tasks</button>':'<button type="button" class="hm-ghost" data-hm-cal>Open in Calendar</button>')+'</footer></section>';
+   +'<footer>'+(it.kind==='task'?'<button type="button" class="hm-btn" data-hm-done="'+esc(it.id)+'">Mark done</button><button type="button" class="hm-ghost" data-hm-tasks>Open in Tasks</button>':(it.kind==='scout'?'<button type="button" class="hm-ghost" data-hm-scout>Open in Scouting</button>':'<button type="button" class="hm-ghost" data-hm-cal>Open in Calendar</button>'))+'</footer></section>';
 }
 var OUTCOMES=[['sign','Sign'],['develop','Develop'],['pass','Pass'],['no_show','No show'],['reschedule','Reschedule']];
 function interestBlock(it){
@@ -229,7 +258,7 @@ function goto(path){if(typeof window.navTo==='function')window.navTo(path);}
 
 document.addEventListener('click',function(e){
   var host=H.host;if(!host||!host.contains(e.target))return;
-  var t=e.target.closest('[data-hm-newcall],[data-hm-outcome],[data-hm],[data-hm-view],[data-hm-cat],[data-hm-done],[data-hm-pick],[data-hm-slot],[data-hm-goto],[data-hm-close],[data-hm-tasks],[data-hm-cal]');if(!t)return;
+  var t=e.target.closest('[data-hm-scout],[data-hm-newcall],[data-hm-outcome],[data-hm],[data-hm-view],[data-hm-cat],[data-hm-done],[data-hm-pick],[data-hm-slot],[data-hm-goto],[data-hm-close],[data-hm-tasks],[data-hm-cal]');if(!t)return;
   if(t.hasAttribute('data-hm-newcall')){openCall();return;}
   if(t.hasAttribute('data-hm-outcome')){setOutcome(t.getAttribute('data-hm-event'),t.getAttribute('data-hm-outcome'));return;}
   if(t.hasAttribute('data-hm-done')){e.stopPropagation();complete(t.getAttribute('data-hm-done'));return;}
@@ -239,6 +268,7 @@ document.addEventListener('click',function(e){
   if(t.hasAttribute('data-hm-close')){H.sel=null;paint();return;}
   if(t.hasAttribute('data-hm-tasks')){goto('tasksconsolidated');return;}
   if(t.hasAttribute('data-hm-cal')){goto('calendar');return;}
+  if(t.hasAttribute('data-hm-scout')){goto('scouting');return;}
   if(t.hasAttribute('data-hm-view')){H.view=t.getAttribute('data-hm-view');save();H.sel=null;paint();return;}
   if(t.hasAttribute('data-hm-cat')){var c=t.getAttribute('data-hm-cat');H.cats[c]=H.cats[c]===false;save();paint();return;}
   var a=t.getAttribute('data-hm');if(a==='prev')nav(-1);else if(a==='next')nav(1);else if(a==='today'){H.day=today();H.sel=null;load();}else if(a==='retry'){H.err='';load(true);}
