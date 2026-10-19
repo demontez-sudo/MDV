@@ -26,19 +26,12 @@ var SECTIONS=[
  {cap:'Daily',items:[
   {id:'home',label:'Home',icon:'ti-home-2',page:'overview'},
   {id:'tasks',label:'Tasks',icon:'ti-checkbox',page:'tasksconsolidated',badge:'tasks',sub:[['tasksconsolidated','Tasks'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
-  {id:'messages',label:'Messages',icon:'ti-message-circle',page:'inbox'},
-  {id:'mail',label:'Mail',icon:'ti-mail',page:'mail',badge:'mail'},
-  {id:'notes',label:'Notes',icon:'ti-notes',page:'notes',badge:'notes'},
-  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Calendar'],['availability','Availability']]},
-  {id:'helm',label:'Helm',icon:'ti-compass',page:'helm'}]},
+  {id:'inbox',label:'Inbox',icon:'ti-inbox',page:'inbox',badge:'inbox',sub:[['inbox','Messages'],['mail','Mail'],['notes','Notes']]},
+  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Calendar'],['helm','Helm'],['availability','Availability']]}]},
  {cap:'Agency',items:[
-  {id:'roster',label:'Roster',icon:'ti-users',page:'roster'},
-  {id:'clients',label:'Clients',icon:'ti-user-circle',page:'industrydirectory'},
-  {id:'outreach',label:'Outreach',icon:'ti-send',page:'outreach'},
-  {id:'modeltools',label:'Model Tools',icon:'ti-heart-handshake',sub:[['multipackage','Packages'],['packageresponses','Package Responses'],['modelevaluations','Evaluations'],['modelsubmissions','Submissions']]},
-  {id:'scouting',label:'Scouting',icon:'ti-user-search',page:'scouting'},
-  {id:'season',label:'Season',icon:'ti-layout-grid',page:'seasonmanagement'},
-  {id:'development',label:'Development',icon:'ti-chart-bar',page:'modeldevelopment'},
+  {id:'roster',label:'Roster',icon:'ti-users',page:'roster',sub:[['roster','Roster'],['scouting','Scouting'],['seasonmanagement','Season'],['modeldevelopment','Development'],['modelevaluations','Evaluations'],['modelsubmissions','Submissions']]},
+  {id:'clients',label:'Clients',icon:'ti-user-circle',page:'industrydirectory',sub:[['industrydirectory','Clients'],['outreach','Outreach']]},
+  {id:'packages',label:'Packages',icon:'ti-package',page:'multipackage',sub:[['multipackage','Packages'],['packageresponses','Responses']]},
   {id:'editorial',label:'Editorial',icon:'ti-notebook',page:'editorial'}]},
  {cap:'Management',items:[
   {id:'travel',label:'Travel & Visa',icon:'ti-plane',sub:[['globalmobility','Mobility'],['visa','Visa & Compliance']]},
@@ -97,10 +90,25 @@ function buildMenu(){
   var cur=current();
   sb.querySelectorAll('.ws-it').forEach(function(b){var it=sb.__items[b.dataset.item],on=it&&pagesOf(it).indexOf(cur)>=0;b.classList.toggle('on',!!on);});
 }
+/* Pages that belong to one menu item share a tab bar at the top of the content, so Inbox, Calendar, Roster, Clients and Packages each feel like one place. */
+function hubBar(){
+  var pm=document.getElementById('pm');if(!pm)return;
+  var cur=current(),v=visible(),hub=null;
+  v.secs.forEach(function(sc){sc.items.forEach(function(i){if(!hub&&arr(i.sub).length>1&&pagesOf(i).indexOf(cur)>=0)hub=i;});});
+  var bar=document.getElementById('ws-hubbar');
+  if(!hub){if(bar)bar.remove();return;}
+  var html=arr(hub.sub).map(function(t){return '<button type="button" class="ws-hubtab'+(t[0]===cur?' on':'')+'" data-hub-go="'+esc(t[0])+'">'+esc(t[1])+'</button>';}).join('');
+  if(!bar){bar=document.createElement('nav');bar.id='ws-hubbar';bar.setAttribute('aria-label',hub.label);pm.insertBefore(bar,pm.firstChild);}
+  else if(bar.parentNode!==pm||pm.firstChild!==bar)pm.insertBefore(bar,pm.firstChild);
+  if(window.innerWidth>900){var tb=document.querySelector('#app .topbar'),sd=document.getElementById('ws-side'),z=parseFloat(getComputedStyle(document.body).zoom)||1;
+    if(tb&&sd){var top=Math.round(tb.getBoundingClientRect().bottom/z+2),left=Math.round(sd.getBoundingClientRect().right/z+26);bar.style.top=top+'px';bar.style.left=left+'px';bar.style.maxWidth='calc('+Math.round(window.innerWidth/z)+'px - '+(left+30)+'px)';}}
+  var sig=hub.id+'|'+cur+'|'+html.length;if(bar.dataset.sig!==sig){bar.dataset.sig=sig;bar.innerHTML='<span class="ws-hubname">'+esc(hub.label)+'</span>'+html;}
+}
+document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('#ws-hubbar [data-hub-go]');if(t){e.preventDefault();go(t.getAttribute('data-hub-go'));}});
 function badges(){
   var p=window.VEUX_SMART_PORTAL&&VEUX_SMART_PORTAL.last,sb=document.getElementById('ws-side');if(!sb)return;
   var w=window.MDV_MAIL&&MDV_MAIL.widget&&MDV_MAIL.widget();
-  var counts={tasks:p&&p.tasks?arr(p.tasks.open).length:0,mail:(w&&w.unread)||0,notes:(window.MDV_NOTES&&MDV_NOTES.badge&&MDV_NOTES.badge())||0};
+  var counts={tasks:p&&p.tasks?arr(p.tasks.open).length:0,mail:(w&&w.unread)||0,notes:(window.MDV_NOTES&&MDV_NOTES.badge&&MDV_NOTES.badge())||0};counts.inbox=counts.mail+counts.notes;
   document.querySelectorAll('#ws-side [data-badge],#ws-dock [data-badge]').forEach(function(e){var n=counts[e.dataset.badge]||0;e.hidden=!n;e.textContent=n>99?'99+':n;});
 }
 function fly(anchor,it){
@@ -458,7 +466,7 @@ function tick(){
     layoutRow();
     if(S.stale&&S.el&&S.el.isConnected&&S.el.classList.contains('on'))paint();
     if(document.documentElement.getAttribute('data-outlook')!=='workspace')return;
-    patchSheets();buildMenu();buildDock();masthead();skinOnce();tighten();
+    patchSheets();buildMenu();hubBar();buildDock();masthead();skinOnce();tighten();
   }catch(e){}
 }
 /* the menu, dock and spacing follow the page: re-check right after every navigation and on resize, and only sweep occasionally in between */
