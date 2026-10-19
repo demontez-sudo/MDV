@@ -29,3 +29,5 @@
 #al-offer .al-btn{min-height:36px;padding:0 16px;flex:none}.al-x{border:0;background:none;color:var(--mute);font-size:22px;cursor:pointer;line-height:1;flex:none}
 .al-toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:10095;background:#1a1712;color:#f3efe8;border:1px solid rgba(212,176,119,.45);padding:11px 18px;font-size:13px;border-radius:14px;max-width:92vw}.al-toast.bad{border-color:#d9786b}
 @media(max-width:820px){.al{padding:14px 14px 90px}#al-offer{left:12px;right:12px;bottom:84px;max-width:none}}
+
+.al-inst{display:flex;gap:16px;align-items:center}.al-inst img{width:64px;height:64px;border-radius:16px;flex:none}.al-inst b{font-size:15px;font-weight:600}.al-inst p{margin:4px 0 12px;color:var(--mute);font-size:13px;line-height:1.55}

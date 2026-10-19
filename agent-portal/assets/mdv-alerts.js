@@ -83,6 +83,12 @@ function statusHtml(){
   return on?'<div class="al-state ok"><i class="ti ti-bell-ringing"></i><div><h3>Alerts are on for this device</h3><p>You will be told about the things ticked below, even when the portal is closed.</p><div class="al-row"><button type="button" class="al-btn gold" data-act="test">Send a test alert</button><button type="button" class="al-btn" data-act="off">Turn off on this device</button></div></div></div>'
     :'<div class="al-state"><i class="ti ti-bell"></i><div><h3>Alerts are off on this device</h3><p>Turn them on to be told about mentions, new tasks, applications and client activity. You choose what.</p><button type="button" class="al-btn gold" data-act="on">Turn on alerts</button></div></div>';
 }
+function installHtml(){
+  var app=window.MDV_APP;if(!app)return '';
+  var on=app.standalone();
+  var hint={iphone:'On iPhone it is added from Safari with Share → Add to Home Screen.','mac-safari':'On Mac Safari use File → Add to Dock.',android:'On Android use the browser menu → Install app.',desktop:'In Chrome or Edge, use the install icon in the address bar.'}[app.platform()];
+  return '<section class="al-card"><h3>The app</h3><div class="al-inst"><img src="'+esc((window.__VEUX_AGENT_MOUNT__||'')+'/icons/icon-192.png')+'" alt=""><div><b>'+(on?'You are using the app':'Install Maison de Veux as an app')+'</b><p>'+(on?'It opens in its own window, keeps the unread count on its icon, and receives alerts.':'Its own icon and window, an unread count on the icon, and alerts that arrive even when the portal is closed. '+esc(hint))+'</p>'+(on?'':'<button type="button" class="al-btn gold" data-install>Install the app</button>')+'</div></div></section>';
+}
 function prefsHtml(){
   var cfg=S.cfg;if(!cfg||!cfg.configured||!cfg.table_ready||!mine().length)return '';
   var p=mine()[0].prefs||{};
@@ -96,8 +102,9 @@ function devicesHtml(){
 function paint(){
   var el=S.host;if(!el||!el.isConnected)return;
   el.innerHTML='<div class="al"><header class="al-head"><small>ALERTS & DEVICES</small><h1>Know the moment something happens</h1><p>Get an alert on your MacBook and iPhone for mentions, tasks, new applications and client activity.</p></header>'
-    +(S.err?'<p class="al-err">'+esc(S.err)+'</p>':'')+'<section class="al-card big">'+statusHtml()+(S.busy?'<div class="al-busy">Working…</div>':'')+'</section>'+prefsHtml()+devicesHtml()
+    +(S.err?'<p class="al-err">'+esc(S.err)+'</p>':'')+installHtml()+'<section class="al-card big">'+statusHtml()+(S.busy?'<div class="al-busy">Working…</div>':'')+'</section>'+prefsHtml()+devicesHtml()
     +'<section class="al-card"><h3>What triggers an alert</h3><ul class="al-list"><li><b>Mentions</b> Someone @mentions you in a Smart Note.</li><li><b>Tasks</b> A task is assigned to you.</li><li><b>Applications</b> Someone submits the Get Scouted form.</li><li><b>Packages</b> A client first opens a package, or replies to one.</li><li><b>Follow-ups</b> A reminder you set on a note comes due.</li></ul></section></div>';
+  el.querySelectorAll('[data-install]').forEach(function(b){b.onclick=function(){window.MDV_APP&&MDV_APP.install().then(paint);};});
   el.querySelectorAll('[data-act]').forEach(function(b){b.onclick=function(){var a=b.dataset.act;if(a==='on')enable();else if(a==='off')disable();else if(a==='test')test();else if(a==='recheck')load(true).then(paint);};});
   el.querySelectorAll('[data-pref]').forEach(function(c){c.onchange=function(){var p={};el.querySelectorAll('[data-pref]').forEach(function(x){p[x.dataset.pref]=x.checked;});savePrefs(p);};});
   el.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=async function(){try{await post({action:'remove_device',id:b.dataset.rm});S.cfg=await get();var t=await currentSub();if(t&&!mine().some(function(d){return d.endpoint_tail===String(t.endpoint).slice(-12);})){S.sub=null;}paint();}catch(e){toast(msg(e),true);}};});
@@ -116,7 +123,7 @@ function openFromUrl(u){
 }
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',function(e){if(e.data&&e.data.type==='mdv-alert-open')openFromUrl(e.data.url);});
 (function landing(){
-  try{var pg=new URLSearchParams(location.search).get('page');if(!pg)return;var n=0,t=setInterval(function(){if(typeof window.navTo==='function'&&document.getElementById('app')&&getComputedStyle(document.getElementById('app')).display!=='none'){clearInterval(t);window.navTo(pg);}else if(++n>60)clearInterval(t);},500);}catch(e){}
+  try{var pg=new URLSearchParams(location.search).get('page');if(!pg)return;var n=0,t=setInterval(function(){if(typeof window.navTo==='function'&&document.getElementById('app')&&getComputedStyle(document.getElementById('app')).display!=='none'){clearInterval(t);window.navTo(pg);if(new URLSearchParams(location.search).get('new')&&window.MDV_NOTES)setTimeout(function(){MDV_NOTES.open();},900);}else if(++n>60)clearInterval(t);},500);}catch(e){}
 })();
 
 /* ---------- a gentle one-time offer ---------- */
