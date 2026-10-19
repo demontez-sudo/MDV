@@ -1,6 +1,7 @@
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 import { safeDeleteEvent } from './_lib/calendar-safe-delete.mjs';
+import { visibleToUser } from './_lib/calendar-privacy.mjs';
 
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 async function one(q){const {data,error}=await q;if(error)throw error;return data||null;}
@@ -150,7 +151,7 @@ export const handler=async(event)=>{
       rows(admin.from('profiles').select('user_id,display_name,first_name,last_name').limit(1500))
     ]);
 
-    const events=allEvents.filter(x=>inRange(x.starts_at,start,end)||hasRepeat(x));
+    const events=allEvents.filter(x=>visibleToUser(x,user.id)&&(inRange(x.starts_at,start,end)||hasRepeat(x)));
     const bookings=allBookings.filter(x=>inRange(x.starts_at,start,end)||hasRepeat(x));
     const castings=allCastings.filter(x=>inRange(x.starts_at,start,end)||hasRepeat(x));
 

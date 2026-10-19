@@ -459,6 +459,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/calendar/import"
+to = "/.netlify/functions/agent-schedule-import"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/calendar/smart"
 to = "/.netlify/functions/agent-smart-calendar-v1"
 status = 200

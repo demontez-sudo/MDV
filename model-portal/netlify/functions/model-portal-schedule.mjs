@@ -5,6 +5,8 @@ async function rows(q){const {data,error}=await q;if(error)throw error;return da
 const iso=v=>{const d=new Date(v);return Number.isFinite(d.getTime())?d.toISOString():null;};
 const activeStatus=v=>!/declined|cancelled|canceled|released|void/i.test(String(v||''));
 const eventVisible=e=>String(e?.visibility||'').toLowerCase()!=='private';
+// Imported schedule rows keep team, ownership and agency notes on the agency side; the model sees the event itself.
+const modelSafeMeta=m=>{const x={...(m||{})};for(const k of ['team','owner_name','model_names','import_set','import_key','import_hash','import_source','imported_at','imported_by','private_to_user_id','conflict','on_outlook','notes_internal','category'])delete x[k];return x;};
 
 export const handler=async event=>{
   if(event.httpMethod!=='GET')return json(405,{error:'Method not allowed'},{Allow:'GET'});
@@ -40,7 +42,7 @@ export const handler=async event=>{
     const eventRows=events.filter(eventVisible).map(e=>({
       id:e.id,kind:'event',title:e.title,event_type:e.event_type,status:e.status,
       starts_at:e.starts_at,ends_at:e.ends_at,timezone:e.timezone,all_day:e.all_day,
-      location:e.location,notes:e.notes,metadata:e.metadata||{},
+      location:e.location,notes:e.metadata?.notes_internal===true?null:e.notes,metadata:modelSafeMeta(e.metadata),
       model_status:eventLinkMap.get(String(e.id))?.attendance_status||null
     }));
     const bookingRows=bookings.filter(b=>{

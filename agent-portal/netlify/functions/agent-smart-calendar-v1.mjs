@@ -62,7 +62,7 @@ export const handler=async(event)=>{
       const upcoming=bookings.filter(b=>{const d=Date.parse(b.call_time||b.starts_at||0);return Number.isFinite(d)&&d>=now.getTime()&&d<=future3.getTime()&&!kindDone('booking',b.status);});
       const overdue=[];
       for(const b of bookings){const d=Date.parse(b.wrap_time||b.ends_at||b.starts_at||0);if(Number.isFinite(d)&&d<now.getTime()&&!kindDone('booking',b.status))overdue.push({kind:'booking',id:b.id,title:b.title,status:b.status,date:b.starts_at,end:b.ends_at||b.wrap_time,location:b.location});}
-      for(const e of events){const d=Date.parse(e.ends_at||e.starts_at||0);if(Number.isFinite(d)&&d<now.getTime()&&!kindDone('event',e.status)&&e.event_type!=='personal')overdue.push({kind:'event',id:e.id,title:e.title,status:e.status,date:e.starts_at,end:e.ends_at,location:e.location});}
+      for(const e of events){const d=Date.parse(e.ends_at||e.starts_at||0);if(Number.isFinite(d)&&d<now.getTime()&&!kindDone('event',e.status)&&e.event_type!=='personal'&&!e.metadata?.import_set)overdue.push({kind:'event',id:e.id,title:e.title,status:e.status,date:e.starts_at,end:e.ends_at,location:e.location});}
       for(const c of castings){const d=Date.parse(c.ends_at||c.deadline_at||c.starts_at||0);if(Number.isFinite(d)&&d<now.getTime()&&!kindDone('casting',c.status))overdue.push({kind:'casting',id:c.id,title:c.title,status:c.status,date:c.starts_at,end:c.ends_at||c.deadline_at,location:c.location});}
       overdue.sort((a,b)=>String(b.end||b.date).localeCompare(String(a.end||a.date)));
       return json(200,{ok:true,generated_at:now.toISOString(),important_dates:seasons,upcoming_bookings:upcoming.slice(0,30),overdue:overdue.slice(0,50)});
