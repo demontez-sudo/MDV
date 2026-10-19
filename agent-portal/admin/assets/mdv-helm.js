@@ -8,7 +8,7 @@ if(window.MDV_HELM)return;
 var CATS=[['calls','Interest calls & check-ins'],['meetings','Meetings'],['duties','Duties & desk'],['models','Model items on the schedule'],['tasks','Tasks']];
 var START_H=6,END_H=22,HH=56,SNAP=15;
 var KEY='mdv.helm.v1';
-var H={day:today(),view:'day',person:'me',cats:{calls:true,meetings:true,duties:true,models:true,tasks:true},events:[],tasks:[],members:[],myUid:null,week:'',loading:false,err:'',host:null,sel:null,loaded:false};
+var H={mode:'full',day:today(),view:'day',person:'me',cats:{calls:true,meetings:true,duties:true,models:true,tasks:true},events:[],tasks:[],members:[],myUid:null,week:'',loading:false,err:'',host:null,sel:null,loaded:false};
 try{var sv=JSON.parse(localStorage.getItem(KEY)||'{}');if(sv.view==='week'||sv.view==='day')H.view=sv.view;if(typeof sv.person==='string'&&sv.person)H.person=sv.person;if(sv.cats&&typeof sv.cats==='object')Object.keys(H.cats).forEach(function(k){if(sv.cats[k]===false)H.cats[k]=false;});}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify({view:H.view,person:H.person,cats:H.cats}));}catch(e){}}
 
@@ -111,7 +111,7 @@ function header(who){
   var names=peopleList(),me=myName();
   var opts='<option value="all"'+(H.person==='all'?' selected':'')+'>Everyone</option>'+(me?'<option value="me"'+(H.person==='me'?' selected':'')+'>Me ('+esc(me)+')</option>':'')+names.filter(function(n){return n!==me;}).map(function(n){return '<option value="'+esc(n)+'"'+(H.person===n?' selected':'')+'>'+esc(n)+'</option>';}).join('');
   var label=H.view==='week'?(monday(H.day).toLocaleDateString([],{month:'short',day:'numeric'})+' – '+addDays(monday(H.day),6).toLocaleDateString([],{month:'short',day:'numeric'})):fmtDay(H.day);
-  return '<header class="hm-head"><div class="hm-title"><small>Smart agenda</small><h1>Helm</h1></div>'
+  return '<header class="hm-head"><div class="hm-title"><small>'+(H.mode==='calendar'?'Agent calendar':'Smart agenda')+'</small><h1>'+(H.mode==='calendar'?'Helm Calendar':'Helm')+'</h1></div>'
    +'<div class="hm-nav"><button type="button" data-hm="prev" aria-label="Previous">‹</button><button type="button" data-hm="today">Today</button><button type="button" data-hm="next" aria-label="Next">›</button><strong>'+esc(label)+'</strong></div>'
    +'<div class="hm-tools"><div class="hm-seg"><button type="button" data-hm-view="day" class="'+(H.view==='day'?'on':'')+'">Day</button><button type="button" data-hm-view="week" class="'+(H.view==='week'?'on':'')+'">Week</button></div><label class="hm-who"><span>Agenda for</span><select data-hm-person>'+opts+'</select></label></div></header>';
 }
@@ -193,7 +193,7 @@ function paint(){
   if(H.err&&!H.loaded){el.innerHTML='<div class="hm">'+header(who)+'<div class="hm-state bad"><span>'+esc(H.err)+'</span><button type="button" class="hm-btn" data-hm="retry">Try again</button></div></div>';return;}
   var scroller=el.querySelector('.hm-tlwrap'),sy=scroller?scroller.scrollTop:null;
   var main=H.view==='week'?weekView(who):'<div class="hm-tlwrap" data-hm-scroll>'+timeline(who)+'</div>';
-  el.innerHTML='<div class="hm'+(H.loading?' busy':'')+'">'+header(who)+signals(who)+chips()+'<div class="hm-grid"><div class="hm-main">'+main+'</div><aside class="hm-rail">'+detail()+taskRail(who)+'</aside></div></div>';
+  el.innerHTML='<div class="hm'+(H.loading?' busy':'')+'">'+header(who)+signals(who)+chips()+'<div class="hm-grid'+(H.mode==='calendar'&&!H.sel?' solo':'')+'"><div class="hm-main">'+main+'</div>'+(H.mode==='calendar'&&!H.sel?'':'<aside class="hm-rail">'+detail()+(H.mode==='calendar'?'':taskRail(who))+'</aside>')+'</div></div>';
   var sc=el.querySelector('.hm-tlwrap');
   if(sc){if(sy!=null)sc.scrollTop=sy;else{var n=new Date(),target=dkey(H.day)===dkey(n)?Math.max(0,(mins(n)-START_H*60)/60*HH-120):(8-START_H)*HH-10;sc.scrollTop=target;}}
 }
@@ -245,11 +245,12 @@ document.addEventListener('dragleave',function(e){var tl=e.target&&e.target.clos
 document.addEventListener('drop',function(e){var tl=e.target&&e.target.closest&&e.target.closest('[data-hm-drop]');if(!tl||!H.host||!H.host.contains(tl))return;e.preventDefault();tl.classList.remove('drop');var id='';try{id=e.dataTransfer.getData('text/plain');}catch(x){}if(!id||!taskById(id))return;var r=tl.getBoundingClientRect(),zoom=r.height/tl.offsetHeight||1,y=(e.clientY-r.top)/zoom,m=START_H*60+Math.round(y/HH*60/SNAP)*SNAP;m=Math.min(Math.max(m,START_H*60),END_H*60-SNAP);moveTask(id,m,H.day);});
 
 /* ---------- page + route ---------- */
-window.renderHelm=function(el){H.host=el;H.loaded=H.loaded&&H.week===dkey(monday(H.day));paint();return load(true);};
+window.renderHelm=function(el){H.mode='full';H.host=el;H.loaded=H.loaded&&H.week===dkey(monday(H.day));paint();return load(true);};
 (function register(){
-  function put(){var m=window.VEUX_V15_ROUTE_RENDERERS;if(m&&typeof m==='object'){m.helm=function(el){return window.renderHelm(el);};return true;}return false;}
+  function put(){var m=window.VEUX_V15_ROUTE_RENDERERS;if(m&&typeof m==='object'){m.helm=function(el){return window.renderHelm(el);};m.helmcalendar=function(el){return window.renderHelmCalendar(el);};return true;}return false;}
   if(put())return;var n=0,t=setInterval(function(){if(put()||++n>400)clearInterval(t);},150);
   ['veux:shell-ready','veux:assets-ready','veux:auth-ready'].forEach(function(ev){window.addEventListener(ev,put);});
 })();
-window.MDV_HELM={render:window.renderHelm,state:H,findSlot:findSlot,catOf:catOf};
+window.renderHelmCalendar=function(el){H.mode='calendar';H.host=el;H.loaded=H.loaded&&H.week===dkey(monday(H.day));paint();return load(true);};
+window.MDV_HELM={render:window.renderHelm,calendar:window.renderHelmCalendar,state:H,findSlot:findSlot,catOf:catOf};
 })();

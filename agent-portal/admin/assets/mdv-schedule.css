@@ -124,3 +124,10 @@ html body .sc .sc-card .sc-date{color:var(--pmute)!important}
 .sc-grid>*,.sc-aside>*,.sc-panel{min-width:0}
 .sc-mrow>span,.sc-mrow>div{min-width:0;overflow-wrap:anywhere}
 .sc-rules{grid-template-columns:minmax(0,1fr)}.sc-rules li{grid-template-columns:40px minmax(0,1fr)}.sc-rules li>*{min-width:0}.sc-rules b,.sc-rules em{overflow-wrap:anywhere}
+/* Rules: two sections, Day and Week */
+.sc-rules-panel{display:grid;gap:14px}
+.sc-sub{display:grid;gap:8px}
+.sc-subh{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:2px 12px;padding-bottom:8px;border-bottom:1px solid var(--mdv-line-2,rgba(255,255,255,.1))}
+.sc-subh h4{margin:0;font:600 12px Inter,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--mdv-gold,#d4b077)}
+.sc-subh h4{grid-area:1/1}.sc-subh small{grid-area:2/1/3/3;font-size:11.5px;color:var(--mdv-mute,#a89f92)}
+.sc-subh .sc-score{display:inline-block!important;grid-area:1/2;margin:0;white-space:nowrap;width:auto!important}

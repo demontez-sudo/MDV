@@ -69,3 +69,5 @@ html body #p-helm .hm .hm-cat{letter-spacing:.02em!important;font-size:12px!impo
 html body #p-helm .hm .hm-nav button,html body #p-helm .hm .hm-seg button{letter-spacing:.03em!important;text-transform:none!important;min-height:0!important}
 html body #p-helm .hm .hm-blk b{letter-spacing:0!important;text-transform:none!important}
 html body #p-helm .hm .hm-detail header button{padding:0 6px!important;border:0!important;background:transparent!important;min-height:0!important}
+
+.hm-grid.solo{grid-template-columns:1fr}.hm-grid.solo .hm-tlwrap{max-height:calc(100vh - 300px)}

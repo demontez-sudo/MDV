@@ -303,13 +303,20 @@ function marketHtml(emb){
     return '<button type="button" class="sc-mrow'+(isT?' today':'')+(isSel?' sel':'')+'" '+pickAttr+'><b>'+r[0]+'<small>'+fmt(w.d)+'</small></b>'+cell(r[1],'New York')+cell(r[2],'Paris')+(tag.length?'<div class="sc-mtags">'+tag.join('')+'</div>':'')+'</button>';}).join('');
   return '<section class="sc-panel"><header><h3>Market week</h3>'+toggle+'</header>'+summary+'<div class="sc-mhead"><span></span><span class="'+(city==='New York'?'on':'')+'">New York</span><span class="'+(city==='Paris'?'on':'')+'">Paris</span></div>'+rows+'<p class="sc-fine">Highlighted column is where the week is weighted'+(S.market==='auto'?' (from live events: more '+city+' events)':'')+'. '+(emb?'Click a day to see it in the agenda.':'Click a day to open its template.')+'</p></section>';
 }
+var WEEKLY_RULES=['train','dinner','evening'];
 function rulesHtml(c,tid){
-  var rows=RULES.map(function(r,i){
-    var weekly=['train','dinner','evening'].indexOf(r[0])>=0,res=weekly?evalWeek(r[0]):evalRule(r[0],c);
-    var dots='';if(res.rows)dots='<div class="sc-dots">'+res.rows.map(function(x){return '<i class="'+(x.na?'na':x.ok?'ok':'bad')+'" title="'+fmt(x.d,{weekday:'short',month:'short',day:'numeric'})+'">'+fmt(x.d,{weekday:'narrow'})+'</i>';}).join('')+'</div>';
-    return '<li class="'+res.s+'" id="sc-rule-'+r[0]+'"><span class="sc-rn">'+String(i+1).padStart(2,'0')+'</span><div><b>'+esc(r[1])+'</b><em><i class="sc-st">'+({ok:'On track',warn:'Needs attention',na:'Not applicable'})[res.s]+'</i> '+esc(res.t)+'</em>'+dots+(res.fix?'<button type="button" class="sc-fix" data-sc-fix="'+res.fix+'" data-sc-tpl="'+(tid||S.sel)+'">Add the breaks</button>':'')+'</div></li>';}).join('');
-  var all=RULES.map(function(r){var weekly=['train','dinner','evening'].indexOf(r[0])>=0;return weekly?evalWeek(r[0]):evalRule(r[0],c);}),applicable=all.filter(function(r){return r.s!=='na';}),okN=applicable.filter(function(r){return r.s==='ok';}).length;
-  return '<section class="sc-panel"><header><h3>Rules for every day</h3><span class="sc-score'+(okN===applicable.length?' ok':'')+'">'+okN+' of '+applicable.length+' on track</span></header><ol class="sc-rules">'+rows+'</ol><p class="sc-fine">Daily rules are checked against the selected day. Weekly rules look at this whole week, including live events.</p></section>';
+  function res(r){return WEEKLY_RULES.indexOf(r[0])>=0?evalWeek(r[0]):evalRule(r[0],c);}
+  function row(r){
+    var i=RULES.indexOf(r),x=res(r),dots='';if(x.rows)dots='<div class="sc-dots">'+x.rows.map(function(q){return '<i class="'+(q.na?'na':q.ok?'ok':'bad')+'" title="'+fmt(q.d,{weekday:'short',month:'short',day:'numeric'})+'">'+fmt(q.d,{weekday:'narrow'})+'</i>';}).join('')+'</div>';
+    return '<li class="'+x.s+'" id="sc-rule-'+r[0]+'"><span class="sc-rn">'+String(i+1).padStart(2,'0')+'</span><div><b>'+esc(r[1])+'</b><em><i class="sc-st">'+({ok:'On track',warn:'Needs attention',na:'Not applicable'})[x.s]+'</i> '+esc(x.t)+'</em>'+dots+(x.fix?'<button type="button" class="sc-fix" data-sc-fix="'+x.fix+'" data-sc-tpl="'+(tid||S.sel)+'">Add the breaks</button>':'')+'</div></li>';
+  }
+  function score(list){var a=list.map(res).filter(function(r){return r.s!=='na';}),ok=a.filter(function(r){return r.s==='ok';}).length;return '<span class="sc-score'+(ok===a.length?' ok':'')+'">'+ok+' of '+a.length+' on track</span>';}
+  var dayRules=RULES.filter(function(r){return WEEKLY_RULES.indexOf(r[0])<0;}),weekRules=RULES.filter(function(r){return WEEKLY_RULES.indexOf(r[0])>=0;});
+  var dayLabel=c&&c.date?fmt(c.date,{weekday:'long',month:'short',day:'numeric'}):'the selected day',wk=BASE||monday(c&&c.date||new Date());
+  return '<section class="sc-panel sc-rules-panel"><header><h3>Rules</h3></header>'
+    +'<div class="sc-sub"><div class="sc-subh"><h4>Rules of the Day</h4><small>'+esc(dayLabel)+'</small>'+score(dayRules)+'</div><ol class="sc-rules">'+dayRules.map(row).join('')+'</ol></div>'
+    +'<div class="sc-sub"><div class="sc-subh"><h4>Rules of the Week</h4><small>'+esc(fmt(wk)+' – '+fmt(addDays(wk,6)))+'</small>'+score(weekRules)+'</div><ol class="sc-rules">'+weekRules.map(row).join('')+'</ol></div>'
+    +'<p class="sc-fine">Rules of the Day are checked against the selected day. Rules of the Week look at the whole week, including live events.</p></section>';
 }
 
 /* -- Month -- */
@@ -413,7 +420,7 @@ function embeddedHtml(items,dateKey){
   if(!S.tpl)load();
   S.data=fromEngine(items);
   var date=new Date(dateKey+'T12:00:00');BASE=monday(date);
-  try{var id=tplIdFor(date),c=ctxFor(id,date);return '<div class="sc sc-embed">'+marketHtml(dateKey)+rulesHtml(c,id)+'</div>';}
+  try{var id=tplIdFor(date),c=ctxFor(id,date);return '<div class="sc sc-embed">'+rulesHtml(c,id)+marketHtml(dateKey)+'</div>';}
   finally{BASE=null;}
 }
 function bindEmbedded(root,cb){
