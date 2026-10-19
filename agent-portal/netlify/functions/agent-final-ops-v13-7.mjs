@@ -99,7 +99,7 @@ export const handler=async(event)=>{
             updatedAt:now
           };
           const {data:saved,error:saveError}=await admin.rpc('save_editorial_story_v1',{target_org:organization.id,target_key:EDITORIAL_SYNC_KEY,target_story:story,target_actor:user.id,target_archive:false});
-          if(saveError){if(String(saveError.code)==='23514')return json(400,{error:'The editorial store rejected this story: '+String(saveError.message||saveError.details||'a value is not allowed')+(saveError.details?' ('+saveError.details+')':'')});throw saveError;}if(saved?.verified!==true)throw new Error('Editorial story save could not be verified');
+          if(saveError){if(/crm_activity_activity_type_check/.test(String(saveError.message||'')))return json(400,{error:'One-time database update needed: the CRM ledger does not yet accept editorial entries. An admin runs docs/sql/2026-10-19-editorial-activity-types.sql in Supabase, then saving works.'});if(String(saveError.code)==='23514')return json(400,{error:'The editorial store rejected this story: '+String(saveError.message||saveError.details||'a value is not allowed')+(saveError.details?' ('+saveError.details+')':'')});throw saveError;}if(saved?.verified!==true)throw new Error('Editorial story save could not be verified');
           savedStories.push(saved.story);blogPath=blogPath||saved.blog_path;persistedAt=saved.persisted_at;
         }
         return json(200,{ok:true,verified:true,story:savedStories[0],stories:savedStories,blog_path:blogPath,persisted_at:persistedAt});
