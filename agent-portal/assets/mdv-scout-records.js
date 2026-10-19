@@ -336,8 +336,9 @@ function profileHtml(p){
     +'<label class="wide"><span>First impression / notes</span><textarea id="p_notes" rows="3">'+esc(p.notes||'')+'</textarea></label>'
     +'<label><span>Languages</span><input data-p="profile.languages" value="'+esc(pr.languages||'')+'" placeholder="English, French…"></label>'
     +'<label><span>Referred by</span><input data-p="profile.referred_by" value="'+esc(pr.referred_by||'')+'"></label>'
-    +'</div><div class="sr-actions"><button type="button" class="sr-btn gold" data-do="save_profile">Save details</button></div></section>'
-    +measureHtml(p)+'</div></div>';
+    +'</div></section>'
+    +measureHtml(p)
+    +'<div class="sr-savebar"><span class="sr-hint">Name, contact, notes and the other details above are saved when you press Save. Measurements save as you type.</span><button type="button" class="sr-btn gold" data-do="save_profile">Save details</button></div></div></div>';
 }
 function measFieldHtml(f,m,u){
   var v=m[f[0]]||'',conv=f[2]==='len'?convText(v,u):'';

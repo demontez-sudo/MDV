@@ -145,3 +145,6 @@ html body .sr-main label.chk,html body .sr-main label.chk span{text-transform:no
 @media(max-width:900px){.sr-prof{grid-template-columns:1fr}.sr-gal{position:static}.sr-gal-main{display:none}.sr-gal .sr-photos{grid-template-columns:repeat(auto-fill,minmax(64px,72px))}}
 @media(max-width:700px){.sr-ph.big{width:72px;height:92px}.sr-rt h2{font-size:24px}.sr-rh{padding:14px 16px!important}.sr-comp{overflow-x:auto;padding:0 16px}.sr-comp>div{flex:0 0 78px}}
 @media(max-height:700px){.sr-comp{display:none}}
+/* Save details lives at the bottom of the Profile tab and stays in reach while you scroll */
+.sr-savebar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:12px -4px 0;padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,rgba(18,14,12,.82),rgba(18,14,12,.97));backdrop-filter:blur(8px);border-radius:0 0 18px 18px}
+.sr-savebar .sr-hint{margin:0;flex:1 1 260px}
