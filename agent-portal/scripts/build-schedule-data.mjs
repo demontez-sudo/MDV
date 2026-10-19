@@ -64,7 +64,8 @@ const notes = [];
 {
   const { records } = parseCsv(fs.readFileSync(csvPath, 'utf8'), { maxRows: 5000 });
   for (const r of records) {
-    const spec = CSV_TYPES[r.type] || { event_type: 'other', label: r.type || 'Event' };
+    const spec = { ...(CSV_TYPES[r.type] || { event_type: 'other', label: r.type || 'Event' }) };
+    if (/^interest calls?:/i.test(r.title)) spec.label = 'Interest call';
     const models = names(r.models);
     const timed = !!(r.start_et && /^\d{1,2}:\d{2}$/.test(r.start_et));
     const owner = r.owner || (names(r.team)[0] || null);
@@ -126,6 +127,7 @@ function addOrMerge(e) {
       on_outlook: fixed, location: null, notes: note || null, models: [], owner: team.includes('Demontez') && who.length > 1 && kind === 'fixed' ? 'Demontez' : team[0], team,
       model_visible: false, notes_hidden_from_model: false, personal_for: null, area: kind, conflict: clash ? 'Overlaps another meeting at the same time' : null,
     };
+    if (/^interest calls?:/i.test(title) || (fixed && /^Zoom/.test(note || ''))) ev.label = 'Interest call';
     if (title === 'Erika') ev.conflict = 'Overlaps Model Training / New Face (11:00). Suggested: move to 11:30. Not moved.';
     if (title === 'Model Training / New Face' && clash) ev.conflict = 'Overlaps Erika (Zoom) at 11:00. Erika is suggested to move to 11:30. Not moved.';
     if (ev.team.length > 1 && ev.team.includes('Demontez')) ev.owner = 'Demontez';

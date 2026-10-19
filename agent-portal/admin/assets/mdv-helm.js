@@ -5,7 +5,7 @@
 'use strict';
 if(window.MDV_HELM)return;
 
-var CATS=[['calls','Interest calls & check-ins'],['meetings','Meetings'],['duties','Duties & desk'],['models','Models & bookings'],['tasks','Tasks']];
+var CATS=[['calls','Interest calls & check-ins'],['meetings','Meetings'],['duties','Duties & desk'],['models','Model items on the schedule'],['tasks','Tasks']];
 var START_H=6,END_H=22,HH=56,SNAP=15;
 var KEY='mdv.helm.v1';
 var H={day:today(),view:'day',person:'me',cats:{calls:true,meetings:true,duties:true,models:true,tasks:true},events:[],tasks:[],members:[],myUid:null,week:'',loading:false,err:'',host:null,sel:null,loaded:false};
@@ -46,15 +46,18 @@ function catOf(it){
   if(/team meeting|meeting|sync|board|command|scorecard|review|wrap|training|new face|delegation/.test(s)||it.type==='meeting')return 'meetings';
   return 'duties';
 }
-function peopleOf(x,extra){var meta=x.metadata||{},out=[];arr(meta.team).forEach(function(n){out.push(first(n));});[x.owner_member,x.assigned_member].forEach(function(m){var n=m&&first(m.display_name);if(n)out.push(n);});arr(extra).forEach(function(n){if(n)out.push(n);});return out.filter(function(n,i){return n&&out.indexOf(n)===i;});}
+/* Helm is the agent calendar: an item belongs on it only when it is on someone's schedule (metadata.team), or is an agent-owned event with no model attached.
+   Model bookings, castings and model events that are not on the schedule stay on the model calendar only. */
+function peopleOf(x,kind){var meta=x.metadata||{},out=[];arr(meta.team).forEach(function(n){out.push(first(n));});if(!out.length&&kind==='event'&&!arr(x.event_models).length){var n=x.owner_member&&first(x.owner_member.display_name);if(n)out.push(n);}return out.filter(function(n,i){return n&&out.indexOf(n)===i;});}
 function modelNames(rows){return arr(rows).map(function(r){var m=r.models||r;return m&&m.display_name;}).filter(Boolean);}
 function buildEvents(d){
   var out=[];
   function push(kind,x,modelsKey){
     if(!x.starts_at)return;var meta=x.metadata||{};
-    var it={kind:kind,id:x.id,title:x.title||(kind==='booking'?'Booking':kind==='casting'?'Casting':'Event'),start:new Date(x.starts_at),end:x.ends_at?new Date(x.ends_at):null,allDay:!!x.all_day,label:meta.calendar_event_type||(kind==='event'?String(x.event_type||'').replace(/_/g,' '):kind),type:String(x.event_type||kind),status:x.status||'',location:x.location||'',notes:x.notes||'',people:peopleOf(x),models:modelNames(x[modelsKey]),conflict:meta.conflict||'',onOutlook:!!meta.on_outlook};
+    var it={kind:kind,id:x.id,title:x.title||(kind==='booking'?'Booking':kind==='casting'?'Casting':'Event'),start:new Date(x.starts_at),end:x.ends_at?new Date(x.ends_at):null,allDay:!!x.all_day,label:meta.calendar_event_type||(kind==='event'?String(x.event_type||'').replace(/_/g,' '):kind),type:String(x.event_type||kind),status:x.status||'',location:x.location||'',notes:x.notes||'',people:peopleOf(x,kind),models:modelNames(x[modelsKey]),conflict:meta.conflict||'',onOutlook:!!meta.on_outlook};
     if(!it.allDay&&it.end&&it.end-it.start>=20*3600e3)it.allDay=true;
     if(!it.allDay&&it.end&&dkey(it.end)!==dkey(it.start)&&mins(it.start)===0)it.allDay=true;
+    if(!it.people.length)return;
     it.cat=catOf(it);out.push(it);
   }
   arr(d.events).forEach(function(x){push('event',x,'event_models');});
