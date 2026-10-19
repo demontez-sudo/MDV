@@ -113,7 +113,7 @@ function header(who){
   var label=H.view==='week'?(monday(H.day).toLocaleDateString([],{month:'short',day:'numeric'})+' – '+addDays(monday(H.day),6).toLocaleDateString([],{month:'short',day:'numeric'})):fmtDay(H.day);
   return '<header class="hm-head"><div class="hm-title"><small>'+(H.mode==='calendar'?'Agent calendar':'Smart agenda')+'</small><h1>'+(H.mode==='calendar'?'Helm Calendar':'Helm')+'</h1></div>'
    +'<div class="hm-nav"><button type="button" data-hm="prev" aria-label="Previous">‹</button><button type="button" data-hm="today">Today</button><button type="button" data-hm="next" aria-label="Next">›</button><strong>'+esc(label)+'</strong></div>'
-   +'<div class="hm-tools"><div class="hm-seg"><button type="button" data-hm-view="day" class="'+(H.view==='day'?'on':'')+'">Day</button><button type="button" data-hm-view="week" class="'+(H.view==='week'?'on':'')+'">Week</button></div><label class="hm-who"><span>Agenda for</span><select data-hm-person>'+opts+'</select></label></div></header>';
+   +'<div class="hm-tools">'+(H.mode==='calendar'?'<div class="hm-seg hm-calsw" role="group" aria-label="Calendar"><button type="button" data-hm-go="calendar">Agency</button><button type="button" class="on">Helm</button></div>':'')+'<div class="hm-seg"><button type="button" data-hm-view="day" class="'+(H.view==='day'?'on':'')+'">Day</button><button type="button" data-hm-view="week" class="'+(H.view==='week'?'on':'')+'">Week</button></div><label class="hm-who"><span>Agenda for</span><select data-hm-person>'+opts+'</select></label></div></header>';
 }
 function chips(){return '<div class="hm-cats" role="group" aria-label="Show">'+CATS.map(function(c){return '<button type="button" class="hm-cat c-'+c[0]+(H.cats[c[0]]===false?' off':'')+'" data-hm-cat="'+c[0]+'" aria-pressed="'+(H.cats[c[0]]!==false)+'"><i></i>'+esc(c[1])+'</button>';}).join('')+'</div>';}
 function signals(who){
@@ -235,6 +235,7 @@ document.addEventListener('click',function(e){
   if(t.hasAttribute('data-hm-cat')){var c=t.getAttribute('data-hm-cat');H.cats[c]=H.cats[c]===false;save();paint();return;}
   var a=t.getAttribute('data-hm');if(a==='prev')nav(-1);else if(a==='next')nav(1);else if(a==='today'){H.day=today();H.sel=null;load();}else if(a==='retry'){H.err='';load(true);}
 });
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-hm-go]');if(b&&H.host&&H.host.contains(b)){e.preventDefault();goto(b.getAttribute('data-hm-go'));}});
 document.addEventListener('keydown',function(e){if((e.key==='Enter'||e.key===' ')&&e.target&&e.target.matches&&e.target.matches('.hm-chk')&&H.host&&H.host.contains(e.target)){e.preventDefault();complete(e.target.getAttribute('data-hm-done'));}});
 document.addEventListener('change',function(e){if(!H.host||!H.host.contains(e.target))return;if(e.target.matches('[data-hm-person]')){H.person=e.target.value;H.sel=null;save();paint();}});
 document.addEventListener('submit',function(e){var f=e.target&&e.target.closest&&e.target.closest('[data-hm-add]');if(!f||!H.host||!H.host.contains(f))return;e.preventDefault();var inp=f.querySelector('input'),title=inp.value.trim();if(!title)return;inp.disabled=true;addTask(title).catch(function(err){inp.disabled=false;toast('Could not add: '+msg(err),true);});});

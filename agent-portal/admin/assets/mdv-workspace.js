@@ -27,7 +27,7 @@ var SECTIONS=[
   {id:'home',label:'Home',icon:'ti-home-2',page:'overview'},
   {id:'helm',label:'Helm',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','Helm'],['tasksconsolidated','Tasks'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
   {id:'inbox',label:'Inbox',icon:'ti-inbox',page:'inbox',badge:'inbox',sub:[['inbox','Messages'],['mail','Mail'],['notes','Notes']]},
-  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Calendar'],['helmcalendar','Helm Calendar'],['availability','Availability']]}]},
+  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Agency Calendar'],['helmcalendar','Helm Calendar'],['availability','Availability']]}]},
  {cap:'Agency',items:[
   {id:'roster',label:'Roster',icon:'ti-users',page:'roster',sub:[['roster','Roster'],['scouting','Scouting'],['seasonmanagement','Season'],['modeldevelopment','Development'],['modelevaluations','Evaluations'],['modelsubmissions','Submissions']]},
   {id:'clients',label:'Clients',icon:'ti-user-circle',page:'industrydirectory',sub:[['industrydirectory','Clients'],['outreach','Outreach']]},

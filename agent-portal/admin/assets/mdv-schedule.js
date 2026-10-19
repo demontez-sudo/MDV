@@ -304,6 +304,8 @@ function marketHtml(emb){
   return '<section class="sc-panel"><header><h3>Market week</h3>'+toggle+'</header>'+summary+'<div class="sc-mhead"><span></span><span class="'+(city==='New York'?'on':'')+'">New York</span><span class="'+(city==='Paris'?'on':'')+'">Paris</span></div>'+rows+'<p class="sc-fine">Highlighted column is where the week is weighted'+(S.market==='auto'?' (from live events: more '+city+' events)':'')+'. '+(emb?'Click a day to see it in the agenda.':'Click a day to open its template.')+'</p></section>';
 }
 var WEEKLY_RULES=['train','dinner','evening'];
+function rulesTab(){try{return localStorage.getItem('mdv-rules-tab')==='week'?'week':'day';}catch(e){return 'day';}}
+function setRulesTab(v){try{localStorage.setItem('mdv-rules-tab',v==='week'?'week':'day');}catch(e){}}
 function rulesHtml(c,tid){
   function res(r){return WEEKLY_RULES.indexOf(r[0])>=0?evalWeek(r[0]):evalRule(r[0],c);}
   function row(r){
@@ -313,10 +315,11 @@ function rulesHtml(c,tid){
   function score(list){var a=list.map(res).filter(function(r){return r.s!=='na';}),ok=a.filter(function(r){return r.s==='ok';}).length;return '<span class="sc-score'+(ok===a.length?' ok':'')+'">'+ok+' of '+a.length+' on track</span>';}
   var dayRules=RULES.filter(function(r){return WEEKLY_RULES.indexOf(r[0])<0;}),weekRules=RULES.filter(function(r){return WEEKLY_RULES.indexOf(r[0])>=0;});
   var dayLabel=c&&c.date?fmt(c.date,{weekday:'long',month:'short',day:'numeric'}):'the selected day',wk=BASE||monday(c&&c.date||new Date());
-  return '<section class="sc-panel sc-rules-panel"><header><h3>Rules</h3></header>'
-    +'<div class="sc-sub"><div class="sc-subh"><h4>Rules of the Day</h4><small>'+esc(dayLabel)+'</small>'+score(dayRules)+'</div><ol class="sc-rules">'+dayRules.map(row).join('')+'</ol></div>'
-    +'<div class="sc-sub"><div class="sc-subh"><h4>Rules of the Week</h4><small>'+esc(fmt(wk)+' – '+fmt(addDays(wk,6)))+'</small>'+score(weekRules)+'</div><ol class="sc-rules">'+weekRules.map(row).join('')+'</ol></div>'
-    +'<p class="sc-fine">Rules of the Day are checked against the selected day. Rules of the Week look at the whole week, including live events.</p></section>';
+  var tab=rulesTab(),list=tab==='week'?weekRules:dayRules;
+  var seg='<div class="sc-seg" role="group" aria-label="Rules">'+[['day','Rules of the Day'],['week','Rules of the Week']].map(function(t){return '<button type="button" class="'+(tab===t[0]?'on':'')+'" data-sc-rtab="'+t[0]+'">'+t[1]+'</button>';}).join('')+'</div>';
+  return '<section class="sc-panel sc-rules-panel"><header><h3>Rules</h3>'+seg+'</header>'
+    +'<div class="sc-sub"><div class="sc-subh"><h4>'+(tab==='week'?'Rules of the Week':'Rules of the Day')+'</h4><small>'+esc(tab==='week'?fmt(wk)+' – '+fmt(addDays(wk,6)):dayLabel)+'</small>'+score(list)+'</div><ol class="sc-rules">'+list.map(row).join('')+'</ol></div>'
+    +'<p class="sc-fine">'+(tab==='week'?'Rules of the Week look at the whole week, including live events.':'Rules of the Day are checked against the selected day.')+'</p></section>';
 }
 
 /* -- Month -- */
@@ -405,6 +408,7 @@ function wire(root){
   root.querySelectorAll('[data-sc-fix]').forEach(function(b){b.onclick=function(){fixBreaks(b.dataset.scTpl||S.sel);toast('Added two 15-minute screen-free breaks');render();};});
   root.querySelectorAll('[data-sc-rule]').forEach(function(b){b.onclick=function(){var el=document.getElementById('sc-rule-'+b.dataset.scRule);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('flash');setTimeout(function(){el.classList.remove('flash');},1600);}};});
   root.querySelectorAll('[data-sc-market]').forEach(function(b){b.onclick=function(){S.market=b.dataset.scMarket;save();render();};});
+  root.querySelectorAll('[data-sc-rtab]').forEach(function(b){b.onclick=function(){setRulesTab(b.dataset.scRtab);render();};});
   root.querySelectorAll('[data-sc-live]').forEach(function(b){var go=function(){var p=b.dataset.scLive.split('|');var x=(S.data||[]).filter(function(i){return i.kind===p[0]&&String(i.id)===p[1];})[0];if(x&&window.VEUX_V132&&VEUX_V132.openRecord)try{VEUX_V132.openRecord(x.kind,x.raw,{occurrence:x});return;}catch(e){}if(typeof window.navTo==='function')window.navTo('calendar');};b.onclick=go;b.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();go();}};});
   root.querySelectorAll('[data-sc-mm]').forEach(function(b){b.onclick=function(){var n=+b.dataset.scMm,m=S.month||new Date();S.month=n===0?new Date(new Date().getFullYear(),new Date().getMonth(),1):new Date(m.getFullYear(),m.getMonth()+n,1);render();loadLive().then(render);};});
   root.querySelectorAll('[data-sc-day]').forEach(function(b){b.onclick=function(){S.monthSel=b.dataset.scDay;render();};});
@@ -425,6 +429,7 @@ function embeddedHtml(items,dateKey){
 }
 function bindEmbedded(root,cb){
   cb=cb||{};
+  root.querySelectorAll('.sc-embed [data-sc-rtab]').forEach(function(b){b.onclick=function(e){e.stopPropagation();setRulesTab(b.dataset.scRtab);if(cb.onChange)cb.onChange();};});
   root.querySelectorAll('.sc-embed [data-sc-market]').forEach(function(b){b.onclick=function(e){e.stopPropagation();S.market=b.dataset.scMarket;save();if(cb.onChange)cb.onChange();};});
   root.querySelectorAll('.sc-embed [data-sc-eday]').forEach(function(b){b.onclick=function(e){e.stopPropagation();if(cb.onPick)cb.onPick(b.dataset.scEday);};});
   root.querySelectorAll('.sc-embed [data-sc-rule]').forEach(function(b){b.onclick=function(){var el=document.getElementById('sc-rule-'+b.dataset.scRule);if(el)el.scrollIntoView({behavior:'smooth',block:'center'});};});

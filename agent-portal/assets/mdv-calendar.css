@@ -661,3 +661,7 @@ html body .vx17-ib span{letter-spacing:0!important;text-transform:none!important
 /* Team + model pickers share one row in the Agenda toolbar */
 html body #p-calendar .pl-bar>.vx-select{flex:0 1 220px!important;width:auto!important;min-width:0}
 html body #p-calendar .pl-bar>.vx-select .pl-sel{width:100%;max-width:none}
+/* Agency / Helm calendar swap in the calendar header */
+html body #p-calendar .vx75-control .mdv-calsw{flex:0 0 auto;border:1px solid var(--mdv-line-2,rgba(255,255,255,.14));border-radius:999px;overflow:hidden;display:inline-flex}
+html body #p-calendar .vx75-control .mdv-calsw button{border:0!important;border-radius:0!important;background:transparent!important;color:var(--mdv-mute,#a89f92)!important;padding:0 12px!important;height:30px!important;min-height:0!important;font:600 11px Inter,system-ui,sans-serif!important;letter-spacing:.02em!important;text-transform:none!important;white-space:nowrap;box-shadow:none!important}
+html body #p-calendar .vx75-control .mdv-calsw button.on{background:var(--mdv-gold,#d4b077)!important;color:#15110c!important}
