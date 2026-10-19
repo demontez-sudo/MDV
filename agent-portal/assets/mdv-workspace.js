@@ -29,7 +29,8 @@ var SECTIONS=[
   {id:'messages',label:'Messages',icon:'ti-message-circle',page:'inbox'},
   {id:'mail',label:'Mail',icon:'ti-mail',page:'mail',badge:'mail'},
   {id:'notes',label:'Notes',icon:'ti-notes',page:'notes',badge:'notes'},
-  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Calendar'],['availability','Availability']]}]},
+  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Calendar'],['availability','Availability']]},
+  {id:'helm',label:'Helm',icon:'ti-compass',page:'helm'}]},
  {cap:'Agency',items:[
   {id:'roster',label:'Roster',icon:'ti-users',page:'roster'},
   {id:'clients',label:'Clients',icon:'ti-user-circle',page:'industrydirectory'},
@@ -46,7 +47,7 @@ var SECTIONS=[
   {id:'files',label:'Files & Forms',icon:'ti-file-text',page:'filesforms'}]}
 ];
 var SETTINGS={id:'settings',label:'Settings',icon:'ti-settings',sub:[['systemsettings','Portal Settings'],['alerts','Alerts & devices'],['releaseaudit','Release Audit']]};
-var ALWAYS={overview:1,calendar:1,inbox:1,mail:1,notes:1,alerts:1,outreach:1,systemsettings:1};
+var ALWAYS={overview:1,calendar:1,helm:1,inbox:1,mail:1,notes:1,alerts:1,outreach:1,systemsettings:1};
 var LINKED={visa:'globalmobility',agentcommissions:'financelegal'};
 function groups(){return (window.NAV_AGENT||window.VEUX_V15_NAV_FULL||[]).filter(function(g){return g&&g.items&&g.items.length;});}
 function allowed(){var ok=Object.assign({},ALWAYS);groups().forEach(function(g){g.items.forEach(function(i){ok[i[0]]=1;});});Object.keys(LINKED).forEach(function(k){if(ok[LINKED[k]])ok[k]=1;});return ok;}
