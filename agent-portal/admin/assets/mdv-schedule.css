@@ -133,3 +133,13 @@ html body .sc .sc-card .sc-date{color:var(--pmute)!important}
 .sc-subh .sc-score{display:inline-block!important;grid-area:1/2;margin:0;white-space:nowrap;width:auto!important}
 
 .sc-rules-panel>header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.sc-rules-panel>header .sc-seg{flex:0 0 auto}.sc-rules-panel>header .sc-seg button{white-space:nowrap;padding:6px 12px}
+/* Daily Schedule: the card is always a dark panel with light text, whatever skin is active (dark text on a see-through card made the rows unreadable) */
+html body #p-dayschedule .sc .sc-card{background:#17130f!important;color:#f3efe8!important;border:1px solid rgba(255,255,255,.09)}
+html body #p-dayschedule .sc .sc-card h2,html body #p-dayschedule .sc .sc-card .sc-row,html body #p-dayschedule .sc .sc-card .sc-what b{color:#f3efe8!important}
+html body #p-dayschedule .sc .sc-card .sc-date,html body #p-dayschedule .sc .sc-card .sc-what em,html body #p-dayschedule .sc .sc-card .sc-time small,html body #p-dayschedule .sc .sc-card>footer{color:#a89f92!important}
+html body #p-dayschedule .sc .sc-card .sc-time{color:#d8cfc1!important}
+html body #p-dayschedule .sc .sc-card .sc-row{border-top-color:rgba(255,255,255,.09)!important}
+html body #p-dayschedule .sc .sc-card .sc-row:hover{background:rgba(255,255,255,.04)!important}
+html body #p-dayschedule .sc .sc-card .sc-row.now{background:rgba(196,81,63,.16)!important}
+html body #p-dayschedule .sc .sc-card>footer{border-top-color:rgba(255,255,255,.09)!important}
+html body #p-dayschedule .sc .sc-card .sc-ghost{color:#f3efe8!important;border-color:rgba(255,255,255,.2)!important}

@@ -25,7 +25,7 @@ function dayDiff(iso){if(!iso)return null;var d=new Date(iso);if(isNaN(d))return
 var SECTIONS=[
  {cap:'Daily',items:[
   {id:'home',label:'Home',icon:'ti-home-2',page:'overview'},
-  {id:'helm',label:'Helm',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','Helm'],['tasksconsolidated','Tasks'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
+  {id:'helm',label:'Helm',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','Helm'],['tasksconsolidated','Tasks'],['dayschedule','Day schedule'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
   {id:'inbox',label:'Inbox',icon:'ti-inbox',page:'inbox',badge:'inbox',sub:[['inbox','Messages'],['mail','Mail'],['notes','Notes']]},
   {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Agency Calendar'],['helmcalendar','Helm Calendar'],['availability','Availability']]}]},
  {cap:'Agency',items:[
@@ -40,7 +40,7 @@ var SECTIONS=[
   {id:'files',label:'Files & Forms',icon:'ti-file-text',page:'filesforms'}]}
 ];
 var SETTINGS={id:'settings',label:'Settings',icon:'ti-settings',sub:[['systemsettings','Portal Settings'],['alerts','Alerts & devices'],['releaseaudit','Release Audit']]};
-var ALWAYS={overview:1,calendar:1,helm:1,helmcalendar:1,inbox:1,mail:1,notes:1,alerts:1,outreach:1,systemsettings:1};
+var ALWAYS={overview:1,calendar:1,dayschedule:1,helm:1,helmcalendar:1,inbox:1,mail:1,notes:1,alerts:1,outreach:1,systemsettings:1};
 var LINKED={visa:'globalmobility',agentcommissions:'financelegal'};
 function groups(){return (window.NAV_AGENT||window.VEUX_V15_NAV_FULL||[]).filter(function(g){return g&&g.items&&g.items.length;});}
 function allowed(){var ok=Object.assign({},ALWAYS);groups().forEach(function(g){g.items.forEach(function(i){ok[i[0]]=1;});});Object.keys(LINKED).forEach(function(k){if(ok[LINKED[k]])ok[k]=1;});return ok;}
