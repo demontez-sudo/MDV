@@ -164,19 +164,31 @@ function signals(who){
   if(unsched&&who)out.push(['',unsched+' task'+(unsched===1?'':'s')+' without a time']);
   return '<div class="hm-sig"><span class="hm-vera">✦ Helm</span>'+(out.length?out.map(function(s){return s[2]?'<button type="button" class="hm-s '+s[0]+'" data-hm-goto="'+esc(s[2])+'">'+esc(s[1])+' →</button>':'<span class="hm-s '+s[0]+'">'+esc(s[1])+'</span>';}).join(''):'<span class="hm-s">Nothing needs attention.</span>')+'</div>';
 }
-function layout(list){
+function layout(list,maxCols){
+  maxCols=maxCols||4;
   var items=list.map(function(it){var s=Math.max(mins(it.start),START_H*60),e=it.end&&dkey(it.end)===dkey(it.start)?mins(it.end):s+30;e=Math.min(Math.max(e,s+20),END_H*60);return{it:it,s:s,e:e,col:0,cols:1};}).sort(function(a,b){return a.s-b.s||b.e-a.e;});
   var cluster=[],active=[];
-  function close(){var max=cluster.reduce(function(m,x){return Math.max(m,x.col+1);},1);cluster.forEach(function(x){x.cols=max;});cluster=[];}
+  function close(){var max=cluster.reduce(function(m,x){return Math.max(m,x.col+1);},1),cl=cluster;cl.forEach(function(x){x.cols=max;x.crowd=max>maxCols;x.cl=cl;});cluster=[];}
   items.forEach(function(x){active=active.filter(function(a){return a.e>x.s;});if(!active.length&&cluster.length)close();var used=active.map(function(a){return a.col;}),c=0;while(used.indexOf(c)>=0)c++;x.col=c;active.push(x);cluster.push(x);});
   if(cluster.length)close();
-  return items;
+  /* too many at the same time to sit side by side: one card that lists them */
+  var out=[],seen=[];
+  items.forEach(function(x){
+    if(!x.crowd){out.push(x);return;}
+    if(seen.indexOf(x.cl)>=0)return;seen.push(x.cl);
+    out.push({group:true,list:x.cl.map(function(q){return q.it;}),s:Math.min.apply(null,x.cl.map(function(q){return q.s;})),e:Math.max.apply(null,x.cl.map(function(q){return q.e;})),col:0,cols:1});
+  });
+  return out;
 }
 function block(x){
-  var it=x.it,top=(x.s-START_H*60)/60*HH,h=Math.max(20,(x.e-x.s)/60*HH-2),w=100/x.cols,l=x.col*w;
+  if(x.group){
+    var gt=(x.s-START_H*60)/60*HH,n=x.list.length,shown=Math.min(n,5),gh=Math.max((x.e-x.s)/60*HH-2,shown*18+12);
+    return '<div class="hm-blk multi" style="top:'+gt+'px;height:'+gh+'px;left:2px;width:calc(100% - 4px)">'+x.list.slice(0,5).map(function(q){return '<div class="hm-ml c-'+q.cat+'" data-hm-pick="'+esc(q.kind)+'|'+esc(q.id)+'"><span>'+esc(tlabel(q.start))+'</span>'+esc(q.title)+'</div>';}).join('')+(n>5?'<small>+ '+(n-5)+' more</small>':'')+'</div>';
+  }
+  var it=x.it,top=(x.s-START_H*60)/60*HH,h=Math.max(20,(x.e-x.s)/60*HH-2),w=100/x.cols,l=x.col*w,place='left:calc('+l+'% + 2px);width:calc('+w+'% - 4px);';
   var sel=H.sel&&H.sel.kind===it.kind&&String(H.sel.id)===String(it.id);
   var sub=[it.kind==='task'?'Task':'',it.models.length?(it.models.length>1?it.models.length+' models':it.models[0]):'',it.location].filter(Boolean).join(' · ');
-  return '<div class="hm-blk c-'+it.cat+(sel?' sel':'')+(it.conflict?' flag':'')+(it.kind==='task'?' task':'')+'" style="top:'+top+'px;height:'+h+'px;left:calc('+l+'% + 2px);width:calc('+w+'% - 4px)" data-hm-pick="'+esc(it.kind)+'|'+esc(it.id)+'">'
+  return '<div class="hm-blk c-'+it.cat+(h<34?' short':'')+(sel?' sel':'')+(it.conflict?' flag':'')+(it.kind==='task'?' task':'')+'" style="top:'+top+'px;height:'+h+'px;'+place+'" data-hm-pick="'+esc(it.kind)+'|'+esc(it.id)+'">'
    +(it.kind==='task'?'<i class="hm-chk" tabindex="0" data-hm-done="'+esc(it.id)+'" aria-label="Mark done"></i>':'')
    +'<b>'+esc(it.title)+'</b>'+(h>34?'<small>'+esc(tlabel(it.start)+(it.end&&it.kind!=='task'?' – '+tlabel(it.end):''))+(sub?' · '+esc(sub):'')+'</small>':'')+'</div>';
 }
@@ -224,17 +236,20 @@ function taskRail(who){
   return '<section class="hm-card hm-tasks"><header><h3>Tasks</h3><span>'+list.length+' open</span><button type="button" class="hm-ghost sm" data-hm-tasks>Open Tasks →</button></header>'
    +'<form class="hm-add" data-hm-add><input type="text" maxlength="200" placeholder="Add a task for '+esc(H.day.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}))+'…" aria-label="New task"><button type="submit">Add</button></form><div class="hm-tlist">'+body+'</div><p class="hm-tip">Drag a task onto the timeline, or press Schedule to place it in the next free slot.</p></section>';
 }
+function taskChip(x){return '<div class="hm-wt" data-hm-pick="task|'+esc(x.id)+'"><i class="hm-chk" tabindex="0" data-hm-done="'+esc(x.id)+'" aria-label="Mark done"></i>'+(x.allDay?'':'<span>'+esc(tlabel(x.start))+'</span>')+'<b>'+esc(x.title)+'</b></div>';}
 function weekGrid(who){
-  var m=monday(H.day),todayK=dkey(new Date()),now=new Date(),heads='',whole='',cols='',gut='';
+  var m=monday(H.day),todayK=dkey(new Date()),now=new Date(),heads='',strip='',cols='',gut='';
   for(var h=START_H;h<END_H;h++)gut+='<div class="hm-gh" style="top:'+(h-START_H)*HH+'px"><span>'+clock(h*60)+'</span></div>';
   for(var i=0;i<7;i++){
     var d=addDays(m,i),k=dkey(d),it=itemsFor(d,who),isT=k===todayK;
+    var isTask=function(x){return x.kind==='task';},evs=it.timed.filter(function(x){return !isTask(x);}),tasks=it.timed.filter(isTask).concat(it.whole.filter(isTask)),wholeEv=it.whole.filter(function(x){return !isTask(x);});
     heads+='<button type="button" class="hm-wh'+(isT?' today':'')+(k===dkey(H.day)?' cur':'')+'" data-hm-goto="'+k+'"><small>'+d.toLocaleDateString([],{weekday:'short'})+'</small><b>'+d.getDate()+'</b></button>';
-    whole+='<div class="hm-wwd">'+it.whole.slice(0,3).map(function(x){return '<button type="button" class="hm-w c-'+x.cat+'" data-hm-pick="'+esc(x.kind)+'|'+esc(x.id)+'">'+(x.kind==='task'?'☐ ':'')+esc(x.title)+'</button>';}).join('')+(it.whole.length>3?'<p class="hm-more">+ '+(it.whole.length-3)+' more</p>':'')+'</div>';
+    strip+='<div class="hm-wwd">'+wholeEv.slice(0,3).map(function(x){return '<button type="button" class="hm-w c-'+x.cat+'" data-hm-pick="'+esc(x.kind)+'|'+esc(x.id)+'">'+esc(x.title)+'</button>';}).join('')
+      +tasks.slice(0,3).map(taskChip).join('')+(tasks.length>3||wholeEv.length>3?'<button type="button" class="hm-more" data-hm-goto="'+k+'">+ '+(Math.max(0,tasks.length-3)+Math.max(0,wholeEv.length-3))+' more</button>':'')+'</div>';
     var nowLine=isT&&mins(now)>=START_H*60&&mins(now)<END_H*60?'<div class="hm-now" style="top:'+((mins(now)-START_H*60)/60*HH)+'px"><i></i></div>':'';
-    cols+='<div class="hm-wcol'+(isT?' today':'')+'" data-hm-slot="'+k+'" style="height:'+(END_H-START_H)*HH+'px"><div class="hm-lane">'+layout(it.timed).map(block).join('')+'</div>'+nowLine+'</div>';
+    cols+='<div class="hm-wcol'+(isT?' today':'')+'" data-hm-slot="'+k+'" style="height:'+(END_H-START_H)*HH+'px"><div class="hm-lane">'+layout(evs,2).map(block).join('')+'</div>'+nowLine+'</div>';
   }
-  return '<div class="hm-wk"><div class="hm-wk-h"><span class="hm-gut"></span>'+heads+'</div><div class="hm-wk-w"><span class="hm-gut"></span>'+whole+'</div><div class="hm-wk-b"><div class="hm-gutcol" style="height:'+(END_H-START_H)*HH+'px">'+gut+'</div>'+cols+'</div></div>';
+  return '<div class="hm-wk"><div class="hm-wk-top"><div class="hm-wk-h"><span class="hm-gut"></span>'+heads+'</div><div class="hm-wk-w"><span class="hm-gut hm-gutl">Due</span>'+strip+'</div></div><div class="hm-wk-b"><div class="hm-gutcol" style="height:'+(END_H-START_H)*HH+'px">'+gut+'</div>'+cols+'</div></div>';
 }
 function monthGrid(who){
   var y=H.day.getFullYear(),mo=H.day.getMonth(),first=new Date(y,mo,1),start=monday(first),todayK=dkey(new Date()),days=new Date(y,mo+1,0).getDate(),weeks=Math.ceil(((first.getDay()+6)%7+days)/7),cells='';
