@@ -49,20 +49,23 @@ function paint(){
 }
 
 /* ---------- step 1: photos ---------- */
+function isCover(x){return !!(x.metadata&&x.metadata.website_cover===true);}
+function coverHtml(x){var c=isCover(x);return '<button type="button" class="ww-cov'+(c?' on':'')+'" data-ww="cover" data-id="'+esc(x.id)+'" title="'+(c?'This is the photo at the top of her page. Click to use her main photo instead.':'Show this photo at the top of her page')+'"'+(isVid(x)||!can()?' disabled':'')+'>'+(c?'◎ Page cover':'Use as page cover')+'</button>';}
+function hasCover(){return media().some(isCover);}
 function isVid(x){return String(x.media_type||'').toLowerCase()==='video';}
-function cardCls(x){return 'ww-ph'+(x.is_public?' pub':'')+(x.is_primary?' main':'');}
+function cardCls(x){return 'ww-ph'+(x.is_public?' pub':'')+(x.is_primary?' main':'')+(isCover(x)?' cover':'');}
 function starHtml(x){var main=!!x.is_primary;return '<button type="button" class="ww-star" data-ww="main" data-id="'+esc(x.id)+'" title="'+(main?'This is her main photo':'Make this her main photo')+'"'+(isVid(x)||!can()?' disabled':'')+'>'+(main?'★ Main photo':'☆ Make main')+'</button>';}
 function rowHtml(x){var pub=!!x.is_public,main=!!x.is_primary,id=esc(x.id);
   return '<label class="ww-sw"><input type="checkbox" data-ww="pub" data-id="'+id+'"'+(pub?' checked':'')+(main||!can()?' disabled':'')+'><i></i><span>'+(main?'On website (main)':'On website')+'</span></label>'
    +(pub&&!main?'<div class="ww-seg"><button type="button" data-ww="kind" data-id="'+id+'" data-k="editorial" class="'+(isDigital(x)?'':'on')+'">Editorial</button><button type="button" data-ww="kind" data-id="'+id+'" data-k="digital" class="'+(isDigital(x)?'on':'')+'">Digitals</button></div>':'');}
-function countHtml(){var on=media().filter(function(x){return x.is_public;}).length;return '<b>'+on+'</b> on the website · '+(hasMain()?'Main photo chosen ✓':'<span class="bad">Choose a main photo to continue</span>');}
+function countHtml(){var on=media().filter(function(x){return x.is_public;}).length;return '<b>'+on+'</b> on the website · '+(hasMain()?'Main photo chosen ✓':'<span class="bad">Choose a main photo to continue</span>')+' · '+(hasCover()?'Page cover chosen ✓':'Page cover: her main photo');}
 /* update only what changed, so the grid does not reload or jump */
 function patch(){
   var m=document.getElementById('ww-modal');if(!m||W.step!==1)return;
   media().forEach(function(x){
     var c=m.querySelector('.ww-ph[data-pid="'+String(x.id).replace(/"/g,'')+'"]');if(!c)return;
     c.className=cardCls(x);
-    var img=c.querySelector('.ww-img'),st=img&&img.querySelector('.ww-star');if(st)st.outerHTML=starHtml(x);
+    var img=c.querySelector('.ww-img'),st=img&&img.querySelector('.ww-star'),cv=img&&img.querySelector('.ww-cov');if(st)st.outerHTML=starHtml(x);if(cv)cv.outerHTML=coverHtml(x);
     var row=c.querySelector('.ww-row');if(row)row.innerHTML=rowHtml(x);
   });
   var ct=m.querySelector('.ww-count');if(ct)ct.innerHTML=countHtml();
@@ -71,10 +74,10 @@ function patch(){
 function hasMain(){return media().some(function(x){return x.is_primary;});}
 function photosStep(){
   var list=media(),on=list.filter(function(x){return x.is_public;}).length;
-  var head='<h3>Which photos should be on her page?</h3><p class="ww-sub">Pick one <b>main photo</b> (the big photo at the top), then switch on any others. Switched-off photos stay private in the portal.</p>';
+  var head='<h3>Which photos should be on her page?</h3><p class="ww-sub"><b>Main photo</b> is her profile photo, and it can be a digital. <b>Page cover</b> is the big photo at the top of her website page, and it can be a different photo. Switch on any others you want shown. Switched-off photos stay private in the portal.</p>';
   if(!can())head+='<p class="ww-warn">You can look at this, but only people who manage public profiles can change it.</p>';
   if(!list.length)return head+'<div class="ww-empty">No photos yet. Add photos in the Media tab first, then come back.</div>';
-  var grid=list.map(function(x){return '<div class="'+cardCls(x)+'" data-pid="'+esc(x.id)+'"><div class="ww-img">'+(isVid(x)?'<span class="ww-vid">▶ Video</span>':'<img loading="lazy" src="'+esc(x.url||'')+'" alt="">')+starHtml(x)+'</div><div class="ww-row">'+rowHtml(x)+'</div></div>';}).join('');
+  var grid=list.map(function(x){return '<div class="'+cardCls(x)+'" data-pid="'+esc(x.id)+'"><div class="ww-img">'+(isVid(x)?'<span class="ww-vid">▶ Video</span>':'<img loading="lazy" src="'+esc(x.url||'')+'" alt="">')+coverHtml(x)+starHtml(x)+'</div><div class="ww-row">'+rowHtml(x)+'</div></div>';}).join('');
   return head+'<div class="ww-count">'+countHtml()+'</div><div class="ww-grid">'+grid+'</div>';
 }
 var Q=Promise.resolve();
@@ -96,6 +99,20 @@ function togglePub(id){
 function setKind(id,k){
   var x=find(id);if(!x)return;var cat=k==='digital'?'Digital':'Editorial';
   mediaAct(function(){x.category=cat;x.is_public=true;},function(){return mediaApi({action:'update_media',media_id:id,category:cat,is_public:true});});
+}
+function setCover(id){
+  var x=find(id);if(!x||isVid(x))return;
+  if(isCover(x)){
+    mediaAct(function(){media().forEach(function(y){if(y.metadata)delete y.metadata.website_cover;});},function(){return mediaApi({action:'clear_website_cover'});});
+    return;
+  }
+  var needPub=!x.is_public,cat=(needPub&&!eligible(x.category,x.media_type))?'Editorial':null;
+  mediaAct(function(){media().forEach(function(y){if(y.metadata)delete y.metadata.website_cover;});x.metadata=Object.assign({},x.metadata,{website_cover:true});x.is_public=true;if(cat)x.category=cat;},
+    async function(){
+      if(needPub){var b={action:'update_media',media_id:id,is_public:true};if(cat)b.category=cat;await mediaApi(b);}
+      await mediaApi({action:'set_website_cover',media_id:id});
+      toast('Page cover updated');
+    });
 }
 function makeMain(id){
   var x=find(id);if(!x||x.is_primary)return;var wasHead=String(x.category||'').toLowerCase()==='headshot';
@@ -175,6 +192,7 @@ document.addEventListener('click',function(e){
   else if(a==='back'){W.step=Math.max(1,W.step-1);paint();}
   else if(a==='go'){var n=+t.getAttribute('data-n');if(n<=1||hasMain()){W.step=n;if(n===3){W.check=null;paint();loadCheck().then(paint);}else paint();}}
   else if(a==='main')makeMain(t.getAttribute('data-id'));
+  else if(a==='cover')setCover(t.getAttribute('data-id'));
   else if(a==='kind')setKind(t.getAttribute('data-id'),t.getAttribute('data-k'));
   else if(a==='savepage')savePage();
   else if(a==='golive')goLive();

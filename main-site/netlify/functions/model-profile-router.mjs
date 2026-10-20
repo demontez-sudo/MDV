@@ -35,7 +35,9 @@ function profileHtml(route,profile){
   const hero=gallery.find(x=>x.is_website_cover)||gallery.find(x=>x.is_primary)||gallery[0]||null;
   const rest_gallery=gallery.filter(x=>x!==hero);
   const isMen=String(m.gender||'').toLowerCase().startsWith('m');
-  const digitalItems=rest_gallery.filter(x=>String(x.category||'').toLowerCase().startsWith('digital')||String(x.media_type||'').toLowerCase()==='video');
+  /* the page cover can be any photo, not only the main photo; when it is, the main photo (a headshot / digital) sits with the Digitals instead of leading Editorial */
+  const hasCover=gallery.some(x=>x.is_website_cover);
+  const digitalItems=rest_gallery.filter(x=>String(x.category||'').toLowerCase().startsWith('digital')||String(x.media_type||'').toLowerCase()==='video'||(hasCover&&x.is_primary&&x!==hero));
   const editorialItems=rest_gallery.filter(x=>!digitalItems.includes(x));
   const statPairs=[['Height',meas.height],[isMen?'Chest':'Bust',isMen?(meas.chest||meas.bust):(meas.bust||meas.chest)],['Waist',meas.waist],['Hips',meas.hips],['Shoe',meas.shoe],['Hair',meas.hair],['Eyes',meas.eyes]].filter(([,v])=>v);
   const title=escHtml((p.seo_title||name)+' — Maison de Veux');

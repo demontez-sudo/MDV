@@ -60,3 +60,7 @@ html.ww-lock{overflow:hidden}
 .ww-btn:disabled{opacity:.45;cursor:not-allowed}
 .ww-toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);z-index:10100;padding:10px 16px;border-radius:999px;background:#1d1812;border:1px solid #d4b077;color:#f3efe8;font:500 13px Inter,sans-serif}.ww-toast.bad{border-color:#e9a07c}
 @media(max-width:620px){.ww-modal{padding:0;align-items:flex-end}.ww-card{border-radius:18px 18px 0 0}.ww-ck{grid-template-columns:20px 1fr}.ww-ck span{grid-column:2}.ww-grid{grid-template-columns:repeat(2,1fr)}}
+
+.ww-cov{position:absolute;left:8px;top:8px;padding:5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.3);background:rgba(10,8,7,.72);color:#f3efe8;font:600 10.5px Inter,sans-serif;cursor:pointer}
+.ww-cov.on{background:#9ad3a6;border-color:#9ad3a6;color:#10170f}.ww-cov:disabled{opacity:.4;cursor:default}
+.ww-ph.cover{box-shadow:0 0 0 1px #9ad3a6}
