@@ -7,7 +7,9 @@ var KEY='mdv-outlook';
 function outlook(){try{return localStorage.getItem(KEY)==='classic'?'classic':'workspace';}catch(e){return 'workspace';}}
 function apply(v){document.documentElement.setAttribute('data-outlook',v);}
 apply(outlook());
-function size(){try{return localStorage.getItem('mdv-ws-size')==='standard'?'standard':'compact';}catch(e){return 'compact';}}
+/* Safari (Mac, iPad, iPhone) measures zoomed pages differently from Chrome, which put the page tab bar and the content in the wrong places. Safari therefore opens at the normal size unless Compact was chosen in Appearance. */
+function webkitOnly(){var ua=navigator.userAgent||'';return /AppleWebKit/.test(ua)&&!/Chrome|Chromium|CriOS|FxiOS|Edg|OPR|Android/.test(ua);}
+function size(){try{var v=localStorage.getItem('mdv-ws-size');if(v==='standard'||v==='compact')return v;}catch(e){}return webkitOnly()?'standard':'compact';}
 document.documentElement.setAttribute('data-ws-size',size());
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function arr(v){return Array.isArray(v)?v:[];}
