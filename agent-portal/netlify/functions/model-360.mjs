@@ -71,6 +71,8 @@ export const handler=async(event)=>{
       }
       if(action==='update_profile'){
         const patch=clean(body.profile||{},['first_name','last_name','display_name','gender','status','location','public_slug','represented_since','active']);
+        /* the roster reads status, the website reads the active flag: changing one must not leave the other behind */
+        if(patch.status!==undefined&&patch.active===undefined){const st=String(patch.status||'').trim().toLowerCase();if(st==='active')patch.active=true;else if(/^(archiv|releas|inactive)/.test(st))patch.active=false;}
         if(patch.display_name && !patch.first_name){patch.first_name=String(patch.display_name).trim().split(/\s+/)[0]||patch.display_name;}
         const priv=clean(body.private_profile||{},['email','phone','whatsapp','instagram','nationality','internal_notes']);
         const {data:saved,error:saveError}=await admin.rpc('update_model_identity_private_v1',{target_org:organization.id,target_model:modelId,profile_data:patch,private_data:priv});
