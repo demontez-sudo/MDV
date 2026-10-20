@@ -531,7 +531,7 @@ document.addEventListener('pointermove',function(e){
   if(!DRAG.active){
     if(Math.hypot(e.clientX-DRAG.x0,e.clientY-DRAG.y0)<6)return;
     DRAG.active=true;DRAG.src.classList.add('hm-dragging');document.documentElement.classList.add('hm-grabbing');
-    var g=document.createElement('div');g.className='hm-ghost';g.innerHTML='<b></b><small></small>';g.firstChild.textContent=DRAG.it.title;document.documentElement.appendChild(g);DRAG.ghost=g;
+    var g=document.createElement('div');g.className='hm-dragghost';g.innerHTML='<b></b><small></small>';g.firstChild.textContent=DRAG.it.title;document.documentElement.appendChild(g);DRAG.ghost=g;
     try{DRAG.src.setPointerCapture(e.pointerId);}catch(x){}
   }
   e.preventDefault();
