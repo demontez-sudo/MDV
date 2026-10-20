@@ -17,7 +17,7 @@ var hist=[];try{hist=JSON.parse(ls('mdv-diag-loads')||'[]');}catch(e){}
 hist=hist.filter(function(x){return Date.now()-x<4*60000;});hist.push(Date.now());ls('mdv-diag-loads',JSON.stringify(hist.slice(-12)));
 var report=null;
 if(prev&&(Date.now()-prev.t)<20000&&(prev.t-prev.born)<120000){
-  report={looping:hist.length>=3,crashed:!prev.clean,type:nav.type||'',lived:Math.round((prev.t-prev.born)/1000),page:prev.page,trail:prev.trail};
+  report={looping:hist.length>=5,crashed:!prev.clean,type:nav.type||'',lived:Math.round((prev.t-prev.born)/1000),page:prev.page,trail:prev.trail};
   try{ls('mdv-diag-last',JSON.stringify(Object.assign({at:new Date().toISOString()},report)));}catch(e){}
 }
 
