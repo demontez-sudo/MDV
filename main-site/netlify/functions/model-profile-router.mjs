@@ -68,7 +68,7 @@ function profileHtml(route,profile){
 <meta name="description" content="${desc}"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;0,600;1,400;1,500&family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,400&family=Jost:wght@300;400;500&family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root{ --paper:#f4f2ee; --ink:#161310; --stone:#8c8677; --line:#d8d3c8; }
   *{ margin:0; padding:0; box-sizing:border-box; }
@@ -82,23 +82,119 @@ function profileHtml(route,profile){
   .back svg{ transition:transform .3s ease; }
   .back:hover svg{ transform:translateX(-4px); }
   @keyframes fadeIn{ to{ opacity:1; } }
-  .menu-overlay{ position:fixed; inset:0; z-index:300; background:var(--paper); color:var(--ink); opacity:0; visibility:hidden; transition:opacity .4s ease; overflow-y:auto; }
-  .menu-overlay.open{ opacity:1; visibility:visible; }
-  .menu-top{ display:flex; align-items:center; justify-content:space-between; padding:28px 5vw; }
-  .menu-top .mark{ position:static; opacity:1; mix-blend-mode:normal; color:var(--ink); animation:none; }
-  .menu-close{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink); background:none; border:0; cursor:pointer; }
-  .menu-close:hover{ color:var(--stone); }
-  .menu-body{ padding:2vh 5vw 10vh; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6vh; max-width:900px; margin:0 auto; }
-  .menu-city{ text-align:center; }
-  .menu-city-label{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.2em; text-transform:uppercase; color:var(--stone); margin-bottom:22px; }
-  .menu-links{ list-style:none; display:grid; gap:16px; }
-  .menu-links a{ font-family:'Bodoni Moda', serif; font-style:italic; font-size:clamp(1.4rem,3.4vw,2rem); color:var(--ink); transition:color .3s ease; }
-  .menu-links a:hover{ color:var(--stone); }
-  .menu-secondary{ grid-column:1/-1; list-style:none; display:flex; flex-wrap:wrap; justify-content:center; gap:12px 28px; padding-top:4vh; border-top:1px solid var(--line); }
-  .menu-secondary a{ font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--stone); }
-  .menu-secondary a:hover{ color:var(--ink); }
-  @media(max-width:760px){ .menu-body{ grid-template-columns:1fr; gap:7vh; } }
-  .hero-video{ position:relative; width:100%; height:100vh; overflow:hidden; background:#000; }
+  /* same menu as the rest of the site (colours scoped so the light profile page does not change them) */
+  .menu-overlay{ --ink:#efe9df; --ink-dim:#cfc6b6; --black:#0a0908; --panel:#121110; --brass:#a9895f; --hairline:rgba(239,233,223,0.16); color:var(--ink); }
+  .menu-overlay .nav-mark{ font-family:'Cormorant Garamond',serif; font-size:23px; letter-spacing:.1em; text-decoration:none; color:var(--ink); font-style:italic; }
+  .menu-overlay a{ color:inherit; }
+  /* ---------- menu overlay ---------- */
+  .menu-overlay{
+    position: fixed; inset: 0; z-index: 300;
+    background: var(--black);
+    display: flex; flex-direction: column;
+    padding: 26px clamp(20px, 5vw, 56px) clamp(30px, 6vh, 60px);
+    opacity: 0; visibility: hidden;
+    transition: opacity 0.5s cubic-bezier(0.4,0,0.2,1), visibility 0.5s;
+    overflow-y: auto;
+  }
+  .menu-overlay.open{ opacity: 1; visibility: visible; }
+
+  .menu-top{ display: flex; align-items: center; justify-content: space-between; }
+
+  .menu-close{
+    background: none; border: none; cursor: pointer; color: var(--ink);
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .menu-close .x{ width: 16px; height: 16px; position: relative; }
+  .menu-close .x::before, .menu-close .x::after{
+    content:""; position: absolute; left: 0; top: 50%; width: 100%; height: 1px; background: var(--ink);
+  }
+  .menu-close .x::before{ transform: rotate(45deg); }
+  .menu-close .x::after{ transform: rotate(-45deg); }
+  .menu-close:hover .x::before, .menu-close:hover .x::after{ background: var(--brass); }
+
+  .menu-city-switch{
+    position: relative;
+    margin: 48px auto 0;
+    display: inline-flex; gap: 4px; padding: 4px;
+    border: 1px solid var(--hairline); border-radius: 999px;
+    opacity: 0; transform: translateY(10px);
+    transition: opacity 0.6s ease 0.15s, transform 0.6s ease 0.15s;
+  }
+  .menu-overlay.open .menu-city-switch{ opacity: 1; transform: translateY(0); }
+  .menu-city-switch .slider{
+    position: absolute; top: 4px; left: 4px; bottom: 4px;
+    width: calc(50% - 4px); background: var(--brass); border-radius: 999px;
+    transition: transform 0.5s cubic-bezier(0.65,0,0.35,1); z-index: 0;
+  }
+  .menu-city-switch.right .slider{ transform: translateX(100%); }
+  .menu-city-switch button{
+    position: relative; z-index: 1; background: none; border: none; cursor: pointer;
+    padding: 9px 26px; border-radius: 999px;
+    font-family: 'Jost', sans-serif; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ink-dim); transition: color 0.35s ease;
+  }
+  .menu-city-switch button.active{ color: var(--black); }
+
+  .menu-body{
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 56px; padding: 40px 0;
+  }
+
+  .menu-primary{ list-style: none; text-align: center; counter-reset: menu-item; }
+  .menu-primary li{
+    position: relative; margin: 6px 0;
+    opacity: 0; transform: translateY(28px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    counter-increment: menu-item;
+  }
+  .menu-overlay.open .menu-primary li:nth-child(1){ transition-delay: 0.22s; }
+  .menu-overlay.open .menu-primary li:nth-child(2){ transition-delay: 0.30s; }
+  .menu-overlay.open .menu-primary li:nth-child(3){ transition-delay: 0.38s; }
+  .menu-overlay.open .menu-primary li:nth-child(4){ transition-delay: 0.46s; }
+  .menu-overlay.open .menu-primary li{ opacity: 1; transform: translateY(0); }
+  .menu-primary li::before{
+    content: "0" counter(menu-item);
+    position: absolute; left: -46px; top: 50%; transform: translate(-8px, -50%);
+    font-family: 'Cormorant Garamond', serif; font-style: italic; font-size: 15px;
+    color: var(--brass); opacity: 0; transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+  .menu-primary a{
+    position: relative; display: inline-block; text-decoration: none; color: var(--ink);
+    font-family: 'Cormorant Garamond', serif; font-weight: 400;
+    font-size: clamp(34px, 6vw, 64px); line-height: 1.25;
+    transition: color 0.4s ease;
+  }
+  .menu-primary a::after{
+    content: ""; position: absolute; left: 0; right: 100%; bottom: 6px; height: 1px;
+    background: var(--brass); transition: right 0.5s cubic-bezier(0.65,0,0.35,1);
+  }
+  .menu-primary li:hover::before{ opacity: 1; transform: translate(0, -50%); }
+  .menu-primary li:hover a{ color: var(--brass); }
+  .menu-primary li:hover a::after{ right: 0; }
+
+  .menu-secondary{
+    list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: 28px;
+    border-top: 1px solid var(--hairline); padding-top: 32px; width: 100%; max-width: 640px;
+    opacity: 0; transform: translateY(16px);
+    transition: opacity 0.6s ease 0.55s, transform 0.6s ease 0.55s;
+  }
+  .menu-overlay.open .menu-secondary{ opacity: 1; transform: translateY(0); }
+  .menu-secondary a{
+    position: relative; text-decoration: none; color: var(--ink-dim);
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; padding-bottom: 6px;
+    transition: color 0.35s ease;
+  }
+  .menu-secondary a::after{
+    content: ""; position: absolute; left: 0; right: 100%; bottom: 0; height: 1px;
+    background: var(--brass); transition: right 0.4s ease;
+  }
+  .menu-secondary a:hover{ color: var(--brass); }
+  .menu-secondary a:hover::after{ right: 0; }
+  .menu-set{ display: none; }
+  .menu-set.active{ display: contents; }
+
+    .hero-video{ position:relative; width:100%; height:100vh; overflow:hidden; background:#000; }
   .video-wrap{ position:absolute; inset:0; }
   .video-wrap img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
   .hero-video::after{ content:''; position:absolute; inset:0; background:var(--paper); animation: wipe 1.1s cubic-bezier(.76,0,.24,1) forwards; transform-origin:left; pointer-events:none; }
@@ -174,6 +270,8 @@ function profileHtml(route,profile){
   }
   img{ -webkit-user-drag:none; user-drag:none; -webkit-user-select:none; user-select:none; }
 </style>
+<link rel="stylesheet" href="/assets/mdv-menu-16.17.css?v=16.17c">
+
 </head>
 <body>
   <nav class="topnav">
@@ -182,24 +280,27 @@ function profileHtml(route,profile){
     <button type="button" class="menu-trigger" onclick="toggleMenu()">Menu</button>
   </nav>
 
-  <div class="menu-overlay" id="menuOverlay">
+  <div class="menu-overlay" id="menu">
     <div class="menu-top">
-      <span class="mark">Maison de Veux</span>
-      <button type="button" class="menu-close" onclick="toggleMenu()">Close</button>
+      <a class="nav-mark" href="/">Maison de Veux</a>
+      <button type="button" class="menu-close" onclick="toggleMenu()">Close <span class="x"></span></button>
+    </div>
+    <div class="menu-city-switch" id="citySwitch">
+      <span class="slider"></span>
+      <button class="active" onclick="setMenuCity('ny', this)">New York</button>
+      <button onclick="setMenuCity('paris', this)">Paris</button>
     </div>
     <div class="menu-body">
-      <div class="menu-city">
-        <div class="menu-city-label">New York</div>
-        <ul class="menu-links">
+      <div class="menu-set active" data-city="ny">
+        <ul class="menu-primary">
           <li><a href="/women-nyc">Women</a></li>
           <li><a href="/development-nyc">Development</a></li>
           <li><a href="/men-newyork">Men</a></li>
           <li><a href="/creators">Creator</a></li>
         </ul>
       </div>
-      <div class="menu-city">
-        <div class="menu-city-label">Paris</div>
-        <ul class="menu-links">
+      <div class="menu-set" data-city="paris">
+        <ul class="menu-primary">
           <li><a href="/women-paris">Women</a></li>
           <li><a href="/development-paris">Development</a></li>
           <li><a href="/men-paris">Men</a></li>
@@ -209,6 +310,7 @@ function profileHtml(route,profile){
         <li><a href="/get-scouted">Get Scouted</a></li>
         <li><a href="/contact">Contact Us</a></li>
         <li><a href="https://www.instagram.com/maisondeveux">Instagram</a></li>
+        <li><a href="https://models.com/agency/MaisondeVeux-New%20York" target="_blank" rel="noopener noreferrer">Models.com</a></li>
       </ul>
     </div>
   </div>
@@ -267,14 +369,22 @@ function profileHtml(route,profile){
     render();
     if(!reduceMotion && total>1){ restart(); }
   }
-  function toggleMenu(){ document.getElementById('menuOverlay').classList.toggle('open'); }
+  function toggleMenu(){ document.getElementById('menu').classList.toggle('open'); }
   window.toggleMenu = toggleMenu;
-  document.addEventListener('keydown', function(e){ if(e.key==='Escape')document.getElementById('menuOverlay').classList.remove('open'); });
+  function setMenuCity(city, btn){
+    document.querySelectorAll('.menu-city-switch button').forEach(function(b){ b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.getElementById('citySwitch').classList.toggle('right', city === 'paris');
+    document.querySelectorAll('.menu-set').forEach(function(x){ x.classList.toggle('active', x.getAttribute('data-city') === city); });
+  }
+  window.setMenuCity = setMenuCity;
+  document.addEventListener('keydown', function(e){ if(e.key==='Escape')document.getElementById('menu').classList.remove('open'); });
   initSlideshow(document.getElementById('slideshow-editorial'));
   initSlideshow(document.getElementById('slideshow-digitals'));
   document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
   document.addEventListener('dragstart', function(e){ e.preventDefault(); });
 </script>
+<script src="/assets/mdv-menu-16.17.js?v=16.17c" defer></script>
 </body></html>`;
 }
 export const handler=async(event)=>{
