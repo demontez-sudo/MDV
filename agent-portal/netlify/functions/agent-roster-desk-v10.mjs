@@ -21,7 +21,7 @@ function groupBy(rows,key){
 }
 async function fallbackRoster(admin,organizationId,filter){
   let q=admin.from('models').select('*').eq('organization_id',organizationId).order('display_name').limit(Math.min(Number(filter.limit||250),500));
-  if(filter.status)q=q.eq('status',filter.status);else q=q.not('status','ilike','archiv%').not('status','ilike','releas%');
+  if(filter.status)q=q.eq('status',filter.status);else if(!filter.past)q=q.or('status.is.null,and(status.not.ilike.archiv%,status.not.ilike.releas%)');
   if(filter.stage)q=q.eq('stage',filter.stage);
   if(filter.active!==undefined)q=q.eq('active',!!filter.active);
   if(filter.q){
@@ -144,6 +144,7 @@ export const handler=async(event)=>{
     const admin=await requirePermission(user.id,organization.id,'models.read');
     const filter={limit:Number(p.limit||250)};
     for(const k of ['q','market_id','division_id','board_id','gender','stage','status','min_height_cm','max_height_cm','available_start','available_end']) if(p[k]) filter[k]=p[k];
+    const wantPast=filter.status==='past'; if(wantPast){ delete filter.status; filter.past=true; }
     if(p.active!==undefined){ const b=bool(p.active); if(b!==undefined) filter.active=b; }
     const tags=list(p.tag_ids); if(tags.length) filter.tag_ids=tags;
     const skills=list(p.skill_ids); if(skills.length) filter.skill_ids=skills;
@@ -153,7 +154,9 @@ export const handler=async(event)=>{
       if(!rpcUnavailable(rpcResult.error)) throw rpcResult.error;
       roster=await fallbackRoster(admin,organization.id,{...filter,tag_ids:tags,skill_ids:skills});
     }else roster=rpcResult.data||[];
-    if(!filter.status)roster=(roster||[]).filter(x=>!/^(archiv|releas)/i.test(String(x?.status||'').trim()));
+    const pastRe=/^(archiv|releas|former|past|inactive|left|dropped)/i;
+    if(wantPast)roster=(roster||[]).filter(x=>pastRe.test(String(x?.status||'').trim())||x?.active===false);
+    else if(!filter.status)roster=(roster||[]).filter(x=>!/^(archiv|releas)/i.test(String(x?.status||'').trim()));
     const [tagRows,skillRows,markets,divisions,boards,saved]=await Promise.all([
       rows(admin.from('model_tags').select('*').eq('organization_id',organization.id).eq('active',true).order('name')),
       rows(admin.from('model_skills').select('*').eq('organization_id',organization.id).eq('active',true).order('name')),
