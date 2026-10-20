@@ -180,6 +180,8 @@ var CFG={
 };
 function reduced(){try{return window.matchMedia('(prefers-reduced-motion: reduce)').matches;}catch(e){return false;}}
 function saveData(){try{return !!(navigator.connection&&navigator.connection.saveData);}catch(e){return false;}}
+/* iPads and phones: two decoding videos plus frosted panels is what makes Safari give up and reload the page, so touch devices keep the still picture */
+function touchOnly(){try{return window.matchMedia('(pointer: coarse)').matches&&!window.matchMedia('(pointer: fine)').matches;}catch(e){return false;}}
 function stage(){return document.getElementById('cavyre-environment-stage');}
 var t0=performance.now();
 
@@ -197,7 +199,7 @@ var gv=new GLView('mdv-scene-canvas',false,.62),sv=new GLView('mdv-snow-canvas',
 var vs=null,FADE=1.6;
 function stopVideo(){if(vs)clearInterval(vs.timer);var w=document.getElementById('mdv-scene-video');if(w)w.remove();vs=null;}
 function startVideo(key,cfg,onFail){stopVideo();var st=stage();if(!st)return false;var w=document.createElement('div');w.id='mdv-scene-video';w.setAttribute('aria-hidden','true');var img=document.createElement('img');img.className='mdv-poster';img.alt='';img.src=assetURL(cfg.poster);w.appendChild(img);
- if(cfg.filter)w.style.filter=cfg.filter;var still=reduced()||saveData()||!!cfg.still||!cfg.video||!cfg.video.length;
+ if(cfg.filter)w.style.filter=cfg.filter;var still=reduced()||saveData()||touchOnly()||!!cfg.still||!cfg.video||!cfg.video.length;
  if(!still){var vids=[0,1].map(function(){var v=document.createElement('video');v.muted=true;v.defaultMuted=true;v.playsInline=true;v.setAttribute('playsinline','');v.setAttribute('muted','');v.preload='auto';v.disablePictureInPicture=true;v.className='mdv-vid';v.style.opacity='0';w.appendChild(v);return v;});
   var n=cfg.video.length,s={key:key,v:vids,i:0,idx:0,switching:false,n:n,timer:0,ok:false};vs=s;
   vids[0].src=assetURL(cfg.video[0]);vids[1].src=assetURL(cfg.video[1%n]);

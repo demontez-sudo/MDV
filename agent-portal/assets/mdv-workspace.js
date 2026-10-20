@@ -100,8 +100,8 @@ function hubBar(){
   var html=arr(hub.sub).map(function(t){return '<button type="button" class="ws-hubtab'+(t[0]===cur?' on':'')+'" data-hub-go="'+esc(t[0])+'">'+esc(t[1])+'</button>';}).join('');
   if(!bar){bar=document.createElement('nav');bar.id='ws-hubbar';bar.setAttribute('aria-label',hub.label);pm.insertBefore(bar,pm.firstChild);}
   else if(bar.parentNode!==pm||pm.firstChild!==bar)pm.insertBefore(bar,pm.firstChild);
-  if(window.innerWidth>900){var tb=document.querySelector('#app .topbar'),sd=document.getElementById('ws-side'),z=parseFloat(getComputedStyle(document.body).zoom)||1;
-    if(tb&&sd){var top=Math.round(tb.getBoundingClientRect().bottom/z+16),left=Math.round(sd.getBoundingClientRect().right/z+26);bar.style.top=top+'px';bar.style.left=left+'px';bar.style.maxWidth='calc('+Math.round(window.innerWidth/z)+'px - '+(left+30)+'px)';}}
+  /* the bar is part of the page flow and sticks just under the top bar, so there is no position maths that could differ between browsers */
+  var tbar=document.querySelector('#app .topbar');if(tbar&&tbar.offsetHeight)document.documentElement.style.setProperty('--ws-tb',tbar.offsetHeight+'px');
   document.documentElement.classList.add('ws-hub-on');
   var sig=hub.id+'|'+cur+'|'+html.length;if(bar.dataset.sig!==sig){bar.dataset.sig=sig;bar.innerHTML='<span class="ws-hubname">'+esc(hub.label)+'</span>'+html;}
 }
