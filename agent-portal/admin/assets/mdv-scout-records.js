@@ -309,8 +309,10 @@ function paintRecord(){
   var nm=m.querySelector('.sr-main');if(nm)nm.scrollTop=scroll;
   wireRecord(m,p);
 }
-function contractRec(){var id=(R.sc.contract||{}).contract_id;return id&&R.legal?arr(R.legal.contracts).filter(function(x){return x.id===id;})[0]||null:null;}
-function sigReq(){var id=(R.sc.contract||{}).contract_id;if(!id||!R.legal)return null;return arr(R.legal.signature_requests).filter(function(x){return x.contract_id===id;})[0]||null;}
+/* two contracts live on a record: the model's own agreement ('model', stored at contract) and the mother agency's ('ma', stored at contract.ma) */
+function cstate(who){var ct=R.sc.contract||{};return who==='ma'?(ct.ma||{}):ct;}
+function contractRec(who){var id=cstate(who).contract_id;return id&&R.legal?arr(R.legal.contracts).filter(function(x){return x.id===id;})[0]||null:null;}
+function sigReq(who){var id=cstate(who).contract_id;if(!id||!R.legal)return null;return arr(R.legal.signature_requests).filter(function(x){return x.contract_id===id;})[0]||null;}
 async function loadLegal(force){
   if(!window.MDV_CONTRACTS)return;
   if(!force&&R.legal&&Date.now()-R.legalAt<20000)return;
@@ -626,29 +628,35 @@ function dealHtml(p){
     +'<label class="wide"><span>Terms / notes</span><input data-p="offer.notes" value="'+esc(of.notes||'')+'"></label></div></section>'
     +contractHtml(p)+testSec+merge;
 }
-function contractHtml(p){
-  var ct=R.sc.contract||{},rec=contractRec(),docs=rec?(window.MDV_CONTRACTS?MDV_CONTRACTS.docsOf(rec):[]):[],sig=sigReq();
-  var signers=sig?arr(sig.signature_signers):[];
+function contractHtml(p){return contractBlock(p,'model')+contractBlock(p,'ma');}
+function contractBlock(p,who){
+  var ma=who==='ma',ct=cstate(who),rec=contractRec(who),docs=rec?(window.MDV_CONTRACTS?MDV_CONTRACTS.docsOf(rec):[]):[],sig=sigReq(who);
+  var mi=(R.sc.outreach&&R.sc.outreach.ma)||{},base=ma?'contract.ma.':'contract.',signers=sig?arr(sig.signature_signers):[];
   var allSigned=sig&&/complete|signed/i.test(String(sig.status||''))||(signers.length&&signers.every(function(x){return /signed/i.test(String(x.status||''));}));
-  var h='<section class="sr-sec"><h3>Contract</h3>';
-  h+=docs.length?docs.map(function(d){return '<p class="sr-doc">📄 '+esc(d.name||'Contract.pdf')+' <button type="button" class="sr-link" data-do="view_pdf" data-doc="'+esc(d.id)+'">View</button><button type="button" class="sr-link" data-do="remove_pdf" data-doc="'+esc(d.id)+'">Remove</button></p>';}).join(''):'<p class="sr-hint">'+(ct.contract_id?'No PDF attached yet.':'Upload the agreement as a PDF, then send it for e-signature. They read and sign on a secure page, no account needed.')+'</p>';
-  if(signers.length)h+='<div class="sr-signers">'+signers.map(function(x){return '<span class="sr-sg '+(/signed/i.test(x.status||'')?'ok':/declin/i.test(x.status||'')?'bad':'')+'">'+esc(x.display_name||x.email||'Signer')+' · '+esc(x.status||'pending')+'</span>';}).join('')+'</div>';
-  if(sig&&!allSigned)h+='<p class="sr-hint">Signature request: '+esc(sig.status||'sent')+(sig.expires_at?' · link expires '+fmt(sig.expires_at):'')+'</p>';
-  if(allSigned)h+='<p class="sr-ok">✓ Everyone has signed.</p>';
-  h+='<div class="sr-grid"><label><span>Sent on</span><input type="date" data-p="contract.sent_at" value="'+esc(ct.sent_at||'')+'"></label><label><span>Signed on</span><input type="date" data-p="contract.signed_at" value="'+esc(ct.signed_at||'')+'"></label></div>';
-  h+='<div class="sr-actions"><label class="sr-btn">'+(docs.length?'Replace PDF':'Upload contract PDF')+'<input type="file" id="sr-pdf" accept="application/pdf,.pdf" hidden></label>'
-    +'<button type="button" class="sr-btn gold" data-do="send_sign">'+(sig&&!allSigned?'Resend for e-signature':'Send for e-signature')+'</button>'
+  var h='<section class="sr-sec"><h3>'+(ma?'Mother agency (MA) contract'+(mi.agency||mi.name?' <em class="sr-tag">'+esc([mi.name,mi.agency].filter(Boolean).join(' · '))+'</em>':''):'Contract')+'</h3>';
+  var hint=ma?(ct.contract_id?'No PDF attached yet.':'Load the mother agency agreement as a PDF: the model\u2019s current MA contract, or the agreement with the MA. You can send it to the MA for e-signature from here.'):(ct.contract_id?'No PDF attached yet.':'Upload the agreement as a PDF, then send it for e-signature. They read and sign on a secure page, no account needed.');
+  h+=docs.length?docs.map(function(d){return '<p class="sr-doc">\ud83d\udcc4 '+esc(d.name||'Contract.pdf')+' <button type="button" class="sr-link" data-do="view_pdf" data-doc="'+esc(d.id)+'">View</button><button type="button" class="sr-link" data-do="remove_pdf" data-who="'+who+'" data-doc="'+esc(d.id)+'">Remove</button></p>';}).join(''):'<p class="sr-hint">'+hint+'</p>';
+  if(signers.length)h+='<div class="sr-signers">'+signers.map(function(x){return '<span class="sr-sg '+(/signed/i.test(x.status||'')?'ok':/declin/i.test(x.status||'')?'bad':'')+'">'+esc(x.display_name||x.email||'Signer')+' \u00b7 '+esc(x.status||'pending')+'</span>';}).join('')+'</div>';
+  if(sig&&!allSigned)h+='<p class="sr-hint">Signature request: '+esc(sig.status||'sent')+(sig.expires_at?' \u00b7 link expires '+fmt(sig.expires_at):'')+'</p>';
+  if(allSigned)h+='<p class="sr-ok">\u2713 '+(ma?'The MA has signed.':'Everyone has signed.')+'</p>';
+  h+='<div class="sr-grid"><label><span>Sent on</span><input type="date" data-p="'+base+'sent_at" value="'+esc(ct.sent_at||'')+'"></label><label><span>Signed on</span><input type="date" data-p="'+base+'signed_at" value="'+esc(ct.signed_at||'')+'"></label>'
+    +(ma?'<label class="wide"><span>Terms (split, term, exclusivity)</span><input data-p="contract.ma.terms" value="'+esc(ct.terms||'')+'" placeholder="e.g. 20% to the MA for 2 years, non-exclusive"></label>':'')+'</div>';
+  h+='<div class="sr-actions"><label class="sr-btn">'+(docs.length?'Replace PDF':(ma?'Load MA contract PDF':'Upload contract PDF'))+'<input type="file" id="'+(ma?'sr-pdf-ma':'sr-pdf')+'" accept="application/pdf,.pdf" hidden></label>'
+    +'<button type="button" class="sr-btn gold" data-do="send_sign" data-who="'+who+'">'+(ma?(sig&&!allSigned?'Resend to the MA':'Send to the MA for e-signature'):(sig&&!allSigned?'Resend for e-signature':'Send for e-signature'))+'</button>'
     +(ct.contract_id?'<button type="button" class="sr-btn" data-do="refresh_sign">Refresh status</button>':'')
-    +(allSigned&&!isSigned(stepOf(p))?'<button type="button" class="sr-btn gold" data-do="mark_signed">Mark as signed →</button>':'')+'</div></section>';
+    +(!ma&&allSigned&&!isSigned(stepOf(p))?'<button type="button" class="sr-btn gold" data-do="mark_signed">Mark as signed \u2192</button>':'')+'</div></section>';
   return h;
 }
-async function ensureContract(p){
-  var ct=R.sc.contract||{};
+async function ensureContract(p,who){
+  var ma=who==='ma',ct=cstate(who);
   if(ct.contract_id)return ct.contract_id;
   if(!window.MDV_CONTRACTS)throw new Error('Contracts are still loading. Try again in a moment.');
-  var out=await MDV_CONTRACTS.legal({action:'upsert_contract',contract:{title:'Representation agreement · '+p.display_name,contract_type:'representation',status:'draft',structured_terms:{scout_prospect_id:p.id}}});
+  var mi=(R.sc.outreach&&R.sc.outreach.ma)||{};
+  var out=await MDV_CONTRACTS.legal({action:'upsert_contract',contract:ma
+    ?{title:'Mother agency agreement \u00b7 '+p.display_name+(mi.agency?' \u00b7 '+mi.agency:''),contract_type:'other',status:'draft',structured_terms:{scout_prospect_id:p.id,kind:'mother_agency',ma_name:mi.name||null,ma_agency:mi.agency||null}}
+    :{title:'Representation agreement \u00b7 '+p.display_name,contract_type:'representation',status:'draft',structured_terms:{scout_prospect_id:p.id}}});
   var id=out&&out.contract&&out.contract.id;if(!id)throw new Error('The contract could not be created.');
-  setPath(R.sc,'contract.contract_id',id);R.dirty.contract=true;await flush(true);
+  setPath(R.sc,ma?'contract.ma.contract_id':'contract.contract_id',id);R.dirty.contract=true;await flush(true);
   await loadLegal(true);
   return id;
 }
@@ -834,14 +842,16 @@ async function doAction(a,btn){
       await load();R.sc=clone(scoutOf(byId(p.id)));paintPage();paintRecord();
       toast('✓ Model profile created'+(link&&link.measurements_filled&&link.measurements_filled.length?' · measurements carried over':''));
     }else if(a==='send_sign'){
-      var cid=await ensureContract(p);await loadLegal(true);
-      var rec=contractRec()||{id:cid,title:'Representation agreement · '+p.display_name,structured_terms:{}};
-      MDV_CONTRACTS.dialog({contract:rec,signers:[{display_name:p.display_name,email:p.email||''}],
+      var who=btn&&btn.dataset.who==='ma'?'ma':'model',isMa=who==='ma',mi2=(R.sc.outreach&&R.sc.outreach.ma)||{};
+      if(isMa&&!mi2.email)throw new Error('Add the MA\u2019s email on the Outreach tab first.');
+      var cid=await ensureContract(p,who);await loadLegal(true);
+      var rec=contractRec(who)||{id:cid,title:(isMa?'Mother agency agreement \u00b7 ':'Representation agreement \u00b7 ')+p.display_name,structured_terms:{}};
+      MDV_CONTRACTS.dialog({contract:rec,signers:[isMa?{display_name:mi2.name||mi2.agency||'Mother agent',email:mi2.email||''}:{display_name:p.display_name,email:p.email||''}],
         onChange:function(){loadLegal(true);},
         onSent:async function(){
-          setPath(R.sc,'contract.sent_at',nowIso().slice(0,10));R.dirty.contract=true;await flush(true);
-          await addLog('Contract sent for e-signature','step');
-          if(IDX[stepOf(p)]==null||IDX[stepOf(p)]<IDX.contract)await moveTo('contract',{note:'Contract sent for e-signature',quiet:true});
+          setPath(R.sc,isMa?'contract.ma.sent_at':'contract.sent_at',nowIso().slice(0,10));R.dirty.contract=true;await flush(true);
+          await addLog(isMa?'Mother agency contract sent for e-signature':'Contract sent for e-signature','step');
+          if(!isMa&&(IDX[stepOf(p)]==null||IDX[stepOf(p)]<IDX.contract))await moveTo('contract',{note:'Contract sent for e-signature',quiet:true});
           await loadLegal(true);paintRecord();
         }});
     }else if(a==='refresh_sign'){
@@ -850,7 +860,7 @@ async function doAction(a,btn){
       if(window.MDV_CONTRACTS&&btn)MDV_CONTRACTS.openDoc(btn.dataset.doc);
     }else if(a==='remove_pdf'){
       if(!btn||!window.confirm('Remove this PDF from the contract?'))return;
-      await MDV_CONTRACTS.detach((R.sc.contract||{}).contract_id,btn.dataset.doc);
+      await MDV_CONTRACTS.detach(cstate(btn.dataset.who==='ma'?'ma':'model').contract_id,btn.dataset.doc);
       await loadLegal(true);paintRecord();toast('PDF removed');
     }else if(a==='mark_signed'){
       setPath(R.sc,'contract.signed_at',nowIso().slice(0,10));R.dirty.contract=true;await flush(true);
@@ -874,6 +884,16 @@ function wireRecord(m,p){
       var doc=await MDV_CONTRACTS.upload(file,cid);await MDV_CONTRACTS.attach(cid,doc.id);
       await addLog('Contract PDF uploaded · '+file.name,'step');
       await loadLegal(true);paintRecord();toast('✓ Contract PDF attached');
+    }catch(e){toast(msg(e),true);}
+  };
+  var pdfMa=m.querySelector('#sr-pdf-ma');
+  if(pdfMa)pdfMa.onchange=async function(){
+    var file=pdfMa.files&&pdfMa.files[0];if(!file)return;
+    try{
+      var cid=await ensureContract(p,'ma');
+      var doc=await MDV_CONTRACTS.upload(file,cid);await MDV_CONTRACTS.attach(cid,doc.id);
+      await addLog('Mother agency contract PDF uploaded \u00b7 '+file.name,'step');
+      await loadLegal(true);paintRecord();toast('\u2713 MA contract attached');
     }catch(e){toast(msg(e),true);}
   };
   wireInputs(m);
