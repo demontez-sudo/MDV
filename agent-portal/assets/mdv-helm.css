@@ -169,3 +169,7 @@ html.hm-grabbing,html.hm-grabbing *{user-select:none!important;-webkit-user-sele
 
 html body #p-helm .hm .hm-mlmore,html body #p-helmcalendar .hm .hm-mlmore{border:0!important;background:transparent!important;color:var(--g2)!important;font:600 10.5px Inter,system-ui,sans-serif!important;text-align:left;padding:1px 6px!important;height:auto!important;min-height:0!important;letter-spacing:0!important;text-transform:none!important;cursor:pointer}
 .hm-ml{padding:0 5px;line-height:1.35}
+
+.hm-blk.multi{grid-auto-rows:min-content}.hm-blk.multi .hm-ml{min-height:15px;flex:none}.hm-blk.multi .hm-mlmore{min-height:15px}
+
+html body #p-helm .hm .hm-blk.multi .hm-mlmore,html body #p-helmcalendar .hm .hm-blk.multi .hm-mlmore{height:15px!important;line-height:15px!important;padding:0 6px!important;min-height:0!important;max-height:15px!important}

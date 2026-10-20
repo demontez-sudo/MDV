@@ -34,9 +34,9 @@
 html.mm-open,html.mm-open body{overflow:hidden}
 
 /* Install now lives in Settings, never floating */
-@media(max-width:820px){.veux-pwa-install{display:none!important}}
+@media(max-width:900px){.veux-pwa-install{display:none!important}}
 #mdv-install-card{display:none}
-@media(max-width:820px){#mdv-install-card{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 18px;padding:16px 18px;border:1px solid rgba(202,164,100,.35);border-radius:14px;background:rgba(202,164,100,.07)}
+@media(max-width:900px){#mdv-install-card{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 18px;padding:16px 18px;border:1px solid rgba(202,164,100,.35);border-radius:14px;background:rgba(202,164,100,.07)}
 #mdv-install-card small{font:9px var(--fM,monospace);letter-spacing:.18em;color:#caa464}
 #mdv-install-card h3{margin:4px 0;font:400 22px var(--fD,Georgia,serif);color:#f6ecdc}
 #mdv-install-card p{margin:0;font-size:13px;color:#b9ab95;line-height:1.5}

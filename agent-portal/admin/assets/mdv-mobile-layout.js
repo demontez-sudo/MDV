@@ -1,7 +1,7 @@
 /* Phone only: every page opens at the top and stays there while it loads. */
 (function(){
 if(window.__MDV_ML__)return;window.__MDV_ML__=1;
-var MQ=window.matchMedia('(max-width:820px)');
+var MQ=window.matchMedia('(max-width:900px)');
 var touched=false,timers=[];
 function top(){
   if(!MQ.matches||touched)return;

@@ -221,3 +221,20 @@ html,body,#app,#pm{overflow-anchor:none}
 @media(max-width:900px){#ws-hubbar{position:relative;top:auto!important;left:auto!important;max-width:none;margin:8px 0 0;padding:0 12px;border:0;border-radius:0;background:transparent;backdrop-filter:none;overflow-x:auto;flex-wrap:nowrap}#ws-hubbar .ws-hubtab{flex:0 0 auto}}
 /* breathing room: the page starts below the tab bar instead of running under it */
 @media(max-width:900px){#ws-hubbar{margin:10px 0 16px!important}}
+
+/* ---- iPad and other tablets ---- */
+/* the last rows of a page stay clear of the floating shortcut bar */
+html[data-outlook="workspace"] #pm::after{content:"";display:block;height:96px}
+@media(min-width:901px) and (max-width:1180px){
+  /* the top bar has to fit: one clock, no name text, a tighter brand */
+  html[data-outlook="workspace"] #ws-clocks>div:nth-child(2){display:none!important}
+  html[data-outlook="workspace"] #tbName,html[data-outlook="workspace"] #tbRole{display:none!important}
+  html[data-outlook="workspace"] .tb-brand small{display:none!important}
+  html[data-outlook="workspace"] .tb-brand{min-width:0}
+}
+/* finger-sized tabs on touch screens */
+@media(pointer:coarse){
+  html body #pm #ws-hubbar .ws-hubtab{height:42px!important;padding:0 20px!important;font-size:13px!important}
+  #ws-hubbar{padding:7px 10px 7px 22px}
+}
+@media(min-width:901px) and (max-width:1180px) and (pointer:coarse){#ws-hubbar{max-width:calc(100vw - 40px)}}
