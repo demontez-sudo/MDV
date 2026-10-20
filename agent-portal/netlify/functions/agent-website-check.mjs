@@ -20,11 +20,13 @@ async function publicRpc(name, args) {
 async function inspect(admin, orgId, modelId) {
   const model = (await rows(admin.from('models').select('*').eq('organization_id', orgId).eq('id', modelId).limit(1)))[0];
   if (!model) { const e = new Error('Model not found'); e.statusCode = 404; throw e; }
-  const [profileRows, media, markets, boards] = await Promise.all([
+  const [profileRows, media, markets, boards, allBoards, allMarkets] = await Promise.all([
     rows(admin.from('model_public_profiles').select('*').eq('organization_id', orgId).eq('model_id', modelId).limit(1)),
     rows(admin.from('model_media').select('id,url,is_primary,is_public,category,media_type').eq('organization_id', orgId).eq('model_id', modelId)),
     rows(admin.from('model_market_assignments').select('is_primary,status,markets(name,code)').eq('organization_id', orgId).eq('model_id', modelId)).catch(() => []),
-    rows(admin.from('model_division_assignments').select('status,boards(name)').eq('organization_id', orgId).eq('model_id', modelId)).catch(() => []),
+    rows(admin.from('model_division_assignments').select('status,board_id,boards(name,market_id)').eq('organization_id', orgId).eq('model_id', modelId)).catch(() => []),
+    rows(admin.from('boards').select('id,market_id').eq('organization_id', orgId)).catch(() => []),
+    rows(admin.from('markets').select('id,name').eq('organization_id', orgId)).catch(() => []),
   ]);
   const profile = profileRows[0] || null;
   const wm = profile?.metadata?.website_profile || {};
@@ -33,7 +35,14 @@ async function inspect(admin, orgId, modelId) {
   const onRoster = status === 'active' && model.active !== false;
   const headshot = media.find(x => x.is_primary && x.is_public && String(x.media_type || 'image').toLowerCase() === 'image' && String(x.category || '').toLowerCase() === 'headshot');
   const anyPublicImage = media.some(x => x.is_public);
-  const marketNames = markets.filter(m => m.markets?.name && !/^(archiv|inactive|ended)/i.test(String(m.status || ''))).map(m => m.markets.name);
+  /* a model is "in" a market through a market assignment or through the boards she is placed on (the Roster's Website / Board placements) */
+  const marketById = new Map(allMarkets.map(m => [String(m.id), m.name]));
+  const boardMarket = new Map(allBoards.map(b => [String(b.id), b.market_id]));
+  const live = x => !/^(archiv|inactive|ended)/i.test(String(x.status || ''));
+  const marketNames = [...new Set([
+    ...markets.filter(m => m.markets?.name && live(m)).map(m => m.markets.name),
+    ...boards.filter(live).map(b => marketById.get(String(b.boards?.market_id || boardMarket.get(String(b.board_id)) || ''))).filter(Boolean),
+  ])];
   const routeStored = keyOf(model.legacy_key) === route && !!route;
 
   const lookup = route ? await publicRpc('website_public_model_profile', { target_profile: route }) : { ok: false, data: null };
