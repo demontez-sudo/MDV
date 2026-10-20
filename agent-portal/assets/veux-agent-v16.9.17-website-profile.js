@@ -13,7 +13,7 @@ function close(id){var x=document.getElementById(id);if(x)x.remove();}
 function val(id){var x=document.getElementById(id);return x?String(x.value||'').trim():'';}
 function checked(id){var x=document.getElementById(id);return !!(x&&x.checked);}
 function slugify(v,compact){v=String(v||'').trim().toLowerCase();return compact?v.replace(/[^a-z0-9]+/g,''):v.replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');}
-function injectStyle(){if(document.getElementById('vx16917-style'))return;var s=document.createElement('style');s.id='vx16917-style';s.textContent='\
+function injectStyle(){if(document.getElementById('vx16917-style'))return;var s=document.createElement('style');s.id='vx16917-style';s.textContent='.vx16917-live{border:1px solid var(--line2,#3a3226);border-radius:12px;padding:14px 16px;background:rgba(255,255,255,.03)}.vx16917-lhead{display:flex;flex-direction:column;gap:3px;margin-bottom:10px}.vx16917-lhead b{font-size:16px}.vx16917-lhead.ok b{color:#9ad3a6}.vx16917-lhead.bad b{color:#e9a07c}.vx16917-lhead span,.vx16917-lhead a{font-size:12px;color:var(--mute,#9a8f7c)}.vx16917-lrow{display:grid;grid-template-columns:18px minmax(150px,230px) 1fr;gap:8px;padding:5px 0;font-size:12.5px;align-items:baseline}.vx16917-lrow em{font-style:normal;color:var(--mute,#9a8f7c)}.vx16917-lrow.ok span{color:#9ad3a6}.vx16917-lrow.bad span{color:#e9a07c}.vx16917-lpages{margin-top:8px;font-size:12px;color:var(--mute,#9a8f7c)}.vx16917-lman{margin-top:8px;padding:8px 10px;border:1px dashed rgba(224,133,90,.5);border-radius:8px;font-size:12.5px}.vx16917-lact{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}\
 .vx16917-status{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 16px}.vx16917-kpi{border:1px solid var(--line);background:var(--ivory);padding:11px 12px}.vx16917-kpi b{display:block;color:var(--ink);font:500 15px/1.25 var(--fD)}.vx16917-kpi span{display:block;margin-top:4px;color:var(--mute);font:8px/1.35 var(--fM);letter-spacing:.13em;text-transform:uppercase}.vx16917-callout{border:1px solid var(--line);padding:10px 12px;background:var(--goldp);font-size:11px;color:var(--ink2);line-height:1.55}.vx16917-callout.warn{border-color:var(--burg);background:var(--burgp)}.vx16917-url{font:9px/1.5 var(--fM);color:var(--gold);word-break:break-all}.vx16917-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.vx16917-checkrow{display:flex;flex-wrap:wrap;gap:14px;padding:9px 0}.vx16917-checkrow label{display:flex;align-items:center;gap:7px;color:var(--ink2);font-size:11px}.vx16917-checkrow input{accent-color:var(--gold)}.vx16917-checkrow label{cursor:pointer}.vx16917-checkrow input[type=checkbox]{all:revert!important;appearance:checkbox!important;-webkit-appearance:checkbox!important;width:16px!important;height:16px!important;min-width:16px!important;margin:0!important;accent-color:var(--gold)!important;cursor:pointer!important;opacity:1!important;position:static!important;pointer-events:auto!important}@media(max-width:760px){.vx16917-status{grid-template-columns:repeat(2,minmax(0,1fr))}.vx16917-actions .vx132-btn{flex:1 1 46%;min-height:44px}}';document.head.appendChild(s);}
 function statusHtml(w){w=w||{};var deployLabel=w.existing_site?esc(String(w.deployment_status||'not_created').replace(/_/g,' ')):(w.published?'Live':'Not live'),deployTag=w.existing_site?'Deployment':'Page status';return '<div class="vx16917-status"><div class="vx16917-kpi"><b>'+(w.created?(w.published?'Published':'Draft'):'Not Created')+'</b><span>Website Profile</span></div><div class="vx16917-kpi"><b>'+(w.has_headshot?'Ready':'Missing')+'</b><span>Public Headshot</span></div><div class="vx16917-kpi"><b>'+Number(w.public_media_count||0)+'</b><span>Public Media</span></div><div class="vx16917-kpi"><b>'+deployLabel+'</b><span>'+deployTag+'</span></div></div>';}
 async function loadModel(){var id=modelId();if(!id)throw new Error('Open a model first');return api('/api/agent/model-360?organization='+encodeURIComponent(org())+'&model_id='+encodeURIComponent(id));}
@@ -22,6 +22,7 @@ function websiteModal(d){
   var m=d.model||{},p=m.public_profile||{},w=d.website_profile||{},can=!!(d.access&&d.access['public_profiles.manage']);
   var route=w.route_key||m.legacy_key||'',slug=w.public_slug||m.public_slug||'';
   var html='<div class="vx132-modalback" id="vx16917-website-modal"><div class="vx132-modal" style="max-width:920px"><div class="vx132-mhead"><div><div class="vx132-meye">Model 360 · Website</div><div class="vx132-mtitle">'+esc(m.display_name||'Model')+' · Public Profile</div></div><button class="vx132-close" onclick="VEUX_V16917.closeWebsite()">×</button></div><div class="vx132-form"><div class="vx132-formgrid">';
+  html+='<div class="w12" id="vx16917-live"><div class="vx16917-live"><b>Checking what the website needs…</b></div></div>';
   html+='<div class="w12">'+statusHtml(w)+'</div>';
   html+='<div class="vx132-field"><label>Website Route</label><input id="vx16917_route" value="'+esc(route)+'" placeholder="Auto: first name" '+(can?'':'disabled')+'><div class="vx16917-url">'+esc(w.profile_url||'Will become https://www.maisondeveux.com/{route}')+'</div></div>';
   html+='<div class="vx132-field"><label>Public Slug</label><input id="vx16917_slug" value="'+esc(slug)+'" placeholder="Auto: first-last" '+(can?'':'disabled')+'></div>';
@@ -50,7 +51,7 @@ function websiteModal(d){
     html+='<span class="vx16917-callout" style="padding:7px 9px">'+(w.published&&!w.has_headshot?'Published, but NOT live yet: the website only shows a model who has a public primary Headshot. Use Manage Photos to set one.':w.published?'This page is live at the URL above — no deploy step needed.':'Check Published above and Save to make this page live. No deploy step needed.')+'</span>';
   }
   html+='<span style="flex:1"></span><button class="vx132-btn" onclick="VEUX_V16917.closeWebsite()">Cancel</button>'+(can?'<button class="vx132-btn gold" id="vx16917-save" onclick="VEUX_V16917.saveWebsite()">Save Website Profile</button>':'')+'</div></div></div></div>';
-  document.body.insertAdjacentHTML('beforeend',html);window.VEUX_V16917.last=d;
+  document.body.insertAdjacentHTML('beforeend',html);setTimeout(function(){if(window.VEUX_V16917&&VEUX_V16917.liveCheck)VEUX_V16917.liveCheck();},30);window.VEUX_V16917.last=d;
 }
 function newModelModal(){
   injectStyle();close('vx133-modal');
@@ -72,6 +73,22 @@ window.VEUX_V16917={
   newModel:newModelModal,
   version:VERSION,last:null,
   closeWebsite:function(){close('vx16917-website-modal');},
+  liveCheck:async function(fix){
+    var box=document.getElementById('vx16917-live');if(!box)return;var id=modelId();
+    function paint(r){
+      var rows=(r.checks||[]).map(function(c){return '<div class="vx16917-lrow '+(c.ok?'ok':'bad')+'"><span>'+(c.ok?'✓':'✕')+'</span><b>'+esc(c.label)+'</b><em>'+esc(c.detail||'')+'</em></div>';}).join('');
+      var pages=(r.on_city_pages||[]).map(function(p){return esc(p.market)+(p.listed?' ✓':' ✕');}).join(' · ');
+      var head=r.live?'<div class="vx16917-lhead ok"><b>Live on the website</b><a href="'+esc(r.url)+'" target="_blank" rel="noopener">'+esc(r.url)+'</a></div>':'<div class="vx16917-lhead bad"><b>Not on the website yet</b><span>The public site says: '+esc(r.public_site_says||'not found')+'</span></div>';
+      var manual=(r.manual||[]).map(function(m){return '<div class="vx16917-lman"><b>'+esc(m.label)+'</b> — '+esc(m.how)+'</div>';}).join('');
+      var go=(!r.live&&r.can_auto_fix)?'<button type="button" class="vx132-btn gold" onclick="VEUX_V16917.liveCheck(true)">Fix and put her on the website</button>':'';
+      box.innerHTML='<div class="vx16917-live">'+head+'<div class="vx16917-lrows">'+rows+'</div>'+(pages?'<div class="vx16917-lpages">City pages: '+pages+'</div>':'')+manual+'<div class="vx16917-lact">'+go+'<button type="button" class="vx132-btn" onclick="VEUX_V16917.liveCheck()">Check again</button></div></div>';
+    }
+    try{
+      box.innerHTML='<div class="vx16917-live"><b>'+(fix?'Fixing…':'Checking what the website needs…')+'</b></div>';
+      var r=fix?await post('/api/agent/website/check',{action:'make_live',model_id:id}):await api('/api/agent/website/check?organization='+encodeURIComponent(org())+'&model_id='+encodeURIComponent(id));
+      paint(r);
+    }catch(e){box.innerHTML='<div class="vx16917-live"><b>Could not run the check.</b> '+esc(e.message||e)+' <button type="button" class="vx132-btn" onclick="VEUX_V16917.liveCheck()">Try again</button></div>';}
+  },
   website:async function(){try{websiteModal(await loadModel());}catch(e){alert(e.message);}},
   intakeName:function(name){var parts=String(name||'').trim().split(/\s+/),f=document.getElementById('vx133_first_name'),l=document.getElementById('vx133_last_name'),r=document.getElementById('vx16917_new_route'),s=document.getElementById('vx16917_new_slug');if(f&&!f.dataset.touched)f.value=parts[0]||'';if(l&&!l.dataset.touched)l.value=parts.slice(1).join(' ');if(r&&!r.dataset.touched)r.placeholder=(slugify(parts[0]||'',true)||'auto');if(s&&!s.dataset.touched)s.placeholder=(slugify(name,false)||'auto');},
   intakeWebsite:function(){var on=checked('vx16917_create_website');['vx16917_new_route','vx16917_new_slug'].forEach(function(id){var x=document.getElementById(id);if(x)x.disabled=!on;});},
