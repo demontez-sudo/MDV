@@ -674,3 +674,8 @@ html body #p-calendar .vx75-calendar>.vx75-control{height:auto!important;min-hei
 html body #p-calendar .vx75-calendar>.vx75-control{display:flex!important;flex-wrap:wrap;align-items:center;gap:10px 16px}
 html body #p-calendar .vx75-calendar>.vx75-control>.vx75-identity{flex:1 1 220px;min-width:0}
 html body #p-calendar .vx75-calendar>.vx75-control>:not(.vx75-identity){flex:0 0 auto}
+
+/* the Smart timing line in the event form is plain text, not a row of boxes: keep it as one readable sentence */
+html body #vx1043-smart-note{display:block!important;line-height:1.55;white-space:normal;font-size:12px!important;padding:10px 14px!important}
+html body #vx1043-smart-note>b,html body #vx1043-smart-note>span{display:inline!important;flex:none!important;width:auto!important;max-width:none!important}
+html body #vx1043-smart-note>button,html body #vx1043-smart-note>a{display:inline-flex!important;margin-left:10px;vertical-align:middle;width:auto!important}
