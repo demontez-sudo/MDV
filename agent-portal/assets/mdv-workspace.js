@@ -96,12 +96,13 @@ function hubBar(){
   var cur=current(),v=visible(),hub=null;
   v.secs.forEach(function(sc){sc.items.forEach(function(i){if(!hub&&arr(i.sub).length>1&&pagesOf(i).indexOf(cur)>=0)hub=i;});});
   var bar=document.getElementById('ws-hubbar');
-  if(!hub){if(bar)bar.remove();return;}
+  if(!hub){if(bar)bar.remove();document.documentElement.classList.remove('ws-hub-on');return;}
   var html=arr(hub.sub).map(function(t){return '<button type="button" class="ws-hubtab'+(t[0]===cur?' on':'')+'" data-hub-go="'+esc(t[0])+'">'+esc(t[1])+'</button>';}).join('');
   if(!bar){bar=document.createElement('nav');bar.id='ws-hubbar';bar.setAttribute('aria-label',hub.label);pm.insertBefore(bar,pm.firstChild);}
   else if(bar.parentNode!==pm||pm.firstChild!==bar)pm.insertBefore(bar,pm.firstChild);
   if(window.innerWidth>900){var tb=document.querySelector('#app .topbar'),sd=document.getElementById('ws-side'),z=parseFloat(getComputedStyle(document.body).zoom)||1;
-    if(tb&&sd){var top=Math.round(tb.getBoundingClientRect().bottom/z+2),left=Math.round(sd.getBoundingClientRect().right/z+26);bar.style.top=top+'px';bar.style.left=left+'px';bar.style.maxWidth='calc('+Math.round(window.innerWidth/z)+'px - '+(left+30)+'px)';}}
+    if(tb&&sd){var top=Math.round(tb.getBoundingClientRect().bottom/z+16),left=Math.round(sd.getBoundingClientRect().right/z+26);bar.style.top=top+'px';bar.style.left=left+'px';bar.style.maxWidth='calc('+Math.round(window.innerWidth/z)+'px - '+(left+30)+'px)';}}
+  document.documentElement.classList.add('ws-hub-on');
   var sig=hub.id+'|'+cur+'|'+html.length;if(bar.dataset.sig!==sig){bar.dataset.sig=sig;bar.innerHTML='<span class="ws-hubname">'+esc(hub.label)+'</span>'+html;}
 }
 document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('#ws-hubbar [data-hub-go]');if(t){e.preventDefault();go(t.getAttribute('data-hub-go'));}});
@@ -423,9 +424,9 @@ function tighten(){
   if(!first)return;
   var inner=first.querySelector('.ws-home')||first;
   var cur=parseFloat(root.style.getPropertyValue('--ws-adj'))||0;
-  var tbBottom=(tb.offsetTop||0)+tb.offsetHeight,want=tbBottom+14,have=docTop(first);
+  var tbBottom=(tb.offsetTop||0)+tb.offsetHeight,hb=document.getElementById('ws-hubbar'),extra=(hb&&root.classList.contains('ws-hub-on')&&window.innerWidth>900)?hb.offsetHeight+22:0,want=tbBottom+14+extra,have=docTop(first);   /* leave room for the page tab bar */
   var se=document.scrollingElement;if(window.scrollY>2||document.body.scrollTop>2||(se&&se.scrollTop>2))return;
-  var next=Math.max(-160,Math.min(60,Math.round(cur-(have-want))));
+  var next=Math.max(-160,Math.min(130,Math.round(cur-(have-want))));
   if(Math.abs(next-cur)>4)root.style.setProperty('--ws-adj',next+'px');
 }
 /* ---------- Compact size: keep viewport units honest ----------

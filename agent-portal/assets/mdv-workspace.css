@@ -212,10 +212,12 @@ html{--ws-vh:1vh;--ws-vw:1vw}
 html[data-outlook="workspace"][data-ws-size="compact"]{--ws-vh:calc(1vh / .84);--ws-vw:calc(1vw / .84)}
 }
 /* shared tab bar for pages that belong to one menu item */
-#ws-hubbar{position:fixed;top:74px;left:240px;z-index:40;display:flex;align-items:center;gap:6px;margin:0;padding:2px 4px 2px 14px;border-radius:999px;background:rgba(9,7,6,.88);backdrop-filter:blur(10px);border:1px solid var(--ws-line,rgba(255,255,255,.1));max-width:calc(100vw - 280px);overflow-x:auto}
-#ws-hubbar .ws-hubname{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ws-bright,#E6A06C);margin-right:10px}
-html body #pm #ws-hubbar .ws-hubtab{border:1px solid var(--ws-line,rgba(255,255,255,.12))!important;background:transparent!important;color:var(--mdv-mute,#a89f92)!important;border-radius:999px!important;padding:0 15px!important;height:28px!important;min-height:0!important;font:600 12px Inter,system-ui,sans-serif!important;letter-spacing:.03em!important;text-transform:none!important;cursor:pointer;box-shadow:none!important}
+#ws-hubbar{position:fixed;top:74px;left:240px;z-index:40;display:flex;align-items:center;gap:6px;margin:0;padding:6px 8px 6px 20px;gap:8px;border-radius:999px;background:rgba(9,7,6,.9);backdrop-filter:blur(10px);border:1px solid var(--ws-line,rgba(255,255,255,.1));max-width:calc(100vw - 280px);overflow-x:auto}
+#ws-hubbar .ws-hubname{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ws-bright,#E6A06C);margin-right:14px}
+html body #pm #ws-hubbar .ws-hubtab{border:1px solid var(--ws-line,rgba(255,255,255,.12))!important;background:transparent!important;color:var(--mdv-mute,#a89f92)!important;border-radius:999px!important;padding:0 18px!important;height:32px!important;min-height:0!important;font:600 12px Inter,system-ui,sans-serif!important;letter-spacing:.03em!important;text-transform:none!important;cursor:pointer;box-shadow:none!important}
 html body #pm #ws-hubbar .ws-hubtab:hover{color:var(--mdv-ink,#f3efe8)!important;border-color:var(--ws-bright,#E6A06C)!important}
 html body #pm #ws-hubbar .ws-hubtab.on{background:var(--ws-bright,#E6A06C)!important;border-color:var(--ws-bright,#E6A06C)!important;color:#14110c!important}
-#pm{overflow-anchor:none}
+html,body,#app,#pm{overflow-anchor:none}
 @media(max-width:900px){#ws-hubbar{position:relative;top:auto!important;left:auto!important;max-width:none;margin:8px 0 0;padding:0 12px;border:0;border-radius:0;background:transparent;backdrop-filter:none;overflow-x:auto;flex-wrap:nowrap}#ws-hubbar .ws-hubtab{flex:0 0 auto}}
+/* breathing room: the page starts below the tab bar instead of running under it */
+@media(max-width:900px){#ws-hubbar{margin:10px 0 16px!important}}
