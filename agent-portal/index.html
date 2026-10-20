@@ -34,7 +34,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@200;300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@200;300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <script id="vx-color-wave-prepaint">
 (function(){
   try{
@@ -79,92 +79,87 @@ input,select,textarea{font-family:inherit;font-size:15px}
 a{color:var(--gold);text-decoration:none}
 ::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-thumb{background:var(--line2)}
 
-/* Login — dark split screen: cinematic scene + system statement on the left, sign-in on the right. */
-#login{position:fixed;inset:0;z-index:9000;display:grid;grid-template-columns:minmax(0,1fr) clamp(400px,34vw,560px);background:#050507;color:#f6f4fa;overflow:auto;-webkit-font-smoothing:antialiased}
+/* Login — full-bleed photograph, welcome copy bottom-left, frosted sign-in card on the right. */
+#login{position:fixed;inset:0;z-index:9000;display:grid;grid-template:minmax(0,1fr)/minmax(0,1fr);overflow:auto;background:#050507 url(assets/cavyre-login.jpg) 24% 38%/cover no-repeat;color:#f6f4fa;-webkit-font-smoothing:antialiased}
 #login,#login *{font-family:'Montserrat','Inter',system-ui,sans-serif!important}
 #login *,#login *::before,#login *::after{box-sizing:border-box}
+#login::before{content:'';position:fixed;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(4,4,6,.5) 0%,rgba(4,4,6,.08) 46%,rgba(4,4,6,.42) 100%),linear-gradient(0deg,rgba(4,4,6,.7) 0%,rgba(4,4,6,0) 44%),linear-gradient(180deg,rgba(4,4,6,.45) 0%,rgba(4,4,6,0) 20%)}
+#login .serif,#login .lg-wordmark,#login .lg-bigmark,#login .lg-headline,#login .lg-mark-word{font-family:'Cormorant Garamond','Cormorant',Georgia,serif!important}
 
-/* left: scene + copy */
-#login .lg-brand{position:relative;min-height:660px;padding:clamp(34px,4.4vw,68px);display:flex;flex-direction:column;overflow:hidden;background:#07070a;border:0}
-#login .lg-scene{position:absolute;inset:0;z-index:0;pointer-events:none}
-#login .lg-scene svg{position:absolute;inset:0;width:100%;height:100%;display:block}
-#login .lg-scene::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(4,4,6,.84) 0%,rgba(4,4,6,.5) 36%,rgba(4,4,6,0) 68%),linear-gradient(0deg,rgba(4,4,6,.82) 0%,rgba(4,4,6,0) 34%)}
-#login .lg-brand>:not(.lg-scene){position:relative;z-index:1}
-#login .lg-wordmark{font-size:clamp(28px,2.7vw,40px);font-weight:300;letter-spacing:.42em;line-height:1;color:#fff;margin:0}
-#login .lg-portal-title{margin-top:14px;font-size:clamp(11px,.95vw,13px);font-weight:400;letter-spacing:.5em;text-transform:uppercase;color:rgba(255,255,255,.78)}
-#login .lg-brand-copy{max-width:640px;margin:clamp(40px,9vh,120px) 0 auto}
-#login .lg-network{font-size:11px;font-weight:400;letter-spacing:.3em;line-height:1.9;text-transform:uppercase;color:rgba(255,255,255,.55)}
-#login .lg-divider{width:48px;height:1px;background:rgba(255,255,255,.5);margin:26px 0 30px}
-#login .lg-headline{font-size:clamp(38px,4.4vw,68px);font-weight:200;letter-spacing:.16em;line-height:1.2;text-transform:uppercase;color:#fff;margin:0}
-#login .lg-headline em{font-style:normal;color:#a98bff}
-#login .lg-lede{margin-top:34px;max-width:400px;font-size:clamp(14px,1.15vw,17px);font-weight:300;line-height:1.6;color:rgba(255,255,255,.82)}
-#login .lg-points{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));max-width:720px;margin-top:48px;gap:0;border:0;padding:0}
-#login .lg-point{padding:0 clamp(12px,1.5vw,22px);border-left:1px solid rgba(255,255,255,.14)}
-#login .lg-point:first-child{padding-left:0;border-left:0}
-#login .lg-point i{display:flex;align-items:center;gap:12px;font-style:normal;font-size:clamp(13px,1.1vw,16px);font-weight:300;letter-spacing:.14em;color:#fff;line-height:1;margin:0 0 18px}
-#login .lg-point i::after{content:'';flex:0 0 clamp(18px,2.2vw,34px);height:1px;background:rgba(255,255,255,.28)}
-#login .lg-point:first-child i::after{background:#9b6cff}
-#login .lg-point b{display:block;font-size:clamp(9px,.78vw,11px);font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:#fff;white-space:nowrap}
-#login .lg-point span{display:block;margin-top:9px;font-size:clamp(11px,.9vw,13px);font-weight:300;line-height:1.55;color:rgba(255,255,255,.6)}
+/* left: wordmark, welcome copy, four capabilities */
+#login .lg-brand{grid-area:1/1;position:relative;z-index:1;min-height:720px;padding:clamp(26px,3.6vw,60px) clamp(28px,3.6vw,60px) clamp(30px,4.4vh,52px);display:flex;flex-direction:column;pointer-events:none;background:none;border:0}
+#login .lg-brand-top{display:flex;align-items:flex-start;justify-content:space-between;gap:24px}
+#login .lg-wordmark{font-size:clamp(34px,3.7vw,62px);font-weight:300;letter-spacing:.2em;line-height:1;color:#fff;margin:0}
+#login .lg-system{margin-top:clamp(8px,1.2vw,20px);font-size:clamp(9px,.78vw,12px);font-weight:400;letter-spacing:.4em;text-transform:uppercase;color:rgba(255,255,255,.78);white-space:nowrap}
+#login .lg-brand-copy{margin-top:auto;max-width:min(720px,52vw)}
+#login .lg-welcome{font-size:clamp(11px,.95vw,15px);font-weight:400;letter-spacing:.4em;text-transform:uppercase;color:rgba(255,255,255,.85)}
+#login .lg-bigmark{margin:clamp(8px,1vw,16px) 0 0;font-size:clamp(54px,6vw,100px);font-weight:300;letter-spacing:.2em;line-height:1;color:#fff}
+#login .lg-headline{margin:clamp(10px,1.2vw,20px) 0 0;font-size:clamp(34px,3.7vw,62px);font-weight:300;letter-spacing:0;line-height:1.04;color:#fff;text-transform:none}
+#login .lg-lede{margin-top:clamp(14px,1.8vw,28px);font-size:clamp(10px,.92vw,15px);font-weight:300;letter-spacing:.34em;line-height:1.7;text-transform:uppercase;color:rgba(255,255,255,.88)}
+#login .lg-points{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));max-width:min(800px,56vw);margin-top:clamp(26px,4.2vh,54px)}
+#login .lg-point{position:relative;padding:0 clamp(10px,1.3vw,22px);display:grid;grid-template-columns:auto;align-content:start;row-gap:0}
+#login .lg-point:first-child{padding-left:0}
+#login .lg-point+.lg-point::before{content:'';position:absolute;left:0;top:4px;height:58px;width:1px;background:rgba(255,255,255,.22)}
+#login .lg-point i{display:flex;align-items:center;justify-content:center;width:clamp(44px,3.6vw,60px);height:clamp(42px,3.4vw,56px);border:1px solid rgba(255,255,255,.55);border-radius:10px;background:rgba(0,0,0,.22);margin:0 0 clamp(10px,1.1vw,16px)}
+#login .lg-point i svg{width:56%;height:56%;fill:none;stroke:#fff;stroke-width:1.4;stroke-linecap:round;stroke-linejoin:round}
+#login .lg-point b{display:block;font-size:clamp(10px,.86vw,14px);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#fff}
+#login .lg-point span{display:block;margin-top:6px;font-size:clamp(10px,.82vw,13px);font-weight:300;line-height:1.5;color:rgba(255,255,255,.82)}
 
 /* right: sign in */
-#login .lg-entry{position:relative;min-height:660px;padding:96px clamp(30px,4vw,64px) 56px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0a0a0e 0%,#060608 100%);border-left:1px solid rgba(255,255,255,.07)}
-#login .lg-language{position:absolute;top:38px;right:clamp(28px,3.4vw,52px);display:flex;align-items:center;gap:10px;padding:0;border:0;border-radius:0;background:none;font-size:11px;font-weight:500;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.88)}
-#login .lg-language svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.4}
-#login .lg-card{width:100%;max-width:404px;padding:0;border:0;background:none;box-shadow:none}
-#login .lg-top{padding:0 0 30px;text-align:center;border:0}
-#login .lg-logo{display:block;width:78px;height:78px;margin:0 auto 22px;border:0;border-radius:0;box-shadow:none;background:none;font-size:0}
-#login .lg-logo svg{width:100%;height:100%;display:block;overflow:visible}
-#login .lg-mark-word{font-size:25px;font-weight:300;letter-spacing:.42em;text-indent:.42em;line-height:1;color:#fff}
-#login .lg-mark-sub{margin-top:10px;font-size:10px;font-weight:500;letter-spacing:.5em;text-indent:.5em;text-transform:uppercase;color:#a98bff}
-#login .lg-h1{margin-top:44px;font-size:34px;font-weight:300;letter-spacing:0;line-height:1.15;color:#fff;text-transform:none}
-#login .lg-h1 em{font-style:normal;color:inherit}
-#login .lg-sub{margin-top:12px;font-size:14px;font-weight:300;letter-spacing:0;line-height:1.5;color:rgba(255,255,255,.7);text-transform:none}
-#login .lg-eyebrow{display:none}
+#login .lg-entry{grid-area:1/1;position:relative;z-index:2;min-height:720px;display:flex;align-items:center;justify-content:flex-end;padding:clamp(70px,9vh,110px) clamp(24px,5vw,84px) clamp(24px,5vh,56px);background:none;border:0}
+#login .lg-language,#login .lg-eyebrow,#login .lg-logo{display:none}
+#login .lg-entry .lg-card{width:100%;max-width:clamp(400px,35vw,592px);padding:clamp(30px,3.4vw,56px) clamp(24px,3vw,48px) clamp(24px,2.6vw,40px);border-radius:22px;border:1px solid rgba(255,255,255,.16);background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.02)),rgba(18,18,22,.5);-webkit-backdrop-filter:blur(28px) saturate(1.15)!important;backdrop-filter:blur(28px) saturate(1.15)!important;box-shadow:0 34px 100px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12)}
+#login .lg-top{padding:0 0 clamp(26px,3.6vh,44px);text-align:center;border:0}
+#login .lg-mark-word{font-size:clamp(42px,4.3vw,70px);font-weight:300;letter-spacing:.2em;text-indent:.2em;line-height:1;color:#fff}
+#login .lg-mark-sub{margin-top:clamp(14px,2vh,24px);font-size:clamp(10px,.86vw,13px);font-weight:400;letter-spacing:.4em;text-indent:.4em;text-transform:uppercase;color:rgba(255,255,255,.88)}
+#login .lg-h1,#login .lg-sub{text-transform:none;letter-spacing:0}
+#login .lg-h1{margin-top:28px;font-size:22px;font-weight:300;line-height:1.2;color:#fff}
+#login .lg-sub{margin-top:8px;font-size:13px;font-weight:300;line-height:1.5;color:rgba(255,255,255,.72)}
+#login .lg-h1.lg-quiet,#login .lg-sub.lg-quiet{display:none}
 #login .lg-body{padding:0}
-#login .lg-lbl{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-#login .lg-field{display:flex;align-items:center;gap:14px;height:58px;margin:0 0 14px;padding:0 16px 0 18px;border:1px solid rgba(255,255,255,.26);border-radius:10px;background:rgba(255,255,255,.02);transition:border-color .15s,box-shadow .15s}
-#login .lg-field:focus-within{border-color:#a97bff;box-shadow:0 0 0 3px rgba(150,95,255,.18)}
-#login .lg-field::before{content:'';display:block;flex:0 0 22px;width:22px;height:22px;background:rgba(255,255,255,.88);-webkit-mask:var(--lg-ico) center/contain no-repeat;mask:var(--lg-ico) center/contain no-repeat}
+#login .lg-lbl{position:static;display:block;width:auto;height:auto;margin:0 0 10px;padding:0;overflow:visible;clip:auto;white-space:normal;border:0;font-size:11px;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.82)}
+#login .lg-field{display:flex;align-items:center;gap:14px;height:54px;margin:0 0 22px;padding:0 16px 0 18px;border:1px solid rgba(255,255,255,.1);border-radius:8px;background:rgba(6,6,8,.55);transition:border-color .15s,box-shadow .15s}
+#login .lg-field:focus-within{border-color:rgba(255,255,255,.5);box-shadow:0 0 0 3px rgba(255,255,255,.08)}
+#login .lg-field::before{content:'';display:block;flex:0 0 22px;width:22px;height:22px;background:rgba(255,255,255,.9);-webkit-mask:var(--lg-ico) center/contain no-repeat;mask:var(--lg-ico) center/contain no-repeat}
 #login .lg-field.email{--lg-ico:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round' stroke-linecap='round'><rect x='2.5' y='5' width='19' height='14' rx='1.5'/><path d='M3 6.5l9 7 9-7'/></svg>")}
 #login .lg-field.password{--lg-ico:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round' stroke-linecap='round'><rect x='4.5' y='10.5' width='15' height='10' rx='1.5'/><path d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/><circle cx='12' cy='15.5' r='1.2'/></svg>")}
 #login .lg-inp{flex:1 1 auto;min-width:0;height:100%;min-height:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;outline:none!important;color:#fff!important;font-size:15px!important;font-weight:300;letter-spacing:0}
 #login .lg-inp::placeholder{color:rgba(255,255,255,.55);opacity:1}
-#login .lg-inp:-webkit-autofill{-webkit-text-fill-color:#fff;caret-color:#fff;box-shadow:0 0 0 100px #101015 inset!important}
-#login .lg-eye{--lg-eye:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round' stroke-linecap='round'><path d='M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z'/><circle cx='12' cy='12' r='3'/></svg>");flex:0 0 28px;width:28px;height:28px;padding:0;border:0;background:none;cursor:pointer;position:relative;opacity:.85;transition:opacity .15s}
+#login .lg-inp:-webkit-autofill{-webkit-text-fill-color:#fff;caret-color:#fff;box-shadow:0 0 0 100px #121216 inset!important}
+#login .lg-eye{--lg-eye:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round' stroke-linecap='round'><path d='M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z'/><circle cx='12' cy='12' r='3'/></svg>");flex:0 0 28px;width:28px;height:28px;position:relative;padding:0;border:0;background:none;cursor:pointer;opacity:.8}
 #login .lg-eye::before{content:'';position:absolute;inset:3px;background:#fff;-webkit-mask:var(--lg-eye) center/contain no-repeat;mask:var(--lg-eye) center/contain no-repeat}
 #login .lg-eye.on{--lg-eye:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.4' stroke-linejoin='round' stroke-linecap='round'><path d='M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z'/><circle cx='12' cy='12' r='3'/><path d='M4 4l16 16'/></svg>")}
 #login .lg-eye:hover,#login .lg-eye:focus-visible{opacity:1}
-#login .lg-options{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:18px 2px 32px}
-#login .lg-remember{display:flex;align-items:center;gap:10px;font-size:13px;font-weight:300;letter-spacing:0;text-transform:none;color:rgba(255,255,255,.85);cursor:pointer}
-#login .lg-remember input{-webkit-appearance:none!important;appearance:none!important;width:18px!important;height:18px!important;min-height:0!important;margin:0;border:1px solid rgba(255,255,255,.4)!important;border-radius:4px!important;background:transparent!important;cursor:pointer;flex:0 0 18px;padding:0!important}
-#login .lg-remember input:checked{border-color:#8b55f0!important;background:#8b55f0 url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>") center/12px no-repeat!important}
-#login #veuxForgotBtn{margin:0;padding:0;border:0;background:none;font-size:13px;font-weight:400;letter-spacing:0;text-transform:none;color:#a98bff;text-decoration:none;opacity:1;cursor:pointer}
-#login #veuxForgotBtn:hover{color:#c8b3ff}
-#login .lg-err{margin:0 0 18px;text-align:center;font-size:13px;font-weight:300;line-height:1.5;letter-spacing:0;color:#ff9fae}
-#login .lg-btn{display:block;position:relative;width:90px;height:90px;min-height:0;margin:0 auto;padding:0;border:0!important;border-radius:50%!important;font-size:0!important;line-height:0;color:transparent!important;letter-spacing:0;background:radial-gradient(circle at 34% 26%,#c9a2ff 0%,#8d52ec 42%,#5a22b6 100%);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16),0 12px 44px rgba(124,58,237,.38);transition:transform .15s,box-shadow .15s,filter .15s}
-#login .lg-btn::after{content:'';position:absolute;inset:0;margin:auto;width:34px;height:34px;background:#fff;-webkit-mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 12h15M13 6l6 6-6 6'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'><path d='M4 12h15M13 6l6 6-6 6'/></svg>") center/contain no-repeat}
-#login .lg-btn:hover:not(:disabled){transform:scale(1.05);filter:brightness(1.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.2),0 14px 52px rgba(124,58,237,.5)}
-#login .lg-btn:focus-visible{outline:2px solid #c8b3ff;outline-offset:4px}
-#login .lg-btn:disabled{opacity:.5;cursor:wait;transform:none}
-#login .lg-btn.pill{width:100%;height:52px;border-radius:999px!important;font-size:12px!important;line-height:1;font-weight:500;letter-spacing:.2em;text-transform:uppercase;color:#fff!important}
-#login .lg-btn.pill::after{display:none}
-#login .lg-secure{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:46px;font-size:12px;font-weight:300;letter-spacing:.04em;text-transform:none;color:rgba(255,255,255,.62)}
-#login .lg-secure::before{content:'';width:15px;height:15px;background:rgba(255,255,255,.62);-webkit-mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'><rect x='4.5' y='10.5' width='15' height='10' rx='1.5'/><path d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'><rect x='4.5' y='10.5' width='15' height='10' rx='1.5'/><path d='M8 10.5V7.5a4 4 0 0 1 8 0v3'/></svg>") center/contain no-repeat}
+#login .lg-options{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:-4px 0 26px}
+#login .lg-remember{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:300;letter-spacing:0;text-transform:none;color:rgba(255,255,255,.88);cursor:pointer}
+#login .lg-remember input{-webkit-appearance:none!important;appearance:none!important;width:18px!important;height:18px!important;min-height:0!important;margin:0;border:1px solid rgba(255,255,255,.7)!important;border-radius:3px!important;background:transparent!important;cursor:pointer;flex:0 0 18px;padding:0!important}
+#login .lg-remember input:checked{border-color:#fff!important;background:#fff url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M5 12.5l4.5 4.5L19 7.5'/></svg>") center/12px no-repeat!important}
+#login #veuxForgotBtn{margin:0;padding:0;border:0;background:none;font-size:14px;font-weight:300;letter-spacing:0;text-transform:none;color:#fff;cursor:pointer}
+#login #veuxForgotBtn:hover{text-decoration:underline}
+#login .lg-err{margin:0 0 16px;text-align:center;font-size:13px;font-weight:300;line-height:1.5;letter-spacing:0;color:#ff9fae}
+#login .lg-btn{display:flex;align-items:center;justify-content:center;gap:12px;position:relative;width:100%;height:54px;min-height:0;margin:0;padding:0;border:0!important;border-radius:8px!important;background:#fff;color:#0b0b0e!important;font-size:0!important;line-height:1;box-shadow:0 10px 30px rgba(0,0,0,.28);cursor:pointer;transition:transform .15s,filter .15s,opacity .15s}
+#login .lg-btn::before{content:'Sign In';font-size:17px;font-weight:500;letter-spacing:0;color:#0b0b0e}
+#login .lg-btn::after{content:'';display:block;width:22px;height:22px;background:#0b0b0e;-webkit-mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M4 12h15M13 6l6 6-6 6'/></svg>") center/contain no-repeat;mask:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'><path d='M4 12h15M13 6l6 6-6 6'/></svg>") center/contain no-repeat}
+#login .lg-btn:hover:not(:disabled){filter:brightness(.95);transform:translateY(-1px)}
+#login .lg-btn:focus-visible{outline:2px solid #fff;outline-offset:4px}
+#login .lg-btn:disabled{opacity:.55;cursor:wait;transform:none}
+#login .lg-secure{display:flex;align-items:center;gap:16px;margin-top:clamp(34px,6vh,70px);font-size:11px;font-weight:400;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,255,255,.7);white-space:nowrap}
+#login .lg-secure::after{content:'';flex:1 1 auto;height:1px;background:rgba(255,255,255,.4)}
 #login .lg-foot{display:none}
 
-@media(max-width:1180px){#login .lg-points{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:26px;max-width:420px}#login .lg-point:nth-child(3){padding-left:0;border-left:0}}
+@media(max-width:1180px){#login .lg-brand-copy{max-width:50vw}#login .lg-points{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:22px;max-width:360px}#login .lg-point:nth-child(3){padding-left:0}#login .lg-point:nth-child(3)::before{display:none}}
 @media(max-width:900px){
-  #login{grid-template-columns:1fr}
-  #login .lg-brand{position:fixed;inset:0;z-index:0;min-height:0;padding:0;pointer-events:none}
-  #login .lg-brand>:not(.lg-scene){display:none}
-  #login .lg-scene::after{background:linear-gradient(180deg,rgba(4,4,6,.7),rgba(4,4,6,.93))}
-  #login .lg-entry{z-index:1;min-height:100%;background:none;border:0;padding:88px 22px 40px}
-  #login .lg-language{top:26px;right:22px}
-  #login .lg-card{max-width:420px}
+  #login{background-position:30% center}
+  #login::before{background:linear-gradient(180deg,rgba(4,4,6,.55) 0%,rgba(4,4,6,.72) 100%)}
+  #login .lg-brand{min-height:0;padding:22px}
+  #login .lg-brand-copy,#login .lg-system{display:none}
+  #login .lg-wordmark{font-size:30px}
+  #login .lg-entry{justify-content:center;min-height:100%;padding:96px 18px 32px}
+  #login .lg-entry .lg-card{max-width:440px}
+  #login .lg-secure{letter-spacing:.16em;font-size:10px;white-space:normal;justify-content:center;text-align:center}
+  #login .lg-secure::after{display:none}
 }
-@media(max-height:760px) and (min-width:901px){#login .lg-brand,#login .lg-entry{min-height:700px}#login .lg-h1{margin-top:30px}}
-@media(max-width:420px){#login .lg-h1{font-size:30px}#login .lg-entry{padding-left:18px;padding-right:18px}}
+@media(max-height:760px) and (min-width:901px){#login .lg-brand,#login .lg-entry{min-height:700px}}
 @media(prefers-reduced-motion:reduce){#login *{transition:none!important}}
 
 #app{display:none;min-height:100dvh;flex-direction:column}
@@ -1489,82 +1484,42 @@ border-radius:7px!important;background:transparent!important;color:inherit!impor
 <body>
 
 <div id="login">
-  <section class="lg-brand" aria-label="CAVYRE Agent Portal">
-    <div class="lg-scene" aria-hidden="true">
-      <svg viewBox="0 0 1000 1000" preserveAspectRatio="xMaxYMid slice" xmlns="http://www.w3.org/2000/svg" focusable="false">
-        <defs>
-          <linearGradient id="lgSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a5c78"/><stop offset=".5" stop-color="#b7a590"/><stop offset=".8" stop-color="#e4bb8c"/><stop offset="1" stop-color="#a07a52"/></linearGradient>
-          <linearGradient id="lgWall" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#0b0b0e"/><stop offset="1" stop-color="#1b1b20"/></linearGradient>
-          <linearGradient id="lgFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c231d"/><stop offset=".45" stop-color="#0e0d0f"/><stop offset="1" stop-color="#050506"/></linearGradient>
-          <linearGradient id="lgGlass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".17"/><stop offset="1" stop-color="#fff" stop-opacity=".04"/></linearGradient>
-          <linearGradient id="lgGold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f2c98f" stop-opacity="0"/><stop offset=".55" stop-color="#f2c98f"/><stop offset="1" stop-color="#ffe9c6"/></linearGradient>
-          <radialGradient id="lgGlow" cx=".72" cy=".78" r=".5"><stop offset="0" stop-color="#7c3aed" stop-opacity=".3"/><stop offset="1" stop-color="#7c3aed" stop-opacity="0"/></radialGradient>
-        </defs>
-        <rect width="1000" height="1000" fill="#07070a"/>
-        <rect width="520" height="830" fill="url(#lgWall)"/>
-        <rect x="630" y="95" width="370" height="565" fill="url(#lgSky)"/>
-        <path d="M630 470L700 440 770 462 850 418 930 458 1000 440V570H630Z" fill="#4b3b31" opacity=".92"/>
-        <path d="M630 524L720 502 800 514 900 482 1000 506V596H630Z" fill="#2d2420"/>
-        <rect x="630" y="596" width="370" height="64" fill="#8b6b4d" opacity=".5"/>
-        <path d="M500 0H1000V95H630Z" fill="#0b0a0b"/>
-        <path d="M630 95H1000" stroke="#c9a37a" stroke-opacity=".45"/>
-        <rect y="660" width="1000" height="340" fill="url(#lgFloor)"/>
-        <rect x="630" y="660" width="370" height="130" fill="url(#lgSky)" opacity=".2"/>
-        <path d="M0 830L1000 790M0 900L1000 860" stroke="#fff" stroke-opacity=".05"/>
-        <rect x="440" y="615" width="92" height="215" fill="#060607"/>
-        <rect x="905" y="610" width="95" height="150" fill="#09090b"/>
-        <circle cx="338" cy="262" r="135" fill="none" stroke="#fff" stroke-opacity=".11"/>
-        <path d="M652 372A206 206 0 0 1 846 484" fill="none" stroke="#08080a" stroke-width="44"/>
-        <path d="M652 351A227 227 0 0 1 862 470" fill="none" stroke="url(#lgGold)" stroke-width="2"/>
-        <path d="M478 648A205 205 0 0 0 846 676" fill="none" stroke="#08080a" stroke-width="40"/>
-        <path d="M486 622A228 228 0 0 0 862 650" fill="none" stroke="url(#lgGold)" stroke-width="1.5" opacity=".7"/>
-        <polygon points="500,0 662,105 662,778 500,800" fill="url(#lgGlass)" stroke="#fff" stroke-opacity=".3"/>
-        <g transform="translate(528 128) skewY(14)" fill="#fff" fill-opacity=".8" font-size="11" letter-spacing="3.2">
-          <text y="0">PEOPLE</text><text y="33">OPPORTUNITY</text><text y="66">MOVEMENT</text><text y="99">RELATIONSHIPS</text><text y="132">PERFORMANCE</text>
-          <rect y="152" width="40" height="1" fill="#fff"/>
-        </g>
-        <rect x="770" y="70" width="2" height="95" fill="#9b6cff"/>
-        <rect x="390" y="312" width="2" height="44" fill="#9b6cff"/>
-        <rect width="1000" height="1000" fill="url(#lgGlow)"/>
-      </svg>
-    </div>
+  <section class="lg-brand" aria-label="CAVYRE Agency Operating System">
     <div class="lg-brand-top">
       <div class="lg-wordmark">CAVYRE</div>
-      <div class="lg-portal-title">Agent Portal</div>
+      <div class="lg-system">Agency Operating System</div>
     </div>
     <div class="lg-brand-copy">
-      <div class="lg-network">Global Network<br>Est. 2026</div>
-      <div class="lg-divider"></div>
-      <h2 class="lg-headline">The<br>System<br>Behind<br><em>The Agency.</em></h2>
-      <p class="lg-lede">Talent. Clients. Castings. Bookings.<br>Finance. Travel. Everything connected<br>in one intelligent system.</p>
-    </div>
-    <div class="lg-points">
-      <div class="lg-point"><i>01</i><b>Models</b><span>Rosters, portfolios,<br>development</span></div>
-      <div class="lg-point"><i>02</i><b>Clients</b><span>Relationships,<br>communication</span></div>
-      <div class="lg-point"><i>03</i><b>Operations</b><span>Castings, bookings,<br>travel, visas</span></div>
-      <div class="lg-point"><i>04</i><b>Finance</b><span>Invoices, payments,<br>reporting</span></div>
+      <div class="lg-welcome">Welcome to</div>
+      <div class="lg-bigmark">CAVYRE</div>
+      <h2 class="lg-headline">The system behind<br>the agency.</h2>
+      <p class="lg-lede">One desk. Every relationship connected.</p>
+      <div class="lg-points">
+        <div class="lg-point"><i><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20v-1.2a5.2 5.2 0 0 1 5.2-5.2h1.6a5.2 5.2 0 0 1 5.2 5.2V20"/><circle cx="17" cy="9" r="2.4"/><path d="M17.5 13.6A4.4 4.4 0 0 1 21.5 18v2"/></svg></i><b>Talent</b><span>Roster, portfolios,<br>measurements,<br>placement tracking.</span></div>
+        <div class="lg-point"><i><svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg></i><b>Castings</b><span>Castings, fittings,<br>bookings in one<br>place.</span></div>
+        <div class="lg-point"><i><svg viewBox="0 0 24 24"><path d="M21 3.5L10.5 14M21 3.5l-6.5 17-4-6.5-6.5-4z"/></svg></i><b>Mobility</b><span>Visas, travel,<br>movement<br>management.</span></div>
+        <div class="lg-point"><i><svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></svg></i><b>Finance</b><span>Invoices, payments,<br>client tracking.</span></div>
+      </div>
     </div>
   </section>
   <section class="lg-entry">
-    <div class="lg-language" aria-hidden="true"><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M2.5 12h19M12 2.5c2.8 2.8 4 6 4 9.5s-1.2 6.700-4 9.500c-2.800-2.800-4-6-4-9.500s1.200-6.700 4-9.500z"/></svg><span>English</span><svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px;margin-left:12px"><path d="M6 9l6 6 6-6"/></svg></div>
     <div class="lg-card">
       <div class="lg-top">
-        <div class="lg-logo"><svg viewBox="0 0 80 80" fill="none" stroke-linecap="round"><path d="M69.400 23A34 34 0 1 0 57 69.400" stroke="#fff" stroke-width="2.600"/><path d="M57 69.400A34 34 0 0 0 73.500 34.100" stroke="#a46bff" stroke-width="2.600"/><circle cx="73.500" cy="34.100" r="2.600" fill="#c3a2ff" stroke="none"/></svg></div>
         <div class="lg-mark-word">CAVYRE</div>
-        <div class="lg-mark-sub">Agent Portal</div>
-        <div class="lg-h1">Welcome back.</div>
-        <div class="lg-sub">Sign in to access your agency workspace.</div>
+        <div class="lg-mark-sub">Agency Operating System</div>
+        <div class="lg-h1 lg-quiet">Welcome back.</div>
+        <div class="lg-sub lg-quiet">Sign in to access your agency workspace.</div>
       </div>
       <form class="lg-body" onsubmit="return false;">
         <label class="lg-lbl" for="veuxEmail">Email address</label>
-        <div class="lg-field email"><input class="lg-inp" id="veuxEmail" type="email" autocomplete="username" placeholder="Email address"></div>
+        <div class="lg-field email"><input class="lg-inp" id="veuxEmail" type="email" autocomplete="username" placeholder="Enter your email"></div>
         <label class="lg-lbl" for="veuxPassword">Password</label>
-        <div class="lg-field password"><input class="lg-inp" id="veuxPassword" type="password" autocomplete="current-password" placeholder="Password"><button type="button" class="lg-eye" aria-label="Show password"></button></div>
+        <div class="lg-field password"><input class="lg-inp" id="veuxPassword" type="password" autocomplete="current-password" placeholder="Enter your password"><button type="button" class="lg-eye" aria-label="Show password"></button></div>
         <div class="lg-options"><label class="lg-remember"><input id="veuxRemember" type="checkbox" checked> Keep me signed in</label><button type="button" id="veuxForgotBtn">Forgot password?</button></div>
-        <div class="lg-err" id="veuxLoginErr" style="display:block;color:rgba(255,255,255,.45)">Connecting securely…</div>
+        <div class="lg-err" id="veuxLoginErr" style="display:block;color:rgba(255,255,255,.55)">Connecting securely…</div>
         <button class="lg-btn" id="veuxLoginBtn" type="button" aria-label="Sign in" disabled>Connecting…</button>
       </form>
-      <div class="lg-secure">Secure · Private · Always</div>
+      <div class="lg-secure"><span>Agency &nbsp;/&nbsp; Talent &nbsp;/&nbsp; Clients &nbsp;/&nbsp; Global</span></div>
     </div>
   </section>
 </div>

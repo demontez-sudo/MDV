@@ -76,8 +76,8 @@ async function uploadModelMedia(file,modelId,options){
 function qs(id){return document.getElementById(id);}function slug(v){return String(v||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
 function initials(v){return String(v||'').split(/\s+/).filter(Boolean).slice(0,2).map(function(x){return x[0];}).join('').toUpperCase()||'A';}
-var LOGO='<div class="lg-logo"><svg viewBox="0 0 80 80" fill="none" stroke-linecap="round"><path d="M69.4 23A34 34 0 1 0 57 69.4" stroke="#fff" stroke-width="2.6"/><path d="M57 69.4A34 34 0 0 0 73.5 34.1" stroke="#a46bff" stroke-width="2.6"/><circle cx="73.5" cy="34.1" r="2.6" fill="#c3a2ff" stroke="none"/></svg></div><div class="lg-mark-word">CAVYRE</div><div class="lg-mark-sub">Agent Portal</div>';
-function loginTop(h,s){return LOGO+'<div class="lg-h1">'+h+'</div><div class="lg-sub">'+s+'</div>';}
+var LOGO='<div class="lg-logo"><svg viewBox="0 0 80 80" fill="none" stroke-linecap="round"><path d="M69.4 23A34 34 0 1 0 57 69.4" stroke="#fff" stroke-width="2.6"/><path d="M57 69.4A34 34 0 0 0 73.5 34.1" stroke="#a46bff" stroke-width="2.6"/><circle cx="73.5" cy="34.1" r="2.6" fill="#c3a2ff" stroke="none"/></svg></div><div class="lg-mark-word">CAVYRE</div><div class="lg-mark-sub">Agency Operating System</div>';
+function loginTop(h,s,quiet){var q=quiet?' lg-quiet':'';return LOGO+'<div class="lg-h1'+q+'">'+h+'</div><div class="lg-sub'+q+'">'+s+'</div>';}
 var EYE='<button type="button" class="lg-eye" aria-label="Show password"></button>';
 function loginError(msg){var e=qs('veuxLoginErr');if(e){e.textContent=msg||'';e.style.display=msg?'block':'none';}}
 function loginBusy(on,label){var b=qs('veuxLoginBtn');if(b){b.disabled=!!on;b.textContent=on?(label||'Signing in…'):'Sign In to Portal →';}}
@@ -85,11 +85,11 @@ function rewriteLogin(){
   var login=qs('login');if(!login)return;
   var card=login.querySelector('.lg-card');if(!card)return;
   var top=card.querySelector('.lg-top');
-  if(top)top.innerHTML=loginTop('Welcome back.','Sign in to access your agency workspace.');
+  if(top)top.innerHTML=loginTop('Welcome back.','Sign in to access your agency workspace.',true);
   var form=card.querySelector('.lg-body');
   if(form){
     form.setAttribute('onsubmit','return false;');
-    form.innerHTML='<label class="lg-lbl" for="veuxEmail">Email address</label><div class="lg-field email"><input class="lg-inp" id="veuxEmail" type="email" autocomplete="username" placeholder="Email address"></div><label class="lg-lbl" for="veuxPassword">Password</label><div class="lg-field password"><input class="lg-inp" id="veuxPassword" type="password" autocomplete="current-password" placeholder="Password">'+EYE+'</div><div class="lg-options"><label class="lg-remember"><input id="veuxRemember" type="checkbox" checked> Keep me signed in</label><button type="button" id="veuxForgotBtn">Forgot password?</button></div><div class="lg-err" id="veuxLoginErr" style="display:none"></div><button class="lg-btn" id="veuxLoginBtn" type="button" aria-label="Sign in">Sign In to Portal →</button>';
+    form.innerHTML='<label class="lg-lbl" for="veuxEmail">Email address</label><div class="lg-field email"><input class="lg-inp" id="veuxEmail" type="email" autocomplete="username" placeholder="Enter your email"></div><label class="lg-lbl" for="veuxPassword">Password</label><div class="lg-field password"><input class="lg-inp" id="veuxPassword" type="password" autocomplete="current-password" placeholder="Enter your password">'+EYE+'</div><div class="lg-options"><label class="lg-remember"><input id="veuxRemember" type="checkbox" checked> Keep me signed in</label><button type="button" id="veuxForgotBtn">Forgot password?</button></div><div class="lg-err" id="veuxLoginErr" style="display:none"></div><button class="lg-btn" id="veuxLoginBtn" type="button" aria-label="Sign in">Sign In to Portal →</button>';
     qs('veuxLoginBtn').onclick=signIn;qs('veuxForgotBtn').onclick=forgotPassword;qs('veuxPassword').addEventListener('keydown',function(e){if(e.key==='Enter')signIn();});
   }
   var foot=card.querySelector('.lg-foot');if(foot)foot.textContent='';
