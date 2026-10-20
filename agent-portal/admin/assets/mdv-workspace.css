@@ -212,7 +212,7 @@ html{--ws-vh:1vh;--ws-vw:1vw}
 html[data-outlook="workspace"][data-ws-size="compact"]{--ws-vh:calc(1vh / .84);--ws-vw:calc(1vw / .84)}
 }
 /* shared tab bar for pages that belong to one menu item */
-#ws-hubbar{position:sticky;top:calc(var(--ws-tb,85px) + 14px);z-index:40;display:flex;align-items:center;gap:8px;width:fit-content;max-width:100%;margin:0 0 22px;padding:6px 8px 6px 20px;border-radius:999px;background:rgba(9,7,6,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--ws-line,rgba(255,255,255,.1));overflow-x:auto}
+#ws-hubbar{position:relative;z-index:40;display:flex;align-items:center;gap:8px;width:fit-content;max-width:100%;margin:0 0 22px;padding:6px 8px 6px 20px;border-radius:999px;background:rgba(9,7,6,.9);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--ws-line,rgba(255,255,255,.1));overflow-x:auto}
 #ws-hubbar .ws-hubname{font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ws-bright,#E6A06C);margin-right:14px}
 html body #pm #ws-hubbar .ws-hubtab{border:1px solid var(--ws-line,rgba(255,255,255,.12))!important;background:transparent!important;color:var(--mdv-mute,#a89f92)!important;border-radius:999px!important;padding:0 18px!important;height:32px!important;min-height:0!important;font:600 12px Inter,system-ui,sans-serif!important;letter-spacing:.03em!important;text-transform:none!important;cursor:pointer;box-shadow:none!important}
 html body #pm #ws-hubbar .ws-hubtab:hover{color:var(--mdv-ink,#f3efe8)!important;border-color:var(--ws-bright,#E6A06C)!important}

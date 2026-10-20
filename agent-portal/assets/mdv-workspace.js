@@ -419,15 +419,27 @@ function skinOnce(){
 }
 function docTop(el){var y=0,n=el;while(n){y+=n.offsetTop||0;n=n.offsetParent;}return y;}
 /* keep the page content just under the top bar, whatever else the page adds above it */
+/* the highest piece of real content on the page (its title, usually), not just the first block, so nothing can be left under the tab bar */
+function topMostContent(panel){
+  var best=null,queue=[],depth=0;
+  for(var i=0;i<panel.children.length;i++)queue.push([panel.children[i],1]);
+  var seen=0;
+  while(queue.length&&seen++<120){
+    var q=queue.shift(),el=q[0],d=q[1];
+    if(!el||el.nodeType!==1)continue;
+    var cs=getComputedStyle(el);
+    if(cs.display==='none'||cs.visibility==='hidden'||cs.position==='fixed'||cs.position==='absolute')continue;
+    if(el.offsetHeight>8&&el.offsetWidth>8){var t=docTop(el);if(best===null||t<best)best=t;}
+    if(d<3)for(var j=0;j<el.children.length;j++)queue.push([el.children[j],d+1]);
+  }
+  return best;
+}
 function tighten(){
   var tb=document.querySelector('#app .topbar'),root=document.documentElement;if(!tb)return;
   var panel=document.querySelector('#pm .panel.on, .pm .panel.on');if(!panel){return;}
-  var first=null,kids=panel.children;for(var i=0;i<kids.length;i++){var k=kids[i];if(k.offsetParent===null&&getComputedStyle(k).position!=='fixed')continue;if(k.offsetHeight>8){first=k;break;}}
-  if(!first)return;
-  var inner=first.querySelector('.ws-home')||first;
+  var have=topMostContent(panel);if(have===null)return;
   var cur=parseFloat(root.style.getPropertyValue('--ws-adj'))||0;
-  var tbBottom=(tb.offsetTop||0)+tb.offsetHeight,hb=document.getElementById('ws-hubbar'),extra=(hb&&root.classList.contains('ws-hub-on')&&window.innerWidth>900)?hb.offsetHeight+22:0,want=tbBottom+14+extra,have=docTop(first);   /* leave room for the page tab bar */
-  var se=document.scrollingElement;if(window.scrollY>2||document.body.scrollTop>2||(se&&se.scrollTop>2))return;
+  var tbBottom=(tb.offsetTop||0)+tb.offsetHeight,hb=document.getElementById('ws-hubbar'),extra=(hb&&root.classList.contains('ws-hub-on')&&window.innerWidth>900)?hb.offsetHeight+22:0,want=tbBottom+14+extra;   /* leave room for the page tab bar */
   var next=Math.max(-160,Math.min(130,Math.round(cur-(have-want))));
   if(Math.abs(next-cur)>4)root.style.setProperty('--ws-adj',next+'px');
 }
