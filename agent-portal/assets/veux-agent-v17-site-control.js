@@ -6,7 +6,23 @@ function bridge(){return window.VEUX_AGENT_V4;}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];});}
 function org(){var b=bridge();return (b&&b.state&&b.state.org&&b.state.org.slug)||'maison-de-veux';}
 function openModel(id){window._veuxV10ModelId=id;if(window.VEUX_PERF&&VEUX_PERF.invalidate)VEUX_PERF.invalidate('modelpage');if(typeof window.navTo==='function')window.navTo('modelpage');}
-window.VEUX_SITE_CONTROL={openModel:openModel};
+async function fix(action,id,btn){
+  var b=bridge();if(!b||!b.api)return;
+  try{if(btn){btn.disabled=true;btn.textContent='Saving…';}
+    var r=await b.api('/api/agent/site-control?organization='+encodeURIComponent(org()),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:action,model_id:id})});
+    if(!r||r.verified!==true)throw new Error('Not confirmed');
+    if(btn){btn.textContent='Done';btn.className='vx170-sc-chip';}
+    var old=document.getElementById('vx170-site-control');if(old){old.remove();inject();}
+  }catch(e){if(btn){btn.disabled=false;btn.textContent='Could not save, try again';}}
+}
+window.VEUX_SITE_CONTROL={openModel:openModel,fix:fix};
+
+function fixList(title,items,action,label){
+  if(!items||!items.length)return '';
+  return '<div class="vx170-sc-row"><b>'+esc(title)+'</b><div class="vx170-sc-chips">'+items.slice(0,20).map(function(m){
+    return '<span class="vx170-sc-fix"><button type="button" class="vx170-sc-chip" onclick="VEUX_SITE_CONTROL.openModel(\''+esc(m.id)+'\')">'+esc(m.display_name||'Model')+'</button><button type="button" class="vx170-sc-chip go" onclick="VEUX_SITE_CONTROL.fix(\''+action+'\',\''+esc(m.id)+'\',this)">'+esc(label)+'</button></span>';
+  }).join('')+'</div></div>';
+}
 
 function list(title,items,emptyMsg){
   if(!items||!items.length)return '<div class="vx170-sc-row"><b>'+esc(title)+'</b><span class="vx170-sc-ok">'+esc(emptyMsg||'None')+'</span></div>';
@@ -19,6 +35,8 @@ function cardHtml(d){
   var c=d.counts||{};
   return '<div class="v152-card" id="vx170-site-control"><header><b>Site Control · maisondeveux.com</b><span style="font:9px var(--fM,monospace);letter-spacing:.12em;text-transform:uppercase;color:var(--mute)">Demontez &amp; Admin only</span></header>'
   +'<div class="vx170-sc-stats"><div><b>'+Number(c.published||0)+'</b><span>Published</span></div><div><b>'+Number(c.draft||0)+'</b><span>Draft</span></div><div><b>'+Number(c.no_profile||0)+'</b><span>No Profile</span></div><div><b>'+Number(c.no_media||0)+'</b><span>No Photos</span></div><div><b>'+Number(c.no_public_headshot||0)+'</b><span>No Public Headshot</span></div></div>'
+  +fixList('On the roster but hidden from the website (the active switch is off)',d.hidden_on_site,'activate','Show on site')
+  +fixList('Profile not published yet',d.unpublished_draft,'publish','Publish')
   +list('Published with no public Headshot — their site photo is broken right now',d.published_missing_headshot,'All published profiles have a public Headshot')
   +list('No photos uploaded at all — cannot appear correctly on the site',d.no_media,'Every model has at least one photo')
   +list('Website profile never created',d.no_profile,'Every model has a website profile record')
@@ -41,7 +59,7 @@ async function inject(){
 function injectStyle(){
   if(document.getElementById('vx170-sc-style'))return;
   var s=document.createElement('style');s.id='vx170-sc-style';
-  s.textContent='#vx170-site-control{margin-top:16px}.vx170-sc-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;padding:12px 0}.vx170-sc-stats>div{border:1px solid var(--line);background:var(--ivory);padding:9px 10px;text-align:center}.vx170-sc-stats b{display:block;font:500 18px/1.2 var(--fD,serif);color:var(--ink)}.vx170-sc-stats span{display:block;margin-top:3px;font:8px/1.3 var(--fM,monospace);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}.vx170-sc-row{padding:10px 0;border-top:1px solid var(--line)}.vx170-sc-row b{display:block;font-size:12px;color:var(--ink2);margin-bottom:6px}.vx170-sc-ok{font-size:11px;color:var(--mute)}.vx170-sc-chips{display:flex;flex-wrap:wrap;gap:6px}.vx170-sc-chip{border:1px solid var(--line);background:var(--paper,transparent);padding:5px 9px;font-size:11px;color:var(--ink2);cursor:pointer;border-radius:6px}.vx170-sc-chip:hover{border-color:var(--gold);color:var(--gold)}.vx170-sc-more{align-self:center;font-size:10px;color:var(--mute)}';
+  s.textContent='.vx170-sc-fix{display:inline-flex;gap:4px;margin:0 6px 6px 0}.vx170-sc-chip.go{border-color:rgba(212,176,119,.6);color:var(--gold,#d4b077)}#vx170-site-control{margin-top:16px}.vx170-sc-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;padding:12px 0}.vx170-sc-stats>div{border:1px solid var(--line);background:var(--ivory);padding:9px 10px;text-align:center}.vx170-sc-stats b{display:block;font:500 18px/1.2 var(--fD,serif);color:var(--ink)}.vx170-sc-stats span{display:block;margin-top:3px;font:8px/1.3 var(--fM,monospace);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}.vx170-sc-row{padding:10px 0;border-top:1px solid var(--line)}.vx170-sc-row b{display:block;font-size:12px;color:var(--ink2);margin-bottom:6px}.vx170-sc-ok{font-size:11px;color:var(--mute)}.vx170-sc-chips{display:flex;flex-wrap:wrap;gap:6px}.vx170-sc-chip{border:1px solid var(--line);background:var(--paper,transparent);padding:5px 9px;font-size:11px;color:var(--ink2);cursor:pointer;border-radius:6px}.vx170-sc-chip:hover{border-color:var(--gold);color:var(--gold)}.vx170-sc-more{align-self:center;font-size:10px;color:var(--mute)}';
   document.head.appendChild(s);
 }
 
