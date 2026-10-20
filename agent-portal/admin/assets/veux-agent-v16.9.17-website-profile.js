@@ -47,7 +47,7 @@ function websiteModal(d){
     if(w.created&&can)html+='<button class="vx132-btn" onclick="VEUX_V16917.downloadBuild()">Download Site ZIP</button>';
     if(w.created)html+='<button class="vx132-btn" onclick="VEUX_V16917.markDeployed()">Mark Deployed</button>';
   }else if(w.created){
-    html+='<span class="vx16917-callout" style="padding:7px 9px">'+(w.published?'This page is live at the URL above — no deploy step needed.':'Check Published above and Save to make this page live. No deploy step needed.')+'</span>';
+    html+='<span class="vx16917-callout" style="padding:7px 9px">'+(w.published&&!w.has_headshot?'Published, but NOT live yet: the website only shows a model who has a public primary Headshot. Use Manage Photos to set one.':w.published?'This page is live at the URL above — no deploy step needed.':'Check Published above and Save to make this page live. No deploy step needed.')+'</span>';
   }
   html+='<span style="flex:1"></span><button class="vx132-btn" onclick="VEUX_V16917.closeWebsite()">Cancel</button>'+(can?'<button class="vx132-btn gold" id="vx16917-save" onclick="VEUX_V16917.saveWebsite()">Save Website Profile</button>':'')+'</div></div></div></div>';
   document.body.insertAdjacentHTML('beforeend',html);window.VEUX_V16917.last=d;
