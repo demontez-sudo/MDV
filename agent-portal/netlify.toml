@@ -584,6 +584,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/shoot-plans"
+to = "/.netlify/functions/agent-shoot-plans"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/availability/v10"
 to = "/.netlify/functions/agent-availability-desk-v10"
 status = 200
