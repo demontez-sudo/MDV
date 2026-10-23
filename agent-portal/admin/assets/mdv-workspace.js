@@ -428,20 +428,30 @@ function topMostContent(panel){
     var q=queue.shift(),el=q[0],d=q[1];
     if(!el||el.nodeType!==1)continue;
     var cs=getComputedStyle(el);
-    if(cs.display==='none'||cs.visibility==='hidden'||cs.position==='fixed'||cs.position==='absolute')continue;
+    if(cs.display==='none'||cs.visibility==='hidden'||cs.position==='fixed'||cs.position==='absolute'||cs.position==='sticky')continue;   /* sticky blocks (the Tasks side rail) move with scrolling, so they cannot say where the page starts */
     if(el.offsetHeight>8&&el.offsetWidth>8){var t=docTop(el);if(best===null||t<best)best=t;}
     if(d<3)for(var j=0;j<el.children.length;j++)queue.push([el.children[j],d+1]);
   }
   return best;
 }
+var TG={last:null,freeze:0,page:''};
 function tighten(){
   var tb=document.querySelector('#app .topbar'),root=document.documentElement;if(!tb)return;
   var panel=document.querySelector('#pm .panel.on, .pm .panel.on');if(!panel){return;}
+  var now=Date.now();
+  if(TG.page!==panel.id){TG.page=panel.id;TG.last=null;TG.freeze=0;}   /* a new page starts fresh */
+  if(now<TG.freeze)return;
   var have=topMostContent(panel);if(have===null)return;
   var cur=parseFloat(root.style.getPropertyValue('--ws-adj'))||0;
   var tbBottom=(tb.offsetTop||0)+tb.offsetHeight,hb=document.getElementById('ws-hubbar'),extra=(hb&&root.classList.contains('ws-hub-on')&&window.innerWidth>900)?hb.offsetHeight+22:0,want=tbBottom+14+extra;   /* leave room for the page tab bar */
-  var next=Math.max(-160,Math.min(130,Math.round(cur-(have-want))));
-  if(Math.abs(next-cur)>4)root.style.setProperty('--ws-adj',next+'px');
+  var err=have-want;
+  /* if the last nudge did not bring the page closer to where it should start, the measurement is not following the page: stop nudging (and go back to the plain layout) instead of swinging up and down */
+  if(TG.last&&now-TG.last.t<6000&&Math.abs(err)>Math.abs(TG.last.err)-3){
+    TG.freeze=now+120000;TG.last=null;root.style.setProperty('--ws-adj','0px');return;
+  }
+  var next=Math.max(-160,Math.min(130,Math.round(cur-err)));
+  if(Math.abs(next-cur)>4){root.style.setProperty('--ws-adj',next+'px');TG.last={t:now,err:err};}
+  else TG.last=null;
 }
 /* ---------- Compact size: keep viewport units honest ----------
    CSS zoom shrinks everything, including 100vh / 100vw, so full-screen backdrops and viewport-height layouts came out 16% short.
