@@ -58,6 +58,14 @@ export const handler=async event=>{
     // Documents attached to a specific booking / casting / event and shared with this model.
     const scopedDocs=await safe('scoped_document_links',admin.from('document_links').select('id,document_id,resource_type,resource_id,relationship,visible_to_model,created_at,documents(id,name,category,mime_type,size_bytes,status,created_at)').eq('organization_id',organization.id).in('resource_type',['booking','casting','event']).eq('visible_to_model',true).order('created_at',{ascending:false}).limit(500),warnings);
 
+    /* Shoot plans: only plans staff chose to share, and only the sections they chose. */
+    const shootRows=await safe('model_shoot_plans',admin.from('model_shoot_plans').select('id,title,plan,shared_sections,shared_at,updated_at').eq('organization_id',organization.id).eq('model_id',modelId).eq('shared_with_model',true).neq('status','archived').order('shared_at',{ascending:false}),warnings);
+    const sharedShootPlans=shootRows.map(r=>{
+      const keep=new Set(Array.isArray(r.shared_sections)?r.shared_sections:[]),p=r.plan||{};
+      const out={id:r.id,title:r.title,name:p.name||'',eyebrow:p.eyebrow||'',sub:p.sub||'',facts:p.facts||[],shared_at:r.shared_at,updated_at:r.updated_at,brief:keep.has('brief')?p.brief||null:null,book:keep.has('book')?p.book||null:null,prep:keep.has('prep')?p.prep||null:null,shoots:[]};
+      (p.shoots||[]).forEach((s,i)=>{if(keep.has('s'+i))out.shoots.push({...s,key:'s'+i});});
+      return out;
+    }).filter(x=>x.brief||x.book||x.prep||x.shoots.length);
     /* Notes shared with the model: visible_to_model column, or metadata.visible_to_model on databases without it. */
     const sharedNotes=notes.filter(n=>n.visible_to_model===true||n.metadata?.visible_to_model===true).slice(0,100);
     const passports=await safe('passports',admin.from('passports').select('id,model_id,country_code,status,expires_on,visible_to_model').eq('organization_id',organization.id).eq('model_id',modelId),warnings);
@@ -121,6 +129,7 @@ export const handler=async event=>{
       tasks,
       /* The agency's evaluations and development plans are internal. The model portal shows the model's own gameplan and submissions, never these. */
       development:{evaluations:[],plans:[]},
+      shoot_plans:sharedShootPlans,
       documents:{contracts,links:documentLinks},
       finance:{ledger,statements},
       notes:sharedNotes,

@@ -39,6 +39,25 @@ export const handler = async event => {
       else { const r = await admin.from('model_shoot_plans').insert({ ...row, organization_id: organization.id, model_id: modelId, created_by: user.id }).select('*').single(); if (r.error) throw r.error; saved = r.data; }
       return json(200, { ok: true, verified: !!saved?.id, plan: saved, replaced: !!existing });
     }
+    if (action === 'share') {
+      const id = String(body.plan_id || ''); if (!id) return json(400, { error: 'plan_id is required' });
+      const shared = body.shared === true;
+      const sections = [...new Set((Array.isArray(body.sections) ? body.sections : []).map(x => String(x).slice(0, 12)).filter(x => /^(brief|book|prep|s\d{1,2})$/.test(x)))];
+      if (shared && !sections.length) return json(400, { error: 'Choose at least one section to share' });
+      const { data: cur, error: cErr } = await admin.from('model_shoot_plans').select('id,title,shared_with_model,shared_sections').eq('organization_id', organization.id).eq('model_id', modelId).eq('id', id).maybeSingle();
+      if (cErr) { if (/shared_with_model|shared_sections|column/i.test(String(cErr.message || ''))) return json(409, { error: 'Sharing needs the updated setup. Run docs/sql/2026-10-22-model-shoot-plans.sql again in Supabase.', needs_setup: true }); throw cErr; }
+      if (!cur) return json(404, { error: 'Plan not found' });
+      const { data, error } = await admin.from('model_shoot_plans').update({ shared_with_model: shared, shared_sections: shared ? sections : [], shared_at: shared ? new Date().toISOString() : null, updated_at: new Date().toISOString() }).eq('organization_id', organization.id).eq('id', id).select('id,shared_with_model,shared_sections,shared_at').single();
+      if (error) throw error;
+      /* tell the model, once, when a plan first becomes visible to them */
+      if (shared && !cur.shared_with_model) {
+        try {
+          const { data: link } = await admin.from('model_user_links').select('user_id').eq('organization_id', organization.id).eq('model_id', modelId).maybeSingle();
+          if (link?.user_id) await admin.from('notifications').insert({ organization_id: organization.id, user_id: link.user_id, notification_type: 'shoot_plan_shared', title: 'Your shoot plan is ready', body: 'Your agent shared your shoot plan. Open Shoot plan to see the shoots, the shot list and what to prepare.', channel: 'in_app', status: 'delivered', source_type: 'shoot_plan', source_id: id, action_url: '?page=myshoot', metadata: { model_id: modelId } });
+        } catch (e) { /* the share itself is saved; a missed notice should not undo it */ }
+      }
+      return json(200, { ok: true, verified: data?.shared_with_model === shared, plan: data });
+    }
     if (action === 'archive') {
       const id = String(body.plan_id || ''); if (!id) return json(400, { error: 'plan_id is required' });
       const { data, error } = await admin.from('model_shoot_plans').update({ status: 'archived', updated_at: new Date().toISOString() }).eq('organization_id', organization.id).eq('model_id', modelId).eq('id', id).select('id').single();

@@ -19,3 +19,8 @@ alter table public.model_shoot_plans enable row level security;
 revoke all on public.model_shoot_plans from anon, authenticated;
 
 create index if not exists model_shoot_plans_model_idx on public.model_shoot_plans (organization_id, model_id, updated_at desc);
+
+-- Sharing: a plan is private to staff until someone switches "Share with model" on, and then only the chosen sections are sent to the model.
+alter table public.model_shoot_plans add column if not exists shared_with_model boolean not null default false;
+alter table public.model_shoot_plans add column if not exists shared_sections jsonb not null default '[]'::jsonb;
+alter table public.model_shoot_plans add column if not exists shared_at timestamptz;

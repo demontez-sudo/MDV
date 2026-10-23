@@ -40,3 +40,8 @@
 .sp-link{border:0;background:none;color:inherit;text-decoration:underline;cursor:pointer;font:inherit}
 .sp-toast{position:fixed;left:50%;bottom:34px;transform:translateX(-50%);z-index:10100;max-width:90vw;padding:10px 16px;border-radius:999px;background:#1d1812;border:1px solid #d4b077;color:#f3efe8;font:500 13px Inter,sans-serif}.sp-toast.bad{border-color:#e9a07c}
 @media(max-width:760px){.sp{padding:16px}.sp-two,.sp-dir{grid-template-columns:1fr}}
+
+.sp-share{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:14px 0 2px;padding:12px 14px;border:1px solid rgba(255,255,255,.12);border-radius:10px;font-size:12.5px;color:var(--mdv-mute,#9a8f7c)}
+.sp-share b{color:#f3efe8}.sp-share.on{border-color:rgba(154,211,166,.5)}.sp-share.open{display:block}
+.sp-share p{margin:6px 0 10px}.sp-checks{display:flex;flex-wrap:wrap;gap:8px 18px;margin-bottom:12px}.sp-checks label{display:flex;align-items:center;gap:7px;color:#f3efe8;font-size:13px;cursor:pointer}
+.sp-row{display:flex;gap:8px;flex-wrap:wrap}

@@ -5,7 +5,7 @@
 'use strict';
 if(window.MDV_SHOOT_PLAN)return;
 
-var CACHE={},UI={tab:{},plan:{}};
+var CACHE={},UI={tab:{},plan:{},share:{}};
 
 function bridge(){return window.VEUX_AGENT_V4;}
 function org(){var b=bridge();return (b&&b.state&&b.state.org&&b.state.org.slug)||'maison-de-veux';}
@@ -118,6 +118,27 @@ function bodyFor(p,tab){
   return viewBrief(p);
 }
 
+
+function sharePanel(cur,tabs,id){
+  var names={};tabs.forEach(function(t){names[t[0]]=t[1];});
+  var on=!!cur.shared_with_model,secs=Array.isArray(cur.shared_sections)?cur.shared_sections:[];
+  if(UI.share[id]){
+    var def=on?secs:tabs.map(function(t){return t[0];}).filter(function(k){return k!=='brief';});
+    return '<div class="sp-share open"><b>Choose what the model can see</b><p>She or he will see a read-only <b>Shoot plan</b> page in the model portal, and get a notice. The brief often has candid notes about the current book, so it starts switched off.</p><div class="sp-checks">'
+      +tabs.map(function(t){return '<label><input type="checkbox" data-spk="'+esc(t[0])+'"'+(def.indexOf(t[0])>=0?' checked':'')+'> '+esc(t[1])+'</label>';}).join('')
+      +'</div><div class="sp-row"><button type="button" class="sp-btn gold" data-sp="share-save" data-id="'+esc(cur.id)+'">'+(on?'Update what is shared':'Share with model')+'</button><button type="button" class="sp-btn" data-sp="share-cancel">Cancel</button></div></div>';
+  }
+  if(on)return '<div class="sp-share on"><span><b>Shared with the model</b> · '+secs.map(function(k){return esc(names[k]||k);}).join(', ')+'</span><span class="sp-row"><button type="button" class="sp-btn" data-sp="share-open">Change</button><button type="button" class="sp-btn" data-sp="share-stop" data-id="'+esc(cur.id)+'">Stop sharing</button></span></div>';
+  return '<div class="sp-share"><span><b>Private to staff.</b> The model cannot see this plan.</span><button type="button" class="sp-btn" data-sp="share-open">Share with model…</button></div>';
+}
+async function saveShare(id,planId,shared,sections){
+  try{
+    var r=await api('/api/agent/shoot-plans',{method:'POST',body:JSON.stringify({organization_slug:org(),action:'share',model_id:id,plan_id:planId,shared:shared,sections:sections})});
+    if(!r||r.verified!==true)throw new Error('Not confirmed');
+    UI.share[id]=false;toast(shared?'Shared with the model':'No longer shared');await load(id,true);
+  }catch(e){toast(String(e&&e.message||e),true);}
+}
+
 function render(id){
   var host=document.getElementById('mdv-sp');if(!host||String(host.getAttribute('data-model'))!==String(id))return;
   var st=CACHE[id];
@@ -133,7 +154,7 @@ function render(id){
   var sel=plans.length>1?'<select class="sp-sel" data-sp="plan">'+plans.map(function(x){return '<option value="'+esc(x.id)+'"'+(x.id===cur.id?' selected':'')+'>'+esc(x.title)+'</option>';}).join('')+'</select>':'';
   var facts=(p.facts||[]).length?'<dl class="sp-facts">'+p.facts.map(function(f){return '<div><dt>'+esc(f.k)+'</dt><dd>'+esc(f.v)+'</dd></div>';}).join('')+'</dl>':'';
   host.innerHTML=head+'<div class="sp-meta"><div><b>'+esc(cur.title)+'</b><span>'+esc(p.eyebrow||'')+(p.sub?' · '+esc(p.sub):'')+'</span></div>'+sel+'</div>'+facts
-    +'<nav class="sp-tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" class="'+(t[0]===tab?'on':'')+'" data-sp="tab" data-t="'+esc(t[0])+'">'+esc(t[1])+'</button>';}).join('')+'</nav>'
+    +sharePanel(cur,tabs,id)+'<nav class="sp-tabs" role="tablist">'+tabs.map(function(t){return '<button type="button" role="tab" class="'+(t[0]===tab?'on':'')+'" data-sp="tab" data-t="'+esc(t[0])+'">'+esc(t[1])+'</button>';}).join('')+'</nav>'
     +'<div class="sp-body">'+bodyFor(p,tab)+'</div><footer><span>'+esc(cur.source_name?'From '+cur.source_name+' · ':'')+'Updated '+esc(new Date(cur.updated_at||Date.now()).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}))+'</span><button type="button" class="sp-link" data-sp="remove" data-id="'+esc(cur.id)+'">Remove this plan</button></footer>';
 }
 
@@ -167,6 +188,10 @@ document.addEventListener('click',function(e){
   var id=modelId(),a=t.getAttribute('data-sp');
   if(a==='import'){var f=document.getElementById('mdv-sp-file');if(f){f.value='';f.click();}}
   else if(a==='tab'){UI.tab[id]=t.getAttribute('data-t');render(id);}
+  else if(a==='share-open'){UI.share[id]=true;render(id);}
+  else if(a==='share-cancel'){UI.share[id]=false;render(id);}
+  else if(a==='share-save'){var host=document.getElementById('mdv-sp'),ks=[].map.call(host.querySelectorAll('[data-spk]:checked'),function(c){return c.getAttribute('data-spk');});if(!ks.length){toast('Choose at least one section to share',true);return;}saveShare(id,t.getAttribute('data-id'),true,ks);}
+  else if(a==='share-stop'){if(confirm('Stop sharing this plan? It disappears from the model portal.'))saveShare(id,t.getAttribute('data-id'),false,[]);}
   else if(a==='remove'){if(confirm('Remove this shoot plan from the model?'))api('/api/agent/shoot-plans',{method:'POST',body:JSON.stringify({organization_slug:org(),action:'archive',model_id:id,plan_id:t.getAttribute('data-id')})}).then(function(){toast('Plan removed');return load(id,true);}).catch(function(x){toast(String(x&&x.message||x),true);});}
 });
 document.addEventListener('change',function(e){

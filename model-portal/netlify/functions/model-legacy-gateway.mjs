@@ -36,7 +36,7 @@ function legacyBootstrap(b,s){
     tasks:b.tasks||[],approvals:notifications.filter(x=>/approval/i.test(String(x.notification_type||x.source_type||''))),
     notifications,mobility:b.mobility||{travel:[],visa_cases:[]},documents:b.documents?.links||[],
     finance:{...(b.finance||{}),account:b.finance?.account||{summary:{balances:[],budget_projection:[]},budgets:[],expenses:[],statement_acknowledgements:[]}},
-    development:b.development||{},notes:b.notes||[],conversations:b.conversations||[],messages:b.messages||[],scoped_documents:b.scoped_documents||[],current_user_id:b.account?.user_id||null,wellness:b.wellness||{profile:null,items:[],checkins:[]},warnings:[...(b.warnings||[]),...(s.warnings||[])]
+    development:b.development||{},shoot_plans:b.shoot_plans||[],notes:b.notes||[],conversations:b.conversations||[],messages:b.messages||[],scoped_documents:b.scoped_documents||[],current_user_id:b.account?.user_id||null,wellness:b.wellness||{profile:null,items:[],checkins:[]},warnings:[...(b.warnings||[]),...(s.warnings||[])]
   };
 }
 async function invoke(handler,req,body){return handler(await toLegacyEvent(req,body));}
