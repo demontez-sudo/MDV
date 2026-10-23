@@ -119,7 +119,8 @@ export const handler=async event=>{
       availability:{blocks:availability},
       requests:notifications,
       tasks,
-      development:{evaluations,plans},
+      /* The agency's evaluations and development plans are internal. The model portal shows the model's own gameplan and submissions, never these. */
+      development:{evaluations:[],plans:[]},
       documents:{contracts,links:documentLinks},
       finance:{ledger,statements},
       notes:sharedNotes,
