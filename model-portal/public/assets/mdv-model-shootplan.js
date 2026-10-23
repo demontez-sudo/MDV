@@ -21,24 +21,41 @@ function viewShoot(s){
    +'<div class="msp-two"><div>'+paras(s.paragraphs)+((s.words||[]).length?'<div class="msp-words">'+s.words.map(function(w){return '<span>'+esc(w)+'</span>';}).join('')+'</div>':'')+'</div><div>'+(s.refs||[]).map(blk).join('')+'</div></div>'
    +((s.specs||[]).length?'<div class="msp-specs">'+s.specs.map(blk).join('')+'</div>':'')+((s.direction||[]).length?'<div class="msp-dir">'+s.direction.map(blk).join('')+'</div>':'')+table+day;
 }
+function viewShots(p){
+  var total=0;(p.shoots||[]).forEach(function(s){total+=((s.shots&&s.shots.rows)||[]).length;});
+  var groups=(p.shoots||[]).filter(function(s){return s.shots&&s.shots.rows&&s.shots.rows.length;}).map(function(s){
+    var cols=s.shots.columns||[];
+    return '<section class="msp-sl"><h3><i>'+esc(s.roman)+'</i> '+esc(s.name)+' <span>'+s.shots.rows.length+' shots</span></h3>'
+      +s.shots.rows.map(function(r){
+        var c=r.cells||[],last=c.length-1;
+        var rest=c.slice(2,last).map(function(v,i){return v?'<div><small>'+esc(cols[i+2]||'')+'</small><p>'+esc(v)+'</p></div>':'';}).join('');
+        return '<article class="msp-shot"><div class="msp-sc"><b>'+esc(c[0]||'')+'</b></div><div class="msp-sb"><h4>'+esc(c[1]||'')+'</h4><div class="msp-sg">'+rest+'</div></div><span class="msp-su'+(r.hero?' hero':'')+'">'+esc(c[last]||'')+'</span></article>';
+      }).join('')+'</section>';
+  }).join('');
+  return '<div class="msp-eyebrow">Every shot, in order</div><h2 class="msp-title">Shot list <em>'+total+' shots across '+(p.shoots||[]).length+' shoots</em></h2>'
+    +'<div class="msp-tools"><button type="button" class="msp-print" onclick="window.print()">Print shot list</button></div>'+(groups||'<p>No shots have been shared yet.</p>');
+}
 function viewBook(b){return '<div class="msp-eyebrow">'+esc(b.eyebrow)+'</div><h2 class="msp-title">'+esc(b.heading)+'</h2>'+(b.intro?'<p class="msp-lede">'+esc(b.intro)+'</p>':'')+'<div class="msp-book">'+(b.pages||[]).map(function(x){return '<div class="'+(x.cut?'cut':'')+'"><span>'+esc(x.pg)+'</span><b>'+esc(x.title)+'</b><small>'+esc(x.sub)+'</small></div>';}).join('')+'</div>';}
 function viewPrep(b){return '<div class="msp-eyebrow">'+esc(b.eyebrow)+'</div><h2 class="msp-title">'+esc(b.heading)+'</h2><div class="msp-prep">'+(b.groups||[]).map(blk).join('')+'</div>';}
 function tabsOf(p){
   var t=[];if(p.brief)t.push(['brief','Brief']);
+  if((p.shoots||[]).some(function(s){return s.shots&&s.shots.rows&&s.shots.rows.length;}))t.push(['shots','Shot list']);
   (p.shoots||[]).forEach(function(s){t.push([s.key,(s.roman?s.roman+' · ':'')+s.name]);});
   if(p.book)t.push(['book','Book order']);if(p.prep)t.push(['prep','Prep']);return t;
 }
 function bodyFor(p,tab){
+  if(tab==='shots')return viewShots(p);
   if(tab==='brief'&&p.brief)return viewBrief(p.brief);
   if(tab==='book'&&p.book)return viewBook(p.book);
   if(tab==='prep'&&p.prep)return viewPrep(p.prep);
   var s=(p.shoots||[]).filter(function(x){return x.key===tab;})[0];return s?viewShoot(s):'';
 }
-function render(el){
+function render(el,want){
   var all=plans();
   var head='<header class="v15m-head"><div><div class="v15m-kicker">DEVELOPMENT · SHOOT PLAN</div><h1>My Shoot Plan</h1><p>Your agent shared this with you. It covers what we are shooting, what to wear and prepare, and how each day runs.</p></div></header>';
   if(!all.length){el.innerHTML='<div class="v15m-page msp">'+head+'<div class="v15m-card"><div class="v15m-empty">Nothing has been shared with you yet.</div></div></div>';return;}
   var cur=all.filter(function(x){return x.id===UI.plan;})[0]||all[0];if(UI.plan!==cur.id){UI.plan=cur.id;UI.tab=null;}
+  if(want&&tabsOf(cur).some(function(t){return t[0]===want;})){UI.tab=want;}
   var tabs=tabsOf(cur),tab=tabs.some(function(t){return t[0]===UI.tab;})?UI.tab:(tabs[0]&&tabs[0][0]);UI.tab=tab;
   var sel=all.length>1?'<select class="msp-sel" id="msp-plan">'+all.map(function(x){return '<option value="'+esc(x.id)+'"'+(x.id===cur.id?' selected':'')+'>'+esc(x.title)+'</option>';}).join('')+'</select>':'';
   var facts=(cur.facts||[]).length?'<dl class="msp-facts">'+cur.facts.map(function(f){return '<div><dt>'+esc(f.k)+'</dt><dd>'+esc(f.v)+'</dd></div>';}).join('')+'</dl>':'';
@@ -47,5 +64,5 @@ function render(el){
   [].forEach.call(el.querySelectorAll('[data-msp]'),function(b){b.onclick=function(){UI.tab=b.getAttribute('data-msp');render(el);};});
   var s=el.querySelector('#msp-plan');if(s)s.onchange=function(){UI.plan=s.value;UI.tab=null;render(el);};
 }
-window.MDV_MODEL_SHOOT={render:render,has:function(){return plans().length>0;}};
+window.MDV_MODEL_SHOOT={render:render,has:function(){return plans().length>0;},hasShots:function(){return plans().some(function(p){return (p.shoots||[]).some(function(s){return s.shots&&s.shots.rows&&s.shots.rows.length;});});}};
 })();

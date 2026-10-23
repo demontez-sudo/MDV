@@ -95,6 +95,15 @@ function viewShoot(s){
    +((s.specs||[]).length?'<div class="sp-specs">'+s.specs.map(block).join('')+'</div>':'')
    +((s.direction||[]).length?'<div class="sp-dir">'+s.direction.map(block).join('')+'</div>':'')+table+day;
 }
+function viewShots(p){
+  var total=0;(p.shoots||[]).forEach(function(s){total+=((s.shots&&s.shots.rows)||[]).length;});
+  var groups=(p.shoots||[]).filter(function(s){return s.shots&&s.shots.rows&&s.shots.rows.length;}).map(function(s){
+    var cols=s.shots.columns||[],rows=s.shots.rows;
+    return '<h5 class="sp-h">'+esc((s.roman?s.roman+' · ':'')+s.name)+' · '+rows.length+' shots</h5><div class="sp-tw"><table class="sp-tbl"><thead><tr>'+cols.map(function(c){return '<th>'+esc(c)+'</th>';}).join('')+'</tr></thead><tbody>'
+      +rows.map(function(r){return '<tr>'+r.cells.map(function(c,i){var cls=i===0?' class="n"':(i===1?' class="shot"':(i===r.cells.length-1?' class="use'+(r.hero?' hero':'')+'"':''));return '<td'+cls+'>'+esc(c)+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>';
+  }).join('');
+  return '<div class="sp-eyebrow">Every shot, in order</div><h3 class="sp-title">Shot list <em>'+total+' shots across '+(p.shoots||[]).length+' shoots</em></h3>'+(groups||'<p class="sp-mute">No shots in this plan.</p>');
+}
 function viewBook(p){
   var b=p.book;if(!b)return '<p class="sp-mute">No book order in this plan.</p>';
   return '<div class="sp-eyebrow">'+esc(b.eyebrow)+'</div><h3 class="sp-title">'+esc(b.heading)+'</h3>'+(b.intro?'<p class="sp-lede">'+esc(b.intro)+'</p>':'')
@@ -106,11 +115,13 @@ function viewPrep(p){
 }
 function tabsOf(p){
   var t=[['brief','Brief']];
+  if((p.shoots||[]).some(function(s){return s.shots&&s.shots.rows&&s.shots.rows.length;}))t.push(['shots','Shot list']);
   (p.shoots||[]).forEach(function(s,i){t.push(['s'+i,(s.roman?s.roman+' · ':'')+s.name]);});
   if(p.book)t.push(['book','Book order']);if(p.prep)t.push(['prep','Prep']);
   return t;
 }
 function bodyFor(p,tab){
+  if(tab==='shots')return viewShots(p);
   if(tab==='brief')return viewBrief(p);
   if(tab==='book')return viewBook(p);
   if(tab==='prep')return viewPrep(p);
@@ -120,6 +131,7 @@ function bodyFor(p,tab){
 
 
 function sharePanel(cur,tabs,id){
+  tabs=tabs.filter(function(t){return t[0]!=='shots';});   /* the shot list is built from the shoots that are shared */
   var names={};tabs.forEach(function(t){names[t[0]]=t[1];});
   var on=!!cur.shared_with_model,secs=Array.isArray(cur.shared_sections)?cur.shared_sections:[];
   if(UI.share[id]){
