@@ -435,7 +435,7 @@ function topMostContent(panel){
   return best;
 }
 var TG={last:null,freeze:0,page:''};
-function tighten(){
+function tighten(fresh){
   var tb=document.querySelector('#app .topbar'),root=document.documentElement;if(!tb)return;
   var panel=document.querySelector('#pm .panel.on, .pm .panel.on');if(!panel){return;}
   var now=Date.now();
@@ -450,6 +450,7 @@ function tighten(){
     TG.freeze=now+120000;TG.last=null;root.style.setProperty('--ws-adj','0px');return;
   }
   var next=Math.max(-160,Math.min(130,Math.round(cur-err)));
+  if(!fresh&&Math.abs(err)<=40)return;   /* a settled page is not nudged for small differences */
   if(Math.abs(next-cur)>4){root.style.setProperty('--ws-adj',next+'px');TG.last={t:now,err:err};}
   else TG.last=null;
 }
@@ -481,6 +482,8 @@ function patchSheets(){
     patched.add(sh);patchRules(rules);
   }
 }
+var LAYOUT={openAt:Date.now(),resizeAt:0};
+function atTop(){return (document.body.scrollTop||document.documentElement.scrollTop||window.pageYOffset||0)<=2;}
 var lastScroll=0,lastW=window.innerWidth,wait=0;
 document.addEventListener('scroll',function(){lastScroll=Date.now();},{capture:true,passive:true});
 /* nothing on the page is measured or moved while it is scrolling or just after: that is what looked like the page adjusting itself when you stopped */
@@ -491,18 +494,24 @@ function tick(){
     layoutRow();
     if(S.stale&&S.el&&S.el.isConnected&&S.el.classList.contains('on'))paint();
     if(document.documentElement.getAttribute('data-outlook')!=='workspace')return;
-    patchSheets();buildMenu();hubBar();buildDock();masthead();skinOnce();tighten();
+    patchSheets();buildMenu();buildDock();masthead();skinOnce();
+    /* Anything that can move the page is done only while the page is at the top, and the spacing nudge only just after a page opens or the window is resized.
+       Doing it while you are scrolled (or when you arrive back at the top) is what looked like the page jumping when you stopped. */
+    var top=atTop();
+    if(top)hubBar();
+    var fresh=(Date.now()-LAYOUT.openAt<4500)||(Date.now()-LAYOUT.resizeAt<1500);
+    if(top)tighten(fresh);
   }catch(e){}
 }
 /* the menu, dock and spacing follow the page: re-check right after every navigation and on resize, and only sweep occasionally in between */
 setInterval(function(){if(!document.hidden)tick();},1800);
-window.addEventListener('resize',function(){if(window.innerWidth===lastW)return;lastW=window.innerWidth;clearTimeout(window.__wsRz);window.__wsRz=setTimeout(tick,120);},{passive:true});
+window.addEventListener('resize',function(){if(window.innerWidth===lastW)return;lastW=window.innerWidth;LAYOUT.resizeAt=Date.now();clearTimeout(window.__wsRz);window.__wsRz=setTimeout(tick,120);},{passive:true});
 (function(){
   function inChain(f,mark){var n=0;while(f&&n++<60){if(f[mark])return true;f=f.__orig||f.__previous;}return false;}
   function hook(){
     if(typeof window.navTo!=='function'||inChain(window.navTo,'__ws'))return;
     var prev=window.navTo;
-    var w=function(){var r=prev.apply(this,arguments);setTimeout(tick,0);setTimeout(tick,250);return r;};
+    var w=function(){LAYOUT.openAt=Date.now();var r=prev.apply(this,arguments);try{if(document.documentElement.getAttribute('data-outlook')==='workspace')hubBar();}catch(e){}setTimeout(tick,0);setTimeout(tick,250);return r;};   /* the page tab bar goes in with the page, not a moment after it (that moment was a visible jump) */
     for(var k in prev){try{w[k]=prev[k];}catch(_e){}}
     w.__ws=1;w.__orig=prev;window.navTo=w;
   }
