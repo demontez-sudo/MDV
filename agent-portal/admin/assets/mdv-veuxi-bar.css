@@ -39,3 +39,15 @@ html[data-veux-wave] body .vx73-command button .vx21-command-arrow{font-size:19p
   html[data-veux-wave] body .vx73-command input{font-size:16px!important;height:40px!important}
   html[data-veux-wave] body .vx73-command button{width:38px!important;height:38px!important}
 }
+
+/* Veux Intelligence card on the overview: the orb is always a round badge with the mark centred in it, level with the heading.
+   On a narrow screen it moves above the text instead of dropping underneath it. */
+html body .vx17-attention{grid-template-columns:minmax(0,1fr) auto!important;gap:22px!important;align-items:center!important}
+html body .vx17-attention .vx17-veuxi-orb{width:64px!important;height:64px!important;min-width:0!important;min-height:0!important;padding:0!important;border-radius:50%!important;aspect-ratio:1/1;justify-self:end;align-self:center;display:grid!important;place-items:center;flex:none}
+html body .vx17-attention .vx17-veuxi-orb img{width:30px!important;height:30px!important;object-fit:contain}
+html[data-veux-wave] body .vx17-attention .vx17-veuxi-orb .vx20-veuxi-wave-mark{width:30px!important;height:30px!important;flex:none!important}
+@media(max-width:760px){
+  html body .vx17-attention{grid-template-columns:1fr!important;gap:14px!important}
+  html body .vx17-attention .vx17-veuxi-orb{order:-1;justify-self:start;width:48px!important;height:48px!important}
+  html body .vx17-attention .vx17-veuxi-orb img,html[data-veux-wave] body .vx17-attention .vx17-veuxi-orb .vx20-veuxi-wave-mark{width:24px!important;height:24px!important}
+}
