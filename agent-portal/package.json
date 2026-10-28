@@ -3,7 +3,7 @@
   "version": "16.11.54",
   "private": true,
   "type": "module",
-  "description": "Agency / Agent operational portal \u2014 CAVYRE 16.11.54 Vera Advanced Operating Intelligence.",
+  "description": "Agency / Agent operational portal \u2014 CAVYRE 16.11.54 Veux Advanced Operating Intelligence.",
   "dependencies": {
     "@supabase/supabase-js": "2.112.3"
   },

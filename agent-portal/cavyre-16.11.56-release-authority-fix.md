@@ -7,7 +7,7 @@ Fixes:
 - Updated visible AGENT release badge to 16.11.56.
 - Renamed and updated runtime authority from 16.11.53 to 16.11.56.
 - Added `assets/cavyre-release-authority.js` as the single runtime release synchronizer.
-- Preserved 16.11.55 Smart CRM forms and Vera 16.11.54 operating intelligence.
+- Preserved 16.11.55 Smart CRM forms and Veux 16.11.54 operating intelligence.
 
 Validation:
 - No live 16.11.53 references remain in root/admin HTML or runtime assets.

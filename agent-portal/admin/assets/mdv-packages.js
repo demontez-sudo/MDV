@@ -1,4 +1,4 @@
-/* Smart Packaging System: pipeline board, engagement rings, Vera signals and a live package cockpit. */
+/* Smart Packaging System: pipeline board, engagement rings, Veux signals and a live package cockpit. */
 (function(){
 if(window.MDV_PKG)return;
 var S={view:'board',q:'',detail:false,el:null,data:null};
@@ -78,7 +78,7 @@ function detailHtml(d,ctx){
   return '<div class="pk-detail-in"><button type="button" class="pk-back" data-pk-back>← Packages</button><header class="pk-dh">'+ring(sc)+'<div><small>Package cockpit</small><h2>'+esc(p.title||'Package')+'</h2><span>'+esc((lp.companies&&lp.companies.name)||'Direct / unassigned')+' · updated '+esc(dt(p.updated_at))+'</span></div></header>'+stepper(lp)
    +'<div class="pk-actions"><button type="button" class="primary" onclick="VEUX_V155.packageForm(\''+esc(p.id)+'\')">Edit</button><button type="button" '+(ready?'':'disabled title="Email delivery is offline"')+' onclick="VEUX_V155.sendPackage(\''+esc(p.id)+'\',this)">'+(ready?'Send':'Email offline')+'</button>'+(ready&&canUpdate(lp)?'<button type="button" class="pk-update-btn" data-pk-update="'+esc(p.id)+'">Send update</button>':'')+'<button type="button" onclick="VEUX_V156.duplicatePackage(\''+esc(p.id)+'\')">Duplicate</button><button type="button" onclick="VEUX_V155.archivePackage(\''+esc(p.id)+'\')">Archive</button></div>'
    +'<div class="pk-metrics"><span><b>'+models.length+'</b>Models</span><span><b>'+opened.length+'/'+recipients.length+'</b>Viewed</span><span><b>'+feedback.length+'</b>Replies</span><span><b>'+esc(dt(p.expires_at))+'</b>Expires</span></div>'
-   +'<section class="pk-vera"><div><small>✦ Vera</small>'+advice.map(function(a){return '<p>'+esc(a)+'</p>';}).join('')+'</div><button type="button" data-pk-ask="'+esc(p.id)+'">Ask Vera</button></section>'
+   +'<section class="pk-veuxi"><div><small>✦ Veux</small>'+advice.map(function(a){return '<p>'+esc(a)+'</p>';}).join('')+'</div><button type="button" data-pk-ask="'+esc(p.id)+'">Ask Veux</button></section>'
    +'<h4>Models</h4><div class="pk-models">'+mm+'</div><h4>Recipients</h4><ul class="pk-rec">'+rn+'</ul>'+(fb?'<h4>Client replies</h4><ul class="pk-fb">'+fb+'</ul>':'')+'</div>';
 }
 function paint(el,data){
@@ -89,7 +89,7 @@ function paint(el,data){
     var h='<div class="mdv-pk">'
      +'<header class="pk-head"><div><small>Model tools · client submissions</small><h1>Smart Packages</h1></div><div class="pk-head-r"><span class="pk-mail '+(ready?'ok':'off')+'" title="'+esc(ready?dc.sender_email:'Email delivery is offline')+'"><i></i>'+(ready?'Email ready':'Email offline')+'</span><button type="button" data-pk-go="packageresponses">Responses'+(openFb?' <b>'+openFb+'</b>':'')+'</button><button type="button" class="primary" onclick="VEUX_V155.packageForm()">+ New package</button></div></header>'
      +'<div class="pk-stats"><span><b>'+total+'</b>Packages</span><span><b>'+live+'</b>Live with clients</span><span><b>'+pkgs.filter(function(x){return stage(x)==='viewed'}).length+'</b>Being viewed</span><span><b>'+openFb+'</b>Need review</span></div>'
-     +(sig.length?'<section class="pk-signals"><h3><i>✦</i> Vera signals</h3><div>'+sig.map(function(s){return '<article class="'+s.k+'"><b>'+esc(s.t)+'</b><p>'+esc(s.d)+'</p><div class="pk-sig-acts"><button type="button" '+(s.page?'data-pk-go="'+esc(s.page)+'"':'data-pk="'+esc(s.id)+'"')+'>'+esc(s.a)+' →</button>'+((s.k==='cold'||s.k==='warm')?'<button type="button" class="ghost" data-pk-update="'+esc(s.id)+'">Send update</button>':'')+'</div></article>';}).join('')+'</div></section>':'')
+     +(sig.length?'<section class="pk-signals"><h3><i>✦</i> Veux signals</h3><div>'+sig.map(function(s){return '<article class="'+s.k+'"><b>'+esc(s.t)+'</b><p>'+esc(s.d)+'</p><div class="pk-sig-acts"><button type="button" '+(s.page?'data-pk-go="'+esc(s.page)+'"':'data-pk="'+esc(s.id)+'"')+'>'+esc(s.a)+' →</button>'+((s.k==='cold'||s.k==='warm')?'<button type="button" class="ghost" data-pk-update="'+esc(s.id)+'">Send update</button>':'')+'</div></article>';}).join('')+'</div></section>':'')
      +'<div class="pk-bar"><label class="pk-search"><input data-pk-q placeholder="Search packages or clients…" value="'+esc(S.q)+'"><i>⌕</i></label><div class="pk-seg" role="group" aria-label="View"><button type="button" data-pk-view="board" class="'+(S.view==='board'?'on':'')+'">Board</button><button type="button" data-pk-view="list" class="'+(S.view==='list'?'on':'')+'">List</button></div></div>'
      +'<div class="pk-layout'+(S.detail&&p.id?' detail-open':'')+'"><main class="pk-main">'+boardHtml(pkgs,p.id)+'</main><aside class="pk-detail">'+detailHtml(d,{list:pkgs,ready:ready})+'</aside></div></div>';
     el.innerHTML=h;
@@ -107,7 +107,7 @@ function bind(el,pkgs){
     if((b=e.target.closest('[data-pk-go]'))){if(window.navTo)navTo(b.dataset.pkGo);return;}
     if(e.target.closest('[data-pk-back]')){S.detail=false;var l=el.querySelector('.pk-layout');if(l)l.classList.remove('detail-open');return;}
     if((b=e.target.closest('[data-pk-update]'))){openUpdateModal(b.dataset.pkUpdate);return;}
-    if((b=e.target.closest('[data-pk-ask]'))){var pk=pkgs.find(function(x){return x.id===b.dataset.pkAsk;})||{};if(window.MDV_VERA_CHAT)MDV_VERA_CHAT.open('Review my package "'+(pk.title||'')+'" for '+((pk.companies&&pk.companies.name)||'the client')+'. It is '+stage(pk)+' with '+((pk.tracking&&pk.tracking.total_views)||0)+' views. Suggest the best follow-up and draft a short message.');return;}
+    if((b=e.target.closest('[data-pk-ask]'))){var pk=pkgs.find(function(x){return x.id===b.dataset.pkAsk;})||{};if(window.MDV_VEUXI_CHAT)MDV_VEUXI_CHAT.open('Review my package "'+(pk.title||'')+'" for '+((pk.companies&&pk.companies.name)||'the client')+'. It is '+stage(pk)+' with '+((pk.tracking&&pk.tracking.total_views)||0)+' views. Suggest the best follow-up and draft a short message.');return;}
     if((b=e.target.closest('[data-pk]'))){S.detail=true;b.classList.add('pk-busy');if(window.VEUX_V155&&VEUX_V155.selectPackage)VEUX_V155.selectPackage(b.dataset.pk);return;}
   };
 }

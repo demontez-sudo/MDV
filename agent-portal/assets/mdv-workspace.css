@@ -51,7 +51,7 @@ html[data-outlook="workspace"] .tb-brand>*:not(.ws-brand):not(.tb-back){display:
 .ws-brand small{font:500 10px/1 Archivo,Inter,sans-serif;letter-spacing:.32em;text-transform:uppercase;color:var(--ws-mute)}
 html[data-outlook="workspace"] .vx73-command{flex:1 1 auto!important;max-width:560px!important;margin:0 auto 0 0!important;height:50px!important;border-radius:999px!important;background:rgba(255,255,255,.03)!important;border:1px solid var(--ws-line)!important;box-shadow:none!important;padding:0 8px 0 18px!important}
 html[data-outlook="workspace"] .vx73-command input{background:transparent!important;border:0!important;color:var(--ws-ink)!important;font:14.5px Archivo,Inter,sans-serif!important}
-html[data-outlook="workspace"] .vx73-command .vera-mark{display:none!important}
+html[data-outlook="workspace"] .vx73-command .veuxi-mark{display:none!important}
 html[data-outlook="workspace"] .vx73-command button{width:36px!important;height:36px!important;border-radius:50%!important;background:var(--ws-wave)!important;border:0!important;color:#1a0d05!important;font-weight:700}
 html[data-outlook="workspace"] body #app .topbar .vx73-clocks,html[data-outlook="workspace"] body #app .vx73-clocks{display:none!important}
 #ws-clocks{display:flex;gap:0;margin-left:auto;flex:none}
@@ -116,7 +116,7 @@ html[data-outlook="workspace"] body #app .vx17-command{background:none!important
 .ws-due{font:400 14px Archivo,sans-serif;color:var(--ws-ink)}.ws-due.today,.ws-due.over{color:var(--ws-bright)}.ws-due.over{color:#ee6a5c}
 .ws-desk>footer{padding:10px 0 4px;border-top:1px solid var(--ws-hair)}.ws-desk>footer .ws-link{margin-left:0}
 
-/* schedule + vera */
+/* schedule + veuxi */
 .ws-wk{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:0 -2px 6px;padding:8px 0 10px;border-bottom:1px solid var(--ws-hair)}
 .ws-wk button{display:grid;gap:3px;justify-items:center;padding:7px 0;border:1px solid transparent;border-radius:6px;background:none;color:var(--ws-ink);cursor:pointer;letter-spacing:0;text-transform:none;font-family:Archivo,sans-serif}
 .ws-wk small{font:500 10.5px Archivo,sans-serif;letter-spacing:.1em;color:var(--ws-mute)}.ws-wk b{font:400 19px Archivo,sans-serif}
@@ -125,8 +125,8 @@ html[data-outlook="workspace"] body #app .vx17-command{background:none!important
 .ws-st1{font:400 16px Archivo,sans-serif;color:var(--ws-ink)}.ws-sp1{width:48px;height:52px;border-radius:3px;border-left:3px solid var(--ws-wave)}
 .ws-sw{display:grid;gap:2px;min-width:0}.ws-sw b{font:500 15px Archivo,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ws-sw small{font:400 12.5px Archivo,sans-serif;color:var(--ws-mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ws-sm{font:400 13px Archivo,sans-serif;color:var(--ws-mute)}.ws-sr i{color:var(--ws-bright);font-size:18px}
-.ws-vera{margin:14px -20px -12px;border-top:1px solid var(--ws-line);padding:14px 20px 16px;background:rgba(255,255,255,.015)}
-.ws-vera>header{display:flex;align-items:center;gap:12px;margin-bottom:10px}.ws-vera h3{margin:0;font:600 15px Archivo,sans-serif!important;letter-spacing:.2em!important;text-transform:uppercase!important;flex:1;color:var(--ws-ink)}
+.ws-veuxi{margin:14px -20px -12px;border-top:1px solid var(--ws-line);padding:14px 20px 16px;background:rgba(255,255,255,.015)}
+.ws-veuxi>header{display:flex;align-items:center;gap:12px;margin-bottom:10px}.ws-veuxi h3{margin:0;font:600 15px Archivo,sans-serif!important;letter-spacing:.2em!important;text-transform:uppercase!important;flex:1;color:var(--ws-ink)}
 .ws-vmark{display:block;width:32px;height:28px;background:var(--ws-bright);-webkit-mask:url(icons/mdv-symbol.svg) center/contain no-repeat;mask:url(icons/mdv-symbol.svg) center/contain no-repeat}
 .ws-vb{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--ws-hair);border-left:3px solid var(--ws-wave);border-radius:6px;background:rgba(255,255,255,.02)}
 .ws-vb p{margin:0;flex:1;font:400 14.5px/1.4 Archivo,sans-serif;color:var(--ws-ink)}

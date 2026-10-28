@@ -71,6 +71,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 else schedule();
 new MutationObserver(schedule).observe(document.documentElement,{subtree:true,childList:true});
 window.addEventListener('veux:shell-ready',schedule);
-window.addEventListener('cavyre:vera-signals',schedule);
+window.addEventListener('cavyre:veuxi-signals',schedule);
 setInterval(enforce,1200);
 })();

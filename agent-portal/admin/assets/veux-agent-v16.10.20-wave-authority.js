@@ -6,13 +6,13 @@ window.__VEUX_WAVE_AUTHORITY_161020__=true;
 
 function mark(avatar){
   var s=document.createElement('span');
-  s.className='vx20-vera-wave-mark'+(avatar?' avatar':'');
+  s.className='vx20-veuxi-wave-mark'+(avatar?' avatar':'');
   s.setAttribute('aria-hidden','true');
   return s;
 }
 function replaceImage(img){
   if(!img||img.dataset.vx20Replaced==='1')return;
-  var avatar=img.classList.contains('vera-avatar-img');
+  var avatar=img.classList.contains('veuxi-avatar-img');
   var s=mark(avatar);
   img.dataset.vx20Replaced='1';
   img.replaceWith(s);
@@ -20,19 +20,19 @@ function replaceImage(img){
 function convert(root){
   root=root||document;
   if(!root.querySelectorAll)return;
-  root.querySelectorAll('.vera-mark-img,.vera-avatar-img').forEach(replaceImage);
+  root.querySelectorAll('.veuxi-mark-img,.veuxi-avatar-img').forEach(replaceImage);
 
-  /* Command bar may exist before Vera's official enhancer. */
+  /* Command bar may exist before Veux's official enhancer. */
   root.querySelectorAll('.vx73-command').forEach(function(cmd){
-    var legacy=cmd.querySelector(':scope > .vera-mark');
+    var legacy=cmd.querySelector(':scope > .veuxi-mark');
     if(legacy){
       var m=mark(false);
       legacy.replaceWith(m);
-    }else if(!cmd.querySelector(':scope > .vx20-vera-wave-mark')){
+    }else if(!cmd.querySelector(':scope > .vx20-veuxi-wave-mark')){
       cmd.insertBefore(mark(false),cmd.firstChild);
     }
     var b=cmd.querySelector('button');
-    if(b&&!b.querySelector('.vx20-vera-wave-mark')){
+    if(b&&!b.querySelector('.vx20-veuxi-wave-mark')){
       b.textContent='';
       b.appendChild(mark(false));
     }
@@ -40,20 +40,20 @@ function convert(root){
 
   /* Fixed launcher. */
   var launcher=document.getElementById('_asst-btn');
-  if(launcher&&!launcher.querySelector('.vx20-vera-wave-mark')){
+  if(launcher&&!launcher.querySelector('.vx20-veuxi-wave-mark')){
     launcher.innerHTML='';
     launcher.appendChild(mark(true));
   }
 
   /* Agency Command orb. */
-  root.querySelectorAll('.vx17-vera-orb').forEach(function(b){
+  root.querySelectorAll('.vx17-veuxi-orb').forEach(function(b){
     b.querySelectorAll('img').forEach(function(i){i.remove();});
-    if(!b.querySelector('.vx20-vera-wave-mark'))b.appendChild(mark(true));
+    if(!b.querySelector('.vx20-veuxi-wave-mark'))b.appendChild(mark(true));
   });
 
-  /* Panel identity and Vera message heads. */
-  root.querySelectorAll('.vera-panel-identity,.vera-message-head').forEach(function(box){
-    if(!box.querySelector('.vx20-vera-wave-mark'))box.insertBefore(mark(box.classList.contains('vera-panel-identity')),box.firstChild);
+  /* Panel identity and Veux message heads. */
+  root.querySelectorAll('.veuxi-panel-identity,.veuxi-message-head').forEach(function(box){
+    if(!box.querySelector('.vx20-veuxi-wave-mark'))box.insertBefore(mark(box.classList.contains('veuxi-panel-identity')),box.firstChild);
   });
 }
 

@@ -14,7 +14,7 @@ function build(){
     bar=document.getElementById('mdv-appbar');
     if(!bar){bar=document.createElement('header');bar.id='mdv-appbar';
       bar.innerHTML='<button type="button" class="ab-l" data-ab="left" aria-label="Back"></button><div class="ab-t"><b></b><small></small></div>'
-       +'<button type="button" class="ab-r" data-ab="vera" aria-label="Ask Vera"><i class="ti ti-sparkles"></i></button>'
+       +'<button type="button" class="ab-r" data-ab="veuxi" aria-label="Ask Veux"><i class="ti ti-sparkles"></i></button>'
        +'<button type="button" class="ab-r" data-ab="bell" aria-label="Notifications"><i class="ti ti-bell"></i><em hidden></em></button>';
       document.body.appendChild(bar);}
     last={};
@@ -67,8 +67,8 @@ document.addEventListener('click',function(e){
   if(a==='left'){
     if(t.dataset.root){if(page()!=='overview'&&typeof window.navTo==='function')window.navTo('overview');else window.scrollTo({top:0,behavior:'smooth'});}
     else if(typeof window.portalBack==='function')window.portalBack();else history.back();
-  }else if(a==='vera'){
-    if(window.MDV_VERA_CHAT&&MDV_VERA_CHAT.open)MDV_VERA_CHAT.open();else{var b=document.getElementById('_asst-btn');if(b)b.click();}
+  }else if(a==='veuxi'){
+    if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open)MDV_VEUXI_CHAT.open();else{var b=document.getElementById('_asst-btn');if(b)b.click();}
   }else if(a==='bell'){
     if(typeof window.toggleNotifPanel==='function')window.toggleNotifPanel();
   }

@@ -113,7 +113,7 @@ export const handler=async(event)=>{
           company=(await rows(admin.from('companies').select('*').eq('organization_id',organization.id).ilike('name',nm).limit(1)))[0]||null;
           if(!company){
             const ct=['brand','agency','casting_office','photographer','media','production','other'].includes(clean(body.company&&body.company.company_type))?body.company.company_type:'brand';
-            const {data,error}=await admin.from('companies').insert({organization_id:organization.id,name:nm,company_type:ct,website:clean(body.company&&body.company.website)||null,notes:clean(body.company&&body.company.notes)||'Added from Season by Vera research. Verify details.'}).select('*').single();if(error)throw error;company=data;out.created_company=true;
+            const {data,error}=await admin.from('companies').insert({organization_id:organization.id,name:nm,company_type:ct,website:clean(body.company&&body.company.website)||null,notes:clean(body.company&&body.company.notes)||'Added from Season by Veux research. Verify details.'}).select('*').single();if(error)throw error;company=data;out.created_company=true;
           }
           await admin.from('season_shows').update({company_id:company.id}).eq('organization_id',organization.id).eq('id',show.id);
         }
@@ -122,7 +122,7 @@ export const handler=async(event)=>{
           const dn=clean(c.display_name);if(!dn)continue;
           let contact=(await rows(admin.from('contacts').select('*').eq('organization_id',organization.id).ilike('display_name',dn).limit(1)))[0]||null;
           if(!contact){
-            const {data,error}=await admin.from('contacts').insert({organization_id:organization.id,display_name:dn,role:clean(c.role)||'Casting Director',company_id:company?.id||null,email:clean(c.email)||null,instagram:clean(c.instagram)||null,market:clean(c.market)||null,notes:clean(c.notes)||'Added from Season by Vera research. Verify details.'}).select('*').single();if(error)throw error;contact=data;out.created_contacts++;
+            const {data,error}=await admin.from('contacts').insert({organization_id:organization.id,display_name:dn,role:clean(c.role)||'Casting Director',company_id:company?.id||null,email:clean(c.email)||null,instagram:clean(c.instagram)||null,market:clean(c.market)||null,notes:clean(c.notes)||'Added from Season by Veux research. Verify details.'}).select('*').single();if(error)throw error;contact=data;out.created_contacts++;
           }
           if(company){
             const ex=(await rows(admin.from('contact_company_links').select('contact_id').eq('organization_id',organization.id).eq('contact_id',contact.id).eq('company_id',company.id).limit(1)))[0];

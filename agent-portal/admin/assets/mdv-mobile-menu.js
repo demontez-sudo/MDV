@@ -6,7 +6,7 @@ var TILES=[
   ['inbox','Messages','ti-message-circle'],['mail','Mail','ti-mail'],['seasonmanagement','Season','ti-calendar-event'],['industrydirectory','Clients','ti-building-store'],['outreach','Outreach','ti-send'],['notes','Notes','ti-notes'],['helm','Helm','ti-compass'],['helmcalendar','Helm Calendar','ti-calendar-user'],['alerts','Alerts','ti-bell-ringing'],
   ['multipackage','Packages','ti-package'],['globalmobility','Mobility','ti-plane'],['financelegal','Finance','ti-cash'],
   ['scouting','Scouting','ti-search'],['modeldevelopment','Development','ti-trending-up'],['team','Team','ti-users-group'],
-  ['editorial','Editorial','ti-news'],['__vera__','Vera','ti-sparkles'],['systemsettings','Settings','ti-settings']
+  ['editorial','Editorial','ti-news'],['__veuxi__','Veux','ti-sparkles'],['systemsettings','Settings','ti-settings']
 ];
 var MORE=[
   ['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control'],['filesforms','Files & Forms'],
@@ -17,7 +17,7 @@ var root=null;
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function go(p){
   close();
-  if(p==='__vera__'){if(window.MDV_VERA_CHAT&&MDV_VERA_CHAT.open)MDV_VERA_CHAT.open();else{var b=document.getElementById('_asst-btn');if(b)b.click();}return;}
+  if(p==='__veuxi__'){if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open)MDV_VEUXI_CHAT.open();else{var b=document.getElementById('_asst-btn');if(b)b.click();}return;}
   if(typeof window.navTo==='function')window.navTo(p);
 }
 function pwaRow(){
@@ -52,7 +52,7 @@ function html(){
     '<header><span class="mm-av">'+esc(u.i)+'</span><div class="mm-who"><b>'+esc(u.n)+'</b><small>'+esc(u.r)+'</small></div><button type="button" class="mm-close" data-mm-x aria-label="Close"><i class="ti ti-x"></i></button></header>'+
     '<label class="mm-search"><i class="ti ti-search"></i><input type="search" placeholder="Find a page…" autocomplete="off"></label>'+
     '<div class="mm-scroll">'+body+
-    '<section class="mm-sec"><div class="mm-tiles"><button type="button" class="mm-tile" data-mm-go="__vera__" data-mm-name="vera ask"><i class="ti ti-sparkles"></i><span>Ask Vera</span></button>'+(window.VEUX_PWA&&!VEUX_PWA.isStandalone()?'<button type="button" class="mm-tile" data-mm-install data-mm-name="install app"><i class="ti ti-download"></i><span>Install app</span></button>':'')+'<button type="button" class="mm-tile mm-out" data-mm-out data-mm-name="sign out"><i class="ti ti-logout"></i><span>Sign out</span></button></div></section></div>'+
+    '<section class="mm-sec"><div class="mm-tiles"><button type="button" class="mm-tile" data-mm-go="__veuxi__" data-mm-name="veuxi ask"><i class="ti ti-sparkles"></i><span>Ask Veux</span></button>'+(window.VEUX_PWA&&!VEUX_PWA.isStandalone()?'<button type="button" class="mm-tile" data-mm-install data-mm-name="install app"><i class="ti ti-download"></i><span>Install app</span></button>':'')+'<button type="button" class="mm-tile mm-out" data-mm-out data-mm-name="sign out"><i class="ti ti-logout"></i><span>Sign out</span></button></div></section></div>'+
   '</section>';
 }
 function open(){

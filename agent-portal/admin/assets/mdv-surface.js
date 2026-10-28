@@ -9,7 +9,7 @@
 if(window.__MDV_SURFACE__)return;window.__MDV_SURFACE__=true;
 
 var CAND='[class*="modal"],[class*="-back"],[class*="overlay"],[class*="dlg"],[class*="dialog"],[class*="drawer"],[class*="sheet"],[class*="popup"]';
-var SKIP='#login,#mdv-appbar,#mdv-tabs,#mdv-diag,.sr-lb,.mdv-lb,[class*="toast"],[class*="lightbox"],[class*="tooltip"],[id*="vera"],[class*="vera-"],[class*="notif"]';
+var SKIP='#login,#mdv-appbar,#mdv-tabs,#mdv-diag,.sr-lb,.mdv-lb,[class*="toast"],[class*="lightbox"],[class*="tooltip"],[id*="veuxi"],[class*="veuxi-"],[class*="notif"]';
 var queued=false;
 
 function shown(e){var s=getComputedStyle(e);return s.display!=='none'&&s.visibility!=='hidden'&&e.getClientRects().length>0;}

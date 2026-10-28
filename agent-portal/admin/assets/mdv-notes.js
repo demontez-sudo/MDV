@@ -241,7 +241,7 @@ function noteHtml(n,replies,compact){
    +(n.title?'<h4>'+esc(n.title)+'</h4>':'')
    +(editing?'<textarea class="nt-edit" rows="5">'+esc(n.body)+'</textarea><div class="nt-acts"><button type="button" class="nt-btn sm gold" data-esave>Save</button><button type="button" class="nt-btn sm" data-ecancel>Cancel</button></div>':'<div class="nt-body">'+bodyHtml(n.title&&n.body.indexOf(n.title)===0?n.body.slice(n.title.length).replace(/^\s+/,''):n.body)+'</div>')
    +((chips||tags||fu||tk||vis)?'<div class="nt-chips">'+chips+fu+tk+tags+vis+'</div>':'')
-   +(compact?'':'<footer class="nt-acts"><button type="button" data-a="pin">'+(n.pinned?'Unpin':'Pin')+'</button><button type="button" data-a="resolve">'+(n.resolved?'Reopen':'Mark done')+'</button><button type="button" data-a="reply">Reply</button><button type="button" data-a="vera"><i class="ti ti-sparkles"></i> Ask Vera</button>'+(mine?'<button type="button" data-a="edit">Edit</button><button type="button" data-a="del" class="danger">Delete</button>':'')+'</footer>')
+   +(compact?'':'<footer class="nt-acts"><button type="button" data-a="pin">'+(n.pinned?'Unpin':'Pin')+'</button><button type="button" data-a="resolve">'+(n.resolved?'Reopen':'Mark done')+'</button><button type="button" data-a="reply">Reply</button><button type="button" data-a="veuxi"><i class="ti ti-sparkles"></i> Ask Veux</button>'+(mine?'<button type="button" data-a="edit">Edit</button><button type="button" data-a="del" class="danger">Delete</button>':'')+'</footer>')
    +(arr(replies).length?'<div class="nt-replies">'+replies.map(function(r){return '<div class="nt-rep"><b>'+esc(r.author_name||'Team')+'</b> <small>'+esc(ago(r.created_at))+'</small><div>'+bodyHtml(r.body)+'</div></div>';}).join('')+'</div>':'')
    +(S.replyOpen===n.id?'<div class="nt-replybox"><textarea rows="2" placeholder="Reply…" data-rtext></textarea><button type="button" class="nt-btn sm gold" data-rsend>Send</button></div>':'')+'</article>';
 }
@@ -258,7 +258,7 @@ function wireNotes(root,rerender){
         else if(a==='reply'){S.replyOpen=S.replyOpen===id?null:id;}
         else if(a==='edit'){S.editing=id;}
         else if(a==='del'){if(!window.confirm('Delete this note?'))return;await post({action:'archive',id:id});S.notes=S.notes.filter(function(x){return x.id!==id&&x.parent_id!==id;});toast('Note deleted');}
-        else if(a==='vera'){askVera('Help me with this note and what to do next.\n\n'+note.body+(arr(note.links).length?'\n\nConnected to: '+note.links.map(function(l){return l.label;}).join(', '):''));return;}
+        else if(a==='veuxi'){askVeuxi('Help me with this note and what to do next.\n\n'+note.body+(arr(note.links).length?'\n\nConnected to: '+note.links.map(function(l){return l.label;}).join(', '):''));return;}
         badge();if(rerender)rerender();
       }catch(e){toast(msg(e),true);}
     };});
@@ -267,9 +267,9 @@ function wireNotes(root,rerender){
     var rs=card.querySelector('[data-rsend]');if(rs)rs.onclick=async function(){var t=card.querySelector('[data-rtext]').value.trim();if(!t)return;try{var r=await post({action:'create',body:t,parent_id:id,visibility:note.visibility,links:[]});S.notes.push(r.note);S.replyOpen=null;if(rerender)rerender();}catch(e){toast(msg(e),true);}};
   });
 }
-function askVera(prompt){
-  try{if(window.MDV_VERA_CHAT&&MDV_VERA_CHAT.open){MDV_VERA_CHAT.open(prompt);return;}}catch(e){}
-  toast('Vera is not available right now.',true);
+function askVeuxi(prompt){
+  try{if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open){MDV_VEUXI_CHAT.open(prompt);return;}}catch(e){}
+  toast('Veux is not available right now.',true);
 }
 function repliesOf(id){return S.notes.filter(function(n){return n.parent_id===id;}).sort(function(a,b){return new Date(a.created_at)-new Date(b.created_at);});}
 function setupHtml(){
@@ -319,7 +319,7 @@ function paintPage(){
   else{var day='';feed=list.map(function(n){var k2=dayKey(n.created_at),h='';if(S.scope!=='followups'&&k2!==day){day=k2;h='<h3 class="nt-day">'+esc(dayLabel(n.created_at))+'</h3>';}return h+noteHtml(n,repliesOf(n.id));}).join('');}
   var tl=topLinks();
   var due=S.notes.filter(function(n){return !n.parent_id&&n.follow_up_at&&!n.resolved;}).sort(function(a,b){return new Date(a.follow_up_at)-new Date(b.follow_up_at);}).slice(0,5);
-  var side='<aside class="nt-side"><section class="nt-card"><h3><i class="ti ti-sparkles"></i> Vera</h3><div class="nt-vera">'
+  var side='<aside class="nt-side"><section class="nt-card"><h3><i class="ti ti-sparkles"></i> Veux</h3><div class="nt-veuxi">'
    +'<button type="button" data-v="week">Summarise this week’s notes</button><button type="button" data-v="follow">What needs a follow-up?</button><button type="button" data-v="team">What does the team need to know?</button></div></section>'
    +'<section class="nt-card"><h3>Most connected</h3>'+(tl.length?'<div class="nt-top">'+tl.map(function(l){var m=LINKS[l.type]||LINKS.page;return '<button type="button" data-f="'+esc(l.type+':'+l.id)+'" data-l="'+esc(l.label||'')+'"><i class="ti '+m[1]+'" style="color:'+m[2]+'"></i><span>'+esc(l.label||m[0])+'</span><em>'+l.n+'</em></button>';}).join('')+'</div>':'<p class="nt-mute">Connections appear as you write.</p>')+'</section>'
    +'<section class="nt-card"><h3>Coming up</h3>'+(due.length?'<ul class="nt-fl">'+due.map(function(n){return '<li data-jump="'+esc(n.id)+'"><span class="nt-chip fu '+dueState(n.follow_up_at)+'"><i class="ti ti-bell"></i>'+esc(shortDate(n.follow_up_at))+'</span><span>'+esc((n.title||n.body).slice(0,70))+'</span></li>';}).join('')+'</ul>':'<p class="nt-mute">No follow-ups set.</p>')+'</section></aside>';
@@ -341,7 +341,7 @@ function paintPage(){
   el.querySelectorAll('[data-v]').forEach(function(b){b.onclick=function(){
     var recent=S.notes.filter(function(n){return !n.parent_id;}).slice(0,25).map(function(n){return '- '+(n.author_name||'Team')+' ('+ago(n.created_at)+'): '+n.body.replace(/\s+/g,' ').slice(0,300)+(arr(n.links).length?' ['+n.links.map(function(l){return l.label;}).join(', ')+']':'');}).join('\n');
     var p={week:'Summarise what the team noted recently and what matters most.',follow:'From these notes, what needs a follow-up and who should do it?',team:'What does the whole team need to know from these notes?'}[b.dataset.v];
-    askVera(p+'\n\nNotes:\n'+recent);};});
+    askVeuxi(p+'\n\nNotes:\n'+recent);};});
   wireNotes(el.querySelector('.nt-feed'),paintPage);
 }
 window.renderNotes=function(el){

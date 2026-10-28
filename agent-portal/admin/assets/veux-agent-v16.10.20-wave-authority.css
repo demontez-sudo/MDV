@@ -73,30 +73,30 @@ html[data-veux-wave] .vx81-nav-flyout nav button:focus i{
 }
 
 /* ---------------------------------------------------------
-   2. VERA: REMOVE ALL FIXED GOLD ARTWORK
-   The JS layer replaces image marks with .vx20-vera-wave-mark.
+   2. VEUX: REMOVE ALL FIXED GOLD ARTWORK
+   The JS layer replaces image marks with .vx20-veuxi-wave-mark.
    --------------------------------------------------------- */
-html[data-veux-wave] .vx20-vera-wave-mark{
+html[data-veux-wave] .vx20-veuxi-wave-mark{
   display:inline-block!important;
   width:22px!important;
   height:22px!important;
   flex:0 0 22px!important;
   background:var(--skin-accent2)!important;
-  -webkit-mask:url("vera/vera-mark.svg") center/contain no-repeat!important;
-  mask:url("vera/vera-mark.svg") center/contain no-repeat!important;
+  -webkit-mask:url("veuxi/veuxi-mark.svg") center/contain no-repeat!important;
+  mask:url("veuxi/veuxi-mark.svg") center/contain no-repeat!important;
   filter:drop-shadow(0 0 8px var(--skin-glow))!important;
 }
-html[data-veux-wave] .vx20-vera-wave-mark.avatar{
+html[data-veux-wave] .vx20-veuxi-wave-mark.avatar{
   width:34px!important;
   height:34px!important;
   flex-basis:34px!important;
 }
-html[data-veux-wave] .vera-mark-img,
-html[data-veux-wave] .vera-avatar-img{
+html[data-veux-wave] .veuxi-mark-img,
+html[data-veux-wave] .veuxi-avatar-img{
   display:none!important;
 }
 
-/* Vera search/command bar */
+/* Veux search/command bar */
 html[data-veux-wave] .vx73-command{
   min-height:46px!important;
   border:1px solid var(--skin-line2)!important;
@@ -126,7 +126,7 @@ html[data-veux-wave] .vx73-command button:hover{
   border-color:var(--skin-accent)!important;
 }
 
-/* Vera launcher */
+/* Veux launcher */
 html[data-veux-wave] #_asst-btn{
   width:56px!important;height:56px!important;
   padding:0!important;
@@ -145,7 +145,7 @@ html[data-veux-wave] #_asst-btn:hover{
     radial-gradient(circle at 50% 44%,var(--skin-glow),var(--skin-card2) 56%,var(--skin-0) 100%)!important;
 }
 
-/* Vera assistant panel */
+/* Veux assistant panel */
 html[data-veux-wave] #_asst-panel{
   background:
     radial-gradient(circle at 85% 0%,var(--skin-soft),transparent 32%),
@@ -157,21 +157,21 @@ html[data-veux-wave] #_asst-panel>div:first-child{
   border-color:var(--skin-line)!important;
   background:linear-gradient(90deg,var(--skin-soft),transparent)!important;
 }
-html[data-veux-wave] .vera-panel-kicker,
-html[data-veux-wave] .vera-message-label{
+html[data-veux-wave] .veuxi-panel-kicker,
+html[data-veux-wave] .veuxi-message-label{
   color:var(--skin-accent)!important;
 }
-html[data-veux-wave] .vera-panel-name{
+html[data-veux-wave] .veuxi-panel-name{
   color:var(--skin-text)!important;
 }
 
-/* Agency Command Vera orb */
-html[data-veux-wave] .vx17-vera-orb{
+/* Agency Command Veux orb */
+html[data-veux-wave] .vx17-veuxi-orb{
   background:
     radial-gradient(circle,var(--skin-glow),var(--skin-card2) 58%,var(--skin-0) 100%)!important;
   border-color:var(--skin-accent)!important;
 }
-html[data-veux-wave] .vx17-vera-orb .vx20-vera-wave-mark{
+html[data-veux-wave] .vx17-veuxi-orb .vx20-veuxi-wave-mark{
   width:38px!important;height:38px!important;
 }
 

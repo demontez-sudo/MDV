@@ -220,7 +220,7 @@
   }
 
   /* Header search remains usable */
-  [class*="vera-search"],
+  [class*="veuxi-search"],
   [class*="command-search"]{
     min-width:0!important;
     width:100%!important;

@@ -212,7 +212,7 @@ html body .mdv-tasks.mdv-tasks .tk-bx:hover{color:#fff!important;background:rgba
   html body .mdv-tasks.mdv-tasks .tk-row .tk-c.c-st,html body .mdv-tasks.mdv-tasks .tk-row .tk-c.c-st .tk-stat{width:auto!important;max-width:170px;min-width:0!important;flex:0 0 auto!important}
 }
 
-/* ===================== Tasks v2 design: chips, two-line rows, docked preview, Vera rail ===================== */
+/* ===================== Tasks v2 design: chips, two-line rows, docked preview, Veux rail ===================== */
 .mdv-tasks .tk-page.tk2{display:grid;grid-template-columns:minmax(0,1fr) 352px;gap:24px;align-items:start;max-width:1720px}
 .mdv-tasks .tk2-main{min-width:0;max-height:calc(100vh - 24px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;padding-right:2px}
 @media(max-width:1320px){.mdv-tasks .tk-page.tk2{grid-template-columns:minmax(0,1fr)}.mdv-tasks .tk2-rail{position:static!important;max-height:none!important}.mdv-tasks .tk2-main{max-height:none!important;overflow:visible!important}.mdv-tasks .tk2-pv{position:static!important}}
@@ -291,7 +291,7 @@ html body .mdv-tasks.mdv-tasks .tk2-open:hover{border-color:var(--mdv-gold)!impo
 .mdv-tasks .tk2-cl .tk-ci{padding:4px 0}.mdv-tasks .tk2-cit{flex:1;min-width:0;font:400 13px/1.4 'Inter',sans-serif;color:var(--mdv-ink);cursor:pointer}.mdv-tasks .tk-ci.done .tk2-cit{color:var(--mdv-mute);text-decoration:line-through}
 .mdv-tasks .tk2-rel{display:grid;gap:10px}.mdv-tasks .tk2-rel>div{display:flex;flex-direction:column;gap:2px;padding:9px 12px;border:1px solid var(--tc-line);border-radius:11px;background:rgba(255,255,255,.025)}
 .mdv-tasks .tk2-rel small{font:500 11px 'Inter',sans-serif;color:var(--mdv-mute)}.mdv-tasks .tk2-rel b{font:500 13px 'Inter',sans-serif;color:var(--mdv-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* Vera · Task Intelligence rail */
+/* Veux · Task Intelligence rail */
 .mdv-tasks .tk2-rail{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;border:1px solid var(--tc-line);border-radius:18px;background:linear-gradient(180deg,color-mix(in srgb,var(--skin-card,#15130f) 80%,transparent),color-mix(in srgb,var(--skin-0,#0c0b09) 80%,transparent));backdrop-filter:blur(10px);padding:18px 16px 16px;scrollbar-width:thin}
 .mdv-tasks .tk2-rail>header{display:flex;align-items:center;gap:8px;margin-bottom:16px}.mdv-tasks .tk2-rail>header b{font:600 18px 'Inter',sans-serif;color:#fff}.mdv-tasks .tk2-dot{color:var(--mdv-mute)}
 .mdv-tasks .tk2-star{color:var(--mdv-gold-2);font-size:20px;line-height:1}

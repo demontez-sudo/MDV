@@ -277,7 +277,7 @@ html[data-veux-wave] .vx-select-option.selected{
   color:var(--skin-accent2)!important;
 }
 
-/* Agency Command / Vera intelligence */
+/* Agency Command / Veux intelligence */
 html[data-veux-wave] .vx17-attention,
 html[data-veux-wave] .vx95-intelligence,
 html[data-veux-wave] [class*="intelligence"]{

@@ -8,7 +8,7 @@
 
   /* one clean layer: the old top bar, old bottom bar, side menu and floating buttons go away */
   html:root:root body #app .topbar,html:root:root body #app .tb,html:root:root body #app nav#mobnav.mobnav,html:root:root body #app .mob-more-sheet,html:root:root body #app .mob-more-ov,html:root:root body #app #sidenav,html:root:root body #app #sb-ov,
-  html:root:root body #ws-side,html:root:root body #ws-fly,html:root:root body #ws-dock,html:root:root body #ws-clocks,html:root:root body .ws-brand,html:root:root body .veux-pwa-install,html:root:root body #vx73-rail,html:root:root body .vx73-rail,html:root:root body #vx80-mobile-nav,html:root:root body #vx80-mobile-sheet,html:root:root body .vx80-mobile-nav,html:root:root body .vx80-mobile-sheet,html:root:root body #_asst-btn.vera-launcher{display:none!important}
+  html:root:root body #ws-side,html:root:root body #ws-fly,html:root:root body #ws-dock,html:root:root body #ws-clocks,html:root:root body .ws-brand,html:root:root body .veux-pwa-install,html:root:root body #vx73-rail,html:root:root body .vx73-rail,html:root:root body #vx80-mobile-nav,html:root:root body #vx80-mobile-sheet,html:root:root body .vx80-mobile-nav,html:root:root body .vx80-mobile-sheet,html:root:root body #_asst-btn.veuxi-launcher{display:none!important}
 
   /* no desktop zoom on a phone: size is set per area below */
   html[data-outlook][data-ws-size] body,html body{zoom:1!important}
@@ -101,8 +101,8 @@
   .mh-dot{width:9px;height:9px;border-radius:50%;background:#c9a04a}
   .mh-dot.pr-r{background:#e0735f}.mh-dot.pr-o{background:var(--ma-cp)}.mh-dot.pr-y{background:#d6b45a}.mh-dot.pr-g{background:#6fa58a}
   .mh-empty{margin:0;padding:12px 0 10px;border-top:1px solid var(--ma-hair);font:400 13px Archivo,sans-serif;color:var(--ma-mute)}
-  .mh-vera p{margin:0 0 10px;font:400 13.5px/1.5 Archivo,sans-serif;color:var(--ma-ink)}
-  .mh-vera{padding-bottom:14px}
+  .mh-veuxi p{margin:0 0 10px;font:400 13.5px/1.5 Archivo,sans-serif;color:var(--ma-ink)}
+  .mh-veuxi{padding-bottom:14px}
   .mh-btn{display:inline-block!important;padding:9px 16px!important;border-radius:18px!important;background:var(--ma-cp)!important;color:#1a0d05!important;font:600 13px Archivo,sans-serif!important}
 
   /* ---------- menu sheet ---------- */

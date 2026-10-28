@@ -74,7 +74,7 @@ function companyProfile(co){
   var mails=people.map(email).filter(Boolean),ce=EMAIL.test(String(co.email||'').trim())?String(co.email).trim():'',site=url(co.website),ig=handle(m.instagram||co.instagram),li=url(m.linkedin);
   var act=arr(d.activity),bk=arr(d.bookings),ca=arr(d.castings),pk=arr(d.packages);
   var last=act[0]&&act[0].occurred_at,cad=parseInt(String(m.follow_up_cadence||'').replace(/\D/g,''),10)||0,days=last?Math.floor((Date.now()-new Date(last))/864e5):null;
-  var vera=!last?'No recorded activity with '+co.name+' yet. A short introduction is the best next step.':(cad&&days>cad)?'Last contact was '+days+' days ago — past the '+cad+'-day follow-up cadence. Time to reach out.':'Last activity '+shortDate(last)+(cad?' · follow-up every '+cad+' days.':'.')+' The relationship is on track.';
+  var veuxi=!last?'No recorded activity with '+co.name+' yet. A short introduction is the best next step.':(cad&&days>cad)?'Last contact was '+days+' days ago — past the '+cad+'-day follow-up cadence. Time to reach out.':'Last activity '+shortDate(last)+(cad?' · follow-up every '+cad+' days.':'.')+' The relationship is on track.';
   var target=ce||mails[0]||'';
   var specs=arr(co.specialties);
   return '<div class="ct-prof">'
@@ -94,7 +94,7 @@ function companyProfile(co){
    +(specs.length?'<div class="ct-tags spec">'+specs.map(function(x){return '<em>'+esc(x)+'</em>';}).join('')+'</div>':'')+'</section>'
    +'<section class="ct-sec"><h3>People <em>'+people.length+'</em> <button type="button" class="ct-btn sm" data-a="addcontact" data-id="'+esc(co.id)+'">+ Add contact</button></h3>'+peopleList(people)+'</section>'
    +'<section class="ct-sec"><h3>Activity</h3>'+(rec.loading?'<p class="ct-fine">Loading…</p>':rec.err?'<p class="ct-err">'+esc(rec.err)+'</p>':timeline(act))+'</section></div>'
-   +'<aside class="ct-colside"><section class="ct-vera"><small>✦ VERA</small><p>'+esc(vera)+'</p>'+(target?'<button type="button" class="ct-btn gold" data-email-to="'+esc(target)+'">✉ Write a follow-up</button>':'')+'</section>'
+   +'<aside class="ct-colside"><section class="ct-veuxi"><small>✦ VEUX</small><p>'+esc(veuxi)+'</p>'+(target?'<button type="button" class="ct-btn gold" data-email-to="'+esc(target)+'">✉ Write a follow-up</button>':'')+'</section>'
    +workList('Bookings',bk,function(x){return '<li><i>◉</i><div><b>'+esc(x.title||'Booking')+'</b><span>'+esc(label(x.status))+'</span></div><time>'+esc(longDate(x.starts_at||x.start_at))+'</time></li>';})
    +workList('Castings',ca,function(x){return '<li><i>◉</i><div><b>'+esc(x.title||'Casting')+'</b><span>'+esc(label(x.status))+'</span></div><time>'+esc(longDate(x.starts_at))+'</time></li>';})
    +workList('Packages',pk,function(x){return '<li><i>◈</i><div><b>'+esc(x.title||x.name||'Package')+'</b><span>'+esc(label(x.status))+'</span></div><time>'+esc(shortDate(x.created_at))+'</time></li>';})

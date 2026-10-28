@@ -6,13 +6,13 @@ window.__VEUX_WAVE_AUTHORITY_161021__=true;
 
 function mark(avatar){
   var s=document.createElement('span');
-  s.className='vx20-vera-wave-mark'+(avatar?' avatar':'');
+  s.className='vx20-veuxi-wave-mark'+(avatar?' avatar':'');
   s.setAttribute('aria-hidden','true');
   return s;
 }
 function replaceImage(img){
   if(!img||img.dataset.vx20Replaced==='1')return;
-  var avatar=img.classList.contains('vera-avatar-img');
+  var avatar=img.classList.contains('veuxi-avatar-img');
   var s=mark(avatar);
   img.dataset.vx20Replaced='1';
   img.replaceWith(s);
@@ -20,21 +20,21 @@ function replaceImage(img){
 function convert(root){
   root=root||document;
   if(!root.querySelectorAll)return;
-  root.querySelectorAll('.vera-mark-img,.vera-avatar-img').forEach(replaceImage);
+  root.querySelectorAll('.veuxi-mark-img,.veuxi-avatar-img').forEach(replaceImage);
 
-  /* Command bar may exist before Vera's official enhancer. */
+  /* Command bar may exist before Veux's official enhancer. */
   root.querySelectorAll('.vx73-command').forEach(function(cmd){
-    /* Exactly one Vera mark: the identity mark on the left. */
-    cmd.querySelectorAll(':scope > .vera-mark-img,:scope > .vera-mark,:scope > .vx20-vera-wave-mark').forEach(function(n,i){if(i>0)n.remove();});
-    var left=cmd.querySelector(':scope > .vera-mark-img,:scope > .vera-mark,:scope > .vx20-vera-wave-mark');
-    if(left&&!left.classList.contains('vx20-vera-wave-mark'))left.replaceWith(mark(false));
-    if(!cmd.querySelector(':scope > .vx20-vera-wave-mark'))cmd.insertBefore(mark(false),cmd.firstChild);
+    /* Exactly one Veux mark: the identity mark on the left. */
+    cmd.querySelectorAll(':scope > .veuxi-mark-img,:scope > .veuxi-mark,:scope > .vx20-veuxi-wave-mark').forEach(function(n,i){if(i>0)n.remove();});
+    var left=cmd.querySelector(':scope > .veuxi-mark-img,:scope > .veuxi-mark,:scope > .vx20-veuxi-wave-mark');
+    if(left&&!left.classList.contains('vx20-veuxi-wave-mark'))left.replaceWith(mark(false));
+    if(!cmd.querySelector(':scope > .vx20-veuxi-wave-mark'))cmd.insertBefore(mark(false),cmd.firstChild);
 
     var b=cmd.querySelector('button');
     if(b){
       b.innerHTML='<span class="vx21-command-arrow" aria-hidden="true">→</span>';
-      b.title='Open Vera Intelligence';
-      b.setAttribute('aria-label','Open Vera Intelligence');
+      b.title='Open Veux Intelligence';
+      b.setAttribute('aria-label','Open Veux Intelligence');
       if(!b.dataset.vx21Bound){
         b.dataset.vx21Bound='1';
         b.addEventListener('click',function(e){e.preventDefault();var launcher=document.getElementById('_asst-btn');if(launcher)launcher.click();});
@@ -54,20 +54,20 @@ function convert(root){
 
   /* Fixed launcher. */
   var launcher=document.getElementById('_asst-btn');
-  if(launcher&&!launcher.querySelector('.vx20-vera-wave-mark')){
+  if(launcher&&!launcher.querySelector('.vx20-veuxi-wave-mark')){
     launcher.innerHTML='';
     launcher.appendChild(mark(true));
   }
 
   /* Agency Command orb. */
-  root.querySelectorAll('.vx17-vera-orb').forEach(function(b){
+  root.querySelectorAll('.vx17-veuxi-orb').forEach(function(b){
     b.querySelectorAll('img').forEach(function(i){i.remove();});
-    if(!b.querySelector('.vx20-vera-wave-mark'))b.appendChild(mark(true));
+    if(!b.querySelector('.vx20-veuxi-wave-mark'))b.appendChild(mark(true));
   });
 
-  /* Panel identity and Vera message heads. */
-  root.querySelectorAll('.vera-panel-identity,.vera-message-head').forEach(function(box){
-    if(!box.querySelector('.vx20-vera-wave-mark'))box.insertBefore(mark(box.classList.contains('vera-panel-identity')),box.firstChild);
+  /* Panel identity and Veux message heads. */
+  root.querySelectorAll('.veuxi-panel-identity,.veuxi-message-head').forEach(function(box){
+    if(!box.querySelector('.vx20-veuxi-wave-mark'))box.insertBefore(mark(box.classList.contains('veuxi-panel-identity')),box.firstChild);
   });
 }
 

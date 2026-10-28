@@ -1,7 +1,7 @@
 
 /* CAVYRE 16.11.78 — Calendar Authority
    Calendar-only repair from last known working portal.
-   Vera Model Intelligence stays on the RIGHT on desktop. */
+   Veux Model Intelligence stays on the RIGHT on desktop. */
 
 #p-calendar{
   --cvy-cal-intel:340px;
@@ -11,7 +11,7 @@
 }
 #p-calendar *{box-sizing:border-box}
 
-/* ---------- SHARED RIGHT-SIDE VERA ---------- */
+/* ---------- SHARED RIGHT-SIDE VEUX ---------- */
 @media (min-width:1181px){
   #p-calendar .cvy-cal-intel-side{
     position:sticky!important;
@@ -384,7 +384,7 @@
   z-index:2!important;
 }
 
-/* Vera Model Intelligence stays in the calendar's right rail, not in the lower command board. */
+/* Veux Model Intelligence stays in the calendar's right rail, not in the lower command board. */
 @media (min-width:1181px){
   #p-calendar .vx75-calendar .cvy-cal-intel-side{
     grid-column:auto!important;

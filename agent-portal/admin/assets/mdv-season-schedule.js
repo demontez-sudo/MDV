@@ -1,4 +1,4 @@
-/* Season schedule: day-by-day list, easy model assignment, Vera designer research + model fit, CRM linking. */
+/* Season schedule: day-by-day list, easy model assignment, Veux designer research + model fit, CRM linking. */
 (function(){
 if(window.MDV_SEASON_SCHED)return;
 var S={q:'',type:'all',assigned:false,busy:false};
@@ -21,7 +21,7 @@ function rowHtml(x,tz){
   var end=x._ends?tf(x._ends,tz):'',dirs=directorsFor(x),ms=x.season_show_models||[];
   var chips=dirs.slice(0,3).map(function(d){return '<span class="sc-chip cd" title="'+esc(d.role||'Casting')+'">CD · '+esc(d.display_name)+'</span>';}).join('')
     +ms.map(function(m){var n=rosterName(m.model_id);return '<span class="sc-chip md" title="'+esc(n)+'"><i>'+esc(initials(n))+'</i>'+esc(n)+'<button type="button" data-sc-rm="'+esc(x.id)+'|'+esc(m.model_id)+'" aria-label="Remove '+esc(n)+'">×</button></span>';}).join('');
-  return '<article class="sc-row" data-sc-show="'+esc(x.id)+'"><time>'+esc(tf(x.starts_at,tz))+(end?'<small>– '+esc(end)+'</small>':'')+'</time><div class="sc-main"><b>'+esc(x.title)+'</b><span>'+esc(x.location||'')+(kindOf(x)==='presentation'?' · Presentation':'')+'</span>'+(chips?'<div class="sc-chips">'+chips+'</div>':'')+'</div><div class="sc-acts"><button type="button" data-sc-models="'+esc(x.id)+'">＋ Models</button><button type="button" class="vera" data-sc-vera="'+esc(x.id)+'">✦ Vera</button></div></article>';
+  return '<article class="sc-row" data-sc-show="'+esc(x.id)+'"><time>'+esc(tf(x.starts_at,tz))+(end?'<small>– '+esc(end)+'</small>':'')+'</time><div class="sc-main"><b>'+esc(x.title)+'</b><span>'+esc(x.location||'')+(kindOf(x)==='presentation'?' · Presentation':'')+'</span>'+(chips?'<div class="sc-chips">'+chips+'</div>':'')+'</div><div class="sc-acts"><button type="button" data-sc-models="'+esc(x.id)+'">＋ Models</button><button type="button" class="veuxi" data-sc-veuxi="'+esc(x.id)+'">✦ Veux</button></div></article>';
 }
 function listHtml(season){
   var tz=tzFor(season),q=S.q.trim().toLowerCase(),days=[],cur=null,n=0;
@@ -87,47 +87,47 @@ function removeModel(showId,modelId){
   M().api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({action:'remove_show_model',organization_slug:M().slug(),show_id:showId,model_id:modelId})}).then(refresh).catch(function(e){toast(String(e&&e.message||e));});
 }
 
-/* ---- Vera analysis ---- */
-function veraPanel(showId,instruction){
+/* ---- Veux analysis ---- */
+function veuxiPanel(showId,instruction){
   var m=M(),x=m.C.shows.find(function(s){return s.id===showId;});if(!x)return;
-  var box=modal('<header><div><small>Vera · designer intelligence</small><h2>'+esc(x.title)+'</h2>'+extLinks(x)+'</div><button type="button" data-sc-x aria-label="Close">×</button></header><div class="sc-body vera"><div class="sc-loading"><i></i><b>Researching the designer on the web…</b><span>Casting history, casting director, aesthetic and which of your models fit. This can take up to 30 seconds.</span></div></div>','wide');
+  var box=modal('<header><div><small>Veux · designer intelligence</small><h2>'+esc(x.title)+'</h2>'+extLinks(x)+'</div><button type="button" data-sc-x aria-label="Close">×</button></header><div class="sc-body veuxi"><div class="sc-loading"><i></i><b>Researching the designer on the web…</b><span>Casting history, casting director, aesthetic and which of your models fit. This can take up to 30 seconds.</span></div></div>','wide');
   var body=box.querySelector('.sc-body');
-  m.api('/api/agent/season/vera',{method:'POST',body:JSON.stringify({organization_slug:m.slug(),show_id:showId,instruction:instruction||''})}).then(function(st){
+  m.api('/api/agent/season/veuxi',{method:'POST',body:JSON.stringify({organization_slug:m.slug(),show_id:showId,instruction:instruction||''})}).then(function(st){
     if(!st||!st.job_id)return st;
     var t0=Date.now();
     return new Promise(function(resolve,reject){(function tick(){
       if(!document.getElementById('mdv-sc-modal')){reject(new Error('Closed'));return;}
-      if(Date.now()-t0>300000){reject(new Error('Vera took too long. Please try again.'));return;}
-      m.api('/api/agent/season/vera?organization='+encodeURIComponent(m.slug())+'&job_id='+encodeURIComponent(st.job_id),{method:'GET',headers:{},__fresh:true}).then(function(r){
-        if(r.status==='complete')resolve(r.result);else if(r.status==='failed')reject(new Error(r.error||'Vera could not finish the research.'));else{var s=body.querySelector('.sc-loading span');if(s&&Date.now()-t0>25000)s.textContent='Still researching — deep web research can take a minute or two…';setTimeout(tick,2000);}
+      if(Date.now()-t0>300000){reject(new Error('Veux took too long. Please try again.'));return;}
+      m.api('/api/agent/season/veuxi?organization='+encodeURIComponent(m.slug())+'&job_id='+encodeURIComponent(st.job_id),{method:'GET',headers:{},__fresh:true}).then(function(r){
+        if(r.status==='complete')resolve(r.result);else if(r.status==='failed')reject(new Error(r.error||'Veux could not finish the research.'));else{var s=body.querySelector('.sc-loading span');if(s&&Date.now()-t0>25000)s.textContent='Still researching — deep web research can take a minute or two…';setTimeout(tick,2000);}
       }).catch(function(e){if(Date.now()-t0<20000)setTimeout(tick,2500);else reject(e);});
     })();});
-  }).then(function(r){renderVera(body,x,r);}).catch(function(e){body.innerHTML='<p class="sc-err">'+esc(String(e&&e.message||e))+'</p><p class="sc-hint">You can close this and try again.</p>';});
+  }).then(function(r){renderVeuxi(body,x,r);}).catch(function(e){body.innerHTML='<p class="sc-err">'+esc(String(e&&e.message||e))+'</p><p class="sc-hint">You can close this and try again.</p>';});
 }
-function renderVera(body,x,r){
+function renderVeuxi(body,x,r){
   var d=r.designer||{},cp=r.casting_profile||{},dirs=r.casting_directors||[],sug=r.suggestions||[],taken={};(x.season_show_models||[]).forEach(function(q){taken[q.model_id]=1;});
   var tags=(d.aesthetic||[]).map(function(t){return '<span class="sc-tag">'+esc(t)+'</span>';}).join('');
   var links=[d.website&&'<a href="'+esc(d.website)+'" target="_blank" rel="noopener noreferrer">Website</a>',d.instagram&&'<a href="https://instagram.com/'+esc(String(d.instagram).replace(/^@/,''))+'" target="_blank" rel="noopener noreferrer">Instagram</a>'].filter(Boolean).join(' · ');
   var h='<section class="vp"><h3>'+esc(d.name||x.title)+'</h3><p>'+esc(d.summary||'No public summary found.')+'</p>'+(tags?'<div class="sc-tags">'+tags+'</div>':'')+(d.creative_director?'<p class="sc-hint">Creative director: '+esc(d.creative_director)+'</p>':'')+(links?'<p class="sc-hint">'+links+'</p>':'')+'</section>';
   h+='<section class="vp"><h4>Casting profile</h4><p>'+esc(cp.summary||'No public casting information found.')+'</p>'+(cp.height_range?'<p class="sc-hint">Typical height: '+esc(cp.height_range)+'</p>':'')+((cp.look||[]).length?'<div class="sc-tags">'+cp.look.map(function(t){return '<span class="sc-tag">'+esc(t)+'</span>';}).join('')+'</div>':'')+'</section>';
   h+='<section class="vp"><h4>Casting directors &amp; contacts</h4>'+(dirs.length?dirs.map(function(c,i){return '<label class="sc-dir"><input type="checkbox" data-sc-dir="'+i+'" '+(c.confidence>=.5?'checked':'')+'><span><b>'+esc(c.display_name)+'</b><small>'+esc([c.role,c.company].filter(Boolean).join(' · '))+' · confidence '+Math.round(c.confidence*100)+'%'+(c.source_url?' · <a href="'+esc(c.source_url)+'" target="_blank" rel="noopener noreferrer">source</a>':'')+'</small></span></label>';}).join(''):'<p class="sc-hint">No casting director found in public sources.</p>')+'<div class="sc-actrow"><button type="button" class="primary" data-sc-crm>'+(dirs.length?'Add designer &amp; selected contacts to CRM and connect':'Add designer to Companies')+'</button></div><p class="sc-crm-msg" hidden></p></section>';
-  h+='<section class="vp"><h4>Models who fit</h4>'+(sug.length?sug.map(function(s){return '<div class="sc-sug"><div class="sc-score" style="--p:'+s.score+'"><b>'+s.score+'</b></div><div class="sc-sugmain"><b>'+esc(s.name)+'</b><p>'+esc(s.reason)+'</p>'+(s.risks?'<small>Watch: '+esc(s.risks)+'</small>':'')+'</div><button type="button" data-sc-addm="'+esc(s.model_id)+'" '+(taken[s.model_id]?'disabled>On show':'>Add')+'</button></div>';}).join('')+'<div class="sc-actrow"><button type="button" data-sc-addtop>Add top 5 to this show</button></div>':'<p class="sc-hint">No suggestions. Add measurements to your models so Vera can match them.</p>')+'</section>';
+  h+='<section class="vp"><h4>Models who fit</h4>'+(sug.length?sug.map(function(s){return '<div class="sc-sug"><div class="sc-score" style="--p:'+s.score+'"><b>'+s.score+'</b></div><div class="sc-sugmain"><b>'+esc(s.name)+'</b><p>'+esc(s.reason)+'</p>'+(s.risks?'<small>Watch: '+esc(s.risks)+'</small>':'')+'</div><button type="button" data-sc-addm="'+esc(s.model_id)+'" '+(taken[s.model_id]?'disabled>On show':'>Add')+'</button></div>';}).join('')+'<div class="sc-actrow"><button type="button" data-sc-addtop>Add top 5 to this show</button></div>':'<p class="sc-hint">No suggestions. Add measurements to your models so Veux can match them.</p>')+'</section>';
   if((r.notes||[]).length)h+='<section class="vp"><h4>Notes</h4><ul>'+r.notes.map(function(n){return '<li>'+esc(n)+'</li>';}).join('')+'</ul></section>';
   if((r.sources||[]).length)h+='<section class="vp"><h4>Sources</h4><div class="sc-src">'+r.sources.map(function(s,i){return '<a href="'+esc(s.url)+'" target="_blank" rel="noopener noreferrer"><b>'+(i+1)+'</b>'+esc(s.title)+'</a>';}).join('')+'</div></section>';
   if(!r.parse_ok&&r.raw)h+='<section class="vp"><h4>Raw answer</h4><pre>'+esc(r.raw)+'</pre></section>';
-  h+='<section class="vp ask"><form data-sc-ask><input placeholder="Ask Vera more about this designer or refine the match (e.g. focus on runway walkers over 178cm)…"><button type="submit" class="primary">Ask</button></form></section>';
+  h+='<section class="vp ask"><form data-sc-ask><input placeholder="Ask Veux more about this designer or refine the match (e.g. focus on runway walkers over 178cm)…"><button type="submit" class="primary">Ask</button></form></section>';
   body.innerHTML=h;
   body.onclick=function(e){
     var a=e.target.closest('[data-sc-addm]');if(a&&!a.disabled){assign(x.id,[a.dataset.scAddm],a,null);return;}
     if(e.target.closest('[data-sc-addtop]')){var ids=sug.filter(function(s){return !taken[s.model_id];}).slice(0,5).map(function(s){return s.model_id;});if(ids.length)assign(x.id,ids,e.target,null);return;}
     var c=e.target.closest('[data-sc-crm]');if(c){linkCrm(x,d,dirs,body,c);}
   };
-  body.querySelector('[data-sc-ask]').onsubmit=function(e){e.preventDefault();var v=this.querySelector('input').value.trim();if(v)veraPanel(x.id,v);};
+  body.querySelector('[data-sc-ask]').onsubmit=function(e){e.preventDefault();var v=this.querySelector('input').value.trim();if(v)veuxiPanel(x.id,v);};
 }
 function linkCrm(x,d,dirs,body,btn){
   var picked=[].slice.call(body.querySelectorAll('[data-sc-dir]:checked')).map(function(c){return dirs[+c.dataset.scDir];});
   var o=btn.textContent;btn.disabled=true;btn.textContent='Saving…';
-  M().api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({action:'crm_link_designer',organization_slug:M().slug(),show_id:x.id,company:{name:d.name||String(x.title).replace(/\s*\(by appointment\)\s*$/i,''),website:d.website||'',company_type:'brand'},contacts:picked.map(function(c){return {display_name:c.display_name,role:c.role||'Casting Director',email:c.email,instagram:c.instagram,notes:'Found by Vera'+(c.source_url?' · '+c.source_url:'')};})})}).then(function(r){
+  M().api('/api/agent/season/v9',{method:'POST',body:JSON.stringify({action:'crm_link_designer',organization_slug:M().slug(),show_id:x.id,company:{name:d.name||String(x.title).replace(/\s*\(by appointment\)\s*$/i,''),website:d.website||'',company_type:'brand'},contacts:picked.map(function(c){return {display_name:c.display_name,role:c.role||'Casting Director',email:c.email,instagram:c.instagram,notes:'Found by Veux'+(c.source_url?' · '+c.source_url:'')};})})}).then(function(r){
     var msg=body.querySelector('.sc-crm-msg');msg.hidden=false;msg.textContent=(r.created_company?'Created company '+(r.company&&r.company.name)+'. ':'Linked to company '+(r.company&&r.company.name)+'. ')+(r.created_contacts?r.created_contacts+' new contact'+(r.created_contacts===1?'':'s')+' added. ':'')+(r.linked?r.linked+' connected to the designer.':'Contacts already connected.');btn.textContent='Saved to CRM';return refresh();
   }).catch(function(e){btn.disabled=false;btn.textContent=o;var msg=body.querySelector('.sc-crm-msg');msg.hidden=false;msg.textContent='Could not save: '+String(e&&e.message||e);});
 }
@@ -136,7 +136,7 @@ document.addEventListener('click',function(e){
   var root=document.querySelector('#p-seasonmanagement .ss48');if(!root||!root.contains(e.target))return;
   var b;
   if((b=e.target.closest('[data-sc-models]'))){e.preventDefault();pickModels(b.dataset.scModels);return;}
-  if((b=e.target.closest('[data-sc-vera]'))){e.preventDefault();veraPanel(b.dataset.scVera);return;}
+  if((b=e.target.closest('[data-sc-veuxi]'))){e.preventDefault();veuxiPanel(b.dataset.scVeuxi);return;}
   if((b=e.target.closest('[data-sc-rm]'))){e.preventDefault();var p=b.dataset.scRm.split('|');removeModel(p[0],p[1]);return;}
   if(e.target.closest('.ss48-tabs button'))setTimeout(function(){var s=M().current(root);render(root,s);},80);
 },true);

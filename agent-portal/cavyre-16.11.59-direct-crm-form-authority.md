@@ -14,6 +14,6 @@ Repair:
 - `VEUX_V133.newCompany/newContact` no longer render legacy forms; they delegate to CavyreCRM.
 - Capture-phase CRM routing is installed as a final safety authority.
 - Smart CRM remains backed by `/api/agent/crm/v9`.
-- Smart form fields include relationship intelligence, priority, follow-up cadence, owner, markets, WhatsApp, LinkedIn, tags, multiple company relationships, notes and Vera research.
+- Smart form fields include relationship intelligence, priority, follow-up cadence, owner, markets, WhatsApp, LinkedIn, tags, multiple company relationships, notes and Veux research.
 
 No second CRM database/API was introduced.

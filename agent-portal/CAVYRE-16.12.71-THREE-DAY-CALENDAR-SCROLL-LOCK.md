@@ -8,7 +8,7 @@ This release keeps the approved Calendar design and changes only its scrolling b
 - The 3-Day calendar main column is now the vertical scroll container.
 - The day headings remain sticky while scrolling through the hours.
 - The Calendar legend remains available at the bottom.
-- Vera / Model Intelligence remains in the right column and can scroll independently when needed.
+- Veux / Model Intelligence remains in the right column and can scroll independently when needed.
 - Legacy shell `overflow:hidden` can no longer clip the 3-Day schedule.
 - Mobile/tablet falls back to normal page scrolling.
 - No event, Calendar API, geometry, drag/drop, model schedule, CRM, Package, Season, or authentication logic was changed.

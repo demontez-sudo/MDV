@@ -22,7 +22,7 @@ export const handler=async(event)=>{
   if(e.professional_email&&!contact.email&&/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clean(e.professional_email,240)))patch.email=clean(e.professional_email,240).toLowerCase();
   const {data:updated,error:ue}=await admin.from('contacts').update(patch).eq('organization_id',organization.id).eq('id',contactId).select('*').single();
   if(ue)throw ue;
-  await admin.from('crm_activity').insert({organization_id:organization.id,contact_id:contactId,activity_type:'note',direction:'internal',subject:'Vera Industry Intelligence',summary:`Agent-approved web enrichment · ${sources.length} sources · confidence ${metadata.industry_intelligence.confidence}%`,occurred_at:new Date().toISOString()});
+  await admin.from('crm_activity').insert({organization_id:organization.id,contact_id:contactId,activity_type:'note',direction:'internal',subject:'Veux Industry Intelligence',summary:`Agent-approved web enrichment · ${sources.length} sources · confidence ${metadata.industry_intelligence.confidence}%`,occurred_at:new Date().toISOString()});
   return json(200,{ok:true,contact:updated,industry_intelligence:metadata.industry_intelligence});
  }catch(e){return errorResponse(e)}
 };

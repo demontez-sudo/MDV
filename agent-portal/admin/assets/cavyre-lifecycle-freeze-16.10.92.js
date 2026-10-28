@@ -8,7 +8,7 @@ var REQUIRED=[
  {name:'main',test:function(){return !!document.querySelector('main')}},
  {name:'release-diagnostics',test:function(){return !!(window.CAVYRE_RELEASE&&CAVYRE_RELEASE.diagnostics)}},
  {name:'global-search',test:function(){return !!window.CAVYRE_GLOBAL_SEARCH}},
- {name:'vera-command',test:function(){return !!document.querySelector('.vx73-command')}},
+ {name:'veuxi-command',test:function(){return !!document.querySelector('.vx73-command')}},
  {name:'agent-rail',test:function(){return !!document.getElementById('vx73-rail')}}
 ];
 function check(){

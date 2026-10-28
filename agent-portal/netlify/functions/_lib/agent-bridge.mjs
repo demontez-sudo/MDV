@@ -78,7 +78,7 @@ const AREAS = {
   'calendar': 'the calendar', 'bookings': 'bookings', 'tasks': 'tasks', 'finance': 'finance', 'packages': 'packages',
   'scouting': 'scouting', 'season': 'the season desk', 'mobility': 'travel and visa', 'documents': 'files and forms',
   'media': 'media', 'development': 'model development', 'availability': 'availability', 'contracts': 'contracts',
-  'communications': 'sending email and messages', 'org': 'agency settings', 'members': 'team management', 'ai': 'Vera',
+  'communications': 'sending email and messages', 'org': 'agency settings', 'members': 'team management', 'ai': 'Veux',
   'public_profiles': 'website profiles', 'billing': 'billing', 'usage': 'usage'
 };
 export function accessMessage(permissionKey) {

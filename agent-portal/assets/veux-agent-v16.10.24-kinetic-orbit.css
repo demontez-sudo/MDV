@@ -84,7 +84,7 @@ html[data-veux-wave] .vx75-orbit-core{
   box-shadow:0 30px 55px rgba(0,0,0,.55),0 0 50px var(--skin-glow),inset 0 0 36px var(--skin-soft)!important;
 }
 html[data-veux-wave] .vx75-orbit-core:after{
-  content:"VERA ORBIT";
+  content:"VEUX ORBIT";
   position:absolute;left:50%;bottom:26px;transform:translateX(-50%);
   font:700 8px/1 monospace;letter-spacing:.22em;color:var(--skin-accent2);white-space:nowrap;
 }

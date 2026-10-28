@@ -162,7 +162,7 @@ function signals(who){
   if(who||true){var f=freeMinutes(H.day,who);if(d.timed.length||isToday)out.push(['ok',(f>=60?Math.floor(f/60)+'h'+(f%60?' '+f%60+'m':''):f+'m')+' free in the working day']);}
   var unsched=allTasks.filter(function(t){return !t.start||t.allDay&&dkey(t.start)===k;}).length;
   if(unsched&&who)out.push(['',unsched+' task'+(unsched===1?'':'s')+' without a time']);
-  return '<div class="hm-sig"><span class="hm-vera">✦ Helm</span>'+(out.length?out.map(function(s){return s[2]?'<button type="button" class="hm-s '+s[0]+'" data-hm-goto="'+esc(s[2])+'">'+esc(s[1])+' →</button>':'<span class="hm-s '+s[0]+'">'+esc(s[1])+'</span>';}).join(''):'<span class="hm-s">Nothing needs attention.</span>')+'</div>';
+  return '<div class="hm-sig"><span class="hm-veuxi">✦ Helm</span>'+(out.length?out.map(function(s){return s[2]?'<button type="button" class="hm-s '+s[0]+'" data-hm-goto="'+esc(s[2])+'">'+esc(s[1])+' →</button>':'<span class="hm-s '+s[0]+'">'+esc(s[1])+'</span>';}).join(''):'<span class="hm-s">Nothing needs attention.</span>')+'</div>';
 }
 function layout(list,maxCols){
   maxCols=maxCols||4;

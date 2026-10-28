@@ -177,7 +177,7 @@ html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="
 }
 html:is([data-veux-wave="galaxy"],[data-veux-wave="christmas"],[data-veux-wave="earth"],[data-veux-wave="waterfall"]) #pm :is(
  .v1686-crm-list,.v1686-crm-detail,.v1686-filterbar,.v1686-tabs,
- .v152-card,.vxrel-card,.vxrel-vera,.vxrel-table,.vx-card,.card,
+ .v152-card,.vxrel-card,.vxrel-veuxi,.vxrel-table,.vx-card,.card,
  .v144-card,.v144-filterbar,.v144-crm-list,.v144-crm-detail,
  [class*="-card"],[class*="-panel"]
 ){

@@ -34,8 +34,8 @@ html[data-veux-wave]:not([data-veux-wave="classic"]) button.primary,
 html[data-veux-wave]:not([data-veux-wave="classic"]) .primary,
 html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-primary,
 html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-hero-actions button:last-child,
-html[data-veux-wave]:not([data-veux-wave="classic"]) [data-vx17-vera],
-html[data-veux-wave]:not([data-veux-wave="classic"]) [data-vx17-context-vera],
+html[data-veux-wave]:not([data-veux-wave="classic"]) [data-vx17-veuxi],
+html[data-veux-wave]:not([data-veux-wave="classic"]) [data-vx17-context-veuxi],
 html[data-veux-wave]:not([data-veux-wave="classic"]) .vx75-add,
 html[data-veux-wave]:not([data-veux-wave="classic"]) .v1682-btn.primary,
 html[data-veux-wave]:not([data-veux-wave="classic"]) .vx-wave-primary{
@@ -53,7 +53,7 @@ html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-command button,
 html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-attention button,
 html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-context-actions button,
 html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-smart-card button,
-html[data-veux-wave]:not([data-veux-wave="classic"]) button[data-vx17-vera]{
+html[data-veux-wave]:not([data-veux-wave="classic"]) button[data-vx17-veuxi]{
   border-color:var(--skin-line2)!important;
   background:color-mix(in srgb,var(--skin-card2) 74%,var(--skin-accent) 26%)!important;
   color:var(--skin-accent2)!important;
@@ -62,20 +62,20 @@ html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-command button:hover,
 html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-attention button:hover,
 html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-context-actions button:hover,
 html[data-veux-wave]:not([data-veux-wave="classic"]) .vx17-smart-card button:hover,
-html[data-veux-wave]:not([data-veux-wave="classic"]) button[data-vx17-vera]:hover{
+html[data-veux-wave]:not([data-veux-wave="classic"]) button[data-vx17-veuxi]:hover{
   background:var(--skin-accent)!important;
   border-color:var(--skin-accent2)!important;
   color:var(--skin-0)!important;
 }
 
-/* Explicit Vera Intelligence buttons found on command surfaces. */
+/* Explicit Veux Intelligence buttons found on command surfaces. */
 html[data-veux-wave]:not([data-veux-wave="classic"]) button{
   --vx-button-accent:var(--skin-accent);
   --vx-button-accent2:var(--skin-accent2);
 }
 html[data-veux-wave]:not([data-veux-wave="classic"]) button:is(
-  [aria-label*="Vera"],
-  [title*="Vera"]
+  [aria-label*="Veux"],
+  [title*="Veux"]
 ){
   border-color:var(--skin-line2)!important;
 }

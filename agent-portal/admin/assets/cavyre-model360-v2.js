@@ -1,4 +1,4 @@
-/* CAVYRE Model 360 v2 — intelligence layout (Overview · Work · Materials · Development · Logistics · Record) with Vera signals. */
+/* CAVYRE Model 360 v2 — intelligence layout (Overview · Work · Materials · Development · Logistics · Record) with Veux signals. */
 (function(){
 'use strict';
 if(window.__CAVYRE_M360__)return;window.__CAVYRE_M360__=1;
@@ -22,7 +22,7 @@ function fmtTime(v){var t=ts(v);return t==null?'':new Date(t).toLocaleTimeString
 function fmtDT(v){var t=ts(v);return t==null?'—':fmtDate(v,{month:'short',day:'numeric'})+' · '+fmtTime(v);}
 function initials(n){return String(n||'?').trim().split(/\s+/).slice(0,2).map(function(x){return x[0]||'';}).join('').toUpperCase()||'?';}
 function ic(name){return '<i class="ti '+name+'" aria-hidden="true"></i>';}
-function ask(prompt){if(!prompt)return '';M.prompts.push(prompt);return '<button type="button" class="m360-ask" title="Ask Vera" onclick="CAVYRE_M360.ask('+(M.prompts.length-1)+')">'+ic('ti-sparkles')+'<span>Ask Vera</span></button>';}
+function ask(prompt){if(!prompt)return '';M.prompts.push(prompt);return '<button type="button" class="m360-ask" title="Ask Veux" onclick="CAVYRE_M360.ask('+(M.prompts.length-1)+')">'+ic('ti-sparkles')+'<span>Ask Veux</span></button>';}
 function card(title,sub,right,body,cls){return '<section class="m360-card '+(cls||'')+'"><header><div><h3>'+esc(title)+'</h3>'+(sub?'<p>'+esc(sub)+'</p>':'')+'</div>'+(right?'<div class="m360-head-r">'+right+'</div>':'')+'</header>'+body+'</section>';}
 function empty(t){return '<div class="m360-empty">'+esc(t)+'</div>';}
 function chip(text,tone){return '<span class="m360-chip '+(tone||'')+'">'+esc(text)+'</span>';}
@@ -78,26 +78,26 @@ function header(){
    +'<nav class="m360-tabs" role="tablist">'+TABS.map(function(t){return '<button type="button" role="tab" class="m360-tab'+(M.tab===t[0]?' on':'')+'" aria-selected="'+(M.tab===t[0])+'" onclick="CAVYRE_M360.tab(\''+t[0]+'\')">'+ic(t[2])+'<span>'+t[1]+'</span></button>';}).join('')+'</nav></header>';
 }
 function menu(){
-  var items=[['Edit profile','ti-pencil','editProfile'],['Manage media','ti-photo','manageMedia'],['Website profile','ti-world','website'],['Account & access','ti-key','access'],['Ask Vera about '+(model().display_name||'this model'),'ti-sparkles','askAbout']];
+  var items=[['Edit profile','ti-pencil','editProfile'],['Manage media','ti-photo','manageMedia'],['Website profile','ti-world','website'],['Account & access','ti-key','access'],['Ask Veux about '+(model().display_name||'this model'),'ti-sparkles','askAbout']];
   return '<div class="m360-menu">'+items.map(function(i){return '<button type="button" onclick="CAVYRE_M360.'+i[2]+'()">'+ic(i[1])+esc(i[0])+'</button>';}).join('')+'</div>';
 }
 
-/* ---------- vera blocks ---------- */
-function veraBanner(){
+/* ---------- veuxi blocks ---------- */
+function veuxiBanner(){
   var it=M.intel;
   if(!it)return '';
   var score=it.readiness,rec=it.recommendation||{};
   var tone=score>=80?'ok':score>=55?'warn':'bad';
-  return '<section class="m360-vera"><div class="m360-ring '+tone+'"><b>'+esc(score)+'</b><small>READY</small></div>'
-   +'<div class="m360-vera-body"><div class="m360-eyebrow">'+ic('ti-sparkles')+' Vera recommendation <em>Beta</em></div><p>'+esc(rec.text||'')+'</p>'
+  return '<section class="m360-veuxi"><div class="m360-ring '+tone+'"><b>'+esc(score)+'</b><small>READY</small></div>'
+   +'<div class="m360-veuxi-body"><div class="m360-eyebrow">'+ic('ti-sparkles')+' Veux recommendation <em>Beta</em></div><p>'+esc(rec.text||'')+'</p>'
    +(arr(rec.evidence).length?'<ul>'+arr(rec.evidence).map(function(e){return '<li>'+esc(e)+'</li>';}).join('')+'</ul>':'')+'</div>'
-   +'<div class="m360-vera-cta">'+ask('Review '+(model().display_name||'this model')+'\'s current situation. Vera\'s live signals say: '+arr(rec.evidence).join(' | ')+'. What should I do first, and what can you prepare for me?')+'</div></section>';
+   +'<div class="m360-veuxi-cta">'+ask('Review '+(model().display_name||'this model')+'\'s current situation. Veux\'s live signals say: '+arr(rec.evidence).join(' | ')+'. What should I do first, and what can you prepare for me?')+'</div></section>';
 }
 function attention(limit){
   var s=signals().slice(0,limit||4);
-  if(!M.intel)return empty('Vera signals are unavailable right now.');
-  if(!s.length)return empty('Nothing needs attention. Vera will flag issues here.');
-  return '<div class="m360-att">'+s.map(function(x){return '<div class="m360-att-item '+esc(x.severity)+'"><span class="m360-sev" title="'+esc(x.severity)+'"></span><div><b>'+esc(x.title)+'</b><p>'+esc(x.detail||'')+'</p><div class="m360-att-act">'+(x.action?'<button type="button" class="m360-pill" onclick="CAVYRE_M360.tab(\''+esc(x.action.target)+'\')">'+esc(x.action.label)+'</button>':'')+ask(x.vera_prompt)+'</div></div></div>';}).join('')+'</div>';
+  if(!M.intel)return empty('Veux signals are unavailable right now.');
+  if(!s.length)return empty('Nothing needs attention. Veux will flag issues here.');
+  return '<div class="m360-att">'+s.map(function(x){return '<div class="m360-att-item '+esc(x.severity)+'"><span class="m360-sev" title="'+esc(x.severity)+'"></span><div><b>'+esc(x.title)+'</b><p>'+esc(x.detail||'')+'</p><div class="m360-att-act">'+(x.action?'<button type="button" class="m360-pill" onclick="CAVYRE_M360.tab(\''+esc(x.action.target)+'\')">'+esc(x.action.label)+'</button>':'')+ask(x.veuxi_prompt)+'</div></div></div>';}).join('')+'</div>';
 }
 
 /* ---------- OVERVIEW ---------- */
@@ -110,7 +110,7 @@ function tOverview(){
   var dev=gl.length?gl.map(function(g){var pc=goalPct(g);return '<div class="m360-goal-mini">'+ic('ti-target')+'<div><b>'+esc(g.title||'Goal')+'</b><p>'+esc(g.status||'open')+(g.target_date?' · due '+esc(fmtDate(g.target_date)):'')+'</p><div class="m360-track"><i style="width:'+pc+'%"></i></div></div><em>'+pc+'%</em></div>';}).join(''):empty('No development goals yet.');
   var act=arr(it.activity).slice(0,5);
   var recent=act.length?'<ol class="m360-mini-tl">'+act.map(function(a){return '<li>'+ic(KIND_ICON[a.kind]||'ti-circle')+'<div><b>'+esc(a.title)+'</b><p>'+esc(a.detail||a.actor_name||'')+'</p></div><time>'+esc(fmtDate(a.at,{month:'short',day:'numeric'}))+'<br>'+esc(fmtTime(a.at))+'</time></li>';}).join('')+'</ol>':empty('No activity yet.');
-  return veraBanner()
+  return veuxiBanner()
    +'<div class="m360-grid g3">'
    +card('Today','Key items and next steps for '+(model().display_name||'the model')+'.',ask('What is the most important thing coming up for '+(model().display_name||'this model')+' and how should we prepare?'),today)
    +card('Needs attention',signals().length+' item'+(signals().length===1?'':'s'),link('View all',"CAVYRE_M360.tab('record')"),attention(3))
@@ -207,9 +207,9 @@ function tDevelopment(){
   var le=ev[0],sc=arr(le&&le.model_evaluation_scores).slice().sort(function(a,b){return Number(b.current_score||0)-Number(a.current_score||0);});
   var evalCard=card('Evaluation',le?'Last reviewed '+fmtDate(le.evaluated_on||le.created_at):'No evaluation yet.',link('Evaluation desk',"VEUX_V155.openEvaluationsForModel('"+esc(M.id)+"')"),le&&sc.length?'<div class="m360-sw"><h5>Strengths</h5><ul>'+sc.slice(0,3).map(function(s){return '<li>'+esc(String(s.category_key||'').replace(/_/g,' '))+' · '+esc(Number(s.current_score).toFixed(1))+'</li>';}).join('')+'</ul><h5>Opportunities</h5><ul>'+sc.slice(-3).reverse().map(function(s){return '<li>'+esc(String(s.category_key||'').replace(/_/g,' '))+' · '+esc(Number(s.current_score).toFixed(1))+'</li>';}).join('')+'</ul></div>':empty('Record an evaluation to see strengths and opportunities.'));
   var rec=it.recommendation||{};
-  var veraC=card('Vera recommendation','Based on current materials, market trends and development goals.','<span class="m360-beta">Beta</span>','<p class="m360-lede sm">'+esc(rec.text||'Vera is gathering signals…')+'</p>'+(arr(rec.evidence).length?'<ul class="m360-ev">'+arr(rec.evidence).map(function(e){return '<li>'+esc(e)+'</li>';}).join('')+'</ul>':'')+'<div class="m360-vbtns"><button type="button" class="m360-btn primary" onclick="CAVYRE_M360.askAbout()">'+ic('ti-message-circle')+'Review and discuss with Vera</button><button type="button" class="m360-btn" onclick="CAVYRE_M360.tab(\'materials\')">'+ic('ti-folder')+'View supporting materials</button></div>','vera');
+  var veuxiC=card('Veux recommendation','Based on current materials, market trends and development goals.','<span class="m360-beta">Beta</span>','<p class="m360-lede sm">'+esc(rec.text||'Veux is gathering signals…')+'</p>'+(arr(rec.evidence).length?'<ul class="m360-ev">'+arr(rec.evidence).map(function(e){return '<li>'+esc(e)+'</li>';}).join('')+'</ul>':'')+'<div class="m360-vbtns"><button type="button" class="m360-btn primary" onclick="CAVYRE_M360.askAbout()">'+ic('ti-message-circle')+'Review and discuss with Veux</button><button type="button" class="m360-btn" onclick="CAVYRE_M360.tab(\'materials\')">'+ic('ti-folder')+'View supporting materials</button></div>','veuxi');
   var gpBody=!gp?'<div class="m360-empty">Loading Smart Gameplan…</div>':(window.CAVYRE_SMART_GAMEPLAN&&window.CAVYRE_SMART_GAMEPLAN.render?window.CAVYRE_SMART_GAMEPLAN.render(model(),gp):empty('Smart Gameplan is not available.'));
-  return direction+goalCards+'<div class="m360-grid g3 dev">'+timeline+evalCard+veraC+'</div><section class="m360-gpwrap"><div class="m360-eyebrow">'+ic('ti-target')+' Smart Gameplan</div><div class="cvygp-host" id="m360-gp">'+gpBody+'</div></section>';
+  return direction+goalCards+'<div class="m360-grid g3 dev">'+timeline+evalCard+veuxiC+'</div><section class="m360-gpwrap"><div class="m360-eyebrow">'+ic('ti-target')+' Smart Gameplan</div><div class="cvygp-host" id="m360-gp">'+gpBody+'</div></section>';
 }
 
 /* ---------- LOGISTICS ---------- */
@@ -394,8 +394,8 @@ function notesApi(body){return post('/api/agent/model-360',Object.assign({model_
 function reload(){return load(true).then(function(){paint();});}
 window.CAVYRE_M360={
   version:'2.0.0',render:render,tab:setTab,refresh:function(){M.error=null;paint();return reload().catch(function(e){M.error=e&&e.message||String(e);paint();});},
-  ask:function(i){var p=M.prompts[i];if(!p)return;try{if(window.MDV_VERA_CHAT&&MDV_VERA_CHAT.open)return MDV_VERA_CHAT.open(p);}catch(e){}var inp=document.querySelector('.vx73-command input');if(inp){inp.value=p;inp.focus();toast('Press Enter to ask Vera');}},
-  askAbout:function(){M.menu=false;var it=M.intel||{},n=model().display_name||'this model';var p='Review '+n+' and recommend next steps. Live signals: '+(signals().slice(0,5).map(function(s){return s.title+' ('+s.detail+')';}).join('; ')||'none')+'.';try{if(window.MDV_VERA_CHAT&&MDV_VERA_CHAT.open)return MDV_VERA_CHAT.open(p);}catch(e){}var inp=document.querySelector('.vx73-command input');if(inp){inp.value=p;inp.focus();}},
+  ask:function(i){var p=M.prompts[i];if(!p)return;try{if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open)return MDV_VEUXI_CHAT.open(p);}catch(e){}var inp=document.querySelector('.vx73-command input');if(inp){inp.value=p;inp.focus();toast('Press Enter to ask Veux');}},
+  askAbout:function(){M.menu=false;var it=M.intel||{},n=model().display_name||'this model';var p='Review '+n+' and recommend next steps. Live signals: '+(signals().slice(0,5).map(function(s){return s.title+' ('+s.detail+')';}).join('; ')||'none')+'.';try{if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open)return MDV_VEUXI_CHAT.open(p);}catch(e){}var inp=document.querySelector('.vx73-command input');if(inp){inp.value=p;inp.focus();}},
   toggleMenu:function(ev){if(ev)ev.stopPropagation();M.menu=!M.menu;paint();if(M.menu){setTimeout(function(){document.addEventListener('click',function c(){M.menu=false;document.removeEventListener('click',c);paint();},{once:true});},0);}},
   editProfile:function(){M.menu=false;paint();if(window.VEUX_V156&&VEUX_V156.editProfile)VEUX_V156.editProfile();},
   manageMedia:function(){M.menu=false;if(window.VEUX_V156&&VEUX_V156.mediaManager)VEUX_V156.mediaManager();},

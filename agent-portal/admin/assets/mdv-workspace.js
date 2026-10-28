@@ -211,7 +211,7 @@ function deskItems(p,H){
   arr(p.tasks&&p.tasks.approvals).forEach(function(a){var due=a.due_at||a.created_at||null;out.push({k:'approval',pri:'o',title:a.title||a.subject||'Approval required',sub:a.requested_by_name||a.type||'Needs a decision',owner:(me&&mname(me))||'You',due:due,btn:'Approve',nav:'approvals',mine:true,id:a.id});});
   H.calList(p.cal).filter(function(x){var t=new Date(x.starts_at).getTime();return t>=Date.now()&&t<=Date.now()+48*36e5&&/pending|hold|tentative|await|invited/i.test(x.status);}).slice(0,3).forEach(function(x){out.push({k:'booking',pri:'y',title:'Confirm '+x.title,sub:(x.models[0]||'')+(x.sub?(x.models[0]?' · ':'')+x.sub:''),owner:'Bookings',due:x.starts_at,btn:'Review',nav:'calendar',mine:true,modelName:x.models[0]});});
   arr(p.finance&&p.finance.overdue).slice(0,2).forEach(function(x){out.push({k:'invoice',pri:'r',title:'Follow up overdue invoice',sub:((x.companies&&x.companies.name)||'Client')+' · '+(x.invoice_number||'Invoice'),owner:'Finance',due:x.due_date||null,btn:'Open',nav:'agentcommissions',mine:true,overdue:true});});
-  H.veraSignals(p).filter(function(x){return /blocked|critical/.test(x.severity);}).slice(0,2).forEach(function(x){out.push({k:'vera',pri:'r',title:x.title,sub:String(x.domain||'')+' · '+(x.detail||''),owner:'Vera',due:null,btn:'Open',nav:x.nav,mine:true,blocked:true,rt:x.recordType,rid:x.recordId});});
+  H.veuxiSignals(p).filter(function(x){return /blocked|critical/.test(x.severity);}).slice(0,2).forEach(function(x){out.push({k:'veuxi',pri:'r',title:x.title,sub:String(x.domain||'')+' · '+(x.detail||''),owner:'Veux',due:null,btn:'Open',nav:x.nav,mine:true,blocked:true,rt:x.recordType,rid:x.recordId});});
   return out;
 }
 function dueLabel(it){
@@ -248,13 +248,13 @@ function scheduleHtml(p){
     var q=e.models[0],m=q?(mm[q.id]||q):null,who=m?nameOf(m):(e.client||e.title);
     return '<button type="button" class="ws-sr" data-vx17-nav="calendar"><span class="ws-st1">'+hm(e.s)+'</span>'+(m?thumb(m,'ws-sp1'):'<span class="ws-sp1 ph" style="--t:'+tint(who)+'">'+esc(initials(who))+'</span>')+'<span class="ws-sw"><b>'+esc(who)+'</b><small>'+esc(e.type+(e.client?' – '+e.client:e.title&&e.title!==e.type?' – '+e.title:''))+'</small></span><span class="ws-sm">'+esc(String(e.market||'').split(',')[0].slice(0,14))+'</span><i class="ti ti-map-pin"></i></button>';
   }).join('')||'<p class="ws-empty">Nothing scheduled.</p>';
-  return '<section class="ws-card ws-sched"><header><h2>Today’s Schedule</h2><button type="button" class="ws-link" data-vx17-nav="calendar">View calendar →</button></header><div class="ws-wk">'+strip+'</div><div class="ws-sl">'+rows+'</div>'+veraHtml(p)+'</section>';
+  return '<section class="ws-card ws-sched"><header><h2>Today’s Schedule</h2><button type="button" class="ws-link" data-vx17-nav="calendar">View calendar →</button></header><div class="ws-wk">'+strip+'</div><div class="ws-sl">'+rows+'</div>'+veuxiHtml(p)+'</section>';
 }
-function veraHtml(p){
-  var sg=S.H.veraSignals(p),top=sg[0],n=sg.length;
+function veuxiHtml(p){
+  var sg=S.H.veuxiSignals(p),top=sg[0],n=sg.length;
   var txt=top?(n>1?n+' items need a decision. ':'')+top.title+(top.detail?' — '+top.detail:''):'Nothing needs a decision right now.';
-  return '<div class="ws-vera"><header><span class="ws-vmark"></span><h3>Vera Briefing</h3><button type="button" class="ws-more" aria-label="Ask Vera" data-vx17-vera>⋯</button></header><div class="ws-vb"><p>'+esc(txt)+'</p>'+(top?'<button type="button" class="ws-act" data-vx17-nav="'+esc(top.nav)+'" data-vx17-record-type="'+esc(top.recordType||'')+'" data-vx17-record-id="'+esc(top.recordId||'')+'">Review options</button>':'')+'</div>'
-    +'<form class="ws-ask" data-ws-ask><i class="ti ti-sparkles"></i><input type="text" placeholder="Ask Vera to research, decide or draft…" aria-label="Ask Vera"><button type="submit" aria-label="Ask"><i class="ti ti-arrow-right"></i></button></form></div>';
+  return '<div class="ws-veuxi"><header><span class="ws-vmark"></span><h3>Veux Briefing</h3><button type="button" class="ws-more" aria-label="Ask Veux" data-vx17-veuxi>⋯</button></header><div class="ws-vb"><p>'+esc(txt)+'</p>'+(top?'<button type="button" class="ws-act" data-vx17-nav="'+esc(top.nav)+'" data-vx17-record-type="'+esc(top.recordType||'')+'" data-vx17-record-id="'+esc(top.recordId||'')+'">Review options</button>':'')+'</div>'
+    +'<form class="ws-ask" data-ws-ask><i class="ti ti-sparkles"></i><input type="text" placeholder="Ask Veux to research, decide or draft…" aria-label="Ask Veux"><button type="submit" aria-label="Ask"><i class="ti ti-arrow-right"></i></button></form></div>';
 }
 
 /* ----- talent readiness ----- */
@@ -331,18 +331,18 @@ function mobileHomeHtml(p,H){
   var all=deskItems(p,H),bucket=function(it){if(it.overdue)return 0;var d=dayDiff(it.due);return d!=null&&d<0?0:d===0?1:2;};
   var need=all.filter(function(i){return i.mine&&bucket(i)<2;}).sort(function(a,b){var o={r:0,o:1,y:2,g:3};return o[a.pri]-o[b.pri]||(new Date(a.due||8e15)-new Date(b.due||8e15));});
   var needRows=need.slice(0,5).map(function(i){var d=dueLabel(i);return '<button type="button" class="mh-row" data-vx17-nav="'+esc(i.nav)+'"><i class="mh-dot pr-'+i.pri+'"></i><span class="mh-b"><b>'+esc(i.title)+'</b><small>'+esc(i.sub)+'</small></span><em class="'+d.c+'">'+esc(d.t)+'</em></button>';}).join('')||'<p class="mh-empty">Nothing needs you right now.</p>';
-  var sg=H.veraSignals(p),top=sg[0],vtxt=top?(sg.length>1?sg.length+' items need a decision. ':'')+top.title+(top.detail?' — '+top.detail:''):'Nothing needs a decision right now.';
+  var sg=H.veuxiSignals(p),top=sg[0],vtxt=top?(sg.length>1?sg.length+' items need a decision. ':'')+top.title+(top.detail?' — '+top.detail:''):'Nothing needs a decision right now.';
   var w=window.MDV_MAIL&&MDV_MAIL.widget&&MDV_MAIL.widget(),mrows='';
   if(!w){mrows='<p class="mh-empty">Checking your inbox…</p>';try{if(window.MDV_MAIL&&MDV_MAIL.refreshWidget)MDV_MAIL.refreshWidget();}catch(e){}}
   else if(w.state==='ok'){mrows=arr(w.rows).slice(0,3).map(function(m){var from=(m.from&&(m.from.name||m.from.address))||'Unknown';return '<button type="button" class="mh-row" data-vx17-nav="mail"><i class="mh-dot '+(m.is_read?'pr-g':'pr-o')+'"></i><span class="mh-b"><b>'+esc(from)+'</b><small>'+esc(m.subject||'')+'</small></span><em>'+hm(m.received)+'</em></button>';}).join('')||'<p class="mh-empty">Inbox is clear.</p>';}
   else mrows='<p class="mh-empty">Connect your email to see messages here.</p>';
   return '<div class="mh-home"><div class="mh-hello"><small>'+now.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})+'</small><h1>'+greet+(nm?', '+esc(nm):'')+'</h1></div>'
-   +'<form class="mh-ask" data-ws-ask><i class="ti ti-sparkles"></i><input type="text" placeholder="Ask Vera…" aria-label="Ask Vera"><button type="submit" aria-label="Ask"><i class="ti ti-arrow-right"></i></button></form>'
+   +'<form class="mh-ask" data-ws-ask><i class="ti ti-sparkles"></i><input type="text" placeholder="Ask Veux…" aria-label="Ask Veux"><button type="submit" aria-label="Ask"><i class="ti ti-arrow-right"></i></button></form>'
    +'<div class="mh-quick">'+quick+'</div>'
    +'<div class="mh-stats">'+stat('ti-calendar-event',wkB,'Bookings','this week','calendar')+stat('ti-users',talent,'Talent',(p.ready||0)+' ready','roster')+stat('ti-currency-dollar',money(wkV,cur),'Booking value','this week','calendar')+stat('ti-file-invoice',money(os,cur),'Outstanding',unpaid.length+' invoice'+(unpaid.length===1?'':'s'),'agentcommissions')+'</div>'
    +'<section class="mh-card">'+mhHead('Today',today.length+' event'+(today.length===1?'':'s')+' →','calendar')+evRows+'</section>'
    +'<section class="mh-card">'+mhHead('Needs attention','All tasks →','tasksconsolidated')+needRows+'</section>'
-   +'<section class="mh-card mh-vera"><header><h2><i class="ti ti-sparkles"></i> Vera briefing</h2></header><p>'+esc(vtxt)+'</p>'+(top?'<button type="button" class="mh-btn" data-vx17-nav="'+esc(top.nav)+'" data-vx17-record-type="'+esc(top.recordType||'')+'" data-vx17-record-id="'+esc(top.recordId||'')+'">Review options</button>':'')+'</section>'
+   +'<section class="mh-card mh-veuxi"><header><h2><i class="ti ti-sparkles"></i> Veux briefing</h2></header><p>'+esc(vtxt)+'</p>'+(top?'<button type="button" class="mh-btn" data-vx17-nav="'+esc(top.nav)+'" data-vx17-record-type="'+esc(top.recordType||'')+'" data-vx17-record-id="'+esc(top.recordId||'')+'">Review options</button>':'')+'</section>'
    +'<section class="mh-card">'+mhHead('Inbox','Open →','mail')+mrows+'</section></div>';
 }
 function paint(){
@@ -379,7 +379,7 @@ document.addEventListener('click',function(e){
     else if(window.VEUX_V152&&VEUX_V152.createOnDate)VEUX_V152.createOnDate(dkey(new Date()));else go('calendar');
   }
 });
-document.addEventListener('submit',function(e){var f=e.target.closest&&e.target.closest('[data-ws-ask]');if(!f)return;e.preventDefault();var i=f.querySelector('input'),q=i.value.trim();i.value='';if(window.MDV_VERA_CHAT&&MDV_VERA_CHAT.open)MDV_VERA_CHAT.open(q||undefined);});
+document.addEventListener('submit',function(e){var f=e.target.closest&&e.target.closest('[data-ws-ask]');if(!f)return;e.preventDefault();var i=f.querySelector('input'),q=i.value.trim();i.value='';if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open)MDV_VEUXI_CHAT.open(q||undefined);});
 /* new mail only refreshes the Mail card, not the whole Home page (a full repaint looks like the page reloading) */
 function paintMail(){
   if(!(S.el&&S.el.isConnected&&S.p&&S.el.classList.contains('on'))){S.stale=true;badges();return;}

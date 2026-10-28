@@ -1,10 +1,10 @@
-/* CAVYRE 16.11.91 — Vera Interaction Authority */
+/* CAVYRE 16.11.91 — Veux Interaction Authority */
 (function(){
 'use strict';
 if(window.__CAVYRE_INTERACTION_AUTHORITY_161191__)return;
 window.__CAVYRE_INTERACTION_AUTHORITY_161191__=1;
 function closest(t,s){try{return t&&t.closest?t.closest(s):null}catch(e){return null}}
-function vera(){return window.CAVYRE_VERA_SMART||null}
+function veuxi(){return window.CAVYRE_VEUXI_SMART||null}
 var ROUTE_ALIAS={
  communication:'inbox',
  travel:'globalmobility',
@@ -25,8 +25,8 @@ function go(page){
   try{if(typeof window.rerender==='function'){window._currentPage=page;var panel=document.getElementById('p-'+page);document.querySelectorAll('#pm .panel,.panel').forEach(function(x){if(x!==panel)x.classList.remove('on')});if(panel)panel.classList.add('on');window.rerender(page);return true}}catch(e){}
   return false;
 }
-function ask(text){var v=vera();if(v&&typeof v.ask==='function'){v.ask(text||'');return true}var open=document.getElementById('_asst-btn');if(open)open.click();setTimeout(function(){var i=document.getElementById('_asst-input'),s=document.getElementById('_asst-send');if(i&&s){i.value=text||'';if(text)s.click()}},100);return !!open}
-function openVera(){var b=document.getElementById('_asst-btn');if(b){b.click();return true}return false}
+function ask(text){var v=veuxi();if(v&&typeof v.ask==='function'){v.ask(text||'');return true}var open=document.getElementById('_asst-btn');if(open)open.click();setTimeout(function(){var i=document.getElementById('_asst-input'),s=document.getElementById('_asst-send');if(i&&s){i.value=text||'';if(text)s.click()}},100);return !!open}
+function openVeuxi(){var b=document.getElementById('_asst-btn');if(b){b.click();return true}return false}
 document.addEventListener('click',function(e){
   var b=closest(e.target,'[data-vx17-nav]');if(b){e.preventDefault();go(b.getAttribute('data-vx17-nav'));return}
   b=closest(e.target,'.vx17-command button,.vx17-context button');if(b){
@@ -40,8 +40,8 @@ document.addEventListener('click',function(e){
     else if(label.indexOf('task')>=0)fallback='tasks';
     if(fallback){e.preventDefault();go(fallback);return}
   }
-  b=closest(e.target,'[data-vx17-vera],[data-vx17-context-vera]');if(b){e.preventDefault();openVera();return}
-  b=closest(e.target,'.vera81-mode[data-mode]');if(b){e.preventDefault();var v=vera();if(v&&typeof v.setMode==='function')v.setMode(b.getAttribute('data-mode'));return}
+  b=closest(e.target,'[data-vx17-veuxi],[data-vx17-context-veuxi]');if(b){e.preventDefault();openVeuxi();return}
+  b=closest(e.target,'.veuxi81-mode[data-mode]');if(b){e.preventDefault();var v=veuxi();if(v&&typeof v.setMode==='function')v.setMode(b.getAttribute('data-mode'));return}
 
   b=closest(e.target,'[data-vx17-mode]');if(b){
     e.preventDefault();
@@ -69,10 +69,10 @@ document.addEventListener('click',function(e){
     return;
   }
 
-  b=closest(e.target,'.vera81-rail [data-nav]');if(b){e.preventDefault();go(b.getAttribute('data-nav'));return}
-  b=closest(e.target,'[data-vera-run-desk]');if(b){e.preventDefault();var v2=vera();if(v2&&typeof v2.runDesk==='function')v2.runDesk();else ask('Run my desk. Prioritize what needs action today and build an ordered plan.');return}
-  b=closest(e.target,'.vera81-rail [data-v81]');if(b){var action=b.getAttribute('data-v81'),v3=vera();if(action==='research'){e.preventDefault();ask('Vera, research the active person or company using live public sources and show me the sources.');return}if(action==='execute'&&v3&&v3.state&&v3.state.pending&&typeof v3.execute==='function'){e.preventDefault();v3.execute(v3.state.pending);return}if(action==='dismiss'&&v3&&typeof v3.setPending==='function'){e.preventDefault();v3.setPending(null);return}}
+  b=closest(e.target,'.veuxi81-rail [data-nav]');if(b){e.preventDefault();go(b.getAttribute('data-nav'));return}
+  b=closest(e.target,'[data-veuxi-run-desk]');if(b){e.preventDefault();var v2=veuxi();if(v2&&typeof v2.runDesk==='function')v2.runDesk();else ask('Run my desk. Prioritize what needs action today and build an ordered plan.');return}
+  b=closest(e.target,'.veuxi81-rail [data-v81]');if(b){var action=b.getAttribute('data-v81'),v3=veuxi();if(action==='research'){e.preventDefault();ask('Veux, research the active person or company using live public sources and show me the sources.');return}if(action==='execute'&&v3&&v3.state&&v3.state.pending&&typeof v3.execute==='function'){e.preventDefault();v3.execute(v3.state.pending);return}if(action==='dismiss'&&v3&&typeof v3.setPending==='function'){e.preventDefault();v3.setPending(null);return}}
 },false);
-window.CAVYRE_INTERACTION_AUTHORITY={release:'16.11.91',navigate:go,ask:ask,openVera:openVera};
+window.CAVYRE_INTERACTION_AUTHORITY={release:'16.11.91',navigate:go,ask:ask,openVeuxi:openVeuxi};
 document.documentElement.setAttribute('data-cavyre-interaction-authority','16.11.91');
 })();

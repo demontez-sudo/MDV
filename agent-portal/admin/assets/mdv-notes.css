@@ -14,7 +14,7 @@
 .nt-side{display:grid;gap:12px;position:sticky;top:12px}
 .nt-card{border:1px solid var(--l2);border-radius:18px;background:rgba(255,255,255,.025);padding:14px 16px;display:grid;gap:10px}
 .nt-card h3{margin:0;font:600 13px var(--fB,Inter,sans-serif);letter-spacing:.04em;display:flex;gap:8px;align-items:center}.nt-card h3 i{color:var(--g)}
-.nt-vera{display:grid;gap:6px}.nt-vera button{text-align:left;border:1px solid var(--l2);background:var(--field);color:var(--ink);border-radius:12px;padding:9px 12px;font-size:12.5px;cursor:pointer}.nt-vera button:hover{border-color:var(--g)}
+.nt-veuxi{display:grid;gap:6px}.nt-veuxi button{text-align:left;border:1px solid var(--l2);background:var(--field);color:var(--ink);border-radius:12px;padding:9px 12px;font-size:12.5px;cursor:pointer}.nt-veuxi button:hover{border-color:var(--g)}
 .nt-top{display:grid;gap:4px}.nt-top button{display:flex;align-items:center;gap:10px;border:0;background:none;color:var(--ink);padding:6px 4px;border-radius:10px;cursor:pointer;text-align:left}.nt-top button:hover{background:rgba(255,255,255,.06)}.nt-top span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}.nt-top em{font-style:normal;font-size:11.5px;color:var(--mute)}
 .nt-fl{list-style:none;margin:0;padding:0;display:grid;gap:8px}.nt-fl li{display:grid;gap:4px;font-size:12.5px;cursor:pointer}.nt-fl li:hover span:last-child{color:var(--g)}
 .nt-mute{margin:0;color:var(--mute);font-size:12.5px}

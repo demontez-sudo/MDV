@@ -3661,7 +3661,7 @@ export const SCHEDULE_SET = {
    "status": "scheduled",
    "on_outlook": false,
    "location": null,
-   "notes": "Agent portal and Vera. One feature shipped or one decision made.",
+   "notes": "Agent portal and Veux. One feature shipped or one decision made.",
    "models": [],
    "owner": "Demontez",
    "team": [

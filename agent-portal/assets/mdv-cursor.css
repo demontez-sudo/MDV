@@ -79,6 +79,15 @@ html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-r::before{inset:-9px;border-radiu
   background-repeat:no-repeat;filter:drop-shadow(0 0 3px rgba(10,9,8,.7))}
 html[data-veux-wave="fallArt"] .mdv-cr.link .mdv-cr-r::before{inset:-3px}
 html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-d{width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:radial-gradient(circle at 35% 30%,#fff 0 12%,var(--cr-hi) 13%,var(--cr) 100%);box-shadow:0 0 0 1.5px rgba(10,9,8,.55),0 0 12px 2px var(--c50)}
+/* Art Image runs on a portrait background, so its cursor is a smaller frame: a 30px ring, corner brackets that sit closer, and a finer drop. */
+html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-r{width:24px;height:24px;margin:-12px 0 0 -12px;border-width:1.25px}
+html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-r::before{inset:-5px;
+  background-size:7px 1.25px,1.25px 7px,7px 1.25px,1.25px 7px,7px 1.25px,1.25px 7px,7px 1.25px,1.25px 7px}
+html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-d{width:6px;height:6px;margin:-3px 0 0 -3px}
+html[data-veux-wave="fallArt"] .mdv-cr.link .mdv-cr-r{width:32px;height:32px;margin:-16px 0 0 -16px}
+html[data-veux-wave="fallArt"] .mdv-cr.link .mdv-cr-r::before{inset:-1px}
+html[data-veux-wave="fallArt"] .mdv-cr.link .mdv-cr-d{width:4px;height:4px;margin:-2px 0 0 -2px}
+html[data-veux-wave="fallArt"] .mdv-cr.label .mdv-cr-r{width:64px;height:64px;margin:-32px 0 0 -32px}
 /* ---- Fall Leaf: an amber leaf that sways in place of the dot ---- */
 html[data-veux-wave="fallLeaf"] .mdv-cr .mdv-cr-d{background:transparent;box-shadow:none;width:4px;height:4px;margin:-2px 0 0 -2px}
 html[data-veux-wave="fallLeaf"] .mdv-cr .mdv-cr-d::before{left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:0;opacity:1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3.5 20.5C3 10.5 9.5 3.5 20.5 3.5c.6 10.5-5.5 17.5-17 17z' fill='%23E0925A' stroke='%2373340F' stroke-width='1.1' stroke-linejoin='round'/%3E%3Cpath d='M3.8 20.2L15 9M9.5 14.5l.2-4.6M12.6 11.6l4.4.2' fill='none' stroke='%2373340F' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 0 4px rgba(224,146,90,.65)) drop-shadow(0 0 1px rgba(10,9,8,.8));transform-origin:50% 50%;animation:mdvCrSway 3.4s ease-in-out infinite alternate}

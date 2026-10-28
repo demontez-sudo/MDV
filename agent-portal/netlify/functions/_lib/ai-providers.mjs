@@ -75,7 +75,7 @@ export function aiProviderStatus() {
 
 export async function callOpenAI({ instructions, input, model }) {
   const apiKey = key('OPENAI_API_KEY');
-  if (!apiKey) throw providerError('OpenAI is not configured for Vera.');
+  if (!apiKey) throw providerError('OpenAI is not configured for Veux.');
   const chosenModel = clean(model) || clean(process.env.VEUX_OPENAI_MODEL) || DEFAULT_OPENAI_MODEL;
   const res = await timedFetch('https://api.openai.com/v1/responses', {
     method: 'POST',
@@ -147,7 +147,7 @@ async function anthropicMessageRequest(apiKey, chosenModel, instructions, input)
 
 export async function callAnthropic({ instructions, input, model }) {
   const apiKey = key('ANTHROPIC_API_KEY');
-  if (!apiKey) throw providerError('Anthropic is not configured for Vera.');
+  if (!apiKey) throw providerError('Anthropic is not configured for Veux.');
   const requestedModel = anthropicConfiguredModel(model);
   const attempts = [];
   let chosenModel = requestedModel;
@@ -231,7 +231,7 @@ export function formatProviderDiagnostics(failures = []) {
 
 export async function callVeuxAI(args = {}) {
   const status = aiProviderStatus();
-  if (!status.ok) throw providerError('Vera has no AI provider configured. Add an OpenAI or Anthropic API key to the maison-agent Netlify environment.');
+  if (!status.ok) throw providerError('Veux has no AI provider configured. Add an OpenAI or Anthropic API key to the maison-agent Netlify environment.');
   const failures = [];
   for (const provider of status.usable) {
     try {
@@ -240,7 +240,7 @@ export async function callVeuxAI(args = {}) {
       failures.push({ provider, message: error?.message || 'request failed', detail: error?.providerDetail || null });
     }
   }
-  const error = providerError('Vera could not reach a configured AI provider. Check the provider key, model access and billing.');
+  const error = providerError('Veux could not reach a configured AI provider. Check the provider key, model access and billing.');
   error.failures = failures;
   throw error;
 }

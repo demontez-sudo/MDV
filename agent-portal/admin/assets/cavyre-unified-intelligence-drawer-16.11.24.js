@@ -16,7 +16,7 @@ function ensureDrawer(){
  d.setAttribute('aria-label','Model Intelligence drawer');
  d.innerHTML=
    '<button type="button" class="vx161124-intel-bar" aria-expanded="false">'+
-     '<span class="vx161124-intel-brand"><i>✦</i><span><small>VERA · MODEL INTELLIGENCE</small><b>Calendar Intelligence</b></span></span>'+
+     '<span class="vx161124-intel-brand"><i>✦</i><span><small>VEUX · MODEL INTELLIGENCE</small><b>Calendar Intelligence</b></span></span>'+
      '<span class="vx161124-intel-date">Current calendar view</span>'+
      '<span class="vx161124-intel-stats">'+
        '<span><b data-kpi="movements">0</b><small>Movements</small></span>'+
@@ -27,7 +27,7 @@ function ensureDrawer(){
    '</button>'+
    '<div class="vx161124-intel-panel">'+
      '<div class="vx161124-intel-panel-head">'+
-       '<div><small>VERA INTELLIGENCE · LIVE CALENDAR CONTEXT</small><b class="vx161124-panel-title">Calendar Intelligence</b></div>'+
+       '<div><small>VEUX INTELLIGENCE · LIVE CALENDAR CONTEXT</small><b class="vx161124-panel-title">Calendar Intelligence</b></div>'+
        '<button type="button" class="vx161124-close">COLLAPSE ↓</button>'+
      '</div>'+
      '<div class="vx161124-intel-content"></div>'+
@@ -94,7 +94,7 @@ function parseStats(node){
 function titleFor(node){
  var h=node.querySelector('h2,h3');
  var val=text(h);
- if(val && !/model intelligence|vera intelligence|high priority/i.test(val))return val;
+ if(val && !/model intelligence|veuxi intelligence|high priority/i.test(val))return val;
  var cal=document.getElementById('p-calendar');
  var active=cal&&cal.querySelector('.vx75-tabs button.on');
  return active?text(active)+' Calendar':'Calendar Intelligence';

@@ -20,7 +20,7 @@ function overlap(aS,aE,bS,bE){
 
 function buildSignals(c){
   const out=[];
-  const add=(severity,code,title,detail,action,vera_prompt)=>out.push({severity,code,title,detail,action:action||null,vera_prompt:vera_prompt||null});
+  const add=(severity,code,title,detail,action,veuxi_prompt)=>out.push({severity,code,title,detail,action:action||null,veuxi_prompt:veuxi_prompt||null});
   const now=Date.now(),name=c.model.display_name||'this model';
   const media=c.media,headshot=media.find(x=>x.is_primary&&String(x.category||'').toLowerCase()==='headshot')||media.find(x=>x.is_primary);
   if(!headshot)add('high','no_headshot','No primary headshot','A public primary Headshot is needed for packages and the website.',{label:'Manage media',target:'materials'},`${name} has no primary headshot. What should we shoot or select first?`);

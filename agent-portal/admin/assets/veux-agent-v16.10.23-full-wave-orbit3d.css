@@ -119,7 +119,7 @@ html[data-veux-wave] .vx81-nav-flyout nav button:hover{
   box-shadow:inset 3px 0 0 var(--skin-accent)!important;
 }
 
-/* ---------- CLEANER VERA / AI COMMAND BAR ---------- */
+/* ---------- CLEANER VEUX / AI COMMAND BAR ---------- */
 html[data-veux-wave] .vx73-command{
   grid-template-columns:22px minmax(0,1fr) 34px!important;
   width:min(600px,43vw)!important;
@@ -159,18 +159,18 @@ html[data-veux-wave] .vx73-command>button:hover{
 html[data-veux-wave] .vx73-command>button:hover .vx21-command-arrow{
   color:var(--skin-0)!important;
 }
-html[data-veux-wave] .vx20-vera-wave-mark{
+html[data-veux-wave] .vx20-veuxi-wave-mark{
   width:16px!important;height:16px!important;
   background:var(--skin-accent2)!important;
   -webkit-mask:none!important;mask:none!important;
   clip-path:polygon(50% 0,61% 39%,100% 50%,61% 61%,50% 100%,39% 61%,0 50%,39% 39%)!important;
   filter:drop-shadow(0 0 7px var(--skin-glow))!important;
 }
-html[data-veux-wave] .vx20-vera-wave-mark.avatar{
+html[data-veux-wave] .vx20-veuxi-wave-mark.avatar{
   width:24px!important;height:24px!important;
 }
 
-/* Vera intelligence rails look like integrated glass, not separate old cards */
+/* Veux intelligence rails look like integrated glass, not separate old cards */
 html[data-veux-wave] .vx75-intel,
 html[data-veux-wave] .vx89-event-intel,
 html[data-veux-wave] .vx85-day-intel,

@@ -68,7 +68,7 @@ function buildCenter(root){
  var c=document.createElement('section');
  c.className='vx161118-task-center-head';
  c.innerHTML=
- '<div class="vx161118-task-center-title"><small>VERA · SMART TASK CENTER</small><h2>Agency Task Command</h2><p>Priority work first. Completed and lower-signal tasks stay out of the active queue until you need them.</p></div>'+
+ '<div class="vx161118-task-center-title"><small>VEUX · SMART TASK CENTER</small><h2>Agency Task Command</h2><p>Priority work first. Completed and lower-signal tasks stay out of the active queue until you need them.</p></div>'+
  '<div class="vx161118-task-metrics">'+
    '<button data-task-mode="smart" class="on"><b>'+counts.priority+'</b><span>Priority</span><small>Urgent + overdue</small></button>'+
    '<button data-task-mode="due"><b>'+counts.due+'</b><span>Due Soon</span><small>Next 3 days</small></button>'+

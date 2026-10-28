@@ -23,12 +23,12 @@ function status(d){
 function mount(host,d,m){
  if(!host||host.querySelector('.vx161065-model-intel'))return;
  var x=status(d),box=document.createElement('section');box.className='vx161065-model-intel';
- box.innerHTML='<header><div><small>VERA · MODEL INTELLIGENCE</small><h3>Model Command</h3><span>'+esc(m.name)+' · live relational profile</span></div><b>'+x.readiness+'%<small> READINESS</small></b></header>'+
+ box.innerHTML='<header><div><small>VEUX · MODEL INTELLIGENCE</small><h3>Model Command</h3><span>'+esc(m.name)+' · live relational profile</span></div><b>'+x.readiness+'%<small> READINESS</small></b></header>'+
  '<div class="vx161065-kpis"><div><small>Bookings</small><b>'+arr(d.bookings).length+'</b></div><div><small>Castings</small><b>'+arr(d.castings).length+'</b></div><div><small>Development Goals</small><b>'+x.openGoals.length+'</b></div><div><small>Open Tasks</small><b>'+x.openTasks.length+'</b></div><div><small>Travel</small><b>'+x.travel.length+'</b></div><div><small>Visa</small><b>'+x.visa.length+'</b></div></div>'+
  '<div class="vx161065-signals">'+(x.signals.length?x.signals.slice(0,5).map(function(s){return '<article class="'+s[1]+'"><div><small>'+esc(s[0])+' SIGNAL</small><b>'+esc(s[2])+'</b></div><button data-vx161065-nav="'+esc(s[3])+'">Review →</button></article>'}).join(''):'<article class="clear"><div><small>READINESS</small><b>No immediate model-level operational risk detected.</b></div></article>')+'</div>';
  var cnt=host.querySelector('.cnt');if(cnt)cnt.insertBefore(box,cnt.firstChild);else host.appendChild(box);
  box.addEventListener('click',function(e){var b=e.target.closest('[data-vx161065-nav]');if(!b)return;var dest=b.getAttribute('data-vx161065-nav');var n=document.querySelector('[data-page="'+dest+'"],[data-nav="'+dest+'"]');if(n)n.click();});
- try{sessionStorage.setItem('cavyre.vera.context.model360',JSON.stringify({model:m.name,readiness:x.readiness,signals:x.signals.map(function(s){return s[0]+': '+s[2]}),open_development_goals:x.openGoals.length,open_tasks:x.openTasks.length,travel_records:x.travel.length,visa_cases:x.visa.length}));}catch(_e){}
+ try{sessionStorage.setItem('cavyre.veuxi.context.model360',JSON.stringify({model:m.name,readiness:x.readiness,signals:x.signals.map(function(s){return s[0]+': '+s[2]}),open_development_goals:x.openGoals.length,open_tasks:x.openTasks.length,travel_records:x.travel.length,visa_cases:x.visa.length}));}catch(_e){}
 }
 function run(){
  var m=selected(),host=document.getElementById('p-modelpage')||document.querySelector('[data-page-root="modelpage"]');if(!m||!host)return;

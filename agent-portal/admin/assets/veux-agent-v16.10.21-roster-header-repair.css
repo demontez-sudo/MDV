@@ -16,7 +16,7 @@ html[data-veux-wave] .vx73-command{
   border-radius:24px!important;
   box-sizing:border-box!important;
 }
-html[data-veux-wave] .vx73-command > .vx20-vera-wave-mark{
+html[data-veux-wave] .vx73-command > .vx20-veuxi-wave-mark{
   grid-column:1!important;
   width:20px!important;height:20px!important;
   justify-self:center!important;
@@ -53,9 +53,9 @@ html[data-veux-wave] .vx73-command > button{
   border-radius:18px!important;
   overflow:hidden!important;
 }
-html[data-veux-wave] .vx73-command > button .vx20-vera-wave-mark,
-html[data-veux-wave] .vx73-command > button .vera-mark,
-html[data-veux-wave] .vx73-command > button .vera-mark-img{
+html[data-veux-wave] .vx73-command > button .vx20-veuxi-wave-mark,
+html[data-veux-wave] .vx73-command > button .veuxi-mark,
+html[data-veux-wave] .vx73-command > button .veuxi-mark-img{
   display:none!important;
 }
 html[data-veux-wave] .vx21-command-arrow{

@@ -18,7 +18,7 @@ function panel(){
    p.setAttribute('aria-label','Model agency calendar intelligence');
  }
  /* Industry Intelligence belongs AFTER the interactive calendar workspace.
-    Vera Model Intelligence remains inside each calendar view's right-side drawer. */
+    Veux Model Intelligence remains inside each calendar view's right-side drawer. */
  if(p.parentNode!==cal||p!==cal.lastElementChild)cal.appendChild(p);
  return p;
 }

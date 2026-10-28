@@ -13,7 +13,7 @@
 .hm-who{display:grid;gap:2px}.hm-who span{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute)}
 .hm-who select{height:36px;min-width:170px;border:1px solid var(--l2);background:var(--mdv-field,#0b0a08);color:var(--ink);border-radius:999px;padding:0 14px;font-size:13px}
 .hm-sig{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--l2);border-radius:16px;background:rgba(255,255,255,.02)}
-.hm-vera{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--g);margin-right:4px}
+.hm-veuxi{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--g);margin-right:4px}
 .hm-s{font-size:12px;border:1px solid var(--l2);border-radius:999px;padding:4px 11px;color:var(--ink);background:rgba(255,255,255,.03)}.hm-s.risk{border-color:rgba(224,133,90,.55);color:#e9a07c;background:rgba(224,133,90,.08)}.hm-s.ok{border-color:rgba(143,179,161,.5);color:#a9cdbb}
 .hm-cats{display:flex;flex-wrap:wrap;gap:8px}
 .hm-cat{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--l2);background:transparent;color:var(--ink);border-radius:999px;padding:6px 13px;font:500 12px Inter,system-ui,sans-serif;cursor:pointer}

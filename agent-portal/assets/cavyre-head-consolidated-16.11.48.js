@@ -528,29 +528,29 @@ window.VEUX_SELECT_SYSTEM_161010={
 
 ;/* END veux-agent-v16.10.16-dropdown-system.js */
 
-;/* BEGIN veux-agent-v16.10.16-vera-official.js */
+;/* BEGIN veux-agent-v16.10.16-veuxi-official.js */
 
 (function(){
 'use strict';
-if(window.__VEUX_VERA_OFFICIAL_161006__)return;
-window.__VEUX_VERA_OFFICIAL_161006__=true;
+if(window.__VEUX_VEUXI_OFFICIAL_161006__)return;
+window.__VEUX_VEUXI_OFFICIAL_161006__=true;
 
 var mount=window.__VEUX_AGENT_MOUNT__;
 if(mount==null)mount=/^\/(?:admin|team)(?:\/|$)/.test(location.pathname)?'/admin':'';
 
-var MARK_SRC=mount+'/assets/vera/vera-mark.svg?v=16.10.16';
-var AVATAR_SRC=mount+'/assets/vera/vera-avatar-circle.svg?v=16.10.16';
+var MARK_SRC=mount+'/assets/veuxi/veuxi-mark.svg?v=16.10.16';
+var AVATAR_SRC=mount+'/assets/veuxi/veuxi-avatar-circle.svg?v=16.10.16';
 
 function markHTML(cls){
-  return '<img class="vera-mark-img'+(cls?' '+cls:'')+'" src="'+MARK_SRC+'" alt="">';
+  return '<img class="veuxi-mark-img'+(cls?' '+cls:'')+'" src="'+MARK_SRC+'" alt="">';
 }
 function avatarHTML(cls){
-  return '<img class="vera-avatar-img'+(cls?' '+cls:'')+'" src="'+AVATAR_SRC+'" alt="">';
+  return '<img class="veuxi-avatar-img'+(cls?' '+cls:'')+'" src="'+AVATAR_SRC+'" alt="">';
 }
 function replaceLegacyMark(node,useAvatar){
-  if(!node||node.dataset.veraOfficial==='1')return;
+  if(!node||node.dataset.veuxiOfficial==='1')return;
   var replacement=document.createElement('img');
-  replacement.className=useAvatar?'vera-avatar-img':'vera-mark-img';
+  replacement.className=useAvatar?'veuxi-avatar-img':'veuxi-mark-img';
   replacement.src=useAvatar?AVATAR_SRC:MARK_SRC;
   replacement.alt='';
   replacement.setAttribute('aria-hidden','true');
@@ -558,30 +558,30 @@ function replaceLegacyMark(node,useAvatar){
 }
 function enhanceCommand(root){
   root.querySelectorAll('.vx73-command').forEach(function(cmd){
-    var legacy=cmd.querySelector(':scope > .vera-mark');
+    var legacy=cmd.querySelector(':scope > .veuxi-mark');
     if(legacy)replaceLegacyMark(legacy,false);
 
     var first=cmd.firstElementChild;
     if(first && first.tagName==='I'){
       var img=document.createElement('img');
-      img.className='vera-mark-img';
+      img.className='veuxi-mark-img';
       img.src=MARK_SRC;img.alt='';img.setAttribute('aria-hidden','true');
       first.replaceWith(img);
     }
 
     var input=cmd.querySelector('input');
     if(input){
-      input.setAttribute('aria-label','Ask Vera');
-      input.setAttribute('placeholder','Ask Vera to research, decide, build or act…');/* same text as the Vera site script: two different texts made the two scripts rewrite it back and forth forever */
+      input.setAttribute('aria-label','Ask Veux');
+      input.setAttribute('placeholder','Ask Veux to research, decide, build or act…');/* same text as the Veux site script: two different texts made the two scripts rewrite it back and forth forever */
     }
 
     var button=cmd.querySelector('button');
     if(button){
-      button.title='Vera Intelligence';
-      button.setAttribute('aria-label','Open Vera Intelligence');
-      var lm=button.querySelector('.vera-mark');
+      button.title='Veux Intelligence';
+      button.setAttribute('aria-label','Open Veux Intelligence');
+      var lm=button.querySelector('.veuxi-mark');
       if(lm)replaceLegacyMark(lm,false);
-      if(!button.querySelector('.vera-mark-img')){
+      if(!button.querySelector('.veuxi-mark-img')){
         var glyph=(button.textContent||'').trim();
         if(glyph==='✦'||glyph==='✧')button.innerHTML=markHTML();
       }
@@ -590,12 +590,12 @@ function enhanceCommand(root){
 }
 function enhanceIntelligence(root){
   root.querySelectorAll('.vx95-intelligence > header').forEach(function(h){
-    var legacy=h.querySelector(':scope > .vera-mark');
+    var legacy=h.querySelector(':scope > .veuxi-mark');
     if(legacy)replaceLegacyMark(legacy,false);
     var glyph=h.querySelector(':scope > i');
     if(glyph){
       var img=document.createElement('img');
-      img.className='vera-mark-img';img.src=MARK_SRC;img.alt='';img.setAttribute('aria-hidden','true');
+      img.className='veuxi-mark-img';img.src=MARK_SRC;img.alt='';img.setAttribute('aria-hidden','true');
       glyph.replaceWith(img);
     }
   });
@@ -603,10 +603,10 @@ function enhanceIntelligence(root){
 function enhanceLauncher(){
   var b=document.getElementById('_asst-btn');
   if(!b)return;
-  b.classList.add('vera-launcher');
-  b.title='Vera';
-  b.setAttribute('aria-label','Open Vera');
-  if(!b.querySelector('.vera-avatar-img')){
+  b.classList.add('veuxi-launcher');
+  b.title='Veux';
+  b.setAttribute('aria-label','Open Veux');
+  if(!b.querySelector('.veuxi-avatar-img')){
     b.innerHTML=avatarHTML();
   }
 }
@@ -615,14 +615,14 @@ function enhancePanel(){
   if(!p)return;
 
   var header=p.firstElementChild;
-  if(header && !header.querySelector('.vera-panel-identity')){
+  if(header && !header.querySelector('.veuxi-panel-identity')){
     var info=header.firstElementChild;
     if(info){
-      info.classList.add('vera-panel-identity');
+      info.classList.add('veuxi-panel-identity');
       info.innerHTML=avatarHTML()+
-        '<div><div class="vera-panel-kicker">VEUX AGENT · INTELLIGENCE</div>'+
-        '<div class="vera-panel-name">Vera</div>'+
-        '<div class="vera-panel-sub" id="_vera-panel-sub">System intelligence</div>'+
+        '<div><div class="veuxi-panel-kicker">VEUX AGENT · INTELLIGENCE</div>'+
+        '<div class="veuxi-panel-name">Veux</div>'+
+        '<div class="veuxi-panel-sub" id="_veuxi-panel-sub">System intelligence</div>'+
         '<div id="_asst-status" style="font:8px var(--fM);letter-spacing:.08em;text-transform:uppercase;color:var(--mute);margin-top:4px">Checking provider…</div></div>';
     }
   }
@@ -631,21 +631,21 @@ function enhanceMessageLabels(root){
   var box=document.getElementById('_asst-msgs');
   if(!box)return;
   Array.from(box.children).forEach(function(msg){
-    if(msg.dataset.veraMessageDone==='1')return;
+    if(msg.dataset.veuxiMessageDone==='1')return;
     var first=msg.firstElementChild;
     if(!first)return;
     var label=(first.textContent||'').trim();
-    if(/^Vera(?: Intelligence)?(?:\s*·|$)/i.test(label)){
-      first.className='vera-message-head';
-      first.innerHTML=markHTML()+'<span class="vera-message-label">'+label.replace(/^Vera Intelligence/i,'Vera')+'</span>';
-      msg.dataset.veraMessageDone='1';
+    if(/^Veux(?: Intelligence)?(?:\s*·|$)/i.test(label)){
+      first.className='veuxi-message-head';
+      first.innerHTML=markHTML()+'<span class="veuxi-message-label">'+label.replace(/^Veux Intelligence/i,'Veux')+'</span>';
+      msg.dataset.veuxiMessageDone='1';
     }
   });
 }
 function apply(root){
   root=root||document;
   if(root.querySelectorAll){
-    root.querySelectorAll('.vera-mark').forEach(function(n){
+    root.querySelectorAll('.veuxi-mark').forEach(function(n){
       if(n.closest('#_asst-btn'))replaceLegacyMark(n,true);
       else replaceLegacyMark(n,false);
     });
@@ -668,8 +668,8 @@ function start(){
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 
-window.VERA={
-  name:'Vera',
+window.VEUXI={
+  name:'Veux',
   product:'VEUX Agent',
   markSrc:MARK_SRC,
   avatarSrc:AVATAR_SRC,
@@ -677,7 +677,7 @@ window.VERA={
 };
 })();
 
-;/* END veux-agent-v16.10.16-vera-official.js */
+;/* END veux-agent-v16.10.16-veuxi-official.js */
 
 ;/* BEGIN cavyre-command-deep-link-16.10.87.js */
 (function(){'use strict';if(window.__CAVYRE_COMMAND_DEEPLINK_161087__)return;window.__CAVYRE_COMMAND_DEEPLINK_161087__=true;
@@ -826,7 +826,7 @@ addEventListener('error',function(e){record('error',e.message,{source:e.filename
 addEventListener('unhandledrejection',function(e){record('promise',e.reason&&e.reason.message||e.reason||'Unhandled rejection',{})});
 function route(){var p=location.pathname.replace(/\/+$/,'')||'/';if(/^\/(?:admin|team)\/.+/.test(p)&&!/^\/(?:admin|team)(?:\/(?:calendar|roster|models?|clients?|bookings?|castings?|travel|mobility|finance|packages?|tasks?|settings)?)?$/i.test(p)){routeFailures.push({at:now(),path:p});try{history.replaceState(history.state,'','/admin'+location.search+location.hash)}catch(e){}}}
 function patchFetch(){var raw=window.fetch;if(!raw||raw.__cavyre161091)return;function wrapped(input,init){var url=typeof input==='string'?input:(input&&input.url)||'';return raw.apply(this,arguments).then(function(r){if(/\/api\/agent\//.test(url)&&!r.ok){apiFailures.push({at:now(),url:url,status:r.status});if(apiFailures.length>40)apiFailures.shift()}return r}).catch(function(err){if(/\/api\/agent\//.test(url)){apiFailures.push({at:now(),url:url,status:0,error:safe(err&&err.message||err)});if(apiFailures.length>40)apiFailures.shift()}throw err})}wrapped.__cavyre161091=true;window.fetch=wrapped}
-function shell(){return{app:!!document.getElementById('app'),main:!!document.querySelector('main'),rail:!!document.getElementById('vx73-rail'),vera:!!document.querySelector('.vx73-command'),search:!!window.CAVYRE_GLOBAL_SEARCH}}
+function shell(){return{app:!!document.getElementById('app'),main:!!document.querySelector('main'),rail:!!document.getElementById('vx73-rail'),veuxi:!!document.querySelector('.vx73-command'),search:!!window.CAVYRE_GLOBAL_SEARCH}}
 function clearStale(){try{if('caches'in window)caches.keys().then(function(keys){keys.filter(function(k){return /cavyre-agent-shell|veux-agent/i.test(k)&&k.indexOf('16.10.91')<0}).forEach(function(k){caches.delete(k)})})}catch(e){}}
 function diagnostics(){return{version:VERSION,at:now(),path:location.pathname,shell:shell(),runtimeErrors:errors.slice(),apiFailures:apiFailures.slice(),routeFailures:routeFailures.slice(),online:navigator.onLine,serviceWorker:!!navigator.serviceWorker}}
 route();patchFetch();clearStale();addEventListener('popstate',route);
@@ -847,7 +847,7 @@ var REQUIRED=[
  {name:'main',test:function(){return !!document.querySelector('main')}},
  {name:'release-diagnostics',test:function(){return !!(window.CAVYRE_RELEASE&&CAVYRE_RELEASE.diagnostics)}},
  {name:'global-search',test:function(){return !!window.CAVYRE_GLOBAL_SEARCH}},
- {name:'vera-command',test:function(){return !!document.querySelector('.vx73-command')}},
+ {name:'veuxi-command',test:function(){return !!document.querySelector('.vx73-command')}},
  {name:'agent-rail',test:function(){return !!document.getElementById('vx73-rail')}}
 ];
 function check(){
@@ -882,7 +882,7 @@ window.addEventListener('cavyre:release-ready',boot);
 ;/* END cavyre-lifecycle-freeze-16.10.92.js */
 
 ;/* BEGIN cavyre-release-certification-16.10.93.js */
-(function(){'use strict';if(window.__CAVYRE_CERT_161093__)return;window.__CAVYRE_CERT_161093__=true;var VERSION='16.10.93';function run(){var tests=[['Application shell',function(){return!!document.getElementById('app')}],['Primary workspace',function(){return!!document.querySelector('main')}],['Agency rail',function(){return!!document.getElementById('vx73-rail')}],['Vera command',function(){return!!document.querySelector('.vx73-command')}],['Global search',function(){return!!window.CAVYRE_GLOBAL_SEARCH}],['Release diagnostics',function(){return!!(window.CAVYRE_RELEASE&&CAVYRE_RELEASE.diagnostics)}],['Lifecycle freeze',function(){return!!(window.CAVYRE_FREEZE&&CAVYRE_FREEZE.check)}]];var results=tests.map(function(t){var ok=false;try{ok=!!t[1]()}catch(e){}return{name:t[0],ok:ok}});var out={version:VERSION,at:new Date().toISOString(),certified:results.every(function(x){return x.ok}),results:results};try{sessionStorage.setItem('cavyre.release.certification',JSON.stringify(out))}catch(e){};dispatchEvent(new CustomEvent('cavyre:release-certification',{detail:out}));return out}window.CAVYRE_CERTIFICATION={version:VERSION,run:run};function boot(){setTimeout(run,650)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();addEventListener('cavyre:release-ready',boot);})();
+(function(){'use strict';if(window.__CAVYRE_CERT_161093__)return;window.__CAVYRE_CERT_161093__=true;var VERSION='16.10.93';function run(){var tests=[['Application shell',function(){return!!document.getElementById('app')}],['Primary workspace',function(){return!!document.querySelector('main')}],['Agency rail',function(){return!!document.getElementById('vx73-rail')}],['Veux command',function(){return!!document.querySelector('.vx73-command')}],['Global search',function(){return!!window.CAVYRE_GLOBAL_SEARCH}],['Release diagnostics',function(){return!!(window.CAVYRE_RELEASE&&CAVYRE_RELEASE.diagnostics)}],['Lifecycle freeze',function(){return!!(window.CAVYRE_FREEZE&&CAVYRE_FREEZE.check)}]];var results=tests.map(function(t){var ok=false;try{ok=!!t[1]()}catch(e){}return{name:t[0],ok:ok}});var out={version:VERSION,at:new Date().toISOString(),certified:results.every(function(x){return x.ok}),results:results};try{sessionStorage.setItem('cavyre.release.certification',JSON.stringify(out))}catch(e){};dispatchEvent(new CustomEvent('cavyre:release-certification',{detail:out}));return out}window.CAVYRE_CERTIFICATION={version:VERSION,run:run};function boot(){setTimeout(run,650)}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();addEventListener('cavyre:release-ready',boot);})();
 ;/* END cavyre-release-certification-16.10.93.js */
 
 ;/* BEGIN cavyre-predeploy-acceptance-16.10.94.js */
@@ -895,7 +895,7 @@ function run(){
   test('Application shell',function(){return!!document.getElementById('app')}),
   test('Primary workspace',function(){return!!document.querySelector('main')}),
   test('Agency navigation rail',function(){return!!document.getElementById('vx73-rail')}),
-  test('Vera command',function(){return!!document.querySelector('.vx73-command')}),
+  test('Veux command',function(){return!!document.querySelector('.vx73-command')}),
   test('Global Search',function(){return!!(window.CAVYRE_GLOBAL_SEARCH&&CAVYRE_GLOBAL_SEARCH.open)}),
   test('Production diagnostics',function(){return!!(window.CAVYRE_RELEASE&&CAVYRE_RELEASE.diagnostics)}),
   test('Lifecycle freeze',function(){return!!(window.CAVYRE_FREEZE&&CAVYRE_FREEZE.check)}),

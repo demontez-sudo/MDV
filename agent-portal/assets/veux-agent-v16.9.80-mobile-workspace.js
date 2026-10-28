@@ -8,7 +8,7 @@
   function groups(){if(window.VEUX_V16979_NAV&&window.VEUX_V16979_NAV.groups)return window.VEUX_V16979_NAV.groups();return (window.NAV_AGENT||window.VEUX_V15_NAV_FULL||[]).filter(function(g){return g&&g.items&&g.items.length;});}
   function close(){document.documentElement.classList.remove('vx80-menu-open');var s=document.getElementById('vx80-mobile-sheet'),o=document.getElementById('vx80-mobile-scrim');if(s)s.setAttribute('aria-hidden','true');if(o)o.hidden=true;}
   function open(){document.documentElement.classList.add('vx80-menu-open');var s=document.getElementById('vx80-mobile-sheet'),o=document.getElementById('vx80-mobile-scrim');if(s)s.setAttribute('aria-hidden','false');if(o)o.hidden=false;}
-  function go(page){close();if(page==='__intelligence__'){var b=document.getElementById('_asst-btn');if(b)b.click();else if(window.toast)window.toast('Vera is still loading.');return;}if(typeof window.navTo==='function')window.navTo(page);}
+  function go(page){close();if(page==='__intelligence__'){var b=document.getElementById('_asst-btn');if(b)b.click();else if(window.toast)window.toast('Veux is still loading.');return;}if(typeof window.navTo==='function')window.navTo(page);}
   function build(){
     var app=document.getElementById('app');if(!app)return;
     var old=document.getElementById('vx80-mobile-nav');if(old)old.remove();

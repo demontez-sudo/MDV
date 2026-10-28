@@ -93,7 +93,7 @@ function crmDetail(x,kind,contacts){
     '<section class="v1686-360-section"><header><b>Professional Contacts</b><span>'+linked.length+'</span></header><div class="v1686-360-contacts">'+
       (linked.length?linked.slice(0,20).map(function(c){return '<button onclick="VEUX_V1686.crmOpenContact(\''+c.id+'\')"><strong>'+esc(c.display_name)+'</strong><small>'+esc(c.role||'Professional Contact')+'</small></button>'}).join(''):'<div class="v1686-empty">No contacts linked yet.</div>')+
     '</div></section>'+
-    '<section class="v1686-360-section"><header><b>Notes & Vera Brief</b></header><p>'+esc(x.notes||'No relationship notes recorded.')+'</p><p class="v1686-360-vera"><b>VERA:</b> '+esc(crmMeta(x,'vera_brief','No Vera brief recorded.'))+'</p></section></aside>';
+    '<section class="v1686-360-section"><header><b>Notes & Veux Brief</b></header><p>'+esc(x.notes||'No relationship notes recorded.')+'</p><p class="v1686-360-veuxi"><b>VEUX:</b> '+esc(crmMeta(x,'veuxi_brief','No Veux brief recorded.'))+'</p></section></aside>';
   }
   var companies=crmLinksForContact(x),primary=x.companies||companies[0]||null;
   return '<aside class="v1686-crm-detail v1686-crm360"><header class="v1686-360-head"><div><small>CONTACT 360 · CANONICAL PERSON</small><h2>'+esc(x.display_name)+'</h2><p>'+esc(x.role||'Professional Contact')+'</p></div>'+badge(x.status)+'</header>'+
@@ -126,7 +126,7 @@ function crmDetail(x,kind,contacts){
     '<div><span>Availability</span><b>'+esc(crmMeta(x,'availability','—'))+'</b></div>'+
   '</div></section>'+
   '<section class="v1686-360-section"><header><b>Working Preferences</b></header><p><b>Talent:</b> '+esc(crmMeta(x,'talent_preferences','—'))+'</p><p><b>Submissions:</b> '+esc(crmMeta(x,'submission_preferences','—'))+'</p><p><b>Current Projects:</b> '+esc(crmMeta(x,'current_projects','—'))+'</p></section>'+
-  '<section class="v1686-360-section"><header><b>Notes & Vera Brief</b></header><p>'+esc(x.notes||'No relationship notes recorded.')+'</p><p class="v1686-360-vera"><b>VERA:</b> '+esc(crmMeta(x,'vera_brief','No Vera brief recorded.'))+'</p></section></aside>';
+  '<section class="v1686-360-section"><header><b>Notes & Veux Brief</b></header><p>'+esc(x.notes||'No relationship notes recorded.')+'</p><p class="v1686-360-veuxi"><b>VEUX:</b> '+esc(crmMeta(x,'veuxi_brief','No Veux brief recorded.'))+'</p></section></aside>';
 }
 async function renderCRM(el){
   el=el||panel('industrydirectory');if(!el)return;

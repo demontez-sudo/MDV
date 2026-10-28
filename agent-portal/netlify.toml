@@ -103,13 +103,13 @@ for = "/admin/manifest.webmanifest"
   Cache-Control = "public, max-age=0, must-revalidate"
 
 [[redirects]]
-from = "/api/agent/vera/intelligence"
-to = "/.netlify/functions/agent-vera-intelligence"
+from = "/api/agent/veuxi/intelligence"
+to = "/.netlify/functions/agent-veuxi-intelligence"
 status = 200
 force = true
 [[redirects]]
-from = "/api/agent/vera/chat"
-to = "/.netlify/functions/agent-vera-chat"
+from = "/api/agent/veuxi/chat"
+to = "/.netlify/functions/agent-veuxi-chat"
 status = 200
 force = true
 [[redirects]]
@@ -519,8 +519,8 @@ status = 200
 force = true
 
 [[redirects]]
-from = "/api/agent/scouting/vera"
-to = "/.netlify/functions/agent-scouting-vera"
+from = "/api/agent/scouting/veuxi"
+to = "/.netlify/functions/agent-scouting-veuxi"
 status = 200
 force = true
 
@@ -549,8 +549,8 @@ status = 200
 force = true
 
 [[redirects]]
-from = "/api/agent/season/vera"
-to = "/.netlify/functions/agent-season-vera"
+from = "/api/agent/season/veuxi"
+to = "/.netlify/functions/agent-season-veuxi"
 status = 200
 force = true
 [[redirects]]
@@ -858,19 +858,19 @@ force = false
         "./emails/**"
       ]
 [[redirects]]
-from = "/api/agent/vera/plan"
-to = "/.netlify/functions/agent-vera-plan"
+from = "/api/agent/veuxi/plan"
+to = "/.netlify/functions/agent-veuxi-plan"
 status = 200
 force = true
 
 [[redirects]]
-from = "/api/agent/vera/desk"
-to = "/.netlify/functions/agent-vera-desk"
+from = "/api/agent/veuxi/desk"
+to = "/.netlify/functions/agent-veuxi-desk"
 status = 200
 force = true
 
 [[redirects]]
-from = "/api/agent/vera/preflight"
-to = "/.netlify/functions/agent-vera-preflight"
+from = "/api/agent/veuxi/preflight"
+to = "/.netlify/functions/agent-veuxi-preflight"
 status = 200
 force = true

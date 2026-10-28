@@ -102,7 +102,7 @@ function paint(){
    +'<div class="ot-ha"><button type="button" class="ot-btn" data-a="mail"><i class="ti ti-mail"></i> New email</button><button type="button" class="ot-btn gold" data-a="log"><i class="ti ti-plus"></i> Log outreach</button></div></header>'
    +(S.err?'<p class="ot-err">'+esc(S.err)+' <button type="button" class="ot-link" data-a="refresh">Try again</button></p>':'')
    +(k?kpiHtml(k):'<div class="ot-kpis sk"><span></span><span></span><span></span><span></span></div>')
-   +(sig.length?'<div class="ot-sig"><b><i class="ti ti-sparkles"></i> Vera</b>'+sig.map(function(x,i){return '<button type="button" data-sig="'+i+'">'+esc(x.t)+'</button>';}).join('')+'</div>':'')
+   +(sig.length?'<div class="ot-sig"><b><i class="ti ti-sparkles"></i> Veux</b>'+sig.map(function(x,i){return '<button type="button" data-sig="'+i+'">'+esc(x.t)+'</button>';}).join('')+'</div>':'')
    +'<nav class="ot-tabs">'+[['timeline','Timeline'],['followups','Follow-ups'+(k&&k.fu?' <i>'+k.fu+'</i>':'')],['people','People'],['companies','Companies']].map(function(t){return '<button type="button" data-view="'+t[0]+'" class="'+(S.view===t[0]?'on':'')+'">'+t[1]+'</button>';}).join('')+'</nav>'
    +(S.view==='timeline'?filtersHtml():'')
    +'<div class="ot-body">'+(S.data?body():'<p class="ot-empty">Loading your outreach…</p>')+'</div></div>';

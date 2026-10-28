@@ -1,4 +1,4 @@
-/* Vera Scout */
+/* Veux Scout */
 .vs-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .vs-open{border-color:var(--mdv-gold,#d4b077)!important;color:var(--mdv-gold,#d4b077)!important}
 .vs-back{position:fixed;inset:0;z-index:10060;background:rgba(6,5,4,.7);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:20px}
@@ -23,7 +23,7 @@
 .vs-head{display:flex;align-items:center;gap:10px;padding-right:30px}
 .vs-fit{font-size:10px;letter-spacing:.14em;text-transform:uppercase;border:1px solid var(--l2);padding:3px 9px;color:var(--mute)}.vs-fit.strong{border-color:#7fc99a;color:#7fc99a}.vs-fit.maybe{border-color:var(--g);color:var(--g)}
 .vs-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.vs-grid .wide{grid-column:1/-1}
-.vs-vera{margin:0;font-size:13px;line-height:1.55}.vs-vera b{color:var(--g);font-weight:500}
+.vs-veuxi{margin:0;font-size:13px;line-height:1.55}.vs-veuxi b{color:var(--g);font-weight:500}
 .vs-tags{display:flex;gap:6px;flex-wrap:wrap}.vs-flag,.vs-miss{font-size:11px;border:1px solid var(--l2);padding:3px 8px;color:var(--mute)}.vs-flag{border-color:#e59a8e;color:#e59a8e}
 .vs-pick{position:absolute;top:12px;right:12px;width:20px;height:20px;cursor:pointer;display:block!important}.vs-pick input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer;width:100%!important}
 .vs-pick span{display:block!important;width:18px;height:18px;border:1px solid var(--mute);background:var(--mdv-panel,#15130f);padding:0;letter-spacing:0!important}.vs-pick input:checked+span{background:var(--g);border-color:var(--g);box-shadow:inset 0 0 0 3px var(--mdv-panel,#15130f)}

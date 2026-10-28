@@ -7,7 +7,7 @@ function run(){
   test('Application shell',function(){return!!document.getElementById('app')}),
   test('Primary workspace',function(){return!!document.querySelector('main')}),
   test('Agency navigation rail',function(){return!!document.getElementById('vx73-rail')}),
-  test('Vera command',function(){return!!document.querySelector('.vx73-command')}),
+  test('Veux command',function(){return!!document.querySelector('.vx73-command')}),
   test('Global Search',function(){return!!(window.CAVYRE_GLOBAL_SEARCH&&CAVYRE_GLOBAL_SEARCH.open)}),
   test('Production diagnostics',function(){return!!(window.CAVYRE_RELEASE&&CAVYRE_RELEASE.diagnostics)}),
   test('Lifecycle freeze',function(){return!!(window.CAVYRE_FREEZE&&CAVYRE_FREEZE.check)}),

@@ -413,7 +413,7 @@ html body #p-calendar .mdv-deck-fold{display:none}
   html body #p-calendar#p-calendar .mdv-deck.collapsed .mdv-deck-title small{display:none}
 }
 
-/* View dossier now lives at the top of the Vera Model Intelligence panel */
+/* View dossier now lives at the top of the Veux Model Intelligence panel */
 html body #p-calendar .vx89-event-intel .vx89-dossier{display:block;width:100%;margin:2px 0 16px;padding:12px 16px;border:0;border-radius:11px;background:linear-gradient(135deg,var(--mdv-gold-2,var(--skin-accent2,#dec08a)),var(--mdv-gold,var(--skin-accent,#c9a66b)));color:#15110a;font:700 12px 'Inter',sans-serif;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;text-align:center}
 html body #p-calendar .vx89-event-intel .vx89-dossier:hover{filter:brightness(1.06)}
 
@@ -501,7 +501,7 @@ html body #p-calendar .vx75-calendar.is-plan>.vx75-control .vx75-identity small{
 .pl-strip{display:flex;justify-content:space-between;align-items:center;gap:10px 18px;flex-wrap:wrap;padding:9px 14px;border:1px solid var(--mdv-line-2);background:var(--mdv-panel);border-radius:10px;font-size:12px;color:var(--mdv-mute)}
 .pl-facts b{color:var(--mdv-ink);font-weight:600}.pl-facts i{font-style:normal;margin:0 8px;opacity:.5}
 .pl-signals{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
-.pl-vera{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mdv-gold)}
+.pl-veuxi{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mdv-gold)}
 .pl-sig{border:1px solid var(--mdv-line-2);border-left:3px solid var(--mdv-gold);background:transparent;color:var(--mdv-ink);padding:4px 10px;font-size:12px;cursor:pointer;border-radius:0 6px 6px 0}
 .pl-sig.risk{border-left-color:#e0685a}.pl-sig:hover{border-color:var(--mdv-gold)}
 .pl-pills{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}

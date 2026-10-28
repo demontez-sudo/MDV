@@ -1,7 +1,7 @@
 /* Visa Desk · Travel Clearance
    The Visa Desk is the gate for travel: a model can only be booked, confirmed or sent on a trip once
    their visa (or a recorded "not required"), and passport, are clear. This page turns the mobility data
-   into a command view — lock board, Vera signals, model clearance cards, pipeline and a 60-day timeline —
+   into a command view — lock board, Veux signals, model clearance cards, pipeline and a 60-day timeline —
    and reuses the existing visa / passport / trip forms for editing. Visa changes re-sync Travel + Calendar
    on the server (calendar events carry the lock state). */
 (function(){
@@ -54,7 +54,7 @@ function build(d){
     var state=atRisk.length?'risk':blocked.length?'action':casesOpen.length?'progress':(mt.length||cleared.length)?'clear':'idle';
     return {m:m,name:m.display_name||'Model',visas:mv,trips:mt,pp:pp,blocked:blocked,atRisk:atRisk,casesOpen:casesOpen,cleared:cleared,state:state};
   });
-  /* Vera signals */
+  /* Veux signals */
   var sig=[];
   upcoming.forEach(function(t){
     var g=t.visa_gate||{},n=days(t.starts_at),who=mName[t.model_id]||'Model',route=[t.origin,t.destination].filter(Boolean).join(' → ')||t.destination||'trip';
@@ -100,8 +100,8 @@ function kpiHtml(k){
   return '<section class="vsd-kpis">'+c(k.cleared,'Models cleared to travel','ok')+c(k.locked,'Trips locked',k.locked?'bad':'')+c(k.risk,'Confirmed trips at risk',k.risk?'crit':'')+c(k.open,'Open visa cases')+c(k.expiring,'Visas expiring ≤ 60d',k.expiring?'warn':'')+'</section>';
 }
 function signalsHtml(sig){
-  if(!sig.length)return '<section class="vsd-card"><header><div><small>✦ VERA · TRAVEL INTELLIGENCE</small><h3>All clear</h3></div></header><p class="vsd-empty">No visa, passport or deadline risks across upcoming travel.</p></section>';
-  return '<section class="vsd-card"><header><div><small>✦ VERA · TRAVEL INTELLIGENCE</small><h3>'+sig.length+' signal'+(sig.length===1?'':'s')+' need attention</h3></div></header><div class="vsd-signals">'+sig.slice(0,8).map(function(x){
+  if(!sig.length)return '<section class="vsd-card"><header><div><small>✦ VEUX · TRAVEL INTELLIGENCE</small><h3>All clear</h3></div></header><p class="vsd-empty">No visa, passport or deadline risks across upcoming travel.</p></section>';
+  return '<section class="vsd-card"><header><div><small>✦ VEUX · TRAVEL INTELLIGENCE</small><h3>'+sig.length+' signal'+(sig.length===1?'':'s')+' need attention</h3></div></header><div class="vsd-signals">'+sig.slice(0,8).map(function(x){
     return '<article class="vsd-sig '+x.sev+'"><div><b>'+esc(x.title)+'</b><p>'+esc(x.text||'')+'</p></div><div class="vsd-sig-act">'+arr(x.act).map(function(a){return '<button type="button" data-act="'+a[0]+'" data-a="'+esc(a[2]||'')+'" data-b="'+esc(a[3]||'')+'">'+esc(a[1])+'</button>';}).join('')+'</div></article>';
   }).join('')+(sig.length>8?'<p class="vsd-more">+ '+(sig.length-8)+' more</p>':'')+'</div></section>';
 }

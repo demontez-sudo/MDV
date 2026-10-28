@@ -1,4 +1,4 @@
-/* Smart Finance & Legal: KPI overview, Vera financial signals, real invoice/payment forms, payouts, contracts, usage rights, signatures. */
+/* Smart Finance & Legal: KPI overview, Veux financial signals, real invoice/payment forms, payouts, contracts, usage rights, signatures. */
 (function(){
 'use strict';
 if(window.__MDV_FIN__)return;window.__MDV_FIN__=true;
@@ -39,7 +39,7 @@ function summarize(d){
   return{outstanding:outstanding,overdueInv:overdueInv,overdueTotal:overdueTotal,dueSoon:dueSoon,unpaid:unpaid,monthlyRevenue:monthlyRevenue,openPayouts:openPayouts,overduePayouts:overduePayouts,collectionRisk:collectionRisk};
 }
 
-/* ---------- Vera financial signals: rule-based, ranked, capped — same shape as mdv-packages.js signals() ---------- */
+/* ---------- Veux financial signals: rule-based, ranked, capped — same shape as mdv-packages.js signals() ---------- */
 function signals(sum){
   var out=[];
   sum.overdueInv.slice().sort(function(a,b){return new Date(a.due_date||0)-new Date(b.due_date||0);}).slice(0,3).forEach(function(x){
@@ -81,7 +81,7 @@ function empty(msg){return '<p class="fin-empty">'+esc(msg)+'</p>';}
 function overviewHtml(d){
   var sum=summarize(d),sig=signals(sum);
   var h='<div class="fin-kpis">'+kpi('Outstanding',money(sum.outstanding),sum.unpaid.length+' open invoice'+(sum.unpaid.length===1?'':'s'))+kpi('Overdue',money(sum.overdueTotal),sum.overdueInv.length+' invoice'+(sum.overdueInv.length===1?'':'s'))+kpi('This month',money(sum.monthlyRevenue),new Date().toLocaleDateString([],{month:'long'})+' payments')+kpi('Open payouts',sum.openPayouts.length,sum.overduePayouts.length+' overdue')+'</div>';
-  h+='<section class="fin-signals"><h3><i>✦</i> Vera financial signals</h3>'+(sig.length?'<div>'+sig.map(function(s){return '<article class="'+s.k+'"><b>'+esc(s.t)+'</b><p>'+esc(s.d)+'</p><button type="button" data-fin-tab="invoices">'+esc(s.a)+' →</button></article>';}).join('')+'</div>':empty('Nothing needs attention right now. Receivables and payouts are on track.'))+'</section>';
+  h+='<section class="fin-signals"><h3><i>✦</i> Veux financial signals</h3>'+(sig.length?'<div>'+sig.map(function(s){return '<article class="'+s.k+'"><b>'+esc(s.t)+'</b><p>'+esc(s.d)+'</p><button type="button" data-fin-tab="invoices">'+esc(s.a)+' →</button></article>';}).join('')+'</div>':empty('Nothing needs attention right now. Receivables and payouts are on track.'))+'</section>';
   h+='<div class="fin-ov-actions"><button type="button" class="primary" data-fin-new-invoice>+ Create Invoice</button><button type="button" data-fin-tab="payouts">View Payouts</button><button type="button" data-fin-tab="invoices">View Invoices</button></div>';
   return h;
 }

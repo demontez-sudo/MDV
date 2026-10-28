@@ -213,7 +213,7 @@ html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-flow-more{a
 html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-upcoming header b{font:600 12px 'Inter',sans-serif!important;color:var(--mdv-gold)!important;letter-spacing:.06em!important;text-transform:uppercase}
 html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-upcoming button:not(.vx89-flow-more){text-transform:none!important;text-align:left}
 html body #p-calendar .vx89-flow-dashboard.vx89-flow-dashboard .vx89-upcoming :is(b,small,span,em){font-family:'Inter',sans-serif!important}
-/* vera drawer (shared by week/day/month) */
+/* veuxi drawer (shared by week/day/month) */
 html body #p-calendar .vx161125-native-drawer.vx161125-native-drawer *{letter-spacing:0!important;font-family:'Inter',sans-serif}
 html body #p-calendar .vx161125-native-drawer .vx161125-native-brand small,html body #p-calendar .vx161125-native-drawer .vx161125-native-panel header small{font:600 10px/1.2 'Inter',sans-serif!important;letter-spacing:.08em!important;text-transform:uppercase;color:var(--mdv-gold)!important}
 html body #p-calendar .vx161125-native-drawer .vx161125-native-brand b,html body #p-calendar .vx161125-native-drawer .vx161125-native-panel header h2{font:600 15px/1.3 'Inter',sans-serif!important;color:var(--mdv-ink)!important;text-transform:none!important}
