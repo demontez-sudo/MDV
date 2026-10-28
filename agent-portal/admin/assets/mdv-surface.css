@@ -41,13 +41,13 @@ html body [data-mdv-dlg] ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.
 html body [data-mdv-dlg] ::-webkit-scrollbar-track{background:transparent}
 
 /* ---- close button: a soft round ---- */
-html body :is([data-mdv-dlg],[data-mdv-page]) :is(.vx133-close,.sr-x,[class*="close"],[class$="-x"],[data-x],[aria-label="Close"],[aria-label="close"]):is(button){
+html body :is([data-mdv-dlg],[data-mdv-page]) :is(.vx133-close,.sr-x,[class*="close"],[class$="-x"],[data-x][aria-label],[aria-label="Close"],[aria-label="close"]):is(button){
   width:38px!important;height:38px!important;min-height:0!important;padding:0!important;border-radius:50%!important;
   border:1px solid var(--sf-hair)!important;background:var(--sf-fill)!important;color:var(--sf-ink)!important;
   display:inline-grid!important;place-items:center;font-size:20px!important;line-height:1!important;letter-spacing:0!important;box-shadow:none!important;cursor:pointer;
   transition:background .15s,border-color .15s,transform .15s;
 }
-html body :is([data-mdv-dlg],[data-mdv-page]) :is(.vx133-close,.sr-x,[class*="close"],[class$="-x"],[data-x],[aria-label="Close"],[aria-label="close"]):is(button):hover{background:var(--sf-fill2)!important;border-color:var(--sf-hair2)!important;transform:rotate(90deg)}
+html body :is([data-mdv-dlg],[data-mdv-page]) :is(.vx133-close,.sr-x,[class*="close"],[class$="-x"],[data-x][aria-label],[aria-label="Close"],[aria-label="close"]):is(button):hover{background:var(--sf-fill2)!important;border-color:var(--sf-hair2)!important;transform:rotate(90deg)}
 
 /* ---- where you type: soft rounded fields ---- */
 html body :is([data-mdv-dlg],[data-mdv-page]) :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]):not([type=color]):not([type=hidden]):not([type=submit]):not([type=button]):not([type=image]):not([type=reset]),select,textarea,.vx-select-btn){
@@ -77,19 +77,19 @@ html body :is([data-mdv-dlg],[data-mdv-page]) .vx-select-option.selected{backgro
 html body :is([data-mdv-dlg],[data-mdv-page]) :is(.vx133-field,.vx132-field,.f-field,.m-field)>label{font-size:11px!important;font-weight:500;letter-spacing:.09em!important;text-transform:uppercase;color:var(--sf-mute)!important;margin-bottom:7px}
 
 /* ---- buttons: pills ---- */
-html body :is([data-mdv-dlg],[data-mdv-page]) :is(button[class*="btn"],footer button,[class*="foot"] button,[class*="mft"] button,[class*="actions"] button,button.sr-btn,button.ct-btn):not([class*="close"],[class$="-x"],[class*="select"],[data-x],.sr-x,.sr-steps button,.sr-tabs button){
+html body :is([data-mdv-dlg],[data-mdv-page]) :is(button[class*="btn"],footer button,[class*="foot"] button,[class*="mft"] button,[class*="actions"] button,button.sr-btn,button.ct-btn):not([class*="close"],[class$="-x"],[class*="select"],[data-x][aria-label],.sr-x,.sr-steps button,.sr-tabs button){
   display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:0 22px!important;
   border:1px solid var(--sf-hair2)!important;border-radius:999px!important;background:var(--sf-fill)!important;color:var(--sf-ink)!important;
   font-size:13px!important;font-weight:500;letter-spacing:.03em!important;text-transform:none!important;box-shadow:none!important;cursor:pointer;
   transition:transform .15s,background .15s,border-color .15s,box-shadow .15s,filter .15s;
 }
-html body :is([data-mdv-dlg],[data-mdv-page]) :is(button[class*="btn"],footer button,[class*="foot"] button,[class*="mft"] button,[class*="actions"] button,button.sr-btn,button.ct-btn):not([class*="close"],[class$="-x"],[class*="select"],[data-x],.sr-x,.sr-steps button,.sr-tabs button):hover:not(:disabled){background:var(--sf-fill2)!important;border-color:color-mix(in srgb,var(--sf-acc) 55%,transparent)!important;transform:translateY(-1px)}
-html body :is([data-mdv-dlg],[data-mdv-page]) :is(button.gold,button.fill,button.primary,button.pri,button.save,button[type=submit],button[class*="btn"][class*="gold"],button[class*="btn"][class*="fill"],button[class*="btn"][class*="primary"]):not([class*="close"],[class$="-x"],[class*="select"],[data-x]){
+html body :is([data-mdv-dlg],[data-mdv-page]) :is(button[class*="btn"],footer button,[class*="foot"] button,[class*="mft"] button,[class*="actions"] button,button.sr-btn,button.ct-btn):not([class*="close"],[class$="-x"],[class*="select"],[data-x][aria-label],.sr-x,.sr-steps button,.sr-tabs button):hover:not(:disabled){background:var(--sf-fill2)!important;border-color:color-mix(in srgb,var(--sf-acc) 55%,transparent)!important;transform:translateY(-1px)}
+html body :is([data-mdv-dlg],[data-mdv-page]) :is(button.gold,button.fill,button.primary,button.pri,button.save,button[type=submit],button[class*="btn"][class*="gold"],button[class*="btn"][class*="fill"],button[class*="btn"][class*="primary"]):not([class*="close"],[class$="-x"],[class*="select"],[data-x][aria-label]){
   background:linear-gradient(135deg,var(--sf-acc2),var(--sf-acc))!important;border-color:transparent!important;color:#12100c!important;font-weight:600;
   box-shadow:0 8px 26px color-mix(in srgb,var(--sf-acc) 30%,transparent)!important;
 }
-html body :is([data-mdv-dlg],[data-mdv-page]) :is(button.gold,button.fill,button.primary,button.pri,button.save,button[type=submit],button[class*="btn"][class*="gold"],button[class*="btn"][class*="fill"],button[class*="btn"][class*="primary"]):not([class*="close"],[class$="-x"],[class*="select"],[data-x]):hover:not(:disabled){filter:brightness(1.07);box-shadow:0 12px 34px color-mix(in srgb,var(--sf-acc) 42%,transparent)!important;background:linear-gradient(135deg,var(--sf-acc2),var(--sf-acc))!important}
-html body :is([data-mdv-dlg],[data-mdv-page]) :is(button.danger,button[class*="btn"][class*="danger"]):not([data-x]){border-color:rgba(224,128,110,.5)!important;color:#f0a898!important;background:rgba(224,128,110,.08)!important}
+html body :is([data-mdv-dlg],[data-mdv-page]) :is(button.gold,button.fill,button.primary,button.pri,button.save,button[type=submit],button[class*="btn"][class*="gold"],button[class*="btn"][class*="fill"],button[class*="btn"][class*="primary"]):not([class*="close"],[class$="-x"],[class*="select"],[data-x][aria-label]):hover:not(:disabled){filter:brightness(1.07);box-shadow:0 12px 34px color-mix(in srgb,var(--sf-acc) 42%,transparent)!important;background:linear-gradient(135deg,var(--sf-acc2),var(--sf-acc))!important}
+html body :is([data-mdv-dlg],[data-mdv-page]) :is(button.danger,button[class*="btn"][class*="danger"]):not([data-x][aria-label]){border-color:rgba(224,128,110,.5)!important;color:#f0a898!important;background:rgba(224,128,110,.08)!important}
 html body :is([data-mdv-dlg],[data-mdv-page]) button:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
 html body :is([data-mdv-dlg],[data-mdv-page]) button:focus-visible{outline:2px solid color-mix(in srgb,var(--sf-acc) 70%,transparent);outline-offset:2px}
 
@@ -124,7 +124,7 @@ html body :is([data-mdv-dlg],[data-mdv-page]) .vx16917-checkrow>label{padding:9p
 html body :is([data-mdv-dlg],[data-mdv-page]) .vx16917-checkrow>label:hover{border-color:var(--sf-hair2);background:var(--sf-fill2)}
 
 /* every other button inside a popup: softly rounded rather than square */
-html body :is([data-mdv-dlg],[data-mdv-page]) button:not([class*="close"],[class$="-x"],[class*="select"],[role="tab"],[role="option"],[data-x]){border-radius:14px!important}
+html body :is([data-mdv-dlg],[data-mdv-page]) button:not([class*="close"],[class$="-x"],[class*="select"],[role="tab"],[role="option"],[data-x][aria-label]){border-radius:14px!important}
 html body :is([data-mdv-dlg],[data-mdv-page]) :is([class*="card"],[class*="aside"]>*):not(tr,td,th,li,img,button,input,select,textarea){border-radius:18px!important}
 /* on a phone the popup covers the tab bar, like a sheet */
 @media(max-width:820px){body:has([data-mdv-dlg]) #mdv-tabs{transform:translateY(110%);pointer-events:none}}
