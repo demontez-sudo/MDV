@@ -1,0 +1,18 @@
+/* Model form: Mother Agency connection */
+.mdv-ma-field{grid-column:1/-1}
+.mal{display:flex;flex-direction:column;gap:12px}
+.mal-loading{padding:12px 4px;font-size:13px;color:#9d97b8}
+.mal-sel{width:100%;box-sizing:border-box;padding:14px 16px;border-radius:14px;border:1px solid rgba(150,120,255,.34);background:#161429;color:inherit;font:inherit;font-size:15px;cursor:pointer}
+.mal-sel:focus{outline:0;border-color:#b9a1ff}
+.mal-card{display:flex;align-items:center;gap:16px;padding:16px 18px;border-radius:14px;border:1px solid rgba(150,120,255,.28);background:linear-gradient(135deg,rgba(150,120,255,.12),rgba(255,255,255,.02))}
+.mal-logo{flex:0 0 54px;width:54px;height:54px;border-radius:50%;overflow:hidden;display:grid;place-items:center;border:1px solid rgba(185,161,255,.5);background:#0f0d20}
+.mal-logo img{width:100%;height:100%;object-fit:contain;background:#fff}.mal-logo span{font-size:17px;color:#cdbcff;letter-spacing:.04em}
+.mal-info{flex:1;min-width:0}.mal-info b{font-size:17px;font-weight:500}.mal-info p{margin:3px 0 0;font-size:12.5px;color:#9d97b8}
+.mal-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}.mal-tags span{padding:3px 10px;border-radius:999px;font-size:11.5px;border:1px solid rgba(255,255,255,.2);color:#b9b4d4}
+.mal-tags .ok{color:#6fcf97;border-color:rgba(111,207,151,.5)}.mal-tags .info{color:#6aa5d8;border-color:rgba(106,165,216,.5)}.mal-tags .warn{color:#e2b04f;border-color:rgba(226,176,79,.5)}.mal-tags .bad{color:#e5707c;border-color:rgba(229,112,124,.5)}
+.mal-act{display:flex;flex-direction:column;gap:8px;flex:0 0 auto}
+.mal-btn{padding:8px 14px;border-radius:999px;border:1px solid rgba(150,120,255,.4);background:transparent;color:inherit;font-size:12.5px;cursor:pointer;white-space:nowrap}
+.mal-btn:hover{border-color:#b9a1ff}.mal-btn.gold{background:#b9a1ff;border-color:transparent;color:#1a1233}
+.mal-note{padding:11px 14px;border-radius:10px;font-size:13px;line-height:1.55;color:#9d97b8;background:rgba(255,255,255,.03);border:1px dashed rgba(150,120,255,.28)}
+.mal-note.ok{color:#6fcf97;border-style:solid;border-color:rgba(111,207,151,.4)}.mal-note.warn{color:#e2b04f;border-color:rgba(226,176,79,.45)}
+@media(max-width:640px){.mal-card{flex-wrap:wrap}.mal-act{flex-direction:row;width:100%}.mal-btn{flex:1}}

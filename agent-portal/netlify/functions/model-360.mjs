@@ -17,6 +17,38 @@ function stagedError(stage,error){const e=new Error(`${stage}: ${error?.message|
 async function saveOne(stage,q){try{return await one(q);}catch(error){throw stagedError(stage,error);}}
 async function saveRows(stage,q){try{return await rows(q);}catch(error){throw stagedError(stage,error);}}
 
+
+/* Connect a model to a Mother Agency profile: an active placement with that agency (so the model shows in its portal),
+   and end the model's placements with any other mother agency. id null = disconnect. Never blocks the save. */
+async function linkMotherAgency(admin,organization,modelId,ma){
+  const result={linked:false,partner_id:null,ended:0};
+  try{
+    const id=ma&&ma.id?String(ma.id):'';
+    const partners=await rows(admin.from('partner_agencies').select('id,partner_type').eq('organization_id',organization.id).eq('partner_type','mother_agency'));
+    const motherIds=new Set(partners.map(x=>String(x.id)));
+    if(id&&!motherIds.has(id)){result.error='That mother agency was not found.';return result;}
+    const current=await rows(admin.from('model_placements').select('id,partner_agency_id,status').eq('organization_id',organization.id).eq('model_id',modelId));
+    for(const pl of current){
+      if(!pl.partner_agency_id||!motherIds.has(String(pl.partner_agency_id))||String(pl.partner_agency_id)===id)continue;
+      if(!['active','pending','placed'].includes(String(pl.status)))continue;
+      let done=false;
+      for(const s of ['ended','inactive','archived']){const {error}=await admin.from('model_placements').update({status:s}).eq('organization_id',organization.id).eq('id',pl.id);if(!error){done=true;break;}}
+      if(done)result.ended++;
+    }
+    if(id){
+      const mine=current.find(pl=>String(pl.partner_agency_id)===id);
+      if(mine){
+        if(!['active','pending','placed'].includes(String(mine.status))){const {error}=await admin.from('model_placements').update({status:'active'}).eq('organization_id',organization.id).eq('id',mine.id);if(error)throw error;}
+      }else{
+        const {error}=await admin.from('model_placements').insert({organization_id:organization.id,model_id:modelId,partner_agency_id:id,status:'active'});
+        if(error)throw error;
+      }
+      result.linked=true;result.partner_id=id;
+    }
+  }catch(error){result.error=String(error?.message||error).slice(0,200);}
+  return result;
+}
+
 export const handler=async(event)=>{
   if(!['GET','POST'].includes(event.httpMethod))return json(405,{error:'Method not allowed'});
   try{
@@ -61,6 +93,7 @@ export const handler=async(event)=>{
         });
         if(createError)throw stagedError('new model file',createError);
         if(created?.verified!==true||!created?.model?.id){const e=new Error('New model save could not be verified');e.statusCode=409;throw e;}
+        const createdMother=body.mother_agency_id?await linkMotherAgency(admin,organization,created.model.id,{id:body.mother_agency_id}):null;
         /* Welcome package: make the portal login, email the model their sign-in details with their agent in CC. Never blocks the save. */
         let welcome=null;
         const welcomeTo=String(priv.email||'').trim().toLowerCase();
@@ -70,7 +103,7 @@ export const handler=async(event)=>{
           try{welcome=await sendModelWelcome(admin,{organization,model:created.model,email:welcomeTo,user});}
           catch(welcomeError){console.error('[model welcome] failed',String(welcomeError?.message||welcomeError));welcome={sent:false,error:welcomeError?.publicMessage||welcomeError?.message||'The welcome email could not be sent.'};}
         }
-        return json(200,{ok:true,verified:true,welcome,model:created.model,placement:{department:department||null,represented_markets:represented,primary_market:primary||null,market_id:body.market_id||null,division_id:body.division_id||null,board_id:body.board_id||null},website_profile:created.website_profile||null,persisted_at:created.persisted_at});
+        return json(200,{ok:true,verified:true,welcome,mother_agency:createdMother,model:created.model,placement:{department:department||null,represented_markets:represented,primary_market:primary||null,market_id:body.market_id||null,division_id:body.division_id||null,board_id:body.board_id||null},website_profile:created.website_profile||null,persisted_at:created.persisted_at});
       }
       const modelId=body.model_id;
       if(!modelId){const e=new Error('model_id is required');e.statusCode=400;throw e;}
@@ -178,7 +211,8 @@ export const handler=async(event)=>{
         const {data,error}=await admin.rpc(rpcName,rpcArgs);
         if(error)throw stagedError('model file transaction',error);
         if(!data?.model?.id){const e=new Error('Model file transaction could not be verified');e.statusCode=409;throw e;}
-        return json(200,{ok:true,verified:true,...(data||{}),persisted_at:data?.model?.updated_at||new Date().toISOString()});
+        const motherAgency=body.mother_agency&&typeof body.mother_agency==='object'?await linkMotherAgency(admin,organization,modelId,body.mother_agency):null;
+        return json(200,{ok:true,verified:true,...(data||{}),mother_agency:motherAgency,persisted_at:data?.model?.updated_at||new Date().toISOString()});
       }
       if(action==='update_measurements'){
         const m=clean(body.measurements||{},['height_cm','height_display','bust_cm','bust_display','chest_cm','chest_display','waist_cm','waist_display','hips_cm','hips_display','dress','suit','shoe','hair','eyes','skin','notes']);
