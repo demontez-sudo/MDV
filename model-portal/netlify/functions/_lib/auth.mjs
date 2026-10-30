@@ -103,7 +103,7 @@ export async function requireUser(event) {
   }
   const exp = meta.cavyre_temp_password_expires_at ? Date.parse(meta.cavyre_temp_password_expires_at) : 0;
   if ((meta.cavyre_password_reset_required === true || meta.cavyre_temporary_login_ready === true) && exp && Date.now() > exp) {
-    const err = new Error('Your temporary password has expired. Contact your agency for a new temporary password.');
+    const err = new Error('Your temporary password has expired. Use Forgot password on the sign-in page to get a secure link and create a new one.');
     err.statusCode = 401;
     err.code = 'TEMP_PASSWORD_EXPIRED';
     err.publicMessage = err.message;

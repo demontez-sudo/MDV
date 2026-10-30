@@ -46,7 +46,7 @@ async function linkOrCreate(admin,organization,ctx,email,issuedBy){
   let authUser=await findAuthUserByEmail(admin,email),temporary_password=null,created=false;
   if(!authUser){
     temporary_password=tempPassword();
-    const {data,error}=await admin.auth.admin.createUser({email,password:temporary_password,email_confirm:true,app_metadata:{role:'model',organization_id:organization.id,[RESET_FLAG]:true,[TEMP_EXP]:new Date(Date.now()+24*60*60*1000).toISOString(),[DISABLED]:false,cavyre_model_id:ctx.model.id,cavyre_account_created_by:issuedBy}});
+    const {data,error}=await admin.auth.admin.createUser({email,password:temporary_password,email_confirm:true,app_metadata:{role:'model',organization_id:organization.id,[RESET_FLAG]:true,[TEMP_EXP]:new Date(Date.now()+7*24*60*60*1000).toISOString(),[DISABLED]:false,cavyre_model_id:ctx.model.id,cavyre_account_created_by:issuedBy}});
     if(error)throw error;authUser=data?.user;created=true;
   }else{
     const meta=safeMeta(authUser);
@@ -136,7 +136,7 @@ export const handler=async(event)=>{
     if(!ctx.link||!ctx.user){const e=new Error('This model does not have a linked authentication account. Use Repair / Create Login first.');e.statusCode=409;throw e;}
     const meta=safeMeta(ctx.user);
     if(action==='generate_temporary_password'){
-      const password=tempPassword(),expires=new Date(Date.now()+24*60*60*1000).toISOString();
+      const password=tempPassword(),expires=new Date(Date.now()+7*24*60*60*1000).toISOString();
       const {data,error}=await admin.auth.admin.updateUserById(ctx.user.id,{password,email_confirm:true,ban_duration:'none',app_metadata:{...meta,[RESET_FLAG]:true,[TEMP_EXP]:expires,[DISABLED]:false,cavyre_password_reset_issued_at:new Date().toISOString(),cavyre_password_reset_issued_by:user.id,cavyre_temporary_login_ready:true}});
       if(error)throw error;ctx={...ctx,user:data.user};
 
