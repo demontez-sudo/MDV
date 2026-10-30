@@ -880,3 +880,9 @@ force = true
   to = "/.netlify/functions/agent-mother-agencies"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/agent/save-to-model"
+  to = "/.netlify/functions/agent-save-to-model"
+  status = 200
+  force = true

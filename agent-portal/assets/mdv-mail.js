@@ -22,6 +22,17 @@ function sentToast(r){if(!r||r.via!=='resend')return 'Sent';var c=r.copy||{};if(
 function msg(e){return (e&&e.message)||String(e||'Something went wrong');}
 function when(v){var d=v?new Date(v):null;if(!d||isNaN(d))return '';var n=new Date();if(d.toDateString()===n.toDateString())return d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});if(n-d<6*864e5)return d.toLocaleDateString([],{weekday:'short'});return d.toLocaleDateString([],{month:'short',day:'numeric',year:d.getFullYear()===n.getFullYear()?undefined:'numeric'});}
 function whenFull(v){var d=v?new Date(v):null;return d&&!isNaN(d)?d.toLocaleString([],{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'}):'';}
+
+/* ---- save to a model profile (see mdv-save-to-model.js) ---- */
+function plain(html){return String(html||'').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').slice(0,6000);}
+function saveCtx(m){return {fromName:who(m.from),from:(m.from&&m.from.address)||'',subject:m.subject||'',text:plain(m.body),body:String(m.body||'')};}
+function shareLinks(m){
+  var found=(String(m.body||'').match(/https:\/\/(?:drive\.google\.com|docs\.google\.com|www\.dropbox\.com|dropbox\.com)\/[^\s"'<>)\]]+/gi)||[]);
+  var seen={},n=0;found.forEach(function(u){u=u.replace(/&amp;/g,'&');if(!seen[u]){seen[u]=1;n++;}});
+  if(!n)return '';
+  return '<div class="mm-links"><small>Shared files in this email</small><button class="mm-btn" data-a="savelinks">Save to a model profile</button></div>';
+}
+async function attFile(m,id,name){var f=await call('attachment',{id:m.id,attachment_id:id}),bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);return new File([u8],f.name||name||'attachment',{type:f.content_type||'application/octet-stream'});}
 function who(a){return a?(a.name&&a.name!==a.address?a.name:a.address)||'Unknown':'Unknown';}
 function size(n){n=Number(n)||0;return n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';}
 function initials(n){return String(n||'?').replace(/[^A-Za-z0-9 ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(function(x){return x[0];}).join('').toUpperCase()||'?';}
@@ -107,7 +118,7 @@ function fit(){
 window.addEventListener('resize',function(){fit();});
 function paintSide(){
   var el=document.getElementById('mm-side');if(!el)return;
-  el.innerHTML='<button class="mm-btn gold mm-compose" data-a="compose">+ New message</button>'
+  el.innerHTML='<button class="mm-btn gold mm-compose" data-a="compose">+ New message</button><button class="mm-btn mm-savefiles" data-a="savefiles" title="Choose files you downloaded and save them to a model profile">Save files to a model</button>'
     +'<button type="button" class="mm-sigbtn" data-a="signature"><span>✎ Signature</span><em>'+(sigActive()?'On':(sigGet()?'Off':'Not set'))+'</em></button>'+'<nav class="mm-folders">'+S.folders.map(function(f){return '<button class="'+(S.folder===f.id?'on':'')+'" data-a="folder" data-id="'+esc(f.id)+'"><span>'+esc(f.name)+'</span>'+(f.unread?'<em>'+f.unread+'</em>':'')+'</button>';}).join('')+'</nav>'
     +'';
   wire(el);
@@ -161,7 +172,7 @@ function paintReader(){
   el.innerHTML='<header class="mm-rh"><button class="mm-back mm-only-mobile" data-a="close">← Back</button><h2>'+esc(m.subject)+'</h2>'
     +'<div class="mm-from"><span class="mm-av big">'+esc(initials(who(m.from)))+'</span><div><b>'+esc(who(m.from))+'</b> <span>&lt;'+esc(m.from?m.from.address:'')+'&gt;</span><small>To: '+esc(m.to.map(who).join(', ')||'—')+(m.cc.length?' · Cc: '+esc(m.cc.map(who).join(', ')):'')+' · '+esc(whenFull(m.received))+'</small></div></div>'
     +'<div class="mm-actions"><button class="mm-btn mm-thr" id="mm-thr" data-a="thread" hidden></button><button class="mm-btn" data-a="reply">Reply</button><button class="mm-btn" data-a="replyAll">Reply all</button><button class="mm-btn" data-a="forward">Forward</button><span class="mm-sp"></span><button class="mm-btn" data-a="unread">Mark unread</button><button class="mm-btn" data-a="archive">Archive</button><button class="mm-btn danger" data-a="delete">Delete</button>'+(m.web_link?'<a class="mm-btn" href="'+esc(m.web_link)+'" target="_blank" rel="noopener noreferrer">Open in Outlook</a>':'')+'</div>'
-    +(att.length?'<div class="mm-atts">'+att.map(function(a){return '<button class="mm-att" data-a="download" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'"><i>'+esc((a.name.split('.').pop()||'file').slice(0,4).toUpperCase())+'</i><span>'+esc(a.name)+'</span><em>'+esc(size(a.size))+'</em></button>';}).join('')+'</div>':'')
+    +(att.length?'<div class="mm-atts">'+att.map(function(a){return '<span class="mm-attw"><button class="mm-att" data-a="download" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'" title="Download, then choose a model profile to save it to"><i>'+esc((a.name.split('.').pop()||'file').slice(0,4).toUpperCase())+'</i><span>'+esc(a.name)+'</span><em>'+esc(size(a.size))+'</em></button><button class="mm-attsave" data-a="savemodel" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'" title="Save straight to a model profile">Save to model</button></span>';}).join('')+(att.length>1?'<button class="mm-btn" data-a="saveall">Save all to a model</button>':'')+'</div>':'')+shareLinks(m)
     +(hasRemote&&!S.showImages?'<div class="mm-imgs">Pictures from the web are hidden. <button class="mm-link" data-a="images">Show images</button> · <button class="mm-link" data-a="images-always">Always show</button></div>':'')+(hasRemote&&S.showImages?'<div class="mm-imgs mm-imgs-on"><button class="mm-link" data-a="images-off">Hide web images</button></div>':'')+'</header>'
     +'<iframe class="mm-body" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Message body"></iframe>'
     +'<div class="mm-thread" id="mm-thread" hidden></div>';
@@ -246,7 +257,11 @@ async function act(a,b){
     if(a==='thread'){setThreadOpen(!threadOpen());paintThread();return;}
     var m=S.detail&&S.detail.m;
     if(a==='disconnect'){if(!window.confirm('Disconnect your email from the portal? Your mailbox itself is not touched.'))return;await call('disconnect');S.status=Object.assign({},S.status,{connected:false});S.folders=[];S.messages=[];S.sel=null;S.detail=null;paint();toast('Email disconnected');return;}
-    if(a==='download'){if(!m)return;b.disabled=true;var f=await call('attachment',{id:m.id,attachment_id:b.dataset.id});b.disabled=false;var bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:f.content_type||'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=f.name||b.dataset.name||'attachment';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);return;}
+    if(a==='savemodel'){if(!m||!window.MDV_SAVE)return;b.disabled=true;try{var sf=await attFile(m,b.dataset.id,b.dataset.name);MDV_SAVE.open({files:[sf],context:saveCtx(m)});}catch(e){toast((e&&e.message)||'That attachment cannot be saved here. Download it from Outlook and drop it into the Save to model window.');MDV_SAVE.open({files:[],context:saveCtx(m)});}b.disabled=false;return;}
+    if(a==='saveall'){if(!m||!window.MDV_SAVE)return;b.disabled=true;var got=[],failed=0;for(var ai=0;ai<S.detail.att.length;ai++){try{got.push(await attFile(m,S.detail.att[ai].id,S.detail.att[ai].name));}catch(e){failed++;}}b.disabled=false;if(failed)toast(failed+' attachment'+(failed===1?'':'s')+' could not be fetched here (too large?). Download '+(failed===1?'it':'them')+' and drop '+(failed===1?'it':'them')+' into the window.');MDV_SAVE.open({files:got,context:saveCtx(m)});return;}
+    if(a==='savelinks'){if(!m||!window.MDV_SAVE)return;MDV_SAVE.open({files:[],context:saveCtx(m)});return;}
+    if(a==='savefiles'){if(window.MDV_SAVE)MDV_SAVE.pick(m?saveCtx(m):null);return;}
+    if(a==='download'){if(!m)return;b.disabled=true;var f=await call('attachment',{id:m.id,attachment_id:b.dataset.id});b.disabled=false;var bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:f.content_type||'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=f.name||b.dataset.name||'attachment';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);if(window.MDV_SAVE){try{MDV_SAVE.open({files:[new File([u8],f.name||b.dataset.name||'attachment',{type:f.content_type||'application/octet-stream'})],context:saveCtx(m)});}catch(_s){}}return;}
     if(!m)return;
     if(a==='reply'||a==='replyAll'||a==='forward'){openReply(a,m);return;}
     if(a==='unread'){await call('mark_read',{id:m.id,read:false});var r=S.messages.filter(function(x){return x.id===m.id;})[0];if(r)r.is_read=false;var fo=S.folders.filter(function(x){return x.id===S.folder;})[0];if(fo)fo.unread++;paintList();paintSide();toast('Marked unread');return;}
