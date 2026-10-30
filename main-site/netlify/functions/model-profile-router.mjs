@@ -24,6 +24,29 @@ function slideshow(id,label,items,name){
   </div>
   <div class="thumb-rail" id="thumbRail-${id}">${thumbs}</div></div>`;
 }
+/* The profile data can hold a measurement as "175 / 175.00cm", "5'9\"", "34" or "86cm". Read whichever it is and show it once, in both units: 5\u20329\u2033 \u00b7 175 cm. */
+function fmtMeasure(kind,raw){
+  const s=String(raw==null?'':raw).trim();if(!s)return '';
+  let cm=null,inch=null;
+  const nums=[...s.matchAll(/(\d+(?:\.\d+)?)\s*(cm|in\b|"|\u2033|\u201d)?/gi)].map(m=>({n:parseFloat(m[1]),u:(m[2]||'').toLowerCase()}));
+  const ft=s.match(/^(\d)\s*(?:'|\u2032|\u2019|ft)\s*(\d{1,2}(?:\.\d+)?)?/i);
+  if(ft){inch=parseInt(ft[1],10)*12+(ft[2]?parseFloat(ft[2]):0);}
+  else{
+    const lim=kind==='h'?100:50;
+    for(const x of nums){
+      if(x.u==='cm'||(!x.u&&x.n>=lim)){if(x.n>=lim&&cm==null)cm=x.n;}
+      else if(x.u&&x.u!=='cm'){if(inch==null)inch=x.n;}
+      else if(!x.u&&x.n<lim&&inch==null&&kind!=='h')inch=x.n;
+    }
+    /* a cm figure that is too small to be centimetres (30.00cm for a bust) was typed in inches */
+    if(cm==null&&inch==null&&nums.length){const n=nums[0].n;if(kind!=='h')inch=n;}
+  }
+  if(inch!=null&&cm==null)cm=inch*2.54;
+  if(cm!=null&&inch==null)inch=cm/2.54;
+  if(cm==null||inch==null||!(cm>0))return s;
+  if(kind==='h'){const tot=Math.round(inch),f=Math.floor(tot/12);return `${f}\u2032${tot-f*12}\u2033 \u00b7 ${Math.round(cm)} cm`;}
+  return `${Math.round(inch*2)/2}\u2033 \u00b7 ${Math.round(cm)} cm`;
+}
 function profileHtml(route,profile){
   const m=profile.model||{},p=profile.public_profile||{},meas=profile.measurements||{};
   const name=m.display_name||'Maison de Veux Model';
@@ -39,7 +62,7 @@ function profileHtml(route,profile){
   const hasCover=gallery.some(x=>x.is_website_cover);
   const digitalItems=rest_gallery.filter(x=>String(x.category||'').toLowerCase().startsWith('digital')||String(x.media_type||'').toLowerCase()==='video'||(hasCover&&x.is_primary&&x!==hero));
   const editorialItems=rest_gallery.filter(x=>!digitalItems.includes(x));
-  const statPairs=[['Height',meas.height],[isMen?'Chest':'Bust',isMen?(meas.chest||meas.bust):(meas.bust||meas.chest)],['Waist',meas.waist],['Hips',meas.hips],['Shoe',meas.shoe],['Hair',meas.hair],['Eyes',meas.eyes]].filter(([,v])=>v);
+  const statPairs=[['Height',fmtMeasure('h',meas.height)],[isMen?'Chest':'Bust',fmtMeasure('c',isMen?(meas.chest||meas.bust):(meas.bust||meas.chest))],['Waist',fmtMeasure('c',meas.waist)],['Hips',fmtMeasure('c',meas.hips)],['Shoe',meas.shoe],['Hair',meas.hair],['Eyes',meas.eyes]].filter(([,v])=>v);
   const title=escHtml((p.seo_title||name)+' — Maison de Veux');
   const desc=escHtml(p.seo_description||p.headline||(name+' at Maison de Veux'));
   const stage=m.stage?escHtml(m.stage):'';
@@ -208,7 +231,7 @@ function profileHtml(route,profile){
   .scroll-cue .bar::after{ content:''; position:absolute; left:0; top:-100%; width:100%; height:100%; background:#fff; animation: dropLine 1.8s ease-in-out infinite; }
   @keyframes dropLine{ 0%{ top:-100%; } 60%{ top:100%; } 100%{ top:100%; } }
   .identity{ padding:11vh 5vw 8vh; display:flex; flex-direction:column; align-items:center; text-align:center; }
-  .name-mask{ overflow:hidden; }
+  .name-mask{ overflow:hidden; padding-bottom:.16em; margin-bottom:-.16em; }
   .name-mask:nth-of-type(2){ padding-left:0.06em; }
   .name{ font-family:'Bodoni Moda', serif; font-weight:500; font-size:clamp(3rem, 8vw, 6.2rem); line-height:0.98; letter-spacing:-0.01em; transform:translateY(105%); animation: riseUp .9s cubic-bezier(.16,1,.3,1) forwards; }
   .name.italic{ font-style:italic; }
