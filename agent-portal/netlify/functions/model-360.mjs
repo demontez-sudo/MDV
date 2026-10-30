@@ -3,6 +3,7 @@ import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge
 import { loadModels } from './_lib/portal-bridge.mjs';
 import { websiteProfileStatus } from './_lib/website-profile.mjs';
 import { logModelActivity, actorFor } from './_lib/model-activity.mjs';
+import { sendModelWelcome } from './_lib/model-welcome.mjs';
 
 function isMissingColumn(err){const m=String(err?.message||'');return err?.code==='PGRST204'||err?.code==='42703'||/column .* (does not exist|of relation)|could not find the .* column/i.test(m);}
 
@@ -60,10 +61,29 @@ export const handler=async(event)=>{
         });
         if(createError)throw stagedError('new model file',createError);
         if(created?.verified!==true||!created?.model?.id){const e=new Error('New model save could not be verified');e.statusCode=409;throw e;}
-        return json(200,{ok:true,verified:true,model:created.model,placement:{department:department||null,represented_markets:represented,primary_market:primary||null,market_id:body.market_id||null,division_id:body.division_id||null,board_id:body.board_id||null},website_profile:created.website_profile||null,persisted_at:created.persisted_at});
+        /* Welcome package: make the portal login, email the model their sign-in details with their agent in CC. Never blocks the save. */
+        let welcome=null;
+        const welcomeTo=String(priv.email||'').trim().toLowerCase();
+        if(body.send_welcome===false)welcome={sent:false,skipped:'turned_off'};
+        else if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(welcomeTo))welcome={sent:false,skipped:'no_email'};
+        else{
+          try{welcome=await sendModelWelcome(admin,{organization,model:created.model,email:welcomeTo,user});}
+          catch(welcomeError){console.error('[model welcome] failed',String(welcomeError?.message||welcomeError));welcome={sent:false,error:welcomeError?.publicMessage||welcomeError?.message||'The welcome email could not be sent.'};}
+        }
+        return json(200,{ok:true,verified:true,welcome,model:created.model,placement:{department:department||null,represented_markets:represented,primary_market:primary||null,market_id:body.market_id||null,division_id:body.division_id||null,board_id:body.board_id||null},website_profile:created.website_profile||null,persisted_at:created.persisted_at});
       }
       const modelId=body.model_id;
       if(!modelId){const e=new Error('model_id is required');e.statusCode=400;throw e;}
+      if(action==='send_welcome_email'){
+        const m=await one(admin.from('models').select('*').eq('organization_id',organization.id).eq('id',modelId));
+        if(!m){const e=new Error('Model not found');e.statusCode=404;throw e;}
+        const pp=await one(admin.from('model_private_profiles').select('email').eq('organization_id',organization.id).eq('model_id',modelId)).catch(()=>null);
+        const to=String(body.email||pp?.email||'').trim().toLowerCase();
+        if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){const e=new Error('Add the model\u2019s email address first.');e.statusCode=400;e.publicMessage=e.message;throw e;}
+        if(body.email&&pp!==null&&!pp?.email){await admin.from('model_private_profiles').update({email:to}).eq('organization_id',organization.id).eq('model_id',modelId);}
+        const welcome=await sendModelWelcome(admin,{organization,model:m,email:to,user,resend:true});
+        return json(200,{ok:true,verified:true,welcome});
+      }
       if(action==='archive_model'||action==='restore_model'){
         const active=action==='restore_model';
         const model=await one(admin.from('models').update({active,status:active?'active':'archived'}).eq('organization_id',organization.id).eq('id',modelId).select('*').single());

@@ -116,6 +116,26 @@ function measStrip(){
    +'<button type="button" class="m360-munit" onclick="CAVYRE_M360.unit()" title="Switch units" aria-label="Switch units">'+(UNIT==='cm'?'cm':'ft / in')+' '+ic('ti-arrows-exchange')+'</button></div></div>';
 }
 
+
+/* ---------- welcome email: what happened when a model was created, and the manual "Send welcome email" ---------- */
+function welcomeBox(title,html){var b=document.getElementById('m360-wel');if(b)b.remove();b=document.createElement('div');b.id='m360-wel';b.className='m360-wel';b.innerHTML='<div class="m360-wel-card" role="dialog" aria-label="'+esc(title)+'"><h3>'+esc(title)+'</h3>'+html+'<div class="m360-wel-act"><button type="button" class="m360-btn primary" onclick="document.getElementById(\'m360-wel\').remove()">Done</button></div></div>';b.onclick=function(e){if(e.target===b)b.remove();};document.body.appendChild(b);}
+function welcomeNotice(out){
+  var w=out&&out.welcome;if(!w)return;
+  if(w.sent){toast('✓ Welcome email sent to '+w.to+(arr(w.cc).length?' (cc '+w.cc.join(', ')+')':''));return;}
+  if(w.skipped==='no_email'){toast('Model saved. No welcome email was sent because no email address was added.');return;}
+  if(w.skipped==='turned_off')return;
+  welcomeBox('Welcome email not sent','<p>The model’s login was made, but the email could not be sent'+(w.error?': '+esc(w.error):'')+'.</p>'+(w.temporary_password?'<p>Give them these details yourself. This is the only time the password is shown.</p><div class="m360-wel-cred"><div><small>Portal</small><b>maisondeveux.com/portal</b></div><div><small>Email</small><b>'+esc(w.login_email||'')+'</b></div><div><small>Temporary password</small><b class="mono">'+esc(w.temporary_password)+'</b></div></div>':'')+'<p>You can try again any time from the model’s ⋯ menu, Send welcome email.</p>');
+}
+window.MDV_WELCOME_NOTICE=welcomeNotice;
+function sendWelcome(){
+  M.menu=false;paint();
+  var n=model().display_name||'this model',pp=(M.p&&M.p.private_profile)||{},email=pp.email||'';
+  if(!email){email=(prompt('What email address should '+n+' use to sign in?')||'').trim();if(!email)return;}
+  if(!confirm('Email '+n+' a welcome message with portal sign-in details, copying their agent?\n\nThis makes a NEW temporary password, so any password they already set is replaced and they will be asked to choose a new one.'))return;
+  toast('Sending welcome email…');
+  post('/api/agent/model-360',{action:'send_welcome_email',model_id:modelId(),email:email}).then(function(out){welcomeNotice(out);}).catch(function(e){toast((e&&e.message)||'Could not send the welcome email');});
+}
+
 /* ---------- header ---------- */
 function header(){
   var m=model(),h=heroUrl(),line=[primaryMarket(),boardName(),m.status||'active'].filter(Boolean).join(' · ');
@@ -129,7 +149,7 @@ function header(){
    +'<nav class="m360-tabs" role="tablist">'+TABS.map(function(t){return '<button type="button" role="tab" class="m360-tab'+(M.tab===t[0]?' on':'')+'" aria-selected="'+(M.tab===t[0])+'" onclick="CAVYRE_M360.tab(\''+t[0]+'\')">'+ic(t[2])+'<span>'+t[1]+'</span></button>';}).join('')+'</nav></header>';
 }
 function menu(){
-  var items=[['Edit profile','ti-pencil','editProfile'],['Manage media','ti-photo','manageMedia'],['Website profile','ti-world','website'],['Account & access','ti-key','access'],['Ask Veux about '+(model().display_name||'this model'),'ti-sparkles','askAbout']];
+  var items=[['Edit profile','ti-pencil','editProfile'],['Manage media','ti-photo','manageMedia'],['Website profile','ti-world','website'],['Account & access','ti-key','access'],['Send welcome email','ti-mail','welcome'],['Ask Veux about '+(model().display_name||'this model'),'ti-sparkles','askAbout']];
   return '<div class="m360-menu">'+items.map(function(i){return '<button type="button" onclick="CAVYRE_M360.'+i[2]+'()">'+ic(i[1])+esc(i[0])+'</button>';}).join('')+'</div>';
 }
 
@@ -450,6 +470,7 @@ window.CAVYRE_M360={
   toggleMenu:function(ev){if(ev)ev.stopPropagation();M.menu=!M.menu;paint();if(M.menu){setTimeout(function(){document.addEventListener('click',function c(){M.menu=false;document.removeEventListener('click',c);paint();},{once:true});},0);}},
   editProfile:function(){M.menu=false;paint();if(window.VEUX_V156&&VEUX_V156.editProfile)VEUX_V156.editProfile();},
   manageMedia:function(){M.menu=false;if(window.VEUX_V156&&VEUX_V156.mediaManager)VEUX_V156.mediaManager();},
+  welcome:sendWelcome,
   unit:function(){UNIT=UNIT==='cm'?'in':'cm';try{localStorage.setItem('m360.unit',UNIT);}catch(e){}paint();},
   editMeasurements:function(){if(window.VEUX_V156&&VEUX_V156.editMeasurements)VEUX_V156.editMeasurements();},
   website:function(){M.menu=false;paint();if(window.VEUX_V16917&&VEUX_V16917.website)VEUX_V16917.website();},

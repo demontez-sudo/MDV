@@ -381,3 +381,11 @@ html body .m360 .m360-crumb b{font-weight:600!important;color:#ece8f7!important}
 .m360-munit{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;border-radius:999px;border:1px solid var(--line2);background:transparent;color:inherit;font-size:11.5px;cursor:pointer}
 .m360-munit:hover{border-color:var(--acc)}
 @media(max-width:820px){.m360-mmeta{margin-left:0;width:100%;justify-content:space-between}.m360-mcell{min-width:64px;padding:8px 12px}.m360-mcell b{font-size:15px}}
+
+/* welcome email notice */
+.m360-wel{position:fixed;inset:0;z-index:2147480000;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:20px}
+.m360-wel-card{width:min(480px,100%);background:#120e2a;border:1px solid var(--line2);border-radius:16px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.m360-wel-card h3{margin:0 0 10px;font-size:22px}.m360-wel-card p{margin:0 0 12px;font-size:14px;line-height:1.6;color:var(--mu)}
+.m360-wel-cred{display:grid;gap:10px;margin:0 0 14px;padding:14px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.04)}
+.m360-wel-cred small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}.m360-wel-cred b{font-weight:500;font-size:15px;word-break:break-all}.m360-wel-cred b.mono{font-family:ui-monospace,monospace;letter-spacing:.04em}
+.m360-wel-act{display:flex;justify-content:flex-end;margin-top:6px}
