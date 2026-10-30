@@ -44,7 +44,12 @@ export default async (req)=>{
   const currentMeta=userData.user.app_metadata&&typeof userData.user.app_metadata==='object'?userData.user.app_metadata:{};
   const nextMeta={...currentMeta,[RESET_FLAG]:false,[TEMP_READY]:false,[TEMP_EXP]:null,cavyre_password_changed_at:new Date().toISOString(),cavyre_password_changed_via:'separated_model_portal_fix_1'};
   const {data,error}=await admin.auth.admin.updateUserById(userData.user.id,{password,email_confirm:true,app_metadata:nextMeta});
-  if(error||!data?.user?.id) return out(500,{error:'Password update could not be verified.'});
+  if(error||!data?.user?.id){
+    const why=String(error?.message||'');
+    if(/weak|easy to guess|pwned|breach|compromised|at least|too short|same password/i.test(why)) return out(422,{error:/same password/i.test(why)?'Choose a password that is different from your temporary one.':'That password is too easy to guess. Use a longer one with a mix of letters, numbers and a symbol.'});
+    console.error('[model password finalize] update failed',why);
+    return out(500,{error:'Your password could not be saved. Try again, or ask your agency for a new temporary password.'});
+  }
 
   // Verify the new credential server-side before telling the portal it succeeded.
   const verifier=createClient(URL,PUB,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}});
