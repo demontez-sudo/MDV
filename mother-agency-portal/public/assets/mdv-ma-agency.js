@@ -142,7 +142,7 @@ function pick(what){pending=what;var f=document.getElementById('ag-file');if(!f)
 async function picked(input){
   var file=input.files&&input.files[0];if(!file||!pending)return;
   var type=pending==='logo'?'logo':pending.split(':')[1]||'other',expires='';
-  if(type==='contract'||type==='licence'||type==='id'){expires=(prompt('Does this document have an expiry date? Enter it as YYYY-MM-DD, or leave blank if it does not expire.')||'').trim();if(expires&&!/^\d{4}-\d{2}-\d{2}$/.test(expires)){toast('That date was not in the format YYYY-MM-DD');return;}}
+  if(type==='contract'||type==='licence'||type==='id'){var ef=await MDV_DIALOG.form({title:'Does this document expire?',message:'Add the expiry date so we can remind you to renew it. Leave it empty if it does not expire.',fields:[{k:'expires',label:'Expiry date',type:'date'}],confirm:'Upload'});if(!ef){pending=null;return;}expires=ef.expires||'';}
   try{
     toast('Uploading…');
     var prep=await api('/api/partner/agency-profile',{action:'upload_url',type:type,name:file.name,mime_type:file.type||'application/octet-stream',size_bytes:file.size});
@@ -160,8 +160,8 @@ async function save(){
   catch(e){A.edit=true;paint();toast((e&&e.message)||'Could not save');}
 }
 async function open(id){try{var r=await api('/api/partner/agency-profile',{action:'download_url',document_id:id});if(r&&r.url)window.open(r.url,'_blank','noopener');}catch(e){toast((e&&e.message)||'Could not open the file');}}
-async function remove(id){if(!confirm('Remove this document?'))return;try{apply(await api('/api/partner/agency-profile',{action:'remove_document',document_id:id}));toast('Document removed');}catch(e){toast((e&&e.message)||'Could not remove');}}
-async function expiry(id){var v=prompt('Expiry date as YYYY-MM-DD (leave blank for none)');if(v==null)return;v=v.trim();if(v&&!/^\d{4}-\d{2}-\d{2}$/.test(v)){toast('Use the format YYYY-MM-DD');return;}try{apply(await api('/api/partner/agency-profile',{action:'set_expiry',document_id:id,expires_on:v}));toast('Expiry updated');}catch(e){toast((e&&e.message)||'Could not update');}}
+async function remove(id){if(!(await MDV_DIALOG.confirm({title:'Remove this document?',message:'It will be deleted from your agency profile.',confirm:'Remove',danger:true})))return;try{apply(await api('/api/partner/agency-profile',{action:'remove_document',document_id:id}));toast('Document removed');}catch(e){toast((e&&e.message)||'Could not remove');}}
+async function expiry(id){var f=await MDV_DIALOG.form({title:'Expiry date',message:'Leave it empty if this document does not expire.',fields:[{k:'expires',label:'Expiry date',type:'date'}],confirm:'Save'});if(!f)return;try{apply(await api('/api/partner/agency-profile',{action:'set_expiry',document_id:id,expires_on:f.expires||''}));toast('Expiry updated');}catch(e){toast((e&&e.message)||'Could not update');}}
 function act(fn){
   if(fn==='edit'){A.edit=true;paint();var t=document.querySelector('.ag-form input,.ag-form textarea');if(t)t.scrollIntoView({block:'center',behavior:'smooth'});}
   else if(fn==='logo')pick('logo');

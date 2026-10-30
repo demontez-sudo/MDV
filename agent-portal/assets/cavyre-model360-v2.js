@@ -129,11 +129,15 @@ function welcomeNotice(out){
 window.MDV_WELCOME_NOTICE=welcomeNotice;
 function sendWelcome(){
   M.menu=false;paint();
-  var n=model().display_name||'this model',pp=(M.p&&M.p.private_profile)||{},email=pp.email||'';
-  if(!email){email=(prompt('What email address should '+n+' use to sign in?')||'').trim();if(!email)return;}
-  if(!confirm('Email '+n+' a welcome message with portal sign-in details, copying their agent?\n\nThis makes a NEW temporary password, so any password they already set is replaced and they will be asked to choose a new one.'))return;
-  toast('Sending welcome email…');
-  post('/api/agent/model-360',{action:'send_welcome_email',model_id:modelId(),email:email}).then(function(out){welcomeNotice(out);}).catch(function(e){toast((e&&e.message)||'Could not send the welcome email');});
+  var n=model().display_name||'this model',pp=(M.p&&M.p.private_profile)||{},email=pp.email||'',D=window.MDV_DIALOG;
+  (async function(){
+    if(!email){var f=await D.form({title:'Which email should '+n+' sign in with?',message:'Add their email address and we will send the welcome message there.',fields:[{k:'email',label:'Email address',type:'email',required:true,placeholder:'name@example.com',pattern:'^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',patternMessage:'Enter a valid email address.'}],confirm:'Continue'});if(!f)return;email=f.email;}
+    var ok=await D.confirm({title:'Send the welcome email to '+n+'?',message:'They will get their portal sign-in details and a short guide, sent to '+email+'. Their agent is copied.\n\nThis makes a new temporary password. If they already chose their own, it is replaced and they will be asked to choose a new one.',confirm:'Send welcome email'});
+    if(!ok)return;
+    toast('Sending welcome email\u2026');
+    try{var out=await post('/api/agent/model-360',{action:'send_welcome_email',model_id:modelId(),email:email});welcomeNotice(out);}
+    catch(e){D.alert({title:'The welcome email could not be sent',message:(e&&e.message)||'Something went wrong. Nothing was changed. Try again in a moment.',tone:'danger',confirm:'Close'});}
+  })();
 }
 
 /* ---------- header ---------- */

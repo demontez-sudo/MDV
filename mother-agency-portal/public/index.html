@@ -12,7 +12,7 @@
 <script>
 (function(){
   /* release lineage: 16.7.8-ma-bootstrap-integrity · 16.7.9-bootstrap-query-integrity · 16.7.10-shell-handoff-integrity · 16.7.11-calendar-views · 16.7.12-write-connection-integrity-20260818 · 16.7.13-mother-agency-access-20260819 · 16.7.14-smart-calendar-travel-documents-20260820 · 16.7.15-mobile-certification-20260820 */
-  window.__VEUX_RELEASE__='17.2.0-my-agency-20261030';
+  window.__VEUX_RELEASE__='17.2.1-dialogs-20261030';
   if(/^maison-ma\.netlify\.app$/i.test(location.hostname)){var tail=location.pathname.replace(/^\/ma(?=\/|$)/,'');if(tail==='/'||!tail)tail='';location.replace('https://www.maisondeveux.com/ma'+tail+location.search+location.hash);return;}
   var branded=/^(www\.)?maisondeveux\.com$/i.test(location.hostname)&&/^\/ma(?:\/|$)/.test(location.pathname);
   window.__VEUX_MA_MOUNT__=branded?'/ma':'';
@@ -112,6 +112,7 @@
     try{
       await loadSupabase();
       await loadScript(asset('veux-partner-v15-core.js'));
+      await loadScript(asset('mdv-dialog.js'));
       await loadScript(asset('mdv-ma-agency.js'));
       await loadScript(asset('veux-partner-staging.js'));
     }catch(e){

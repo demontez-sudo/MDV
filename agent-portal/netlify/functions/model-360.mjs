@@ -40,7 +40,13 @@ async function linkMotherAgency(admin,organization,modelId,ma){
       if(mine){
         if(!['active','pending','placed'].includes(String(mine.status))){const {error}=await admin.from('model_placements').update({status:'active'}).eq('organization_id',organization.id).eq('id',mine.id);if(error)throw error;}
       }else{
-        const {error}=await admin.from('model_placements').insert({organization_id:organization.id,model_id:modelId,partner_agency_id:id,status:'active'});
+        const base={organization_id:organization.id,model_id:modelId,partner_agency_id:id,status:'active'};
+        let {error}=await admin.from('model_placements').insert(base);
+        if(error&&/placement_type|market_id|null value/i.test(String(error.message||''))){
+          const mk=await rows(admin.from('model_market_assignments').select('market_id,is_primary').eq('organization_id',organization.id).eq('model_id',modelId)).catch(()=>[]);
+          const marketId=(mk.find(x=>x.is_primary)||mk[0]||{}).market_id||null;
+          ({error}=await admin.from('model_placements').insert({...base,placement_type:'mother_agency',...(marketId?{market_id:marketId}:{})}));
+        }
         if(error)throw error;
       }
       result.linked=true;result.partner_id=id;
@@ -108,9 +114,9 @@ export const handler=async(event)=>{
       const modelId=body.model_id;
       if(!modelId){const e=new Error('model_id is required');e.statusCode=400;throw e;}
       if(action==='send_welcome_email'){
-        const m=await one(admin.from('models').select('*').eq('organization_id',organization.id).eq('id',modelId));
+        const m=await one(admin.from('models').select('*').eq('organization_id',organization.id).eq('id',modelId).maybeSingle());
         if(!m){const e=new Error('Model not found');e.statusCode=404;throw e;}
-        const pp=await one(admin.from('model_private_profiles').select('email').eq('organization_id',organization.id).eq('model_id',modelId)).catch(()=>null);
+        const pp=await one(admin.from('model_private_profiles').select('email').eq('organization_id',organization.id).eq('model_id',modelId).maybeSingle()).catch(()=>null);
         const to=String(body.email||pp?.email||'').trim().toLowerCase();
         if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){const e=new Error('Add the model\u2019s email address first.');e.statusCode=400;e.publicMessage=e.message;throw e;}
         if(body.email&&pp!==null&&!pp?.email){await admin.from('model_private_profiles').update({email:to}).eq('organization_id',organization.id).eq('model_id',modelId);}

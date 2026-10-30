@@ -57,9 +57,10 @@ function hydrate(host){
     sel.onchange=function(){
       var v=sel.value;
       if(v==='__new'){
-        var name=(prompt('Mother agency name')||'').trim();
-        if(!name){sel.value=idIn.value||(textOnly?'__text':'');return;}
-        bridge().api('/api/agent/mother-agencies',{method:'POST',body:JSON.stringify({organization_slug:org(),action:'create',name:name})}).then(function(r){return loadAgencies(true).then(function(l){list=l;idIn.value=r.partner_id;var a=l.find(function(x){return String(x.id)===String(r.partner_id);});nameIn.value=a?a.name:name;textOnly=false;draw(list);toast('Mother agency added');});}).catch(function(e){toast((e&&e.message)||'Could not add the agency');sel.value=idIn.value||'';});
+        MDV_DIALOG.form({title:'Add a mother agency',message:'Use the name exactly as they will type it when signing in to their portal.',fields:[{k:'name',label:'Agency name',required:true,placeholder:'e.g. Zane Models'}],confirm:'Add agency'}).then(function(f){
+          if(!f){sel.value=idIn.value||(textOnly?'__text':'');return;}
+          return bridge().api('/api/agent/mother-agencies',{method:'POST',body:JSON.stringify({organization_slug:org(),action:'create',name:f.name})}).then(function(r){return loadAgencies(true).then(function(l){list=l;idIn.value=r.partner_id;var a=l.find(function(x){return String(x.id)===String(r.partner_id);});nameIn.value=a?a.name:f.name;textOnly=false;draw(list);toast('Mother agency added');});}).catch(function(e){MDV_DIALOG.alert({title:'The agency could not be added',message:(e&&e.message)||'Try again in a moment.',tone:'danger'});sel.value=idIn.value||'';});
+        });
         return;
       }
       if(v==='__text'){idIn.value='';nameIn.value=nm;card();return;}

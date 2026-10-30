@@ -144,8 +144,8 @@ function open(id){
 function refreshOpen(){return open(S.open).then(function(){return load();});}
 async function access(kind){
   var a=S.detail&&S.detail.agency;if(!a||S.busy)return;
-  if(kind==='clear_access'&&!confirm('Remove portal access for '+a.name+'? Their current code will stop working.'))return;
-  if(kind==='set_access'&&a.access.has_code&&!confirm('Make a new code for '+a.name+'? The old code stops working straight away.'))return;
+  if(kind==='clear_access'&&!(await MDV_DIALOG.confirm({title:'Remove portal access?',message:a.name+' will no longer be able to sign in. Their current code stops working straight away. You can create a new one at any time.',confirm:'Remove access',danger:true})))return;
+  if(kind==='set_access'&&a.access.has_code&&!(await MDV_DIALOG.confirm({title:'Make a new access code?',message:'The old code for '+a.name+' stops working straight away. You will see the new code once, so be ready to copy it.',confirm:'Make new code'})))return;
   S.busy=kind;paintDrawer();
   try{
     var r=await post({action:kind,partner_id:a.id});
@@ -172,9 +172,9 @@ function copy(what){
   function fallback(){var t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();try{document.execCommand('copy');ok();}catch(e){toast('Select the text and copy it');}t.remove();}
 }
 async function add(){
-  var name=prompt('Mother agency name (exactly as they will type it when signing in)');if(!name||!name.trim())return;
-  var city=prompt('City (optional)')||'',country=prompt('Country (optional)')||'',email=prompt('Contact email (optional)')||'';
-  try{var r=await post({action:'create',name:name.trim(),city:city.trim(),country:country.trim(),contact_email:email.trim()});toast('Mother agency added');await load();if(r&&r.partner_id)open(r.partner_id);}catch(e){toast((e&&e.message)||'Could not add the agency');}
+  var f=await MDV_DIALOG.form({title:'Add a mother agency',message:'Use the name exactly as they will type it when signing in to their portal.',fields:[{k:'name',label:'Agency name',required:true,placeholder:'e.g. Zane Models'},{k:'city',label:'City',placeholder:'Optional'},{k:'country',label:'Country',placeholder:'Optional'},{k:'contact_email',label:'Contact email',type:'email',placeholder:'Optional',pattern:'^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',patternMessage:'Enter a valid email address.'}],confirm:'Add agency'});
+  if(!f)return;
+  try{var r=await post({action:'create',name:f.name,city:f.city,country:f.country,contact_email:f.contact_email});toast('Mother agency added');await load();if(r&&r.partner_id)open(r.partner_id);}catch(e){MDV_DIALOG.alert({title:'The agency could not be added',message:(e&&e.message)||'Try again in a moment.',tone:'danger'});}
 }
 function openModel(id){close();window._veuxV10ModelId=id;window._openModelId=id;if(typeof window.navTo==='function')window.navTo('modelpage');}
 
