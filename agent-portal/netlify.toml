@@ -874,3 +874,9 @@ from = "/api/agent/veuxi/preflight"
 to = "/.netlify/functions/agent-veuxi-preflight"
 status = 200
 force = true
+
+[[redirects]]
+  from = "/api/agent/mother-agencies"
+  to = "/.netlify/functions/agent-mother-agencies"
+  status = 200
+  force = true

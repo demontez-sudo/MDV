@@ -10,6 +10,37 @@ function sameHex(a,b){try{const aa=Buffer.from(String(a),'hex'),bb=Buffer.from(S
 function fail(message,statusCode=401){const e=new Error(message);e.statusCode=statusCode;throw e;}
 async function one(query){const {data,error}=await query;if(error)throw error;return data||null;}
 
+
+/* Access made from the main portal (Mother Agencies page): the code is stored only as a salted scrypt hash on partner_agencies.metadata.access. */
+function normCode(v){return String(v||'').toUpperCase().replace(/[^A-Z0-9]/g,'');}
+async function managedAgencies(admin,orgId){
+  const partners=(await admin.from('partner_agencies').select('id,company_id,portal_enabled,metadata').eq('organization_id',orgId).eq('partner_type','mother_agency')).data||[];
+  const withAccess=partners.filter(p=>p.metadata&&p.metadata.access&&p.metadata.access.hash);
+  if(!withAccess.length)return [];
+  const ids=[...new Set(withAccess.map(p=>p.company_id).filter(Boolean))];
+  const companies=ids.length?((await admin.from('companies').select('id,name').eq('organization_id',orgId).in('id',ids)).data||[]):[];
+  const byId=new Map(companies.map(c=>[String(c.id),c]));
+  return withAccess.map(p=>({partner:p,company:byId.get(String(p.company_id))})).filter(x=>x.company&&x.company.name);
+}
+async function checkManagedAccess(admin,orgId,identity,accessCode){
+  const match=(await managedAgencies(admin,orgId)).find(x=>normalize(x.company.name)===identity);
+  if(!match)return null;
+  const {partner,company}=match,a=partner.metadata.access;
+  if(a.locked_until&&new Date(a.locked_until).getTime()>Date.now())fail('Too many incorrect attempts. Try again in 15 minutes.',429);
+  let ok=false;
+  try{ok=a.algo==='scrypt'&&sameHex(crypto.scryptSync(normCode(accessCode),String(a.salt||''),32).toString('hex'),a.hash);}catch{ok=false;}
+  const meta={...(partner.metadata||{})};
+  if(!ok){
+    const fails=(Number(a.fail_count)||0)+1;
+    meta.access={...a,fail_count:fails>=8?0:fails,locked_until:fails>=8?new Date(Date.now()+15*60*1000).toISOString():null};
+    await admin.from('partner_agencies').update({metadata:meta}).eq('id',partner.id);
+    return false;
+  }
+  meta.access={...a,fail_count:0,locked_until:null,last_login_at:new Date().toISOString()};
+  await admin.from('partner_agencies').update({metadata:meta}).eq('id',partner.id);
+  return {legacy_key:slug(company.name),display_name:company.name};
+}
+
 async function organization(admin,slugValue){
   const org=await one(admin.from('organizations').select('id,slug,name,status').eq('slug',slugValue).maybeSingle());
   if(!org)fail('Maison de Veux portal organization was not found.',404);
@@ -58,15 +89,23 @@ async function magicToken(admin,email){
 export async function legacyAccessHandler(event,portal){
   if(event.httpMethod==='GET'){
     if(portal!=='partner')return json(405,{error:'Method not allowed'});
-    return json(200,{ok:true,agencies:Object.values(ACCOUNTS).map(({display_name})=>display_name).sort((a,b)=>a.localeCompare(b))});
+    let names=Object.values(ACCOUNTS).map(({display_name})=>display_name);
+    try{const admin=adminClient(),org=await one(admin.from('organizations').select('id').eq('slug','maison-de-veux').maybeSingle());if(org){for(const x of await managedAgencies(admin,org.id)){if(x.partner.portal_enabled!==false)names.push(x.company.name);}}}catch(_e){}
+    names=[...new Set(names)];
+    return json(200,{ok:true,agencies:names.sort((a,b)=>a.localeCompare(b))});
   }
   if(event.httpMethod!=='POST')return json(405,{error:'Method not allowed'});
   try{
     const body=parseBody(event),identity=normalize(body.identity),accessCode=String(body.password||body.access_code||''),organizationSlug=String(body.organization_slug||'maison-de-veux');
     if(!identity||!accessCode)fail(portal==='model'?'Enter your name and access code.':'Enter your agency name and access code.',400);
-    const account=ACCOUNTS[identity];
-    if(!account||!sameHex(digest(accessCode),account.hash))fail(portal==='model'?'Incorrect name or access code.':'Incorrect agency or access code.',401);
+    let account=ACCOUNTS[identity];
+    if(account&&!sameHex(digest(accessCode),account.hash))account=null;
     const admin=adminClient(),org=await organization(admin,organizationSlug);
+    if(!account&&portal==='partner'){
+      const managed=await checkManagedAccess(admin,org.id,identity,accessCode);
+      if(managed)account=managed;
+    }
+    if(!account)fail(portal==='model'?'Incorrect name or access code.':'Incorrect agency or access code.',401);
     let targetId,userId,email;
     if(portal==='model'){
       let model=await one(admin.from('models').select('id,display_name,legacy_key,status,active').eq('organization_id',org.id).eq('legacy_key',account.legacy_key).maybeSingle());

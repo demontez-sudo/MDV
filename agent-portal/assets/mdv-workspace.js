@@ -33,6 +33,7 @@ var SECTIONS=[
  {cap:'Agency',items:[
   {id:'roster',label:'Roster',icon:'ti-users',page:'roster',sub:[['roster','Roster'],['scouting','Scouting'],['seasonmanagement','Season'],['modeldevelopment','Development'],['modelevaluations','Evaluations'],['modelsubmissions','Submissions']]},
   {id:'clients',label:'Clients',icon:'ti-user-circle',page:'industrydirectory',sub:[['industrydirectory','Clients'],['outreach','Outreach']]},
+  {id:'motheragencies',label:'Mother Agencies',icon:'ti-building-community',page:'motheragencies'},
   {id:'packages',label:'Packages',icon:'ti-package',page:'multipackage',sub:[['multipackage','Packages'],['packageresponses','Responses']]},
   {id:'editorial',label:'Editorial',icon:'ti-notebook',page:'editorial'}]},
  {cap:'Management',items:[
@@ -42,7 +43,7 @@ var SECTIONS=[
   {id:'files',label:'Files & Forms',icon:'ti-file-text',page:'filesforms'}]}
 ];
 var SETTINGS={id:'settings',label:'Settings',icon:'ti-settings',sub:[['systemsettings','Portal Settings'],['alerts','Alerts & devices'],['releaseaudit','Release Audit']]};
-var ALWAYS={overview:1,calendar:1,dayschedule:1,helm:1,helmcalendar:1,inbox:1,mail:1,notes:1,alerts:1,outreach:1,systemsettings:1};
+var ALWAYS={overview:1,calendar:1,dayschedule:1,helm:1,helmcalendar:1,inbox:1,mail:1,notes:1,alerts:1,outreach:1,motheragencies:1,systemsettings:1};
 var LINKED={visa:'globalmobility',agentcommissions:'financelegal'};
 function groups(){return (window.NAV_AGENT||window.VEUX_V15_NAV_FULL||[]).filter(function(g){return g&&g.items&&g.items.length;});}
 function allowed(){var ok=Object.assign({},ALWAYS);groups().forEach(function(g){g.items.forEach(function(i){ok[i[0]]=1;});});Object.keys(LINKED).forEach(function(k){if(ok[LINKED[k]])ok[k]=1;});return ok;}

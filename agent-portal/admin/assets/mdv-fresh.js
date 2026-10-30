@@ -11,7 +11,7 @@ if(window.__MDV_FRESH__)return;window.__MDV_FRESH__=true;
 /* things that are not "saving" even though they are sent as a POST, or that draw their own screen */
 var SKIP=/\/api\/agent\/(mail|veuxi|notifications|bootstrap|attachments|assistant|outreach|notes)|upload-url|keepalive|preflight|\/api\/auth|analytics|heartbeat/i;
 var READ=/^(get|list|read|search|query|messages|folders|folder|message|thread|status|load|fetch|preview|suggest|analy[sz]e|check|verify|count|summary|lookup|download|open|view)/i;
-var SELF=/^(mail|notes|outreach|dayschedule|systemsettings)$/;
+var SELF=/^(mail|notes|outreach|motheragencies|dayschedule|systemsettings)$/;
 var hooked=false,timer=null,obs=null,changed=false,page='',tries=0;
 
 function isWrite(path,opts){
