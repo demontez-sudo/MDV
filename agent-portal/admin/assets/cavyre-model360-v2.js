@@ -66,6 +66,56 @@ function openTasks(){return arr(M.d&&M.d.tasks).filter(function(t){return ['comp
 function goals(){var out=[];arr(M.d&&M.d.development&&M.d.development.plans).forEach(function(pl){arr(pl.development_goals).forEach(function(g){out.push(Object.assign({plan:pl},g));});});return out;}
 function goalPct(g){var s=String(g.status||'').toLowerCase();return /complete|done/.test(s)?100:/progress|active|on_track/.test(s)?50:0;}
 
+/* ---------- measurements: one reading of the numbers, shown the same way on every tab ---------- */
+var UNIT=(function(){try{return localStorage.getItem('m360.unit')==='cm'?'cm':'in';}catch(e){return 'in';}})();
+function numOf(v){var n=parseFloat(String(v==null?'':v).replace(',','.'));return isFinite(n)?n:null;}
+/* a stored value can be a number of cm, or text like 5'10", 178 cm, 34". Work out both units whichever one was typed. */
+function readM(kind,cm,disp){
+  var c=numOf(cm),inch=null,s=String(disp==null?'':disp).trim();
+  if(c&&c>0){inch=c/2.54;}
+  else if(s){
+    var ft=s.match(/^(\d+)\s*(?:'|\u2019|\u2032|ft)\s*(\d+(?:\.\d+)?)?/i),cmm=s.match(/(\d+(?:\.\d+)?)\s*cm/i),im=s.match(/(\d+(?:\.\d+)?)\s*(?:"|\u201d|\u2033|in\b)/i),pl=s.match(/^(\d+(?:\.\d+)?)$/);
+    if(ft){inch=parseInt(ft[1],10)*12+(ft[2]?parseFloat(ft[2]):0);c=inch*2.54;}
+    else if(cmm){c=parseFloat(cmm[1]);inch=c/2.54;}
+    else if(im){inch=parseFloat(im[1]);c=inch*2.54;}
+    else if(pl){var n=parseFloat(pl[1]);var isCm=kind==='h'?n>=100:n>=50;if(isCm){c=n;inch=n/2.54;}else{inch=n;c=n*2.54;}}
+  }
+  if(!(c>0)||!(inch>0))return s?{raw:s}:null;
+  return {cm:c,inch:inch};
+}
+function fmtM(kind,r,unit){
+  if(!r)return '';if(r.raw)return r.raw;
+  if(unit==='cm')return Math.round(r.cm)+' cm';
+  if(kind==='h'){var tot=Math.round(r.inch),f=Math.floor(tot/12);return f+'\u2032'+(tot-f*12)+'\u2033';}
+  return (Math.round(r.inch*2)/2)+'\u2033';
+}
+function measSpec(){
+  var men=/^m(e|a)n$|^male$/i.test(String(model().gender||'').trim())||/men/i.test(model().gender||'');
+  var mm=(M.p&&M.p.measurements)||{};
+  var core=[['Height','h',mm.height_cm,mm.height_display,1],[men?'Chest':'Bust','c',mm[men?'chest_cm':'bust_cm']||mm.bust_cm||mm.chest_cm,mm[men?'chest_display':'bust_display']||mm.bust_display||mm.chest_display,1],['Waist','c',mm.waist_cm,mm.waist_display,1],['Hips','c',mm.hips_cm,mm.hips_display,1],[men?'Suit':'Dress','t',null,men?(mm.suit||mm.dress):(mm.dress||mm.suit),0],['Shoe','t',null,mm.shoe,1],['Hair','t',null,mm.hair,0],['Eyes','t',null,mm.eyes,0]];
+  return {mm:mm,rows:core.map(function(r){
+    var val=r[1]==='t'?(r[3]?{raw:String(r[3])}:null):readM(r[1]==='h'?'h':'c',r[2],r[3]);
+    return {label:r[0],kind:r[1],val:val,needed:!!r[4]};
+  })};
+}
+function measAge(mm){var t=ts(mm.updated_at||mm.created_at);if(t==null)return null;var d=Math.floor((Date.now()-t)/864e5);return d;}
+function ageText(d){if(d<1)return 'today';if(d<31)return d+' day'+(d===1?'':'s')+' ago';var mo=Math.round(d/30);return mo<12?mo+' mo ago':(Math.round(d/365*10)/10)+' yr ago';}
+/* a strip that sits under the model's name on every tab: the numbers, the other unit, what is missing and how old they are */
+function measStrip(){
+  var S=measSpec(),rows=S.rows,have=rows.filter(function(r){return r.val;}),needed=rows.filter(function(r){return r.needed;}),missing=needed.filter(function(r){return !r.val;});
+  var age=measAge(S.mm),stale=age!=null&&age>180;
+  var cells=rows.filter(function(r){return r.val||r.needed;}).map(function(r){
+    if(!r.val)return '<button type="button" class="m360-mcell miss" onclick="CAVYRE_M360.editMeasurements()" title="Add '+esc(r.label.toLowerCase())+'"><small>'+esc(r.label)+'</small><b>+ Add</b></button>';
+    var main=r.kind==='t'?r.val.raw:fmtM(r.kind,r.val,UNIT),alt=(r.kind==='t'||r.val.raw)?'':fmtM(r.kind,r.val,UNIT==='cm'?'in':'cm');
+    return '<button type="button" class="m360-mcell" onclick="CAVYRE_M360.editMeasurements()" title="Edit measurements"><small>'+esc(r.label)+'</small><b>'+esc(main)+'</b>'+(alt?'<i>'+esc(alt)+'</i>':'')+'</button>';
+  }).join('');
+  var done=needed.length-missing.length,tone=missing.length?(missing.length>2?'bad':'warn'):(stale?'warn':'ok');
+  var status=!have.length?'No measurements yet':missing.length?missing.length+' missing: '+missing.map(function(r){return r.label.toLowerCase();}).join(', '):(stale?'Measured '+ageText(age)+' \u2014 worth re-checking':(age!=null?'Measured '+ageText(age):'Complete'));
+  return '<div class="m360-meas-strip '+tone+'" aria-label="Measurements"><div class="m360-mscroll">'+cells+'</div>'
+   +'<div class="m360-mmeta"><span class="m360-mstat">'+ic(tone==='ok'?'ti-circle-check':'ti-alert-circle')+esc(status)+'</span>'
+   +'<button type="button" class="m360-munit" onclick="CAVYRE_M360.unit()" title="Switch units" aria-label="Switch units">'+(UNIT==='cm'?'cm':'ft / in')+' '+ic('ti-arrows-exchange')+'</button></div></div>';
+}
+
 /* ---------- header ---------- */
 function header(){
   var m=model(),h=heroUrl(),line=[primaryMarket(),boardName(),m.status||'active'].filter(Boolean).join(' · ');
@@ -75,6 +125,7 @@ function header(){
    +'<div class="m360-title"><h1>'+esc(m.display_name||'Model')+'</h1><p>'+esc(line.toUpperCase())+dot+'</p></div>'
    +'<div class="m360-actions"><button type="button" class="m360-btn" data-mdv-note="'+esc(JSON.stringify({type:'model',id:String(M.id||modelId()),label:m.display_name||'Model'}))+'">'+ic('ti-notes')+'Notes</button><button type="button" class="m360-btn primary" onclick="CAVYRE_M360.createAction()">'+ic('ti-circle-plus')+'Create action</button><button type="button" class="m360-btn" onclick="CAVYRE_M360.sharePackage()">'+ic('ti-upload')+'Share package</button>'
    +'<div class="m360-menuwrap"><button type="button" class="m360-btn icon" aria-label="More" onclick="CAVYRE_M360.toggleMenu(event)">'+ic('ti-dots')+'</button>'+(M.menu?menu():'')+'</div></div></div>'
+   +measStrip()
    +'<nav class="m360-tabs" role="tablist">'+TABS.map(function(t){return '<button type="button" role="tab" class="m360-tab'+(M.tab===t[0]?' on':'')+'" aria-selected="'+(M.tab===t[0])+'" onclick="CAVYRE_M360.tab(\''+t[0]+'\')">'+ic(t[2])+'<span>'+t[1]+'</span></button>';}).join('')+'</nav></header>';
 }
 function menu(){
@@ -186,7 +237,7 @@ function tMaterials(){
   var prev=(m.filter(isDigital).length?m.filter(isDigital):m).slice(0,5);
   var pkg=card('Package preview',prev.length+' image'+(prev.length===1?'':'s')+' selected','<button type="button" class="m360-pill" onclick="CAVYRE_M360.manageMedia()">'+ic('ti-refresh')+' Replace images</button>',prev.length?'<div class="m360-prev">'+prev.map(function(x){return '<img loading="lazy" src="'+esc(x.url||'')+'" alt="">';}).join('')+'</div>':empty('No images to preview.'));
   function mrow(k,v){return '<div><small>'+k+'</small><b>'+esc(v||'—')+'</b></div>';}
-  var meas=card('Measurements','','<button type="button" class="m360-link" onclick="CAVYRE_M360.editMeasurements()">'+ic('ti-pencil')+' Edit</button>','<div class="m360-meas">'+mrow('Height',mm.height_display)+mrow(/men/i.test(model().gender||'')?'Chest':'Bust',mm.chest_display||mm.bust_display)+mrow('Waist',mm.waist_display)+mrow('Hips',mm.hips_display)+mrow('Shoe',mm.shoe)+mrow('Hair',mm.hair)+mrow('Eyes',mm.eyes)+'</div>');
+  var meas=card('Measurements','','<button type="button" class="m360-link" onclick="CAVYRE_M360.editMeasurements()">'+ic('ti-pencil')+' Edit</button>','<div class="m360-meas">'+measSpec().rows.map(function(r){var v=r.val?(r.kind==='t'?r.val.raw:fmtM(r.kind,r.val,UNIT)+(r.val.raw?'':' \u00b7 '+fmtM(r.kind,r.val,UNIT==='cm'?'in':'cm'))):'';return mrow(r.label,v);}).join('')+'</div>');
   function newest(f){var t=Math.max.apply(null,[0].concat(m.filter(f).map(function(x){return ts(x.created_at)||0;})));return t?t:null;}
   var fr=[['Digitals updated',newest(isDigital)],['Portfolio images',newest(function(x){return /portfolio|editorial/i.test(catOf(x));})],['Runway media',newest(function(x){return /runway/i.test(catOf(x));})],['Video reel',newest(function(x){return String(x.media_type||'').toLowerCase()==='video';})],['Documents',docs.length?Math.max.apply(null,docs.map(function(d){return ts(d.created_at)||0;})):null]];
   var fresh=card('Media freshness','','','<ul class="m360-fresh">'+fr.map(function(r){var old=r[1]&&(Date.now()-r[1])>90*864e5;return '<li>'+(r[1]?ic(old?'ti-alert-circle m-warn':'ti-circle-check m-ok'):ic('ti-circle-x m-bad'))+'<span>'+esc(r[0])+'</span><em>'+(r[1]?esc(fmtDate(r[1],{month:'short',year:'numeric'})):'Missing')+'</em></li>';}).join('')+'</ul>'+'<div class="m360-fresh-cta">'+ask('Audit '+(model().display_name||'this model')+'\'s materials freshness and tell me what to shoot or update first.')+'</div>');
@@ -399,6 +450,7 @@ window.CAVYRE_M360={
   toggleMenu:function(ev){if(ev)ev.stopPropagation();M.menu=!M.menu;paint();if(M.menu){setTimeout(function(){document.addEventListener('click',function c(){M.menu=false;document.removeEventListener('click',c);paint();},{once:true});},0);}},
   editProfile:function(){M.menu=false;paint();if(window.VEUX_V156&&VEUX_V156.editProfile)VEUX_V156.editProfile();},
   manageMedia:function(){M.menu=false;if(window.VEUX_V156&&VEUX_V156.mediaManager)VEUX_V156.mediaManager();},
+  unit:function(){UNIT=UNIT==='cm'?'in':'cm';try{localStorage.setItem('m360.unit',UNIT);}catch(e){}paint();},
   editMeasurements:function(){if(window.VEUX_V156&&VEUX_V156.editMeasurements)VEUX_V156.editMeasurements();},
   website:function(){M.menu=false;paint();if(window.VEUX_V16917&&VEUX_V16917.website)VEUX_V16917.website();},
   access:function(){M.menu=false;paint();var b=document.querySelector('[data-cvy-access],#cvy-model-access-btn');if(b)b.click();else toast('Account & access is not available on this page.');},
