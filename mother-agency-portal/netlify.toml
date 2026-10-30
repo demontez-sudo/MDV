@@ -118,3 +118,9 @@
   to = "/.netlify/functions/partner-document-finalize"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/partner/agency-profile"
+  to = "/.netlify/functions/partner-agency-profile"
+  status = 200
+  force = true
