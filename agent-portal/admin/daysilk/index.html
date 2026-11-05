@@ -1673,10 +1673,10 @@ const PROVIDERS=[
  ["gmailpw","Gmail with an app password","imap","https://support.google.com/accounts/answer/185833"],["imap","Any other email (IMAP)","imap"]];
 const PV=Object.fromEntries(PROVIDERS.map(p=>[p[0],p]));
 if(!S.mail)S.mail={accounts:null,cfg:null,list:null,errs:[],acc:"all",open:null,unread:0,loading:false,connect:""};
-async function mailInit(force){const M=S.mail;if(!cloud()||!S.user)return;if(M.accounts&&!force)return;
+async function mailInit(force){if(EMB_CLIENT)return;const M=S.mail;if(!cloud()||!S.user)return;if(M.accounts&&!force)return;
  try{const[cfg,acc]=await Promise.all([api("/api/mail/config"),api("/api/mail/accounts")]);M.cfg=cfg;M.accounts=acc.accounts||[]}catch(e){M.cfg={error:e.code==="not_configured"?"not_configured":e.message};M.accounts=[]}
  if(M.accounts.length)mailFetch()}
-async function mailFetch(){const M=S.mail;M.loading=true;if(S.view==="mail")paint();
+async function mailFetch(){if(EMB_CLIENT)return;const M=S.mail;M.loading=true;if(S.view==="mail")paint();
  try{const j=await api("/api/mail/inbox?account="+encodeURIComponent(M.acc));M.list=j.messages||[];M.errs=j.errors||[];M.unread=M.list.filter(x=>x.unread).length;M.at=Date.now()}catch(e){M.errs=[{error:e.message}];M.list=M.list||[]}
  M.loading=false;paint()}
 function vMail(){const M=S.mail;
@@ -1696,7 +1696,7 @@ function mailInbox(){const M=S.mail,l=M.list||[];
  const multi=M.accounts.length>1&&M.acc==="all";
  return h+`<div class="panel mlist">${l.map((m,i)=>{const a=M.accounts.find(x=>x.id===m.acc);return`<button class="mrow ${m.unread?"unread":""}" data-act="mopen" data-i="${i}"><span class="mfrom">${esc(m.fromName||m.from)}</span><span class="msub"><b>${esc(m.subject||"(no subject)")}</b> <span class="muted">${esc(m.snippet||"")}</span></span><span class="mdate">${multi&&a?`<span class="pill">${esc(a.address.split("@")[1]||"")}</span> `:""}${m.date?fmtAgo(m.date):""}</span></button>`}).join("")}</div>`}
 function mailCompose(){const M=S.mail;return`<div class="panel"><form data-form="msend" class="fgrid"><label class="fld">From<select class="txt" name="acc">${M.accounts.map(a=>`<option value="${esc(a.id)}">${esc(a.address)}</option>`).join("")}</select></label><label class="fld">To<input class="txt" type="email" name="to" required multiple></label><label class="fld full">Subject<input class="txt" name="subject"></label><label class="fld full">Message<textarea class="txt" name="text" rows="9" required></textarea></label><div class="full"><button class="btn solid" type="submit">Send</button></div></form></div>`}
-function mailAccounts(){const M=S.mail,cfg=M.cfg||{},c=M.connect;
+function mailAccounts(){if(EMB_CLIENT)return;const M=S.mail,cfg=M.cfg||{},c=M.connect;
  if(cfg.error==="not_configured")return`<p class="authmsg err">Email isn't switched on for this DaySilk yet. The site owner needs to add MAIL_SEAL_KEY and SUPABASE_SERVICE_ROLE_KEY in Netlify.</p>`;
  let h=M.accounts.length?`<div class="panel" style="margin-bottom:18px"><h3>Connected</h3>${M.accounts.map(a=>`<div class="task"><span class="av sm">${svg("mail")}</span><div><span class="tt">${esc(a.address)}</span><small>${esc((PV[a.provider]||[0,"Email"])[1])} · connected ${fmtMD(iso(new Date(a.created_at)))}</small></div><span></span><button class="btn sm danger" data-act="mremove" data-id="${esc(a.id)}">Disconnect</button></div>`).join("")}</div>`:`<p class="lead" style="margin-top:-6px">Connect your first email account. You can add as many as you like.</p>`;
  h+=`<div class="provs">${PROVIDERS.map(([k,n,kind])=>{const off=kind==="oauth"&&!cfg[k];return`<button class="opt" data-act="mconnect" data-v="${k}" aria-pressed="${c===k}" ${off?"disabled":""}><b>${n}</b><small>${off?"Not switched on yet":kind==="oauth"?"Sign in with "+(k==="google"?"Google":"Microsoft"):"Uses an app password"}</small></button>`}).join("")}</div>`;
@@ -2034,7 +2034,9 @@ Object.assign(ACT,{
 /* ---------- Shell ---------- */
 const PAGEDEF={command:["Command","home",vCommand],today:["Today","today",vToday],cal:["Calendar","cal",vCal],tasks:["Tasks","tasks",vTasks],work:["Work","work",vWork],team:["Team","team",vTeam],health:["Wellness","health",vHealth],life:["Life","life",vLife],mail:["Inbox","mail",vMail]};
 const ACCOUNT=[["billing","Plan and billing","card",vBilling],["profile","Profile","user",vProfile],["settings","Settings","gear",vSettings]];
-function pagesNow(){return["command",...PLANS[planOf()].pages].map(k=>[k,...PAGEDEF[k]])}
+/* Inside the portal, what the portal already does is left to the portal: its own Mail replaces DaySilk Mail. */
+const EMB_HIDE=new Set(["mail"]);
+function pagesNow(){return["command",...PLANS[planOf()].pages.filter(k=>!(EMB_CLIENT&&EMB_HIDE.has(k)))].map(k=>[k,...PAGEDEF[k]])}
 // The owner's own DaySilk is a separate app with its own sign-in, served on this domain at /me/. Only admins see the link.
 function personalLink(){return isOwnerAdmin()?`<a class="nav" href="https://daysilk.com/me/" target="_blank" rel="noopener">${svg("life")}<span>My personal DaySilk</span></a>`:""}
 function accountNow(){return isOwnerAdmin()?ACCOUNT.concat([["admin","Admin","shield",vAdmin]]):ACCOUNT}
