@@ -944,6 +944,9 @@ function defaultCore(){return{v:1,onboarded:false,plan:"",q:{answers:{},step:0},
 function core(){if(!S.core)S.core=defaultCore();const d=defaultCore();for(const k in d)if(S.core[k]===undefined)S.core[k]=d[k];const w=S.core.work;for(const k in d.work)if(w[k]===undefined)w[k]=d.work[k];return S.core}
 function day(s){s=s||S.date;if(!S.days[s])S.days[s]={};const d=S.days[s];d.blocks=d.blocks||{};d.habits=d.habits||{};d.big=d.big||[{t:""},{t:""},{t:""}];return d}
 // A secret (server) key must never reach the browser; if one was configured by mistake, refuse to use it.
+/* Inside the Maison de Veux portal the person is already signed in there: DaySilk uses that same connection, so there is no second login and each person gets their own DaySilk. */
+const EMB_CLIENT=(()=>{try{const P=window.parent;return P&&P!==window&&P.MDV_DS_EMBED&&P.VEUX_SUPABASE_CLIENT?P.VEUX_SUPABASE_CLIENT:null}catch(_){return null}})();
+if(EMB_CLIENT){const st=document.createElement("style");st.textContent='[data-act="signout"],[data-v="billing"],[data-v="admin"],a[href*="daysilk.com"]{display:none!important}';document.head.appendChild(st)}
 const cloud=()=>!!(CFG.supabaseUrl&&CFG.supabaseAnonKey&&!/^sb_secret_/.test(CFG.supabaseAnonKey)&&window.supabase&&window.supabase.createClient);
 function lsLoad(){try{const o=JSON.parse(localStorage.getItem(LS)||"null");if(o){S.core=o.core||null;S.days=o.days||{};S.pend=o.pend||null;if(!cloud()&&o.acct)S.acct=o.acct}}catch(_){}}
 // pend lists the documents changed on this device that the account doesn't have yet, so they survive a closed tab.
@@ -1790,7 +1793,7 @@ Object.assign(ACT,{
  retake:()=>{S.flow={step:"q",sec:0,rebuild:true};paint();window.scrollTo(0,0)},
  theme:b=>{core().settings.theme=b.dataset.v;applyTheme();markDirty("core");paint()},
  export:()=>{const u=URL.createObjectURL(new Blob([JSON.stringify({core:S.core,days:S.days},null,1)],{type:"application/json"})),l=document.createElement("a");l.href=u;l.download="daysilk-data-"+todayIso()+".json";document.body.appendChild(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)},
- signout:async()=>{if(sb){await flush();await sb.auth.signOut()}},
+ signout:async()=>{if(sb){await flush();if(EMB_CLIENT)return;await sb.auth.signOut()}},
  erase:async()=>{if(prompt('Type ERASE to delete all of your DaySilk data.')!=="ERASE")return;
   if(sb&&S.user){const{error}=await sb.from("daysilk_docs").delete().eq("user_id",S.user.id);if(error){toast("Couldn't erase. Try again.");return}}
   const plan=core().plan;S.core=defaultCore();S.core.plan=plan;S.core.profile.email=S.user?S.user.email:"";S.days={};lsSave();S.flow=null;toast("Your data was erased");paint()}
@@ -1976,7 +1979,7 @@ async function startSession(user){
  if(!c.profile.email)c.profile.email=user.email||"";
  // The owner already has a DaySilk (his own, at /me/), so signing in here takes him straight there instead of the
  // customer setup. ?members keeps him on this side, for the Admin page or to try the customer journey.
- if(isOwnerAdmin()&&!c.onboarded&&!["members","join"].some(k=>new URLSearchParams(location.search).has(k))){location.replace("/me/");return}
+ if(!EMB_CLIENT&&isOwnerAdmin()&&!c.onboarded&&!["members","join"].some(k=>new URLSearchParams(location.search).has(k))){location.replace("/me/");return}
  if(pd.team){try{await TS.join(pd.team,c.profile.first||"");c.plan="member";toast("You joined "+S.team.team.name)}catch(e){toast("Couldn't join the team: "+e.message)}setPending({team:""})}
  if(S.acct&&S.acct.plan&&!c.plan)c.plan=S.acct.plan;
  if(S.acct&&pd.code){setPending({code:""});redeemCode(pd.code).then(ok=>{if(ok)paint()})}
@@ -2069,7 +2072,7 @@ Object.assign(ACT,{
 document.addEventListener("click",e=>{
  const jn=e.target.closest("[data-act=joinnew],[data-act=joincont]");if(jn&&sb){const u=S.joinUser;S.joinUser=null;
   if(jn.dataset.act==="joincont"){history.replaceState(null,"",location.pathname);S.auth={mode:"in",msg:"",err:false};startSession(u);return}
-  S.joinNew=true;sb.auth.signOut().finally(()=>{S.auth={mode:"up",msg:"",err:false};paint()});return}
+  S.joinNew=true;(EMB_CLIENT?Promise.resolve():sb.auth.signOut()).finally(()=>{S.auth={mode:"up",msg:"",err:false};paint()});return}
  const rs=e.target.closest("[data-act=resendconfirm]");if(rs&&sb){rs.disabled=true;sb.auth.resend({type:"signup",email:S.auth.email,options:{emailRedirectTo:location.origin+location.pathname}}).then(({error})=>{S.auth.msg=error?(error.message||"Couldn't send it. Try again in a minute."):"Sent. It can take a minute to arrive.";S.auth.err=!!error;paint()});return}
  const a0=e.target.closest("[data-auth]");if(a0){const em=document.querySelector("[data-form=auth] [name=email]");S.auth={mode:a0.dataset.auth,msg:"",err:false,email:em?em.value.trim():S.auth.email};paint();return}
  if(S.navOpen&&!e.target.closest(".rail")&&!e.target.closest(".pm-sheet")&&!e.target.closest("[data-act=menu]")){S.navOpen=false;document.body.classList.remove("nav-open")}
@@ -2113,7 +2116,7 @@ setInterval(()=>{if((S.view==="today"||S.view==="command")&&S.core&&core().onboa
  if(q.get("billing")==="ok")setTimeout(()=>toast("Card saved. Thank you."),300);
  if([...q.keys()].some(k=>["plan","team","code","v","mailok","mailerr","billing"].includes(k)))history.replaceState(null,"",location.pathname+(q.has("join")?"?join":q.has("members")?"?members":""));
  if(!cloud()){lsLoad();const pd=pending();if(pd.plan&&!core().plan){core().plan=pd.plan;S.acct={plan:pd.plan,status:"trial",trial_ends:new Date(Date.now()+TRIAL_DAYS*864e5).toISOString()}}applyTheme();if(core().previewTeam)TS.load();paint();return}
- sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+ sb=EMB_CLIENT||window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  // A Sign up link always opens the sign-up form. Whether new accounts are allowed is decided by Supabase, and its answer shows on the form.
  if(q.has("join")||q.has("plan")||q.has("team")||q.has("code"))S.auth.mode="up";
  if(q.has("join"))S.joinAsk=true;

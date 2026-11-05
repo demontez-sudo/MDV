@@ -1,1 +1,1 @@
-window.DAYSILK_CONFIG={"supabaseUrl":"https://fdvkuunenmoamhuygepk.supabase.co","supabaseAnonKey":"sb_publishable_s508IFeCrUjXLHSv5FN9hA_NjzcEfBZ","allowSignup":false,"admins":["demontez@maisondeveux.com"]};
+window.DAYSILK_CONFIG={"supabaseUrl":"https://mogyngdhmzbjmcdqeoxu.supabase.co","supabaseAnonKey":"sb_publishable_6fTsGxRRIDzjXaoUrT0XOg_yZWu21ql","allowSignup":false,"admins":[]};

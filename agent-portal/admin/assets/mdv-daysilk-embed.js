@@ -5,7 +5,7 @@
 'use strict';
 if(window.MDV_DS_EMBED)return;
 var classic=window.renderHelm;
-var E={host:null,loaded:false,loading:false,chips:null,at:0};
+var E={host:null,loaded:false,loading:false,chips:null,at:0,ready:false,setup:null,err:''};
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function arr(v){return Array.isArray(v)?v:[];}
 function mount(){return window.__VEUX_AGENT_MOUNT__==null?(/^\/(?:admin|team)(?:\/|$)/.test(location.pathname)?'/admin':''):window.__VEUX_AGENT_MOUNT__;}
@@ -53,10 +53,23 @@ function chipsHtml(){
   if(!c.length)return '<span class="dse-mute">Agency signals are not available right now.</span>';
   return c.map(function(x){return '<button type="button" class="dse-c '+esc(x.t)+'" data-dse-go="'+esc(x.go)+'">'+esc(x.x)+'</button>';}).join('');
 }
-function paint(){
+function ensureAccount(){
+  if(E.ready||E.setup)return E.setup;
+  var b=bridge();if(!b)return null;
+  E.setup=b.api('/api/agent/daysilk-account',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organization_slug:org()})}).then(function(){E.ready=true;E.err='';}).catch(function(e){E.err=(e&&e.message)||'DaySilk could not be set up for your account.';}).then(function(){E.setup=null;paint(true);});
+  return E.setup;
+}
+function frameHtml(){
+  if(E.err)return '<div class="dse-note"><b>DaySilk is not ready yet</b><p>'+esc(E.err)+'</p><button type="button" class="dse-b" data-dse-retry="1">Try again</button></div>';
+  if(!E.ready)return '<div class="dse-note"><p>Setting up your DaySilk\u2026</p></div>';
+  return '<iframe class="dse-f" src="'+esc(src())+'" title="DaySilk" allow="clipboard-write; fullscreen"></iframe>';
+}
+function paint(force){
   var el=E.host;if(!el)return;
-  var chips=el.querySelector('.dse-chips');if(chips){chips.innerHTML=chipsHtml();return;}
-  el.innerHTML='<div class="dse"><header class="dse-h"><div class="dse-t"><small>Daily system</small><h1>DaySilk</h1></div><div class="dse-chips">'+chipsHtml()+'</div><div class="dse-a"><button type="button" class="dse-b" data-dse-reload="1">Reload</button><a class="dse-b" href="'+esc(src())+'" target="_blank" rel="noopener">Open full screen</a></div></header><iframe class="dse-f" src="'+esc(src())+'" title="DaySilk" allow="clipboard-write; fullscreen"></iframe></div>';
+  var chips=el.querySelector('.dse-chips');
+  if(chips&&!force){chips.innerHTML=chipsHtml();return;}
+  if(chips&&force){chips.innerHTML=chipsHtml();var fr=el.querySelector('.dse-body');if(fr)fr.innerHTML=frameHtml();return;}
+  el.innerHTML='<div class="dse"><header class="dse-h"><div class="dse-t"><small>Daily system</small><h1>DaySilk</h1></div><div class="dse-chips">'+chipsHtml()+'</div><div class="dse-a"><button type="button" class="dse-b" data-dse-reload="1">Reload</button><a class="dse-b" href="'+esc(src())+'" target="_blank" rel="noopener">Open full screen</a></div></header><div class="dse-body">'+frameHtml()+'</div></div>';
 }
 function refresh(force){
   if(E.loading||(!force&&E.chips&&Date.now()-E.at<120000))return;
@@ -66,9 +79,10 @@ function refresh(force){
 document.addEventListener('click',function(e){
   var h=E.host;if(!h||!h.contains(e.target))return;
   var g=e.target.closest&&e.target.closest('[data-dse-go]');if(g){e.preventDefault();go(g.getAttribute('data-dse-go'));return;}
+  var rt=e.target.closest&&e.target.closest('[data-dse-retry]');if(rt){E.err='';E.ready=false;paint(true);ensureAccount();return;}
   var r=e.target.closest&&e.target.closest('[data-dse-reload]');if(r){var f=h.querySelector('.dse-f');if(f)f.src=src();refresh(true);}
 });
-window.MDV_DS_EMBED={render:function(el){E.host=el;paint();refresh(false);},classic:classic,src:src};
+window.MDV_DS_EMBED={render:function(el){E.host=el;paint();ensureAccount();refresh(false);},classic:classic,src:src};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 window.renderHelm=function(el){return window.MDV_DS_EMBED.render(el);};
 })();

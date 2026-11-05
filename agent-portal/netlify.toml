@@ -910,3 +910,9 @@ for = "/admin/daysilk/index.html"
 for = "/admin/daysilk/config.js"
   [headers.values]
   Cache-Control = "no-cache"
+
+[[redirects]]
+  from = "/api/agent/daysilk-account"
+  to = "/.netlify/functions/agent-daysilk-account"
+  status = 200
+  force = true
