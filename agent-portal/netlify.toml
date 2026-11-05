@@ -892,3 +892,21 @@ force = true
   to = "/.netlify/functions/agent-daysilk"
   status = 200
   force = true
+
+# DaySilk (the original platform) is served from this site so it opens inside the portal. Always fresh, like the original.
+[[headers]]
+for = "/daysilk/index.html"
+  [headers.values]
+  Cache-Control = "no-cache"
+[[headers]]
+for = "/daysilk/config.js"
+  [headers.values]
+  Cache-Control = "no-cache"
+[[headers]]
+for = "/admin/daysilk/index.html"
+  [headers.values]
+  Cache-Control = "no-cache"
+[[headers]]
+for = "/admin/daysilk/config.js"
+  [headers.values]
+  Cache-Control = "no-cache"

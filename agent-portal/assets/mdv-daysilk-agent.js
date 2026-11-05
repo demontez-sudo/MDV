@@ -146,8 +146,5 @@ function whenReady(fn){var n=0,t=setInterval(function(){if((window.DS&&window.VE
 
 window.MDV_DS_AGENT={load:load,ask:ask,state:A,plan:function(){return A.ds&&A.ds.plan||null;},answers:function(){return A.ds&&A.ds.answers||null;},blocksOn:blocksOn,dayDone:dayDone,setDay:setDay,onChange:function(f){A.listeners.push(f);},questions:QS,buildPlan:buildPlan};
 
-/* first sign-in: ask the questions once */
-whenReady(function(){
-  load(false).then(function(){if(A.hasMember!==false&&!A.ds)setTimeout(function(){ask(false);},1200);});
-});
+/* The questions now come from DaySilk itself. This module still powers the DaySilk Calendar's routine and habits when an agent has answered them. */
 })();
