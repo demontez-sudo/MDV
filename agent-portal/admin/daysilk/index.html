@@ -946,7 +946,8 @@ function day(s){s=s||S.date;if(!S.days[s])S.days[s]={};const d=S.days[s];d.block
 // A secret (server) key must never reach the browser; if one was configured by mistake, refuse to use it.
 /* Inside the Maison de Veux portal the person is already signed in there: DaySilk uses that same connection, so there is no second login and each person gets their own DaySilk. */
 const EMB_CLIENT=(()=>{try{const P=window.parent;return P&&P!==window&&P.MDV_DS_EMBED&&P.VEUX_SUPABASE_CLIENT?P.VEUX_SUPABASE_CLIENT:null}catch(_){return null}})();
-if(EMB_CLIENT){const st=document.createElement("style");st.textContent='[data-act="menu"],.rail,.tb-logo{display:none!important}header.top{background:transparent!important}.paper,.sched{background:rgba(16,12,10,.66)!important;color:var(--ink)!important;border-color:var(--line)!important}.paper *{border-color:var(--line)}.app{grid-template-columns:1fr!important;min-height:0!important;background:transparent!important}html,body{background:transparent!important}[data-theme="dark"]{--bg:transparent;--surface:rgba(16,12,10,.66);--sunk:rgba(8,6,5,.5)}.panel,.stat,.xpanel,.hq-card,.hq-flow,.hq-dh,.card{backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:9px}::-webkit-scrollbar-track{background:transparent}[data-act="signout"],[data-v="billing"],[data-v="admin"],a[href*="daysilk.com"]{display:none!important}@media(min-width:700px){.kanban{grid-auto-columns:minmax(0,1fr)!important;overflow-x:visible!important}.kanban>*{min-width:0}}';document.head.appendChild(st)}
+const EMB_HOME=!!EMB_CLIENT&&/[?&]home=1/.test(location.search);if(EMB_HOME)document.documentElement.classList.add("emb-home");
+if(EMB_CLIENT){const st=document.createElement("style");st.textContent='[data-act="menu"],.rail,.tb-logo{display:none!important}header.top{background:transparent!important}.paper,.sched{background:rgba(16,12,10,.66)!important;color:var(--ink)!important;border-color:var(--line)!important}.paper *{border-color:var(--line)}.app{grid-template-columns:1fr!important;min-height:0!important;background:transparent!important}html,body{background:transparent!important}[data-theme="dark"]{--bg:transparent;--surface:rgba(16,12,10,.66);--sunk:rgba(8,6,5,.5)}.panel,.stat,.xpanel,.hq-card,.hq-flow,.hq-dh,.card{backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:9px}::-webkit-scrollbar-track{background:transparent}[data-act="signout"],[data-v="billing"],[data-v="admin"],a[href*="daysilk.com"]{display:none!important}@media(min-width:700px){.kanban{grid-auto-columns:minmax(0,1fr)!important;overflow-x:visible!important}.kanban>*{min-width:0}}html[data-theme="dark"] .paper{--ink:#F3EFE8;--muted:#B3A99C;--line:rgba(255,255,255,.14);--surface:rgba(16,12,10,.66);color:#F3EFE8!important;color-scheme:dark}.paper .txt,.paper select.txt{background:rgba(255,255,255,.07)!important;color:#F3EFE8!important;border-color:rgba(255,255,255,.2)!important}.paper .txt option{background:#1b1512;color:#F3EFE8}.paper .btn{border-color:rgba(255,255,255,.28)!important;color:#F3EFE8!important;background:transparent!important}.paper .btn.solid{background:#E08A60!important;border-color:#E08A60!important;color:#1b1512!important}.paper .ib2,.paper .datepill{color:#F3EFE8!important;border-color:rgba(255,255,255,.28)!important;background:transparent!important}.srow time{color:#C9BFB2!important}.stt b{color:#F3EFE8!important}.stt small{color:#B3A99C!important}.srow.cur{background:rgba(224,138,96,.2)!important}.srow>input[type=checkbox]{accent-color:#E08A60!important}.addevbox{background:rgba(255,255,255,.06)!important}.sched-h h3{color:#F3EFE8}html.emb-home,html.emb-home body{background:transparent!important;min-height:0!important;height:auto!important;overflow:hidden!important}html.emb-home #root{display:flow-root;min-height:0!important}.hb{padding:0 0 4px}.hb-top{display:flex;align-items:center;justify-content:space-between;margin:2px 0 10px}.hb .hq-flows{margin:0 0 14px}.hb .xbig3{margin-bottom:14px}.hb-habits .xpanel{display:grid;grid-template-columns:1fr 1fr;column-gap:28px}.hb-habits .xpanel-h{grid-column:1/-1}@media(max-width:700px){.hb-habits .xpanel{grid-template-columns:1fr}}.hb-setup{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:rgba(16,12,10,.66)}.hb-setup b{display:block;font-size:15px}.hb-setup span{font-size:13px;color:var(--muted)}';document.head.appendChild(st)}
 const cloud=()=>!!(CFG.supabaseUrl&&CFG.supabaseAnonKey&&!/^sb_secret_/.test(CFG.supabaseAnonKey)&&window.supabase&&window.supabase.createClient);
 function lsLoad(){try{const o=JSON.parse(localStorage.getItem(LS)||"null");if(o){S.core=o.core||null;S.days=o.days||{};S.pend=o.pend||null;if(!cloud()&&o.acct)S.acct=o.acct}}catch(_){}}
 // pend lists the documents changed on this device that the account doesn't have yet, so they survive a closed tab.
@@ -993,7 +994,7 @@ async function loadCloud(){let all=[];for(let from=0;;from+=1000){const{data,err
 // Another browser's saves arrive live; a refresh when the tab comes back, and every minute, covers a dropped connection.
 let docSub=null;
 function listenDocs(){if(!sb||!S.user)return;if(docSub)sb.removeChannel(docSub);
- docSub=sb.channel("docs-"+S.user.id).on("postgres_changes",{event:"*",schema:"public",table:"daysilk_docs",filter:"user_id=eq."+S.user.id},p=>takeRemote(p.new)).subscribe()}
+ docSub=sb.channel("docs-"+S.user.id+(EMB_HOME?"-home":"")).on("postgres_changes",{event:"*",schema:"public",table:"daysilk_docs",filter:"user_id=eq."+S.user.id},p=>takeRemote(p.new)).subscribe()}
 function takeRemote(row){if(!row||!row.doc_id||row.data==null)return;const id=row.doc_id;if(id!=="core"&&!/^d\d{4}-\d\d-\d\d$/.test(id))return;
  if(inflight.includes(id)||(id==="core"?dirty.core:dirty.days.has(id.slice(1))))return;if(jeq(row.data,docOf(id)))return setBase(id,row.data);
  putDoc(id,row.data);setBase(id,row.data);lsSave();paintSoon()}
@@ -1331,12 +1332,15 @@ function flowLines(k,s){const c=core(),d=day(s),open=c.tasks.filter(x=>!x.done&&
  const wk=[];for(let i=6;i>=0;i--)wk.push(addDays(s,-i));
  return[["Training",trainingOn(s)?(workedOut(s)?"Done today":fmtT(trainTime())):"Rest day"],["Sessions this week",wk.filter(workedOut).length+" of "+wk.filter(trainingOn).length],["Open tasks",String(open.length)]]}
 
+function flowCardsHtml(s,sc,wk,Q){const D=desks();
+ return`<div class="hq-flows">${["daily","work","health"].map(k=>{const dk=D.find(d=>d.flow===k),v=sc[k],q=Q.filter(x=>x.flow===k),cr=q.filter(x=>x.sev==="critical").length,to=dk?dk.pages[0][0]:k==="work"?"tasks":"today";
+  return`<button class="hq-flow" data-act="go" data-v="${to}" style="--fc:${FLOW[k].c}"><div class="hq-fh">${svg(FLOW[k].ic,"xi")}<b>${FLOW[k].n} Flow</b><span class="hq-fq">${q.length} in queue${cr?` · <em>${cr} critical</em>`:""}</span></div><div class="hq-fb"><div class="hq-fv">${v==null?"–":v}<small>${v==null?"off today":"/ 100"}</small></div>${spark(wk.map(x=>x[k]),FLOW[k].c)}</div><ul>${flowLines(k,s).map(l=>`<li><span>${esc(l[0])}</span><b>${esc(l[1])}</b></li>`).join("")}</ul><span class="hq-fgo">Open ${FLOW[k].n} Flow ›</span></button>`}).join("")}</div>`;
+}
 function vCommand(){const c=core(),s=todayIso(),dt=parse(s),P=c.profile,sc=flowScores(s),wk=flowWeek(s),links=flowLinks(s),Q=flowQueue(s),nn=nowNext(s),T=c.templates[tmplFor(s)],crit=Q.filter(q=>q.sev==="critical").length;
  let h=`<section class="hq-hero"><div class="hq-hl"><div class="eyebrow">Command Center · ${DOW[dt.getDay()]} ${fmtMD(s)}${P.city?" · "+esc(P.city):""}</div><h2 class="hq-title">${greet()}, ${esc(P.first||"there")}.</h2><p class="hq-lead">${esc(T?T.n:"Your day")}. ${nn.cur?"Now: "+esc(nn.cur.title)+". ":""}${nn.next?"Next: "+esc(nn.next.title)+" at "+fmtT(nn.next.time)+". ":"Nothing else on the clock. "}${crit?`<b class="hq-crit">${crit} critical</b> in the queue.`:"Nothing critical in the queue."}</p>
   <div class="hq-vacts"><button class="hq-va" data-act="go" data-v="today">${svg("today","xi sm")}Start my day</button><button class="hq-va" data-act="go" data-v="tasks">${svg("plus","xi sm")}Add a task</button><button class="hq-va" data-act="go" data-v="cal" data-t="month">${svg("cal","xi sm")}Add an event</button><button class="hq-va" data-act="qf" data-k="all" data-crit="1">${svg("spark","xi sm")}Show what's critical</button></div></div>${flowMap(sc,links)}</section>`;
  const D=desks();
- h+=`<div class="hq-flows">${["daily","work","health"].map(k=>{const dk=D.find(d=>d.flow===k),v=sc[k],q=Q.filter(x=>x.flow===k),cr=q.filter(x=>x.sev==="critical").length,to=dk?dk.pages[0][0]:k==="work"?"tasks":"today";
-  return`<button class="hq-flow" data-act="go" data-v="${to}" style="--fc:${FLOW[k].c}"><div class="hq-fh">${svg(FLOW[k].ic,"xi")}<b>${FLOW[k].n} Flow</b><span class="hq-fq">${q.length} in queue${cr?` · <em>${cr} critical</em>`:""}</span></div><div class="hq-fb"><div class="hq-fv">${v==null?"–":v}<small>${v==null?"off today":"/ 100"}</small></div>${spark(wk.map(x=>x[k]),FLOW[k].c)}</div><ul>${flowLines(k,s).map(l=>`<li><span>${esc(l[0])}</span><b>${esc(l[1])}</b></li>`).join("")}</ul><span class="hq-fgo">Open ${FLOW[k].n} Flow ›</span></button>`}).join("")}</div>`;
+ h+=flowCardsHtml(s,sc,wk,Q);
  h+=`<div class="xpanel hq-day"><div class="xpanel-h"><h3>Day at a glance</h3><span class="hq-leg">${["daily","work","health"].map(k=>`<i style="--fc:${FLOW[k].c}">${FLOW[k].n}</i>`).join("")}</span><button class="linkbtn" data-act="go" data-v="today">Open Today ›</button></div>${blocksFor(s).some(x=>x.time)?dayBar(s):'<p class="empty">Open day.</p>'}</div>`;
  const up=upcoming(s,14);
  h+=`<div class="hq-grid"><div class="xpanel" id="hq-queue"><div class="xpanel-h"><h3>Command Queue</h3><span class="muted small">${Q.length} signal${Q.length===1?"":"s"} across every flow</span></div>${queueHTML(Q)}</div>
@@ -1347,20 +1351,40 @@ function vCommand(){const c=core(),s=todayIso(),dt=parse(s),P=c.profile,sc=flowS
 
 /* ---------- Today ---------- */
 const initials=P=>((P.first||"")[0]||"")+((P.last||"")[0]||"");
-function vToday(){const c=core(),s=S.date,d=day(s),dt=parse(s),isT=s===todayIso(),b=blocksFor(s),sc=dayScore(s),parts=scoreParts(s),nn=isT?nowNext(s):{cur:null,next:b.find(x=>x.time)},P=c.profile,I=IND[P.industry],T=c.templates[tmplFor(s)],g=c.goals[0];
- const due=c.tasks.filter(x=>!x.done&&x.due&&x.due<=s),tr=trainingOn(s);
- let h=`<section class="xhero"><div class="xhero-in"><div class="xeyebrow">DaySilk <i>·</i> ${esc(isBiz()&&P.company?P.company:PLANS[planOf()].n)} <i>·</i> ${isT?greet()+", "+esc(P.first||"there"):fmtLong(s)}</div>
- <div class="xhero-row"><div class="xnum">${pad(dt.getDate())}</div><div class="xday"><div class="d">${DOW[dt.getDay()]}</div><div class="m">${MON[dt.getMonth()]} ${dt.getFullYear()}</div>${P.city?`<div class="loc">${esc(P.city)}</div>`:""}</div><div class="xquote">${g?`Working toward<br>${esc(g.t)}`:esc(T?T.n:"")+(tr?"<br>Training day":"")}</div><div class="xsig" aria-hidden="true">${esc(initials(P).toUpperCase())}</div><div class="xtag">${esc(T?T.n:"")}${tr?" · training day":""}${isBiz()&&I?" · "+esc(I[1]):""}</div>
- <div class="xscore">${xring(sc,"lg","Daily score")}<dl>${Object.entries(parts).map(([k,v])=>`<dt>${k}</dt><dd>${v==null?"–":v+"%"}</dd>`).join("")}</dl></div></div></div></section>`;
+function todayStrip(s){const c=core(),isT=s===todayIso(),b=blocksFor(s),sc=dayScore(s),nn=isT?nowNext(s):{cur:null,next:b.find(x=>x.time)},due=c.tasks.filter(x=>!x.done&&x.due&&x.due<=s),tr=trainingOn(s);
  const card=(ic,lbl,big,sub,badge)=>`<div class="xstat">${svg(ic,"xi lg")}<div><span class="lbl">${lbl}</span><b>${esc(big)}</b><small>${esc(sub)}</small></div>${badge?`<span class="badge2">${badge}</span>`:""}</div>`;
- h+=`<div class="xstrip">${card("today",isT?"Now":"Starts with",nn.cur?nn.cur.title:isT?"Free time":(nn.next?nn.next.title:"Open day"),nn.cur?fmtT(nn.cur.time):isT?"Nothing scheduled right now":nn.next?fmtT(nn.next.time):"")}${card("cal","Next",isT?(nn.next?nn.next.title:"Day complete"):"–",isT&&nn.next?fmtT(nn.next.time):"Rest well")}${card("health","Workout",tr?(c.train.type||"Workout")+", "+(c.train.mins||45)+" min":"Rest day",tr?(workedOut(s)?"Logged":fmtT(trainTime())):"Recover and stretch")}${card("spark","Daily score",sc+"%",sc>=70?"On track":sc>=40?"Keep going":"Get started")}${card("tasks","Tasks due",String(due.length),due.filter(x=>x.due<s).length+" overdue")}</div>`;
- h+=todayFocus();
+ return`<div class="xstrip">${card("today",isT?"Now":"Starts with",nn.cur?nn.cur.title:isT?"Free time":(nn.next?nn.next.title:"Open day"),nn.cur?fmtT(nn.cur.time):isT?"Nothing scheduled right now":nn.next?fmtT(nn.next.time):"")}${card("cal","Next",isT?(nn.next?nn.next.title:"Day complete"):"–",isT&&nn.next?fmtT(nn.next.time):"Rest well")}${card("health","Workout",tr?(c.train.type||"Workout")+", "+(c.train.mins||45)+" min":"Rest day",tr?(workedOut(s)?"Logged":fmtT(trainTime())):"Recover and stretch")}${card("spark","Daily score",sc+"%",sc>=70?"On track":sc>=40?"Keep going":"Get started")}${card("tasks","Tasks due",String(due.length),due.filter(x=>x.due<s).length+" overdue")}</div>`;
+}
+function big3Html(s){const d=day(s),isT=s===todayIso();let h="";
  const hints=["The one thing that moves work forward","Something for your health or home","Something for someone you love"],names=["Work","Health and home","People"],editing=S.editBig||!d.big.some(x=>x.t);
  h+=`<div class="xsec-h"><h3>${isT?"Today's":"The day's"} Big 3</h3>${d.big.some(x=>x.t)?`<button class="linkbtn" data-act="editbig">${S.editBig?"Done":"Edit"}</button>`:""}</div>`;
  h+=editing?`<div class="xbigedit">${d.big.map((x,i)=>`<div><label>0${i+1} · ${names[i]}<input class="txt" data-scope="day" data-path="big.${i}.t" value="${esc(x.t)}" placeholder="${hints[i]}" aria-label="Big 3 number ${i+1}"></label></div>`).join("")}</div>`
   :`<div class="xbig3">${d.big.map((x,i)=>`<label class="xb3 ${x.done?"done":""}"><span class="n">0${i+1}</span><div><b>${names[i]}</b><span>${esc(x.t||"–")}</span><small>${x.done?"Done":"Tap the box when it's done"}</small></div>${x.t?`<input type="checkbox" class="go" aria-label="Done: ${esc(x.t)}" data-scope="day" data-path="big.${i}.done" ${x.done?"checked":""}>`:""}</label>`).join("")}</div>`;
- h+=`<div class="xmain"><div>${schedPanel(s)}</div><div class="xright">`;
+ return h}
+function habitsPanel(s){const c=core(),d=day(s);let h="";
  if(c.habits.length)h+=`<div class="xpanel"><div class="xpanel-h"><h3>Habits</h3><span class="muted small">${c.habits.filter(k=>d.habits[k]).length} of ${c.habits.length}</span></div>${c.habits.map(k=>`<label class="ck ${d.habits[k]?"done":""}"><input type="checkbox" data-scope="day" data-path="habits.${k}" ${d.habits[k]?"checked":""}><span>${esc(HL(k))}</span></label>`).join("")}</div>`;
+ return h}
+function vToday(){if(!EMB_CLIENT||EMB_HOME)return vTodayFull();const c=core(),s=S.date,d=day(s),up=upcoming(addDays(s,1),7);
+ let h=`<div class="xmain"><div>${schedPanel(s)}</div><div class="xright">`;
+ h+=`<div class="xpanel"><div class="xpanel-h"><h3>Coming up</h3><span class="muted small">Next 7 days</span></div>${up.length?`<div class="paper xup">${up.slice(0,6).map(upRow).join("")}</div>`:'<p class="empty">Nothing in the next week.</p>'}</div>`;
+ h+=`<div class="xpanel"><div class="xpanel-h"><h3>Notes</h3></div><textarea class="txt" data-scope="day" data-path="notes" placeholder="Wins, thoughts, what to remember">${esc(d.notes||"")}</textarea><div class="fgrid" style="margin-top:12px"><label class="fld">Energy (1 to 5)<input class="txt" type="number" min="1" max="5" data-scope="day" data-path="energy" value="${esc(d.energy||"")}"></label><label class="fld">Mood (1 to 5)<input class="txt" type="number" min="1" max="5" data-scope="day" data-path="mood" value="${esc(d.mood||"")}"></label></div></div>`;
+ return h+`</div></div>`}
+/* the DaySilk band on the portal Home: the Now/Next strip, Big 3, the three flows and habits. The day bar and schedule stay with the portal's own Home. */
+function vHomeBand(){const c=core(),s=todayIso(),P=c.profile,sc=flowScores(s),wk=flowWeek(s),Q=flowQueue(s);
+ return`<div class="hb"><div class="hb-top"><span class="eyebrow">DaySilk <i>·</i> ${greet()}, ${esc(P.first||"there")}</span><button class="linkbtn" data-act="go" data-v="today">Open DaySilk ›</button></div>${todayStrip(s)}${big3Html(s)}${flowCardsHtml(s,sc,wk,Q)}<div class="hb-habits">${habitsPanel(s)}</div></div>`}
+let hbObs=null;function hbSize(root){const post=()=>{try{parent.MDV_DS_EMBED.size(Math.ceil(root.getBoundingClientRect().height)+2)}catch(_){}};post();if(!hbObs&&window.ResizeObserver){hbObs=new ResizeObserver(post);hbObs.observe(root)}}
+function homePaint(root){if(!S.user||!S.core){root.innerHTML="";return}
+ root.innerHTML=core().onboarded&&!S.flow?vHomeBand():`<div class="hb hb-setup"><div><b>Set up your DaySilk</b><span>Answer a few questions and your day, habits and flows appear here.</span></div><button class="btn solid" data-act="go" data-v="today">Set up DaySilk</button></div>`;hbSize(root)}
+function vTodayFull(){const c=core(),s=S.date,d=day(s),dt=parse(s),isT=s===todayIso(),b=blocksFor(s),sc=dayScore(s),parts=scoreParts(s),nn=isT?nowNext(s):{cur:null,next:b.find(x=>x.time)},P=c.profile,I=IND[P.industry],T=c.templates[tmplFor(s)],g=c.goals[0];
+ const due=c.tasks.filter(x=>!x.done&&x.due&&x.due<=s),tr=trainingOn(s);
+ let h=`<section class="xhero"><div class="xhero-in"><div class="xeyebrow">DaySilk <i>·</i> ${esc(isBiz()&&P.company?P.company:PLANS[planOf()].n)} <i>·</i> ${isT?greet()+", "+esc(P.first||"there"):fmtLong(s)}</div>
+ <div class="xhero-row"><div class="xnum">${pad(dt.getDate())}</div><div class="xday"><div class="d">${DOW[dt.getDay()]}</div><div class="m">${MON[dt.getMonth()]} ${dt.getFullYear()}</div>${P.city?`<div class="loc">${esc(P.city)}</div>`:""}</div><div class="xquote">${g?`Working toward<br>${esc(g.t)}`:esc(T?T.n:"")+(tr?"<br>Training day":"")}</div><div class="xsig" aria-hidden="true">${esc(initials(P).toUpperCase())}</div><div class="xtag">${esc(T?T.n:"")}${tr?" · training day":""}${isBiz()&&I?" · "+esc(I[1]):""}</div>
+ <div class="xscore">${xring(sc,"lg","Daily score")}<dl>${Object.entries(parts).map(([k,v])=>`<dt>${k}</dt><dd>${v==null?"–":v+"%"}</dd>`).join("")}</dl></div></div></div></section>`;
+ h+=todayStrip(s);
+ h+=todayFocus();
+ h+=big3Html(s);
+ h+=`<div class="xmain"><div>${schedPanel(s)}</div><div class="xright">`;
+ h+=habitsPanel(s);
  h+=`<div class="xpanel"><div class="xpanel-h"><h3>Due and overdue</h3><button class="linkbtn" data-act="go" data-v="tasks">All tasks ›</button></div>${addTaskForm()}${due.length?due.map(taskRow).join(""):'<p class="empty">Nothing due. Nice.</p>'}</div>`;
  const up=upcoming(addDays(s,1),7);
  h+=`<div class="xpanel"><div class="xpanel-h"><h3>Coming up</h3><span class="muted small">Next 7 days</span></div>${up.length?`<div class="paper xup">${up.slice(0,6).map(upRow).join("")}</div>`:'<p class="empty">Nothing in the next week.</p>'}</div>`;
@@ -1576,7 +1600,7 @@ const TS={
   const[t,ms,it]=await Promise.all([sb.from("ds_teams").select("*").eq("id",pick.team_id).maybeSingle(),sb.from("ds_members").select("*").eq("team_id",pick.team_id).order("joined_at"),sb.from("ds_team_items").select("*").eq("team_id",pick.team_id).order("created_at",{ascending:false}).limit(1000)]);
   S.team={team:t.data||{id:pick.team_id,name:"Team"},members:ms.data||[],items:it.data||[],role:pick.role};
   if(teamSub)sb.removeChannel(teamSub);
-  teamSub=sb.channel("team-"+pick.team_id).on("postgres_changes",{event:"*",schema:"public",table:"ds_team_items",filter:"team_id=eq."+pick.team_id},p=>{const L=S.team.items;
+  teamSub=sb.channel("team-"+pick.team_id+(EMB_HOME?"-home":"")).on("postgres_changes",{event:"*",schema:"public",table:"ds_team_items",filter:"team_id=eq."+pick.team_id},p=>{const L=S.team.items;
    if(p.eventType==="DELETE")S.team.items=L.filter(x=>x.id!==p.old.id);else{const i=L.findIndex(x=>x.id===p.new.id);if(i<0)L.unshift(p.new);else L[i]=p.new}
    if(!(document.activeElement&&document.activeElement.matches("input,textarea,select")))paint()}).subscribe()},
  async create(name,myName){
@@ -2032,7 +2056,7 @@ Object.assign(ACT,{
 });
 
 /* ---------- Shell ---------- */
-const PAGEDEF={command:["Command","home",vCommand],today:["Today","today",vToday],cal:["Calendar","cal",vCal],tasks:["Tasks","tasks",vTasks],work:["Work","work",vWork],team:["Team","team",vTeam],health:["Wellness","health",vHealth],life:["Life","life",vLife],mail:["Inbox","mail",vMail]};
+const PAGEDEF={command:["Command","home",vCommand],today:[EMB_CLIENT?"Schedule":"Today","today",vToday],cal:["Calendar","cal",vCal],tasks:["Tasks","tasks",vTasks],work:["Work","work",vWork],team:["Team","team",vTeam],health:["Wellness","health",vHealth],life:["Life","life",vLife],mail:["Inbox","mail",vMail]};
 const ACCOUNT=[["billing","Plan and billing","card",vBilling],["profile","Profile","user",vProfile],["settings","Settings","gear",vSettings]];
 /* Inside the portal, what the portal already does is left to the portal: its own Mail replaces DaySilk Mail. */
 const EMB_HIDE=new Set(["mail"]);
@@ -2057,17 +2081,18 @@ function pmenu(acc,ct,trial){const P=core().profile,D=desks(),tile=([k,l,ic],fc)
  const foot=(isOwnerAdmin()?`<a href="https://daysilk.com/me/" target="_blank" rel="noopener">${svg("life")}My personal DaySilk</a>`:"")+(trial?`<button data-act="go" data-v="billing">${svg("card")}${esc(trialLeft())} day${trialLeft()===1?"":"s"} left in your trial</button>`:"");
  return`<div id="pmenu"><div class="pm-scrim" data-act="menu"></div><div class="pm-sheet" role="dialog" aria-label="Menu"><div class="pm-grab"></div><div class="pm-top"><span class="av">${P.photo?`<img src="${esc(P.photo)}" alt="">`:esc((P.first||"?")[0])}</span><div><b>${esc([P.first,P.last].filter(Boolean).join(" ")||"You")}</b><small>${esc(isBiz()&&P.company?P.company+" · ":"")}${esc(PLANS[planOf()].n)}</small></div><button class="pm-x" data-act="menu" aria-label="Close menu">×</button></div><div class="pm-body">${body}${foot?`<div class="pm-foot">${foot}</div>`:""}</div></div></div>`}
 function paint(){const root=$("#root");
+ if(EMB_HOME){homePaint(root);return}
  if(cloud()&&!S.user){root.innerHTML=authView();return}
  if(!core().onboarded||S.flow){root.innerHTML=flowView();return}
  const y=window.scrollY,open=[...document.querySelectorAll("details[open][data-k]")].map(x=>x.dataset.k);
  document.body.classList.toggle("nav-open",S.navOpen);document.body.classList.toggle("is-phone",isPhone());document.body.classList.toggle("sheet-open",!!S.sheet&&isPhone());root.innerHTML=shell();window.scrollTo(0,y);
  open.forEach(k=>{const n=document.querySelector(`details[data-k="${k}"]`);if(n)n.open=true})}
-function go(v,top){S.view=v;S.navOpen=false;S.sheet=null;S.phEarly=false;S.editBlocks=false;if(v==="mail"&&S.mail.accounts&&S.mail.accounts.length&&(!S.mail.at||Date.now()-S.mail.at>120000))mailFetch();paint();if(top!==false)window.scrollTo(0,0)}
+function go(v,top){if(EMB_CLIENT&&!EMB_HOME&&v==="command"){try{parent.MDV_DS_EMBED.home()}catch(_){}return}S.view=v;S.navOpen=false;S.sheet=null;S.phEarly=false;S.editBlocks=false;if(v==="mail"&&S.mail.accounts&&S.mail.accounts.length&&(!S.mail.at||Date.now()-S.mail.at>120000))mailFetch();paint();if(top!==false)window.scrollTo(0,0)}
 function applyTheme(){const t=(S.core&&S.core.settings&&S.core.settings.theme)||"auto",r=document.documentElement;if(t==="auto"&&!EMB_CLIENT)delete r.dataset.theme;else r.dataset.theme=(t==="auto"?"dark":t);try{localStorage.setItem("daysilk-theme",t)}catch(_){}}
 
 /* ---------- Events ---------- */
 Object.assign(ACT,{
- go:b=>{S.navOpen=false;document.body.classList.remove("nav-open");if(b.dataset.t){const k={cal:"cal",health:"health",life:"life",work:"work",team:"team"}[b.dataset.v];if(k)S.tabs[k]=b.dataset.t}go(b.dataset.v)},
+ go:b=>{if(EMB_HOME){try{parent.MDV_DS_EMBED.open(b.dataset.v,b.dataset.t)}catch(_){}return}S.navOpen=false;document.body.classList.remove("nav-open");if(b.dataset.t){const k={cal:"cal",health:"health",life:"life",work:"work",team:"team"}[b.dataset.v];if(k)S.tabs[k]=b.dataset.t}go(b.dataset.v)},
  menu:()=>{S.navOpen=!S.navOpen;document.body.classList.toggle("nav-open",S.navOpen)},
  tab:b=>{S.tabs[b.dataset.k]=b.dataset.v;S.editBlocks=false;paint()}
 });
@@ -2099,7 +2124,7 @@ document.addEventListener("submit",async e=>{const f=e.target,fn=FORM[f.dataset.
 window.addEventListener("beforeunload",()=>{if(dirty.core||dirty.days.size)flush()});
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)refreshDocs()});window.addEventListener("focus",refreshDocs);window.addEventListener("online",()=>flush());
 setInterval(refreshDocs,60000);
-setInterval(()=>{if((S.view==="today"||S.view==="command")&&S.core&&core().onboarded&&!S.flow&&!(document.activeElement&&document.activeElement.matches("input,textarea,select")))paint()},60000);
+setInterval(()=>{if((EMB_HOME||S.view==="today"||S.view==="command")&&S.core&&core().onboarded&&!S.flow&&!(document.activeElement&&document.activeElement.matches("input,textarea,select")))paint()},60000);
 
 /* ---------- Boot ---------- */
 (function boot(){
@@ -2112,13 +2137,13 @@ setInterval(()=>{if((S.view==="today"||S.view==="command")&&S.core&&core().onboa
  if(q.get("plan")&&PLANS[q.get("plan")])setPending({plan:q.get("plan")});
  if(q.get("team"))setPending({team:q.get("team")});
  if(q.get("code"))setPending({code:q.get("code").toUpperCase()});
- if(q.get("v"))S.view=q.get("v");
+ if(q.get("v"))S.view=q.get("v");else if(EMB_CLIENT&&!EMB_HOME)S.view="today";
  if(q.get("mailok"))setTimeout(()=>toast("Email connected"),300);
  if(q.get("mailerr"))setTimeout(()=>toast("Email didn't connect: "+q.get("mailerr")),300);
  if(q.get("billing")==="ok")setTimeout(()=>toast("Card saved. Thank you."),300);
  if([...q.keys()].some(k=>["plan","team","code","v","mailok","mailerr","billing"].includes(k)))history.replaceState(null,"",location.pathname+(q.has("join")?"?join":q.has("members")?"?members":""));
  if(!cloud()){lsLoad();const pd=pending();if(pd.plan&&!core().plan){core().plan=pd.plan;S.acct={plan:pd.plan,status:"trial",trial_ends:new Date(Date.now()+TRIAL_DAYS*864e5).toISOString()}}applyTheme();if(core().previewTeam)TS.load();paint();return}
- if(EMB_CLIENT){window.__dsGo=v=>{if(PAGEDEF[v])go(v,false)};window.__dsMenu=()=>{try{return pagesNow().map(p=>({k:p[0],l:p[0]==="command"?"Command":p[1]}))}catch(_){return[]}};window.__dsView=()=>S.view}
+ if(EMB_CLIENT){window.__dsGo=(v,t)=>{if(PAGEDEF[v]){if(t){const k={cal:"cal",health:"health",life:"life",work:"work",team:"team"}[v];if(k)S.tabs[k]=t}go(v,false)}};window.__dsMenu=()=>{try{return pagesNow().map(p=>({k:p[0],l:p[0]==="command"?"Command":p[1]}))}catch(_){return[]}};window.__dsView=()=>S.view}
   sb=EMB_CLIENT||window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  // A Sign up link always opens the sign-up form. Whether new accounts are allowed is decided by Supabase, and its answer shows on the form.
  if(q.has("join")||q.has("plan")||q.has("team")||q.has("code"))S.auth.mode="up";

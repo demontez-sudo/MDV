@@ -346,6 +346,7 @@ function mobileHomeHtml(p,H){
    +'<form class="mh-ask" data-ws-ask><i class="ti ti-sparkles"></i><input type="text" placeholder="Ask Veux…" aria-label="Ask Veux"><button type="submit" aria-label="Ask"><i class="ti ti-arrow-right"></i></button></form>'
    +'<div class="mh-quick">'+quick+'</div>'
    +'<div class="mh-stats">'+stat('ti-calendar-event',wkB,'Bookings','this week','calendar')+stat('ti-users',talent,'Talent',(p.ready||0)+' ready','roster')+stat('ti-currency-dollar',money(wkV,cur),'Booking value','this week','calendar')+stat('ti-file-invoice',money(os,cur),'Outstanding',unpaid.length+' invoice'+(unpaid.length===1?'':'s'),'agentcommissions')+'</div>'
+   +'<section class="ws-ds" data-ws-ds></section>'
    +'<section class="mh-card">'+mhHead('Today',today.length+' event'+(today.length===1?'':'s')+' →','calendar')+evRows+'</section>'
    +'<section class="mh-card">'+mhHead('Needs attention','All tasks →','tasksconsolidated')+needRows+'</section>'
    +'<section class="mh-card mh-veuxi"><header><h2><i class="ti ti-sparkles"></i> Veux briefing</h2></header><p>'+esc(vtxt)+'</p>'+(top?'<button type="button" class="mh-btn" data-vx17-nav="'+esc(top.nav)+'" data-vx17-record-type="'+esc(top.recordType||'')+'" data-vx17-record-id="'+esc(top.recordId||'')+'">Review options</button>':'')+'</section>'
@@ -359,12 +360,23 @@ function paint(){
   var html=isPhone()?mobileHomeHtml(p,H):'<div class="ws-home"><header class="ws-head"><div><div class="ws-eye">'+now.toLocaleDateString('en-US',{weekday:'long'}).toUpperCase()+' <i>/</i> '+now.toLocaleDateString('en-US',{month:'long',day:'numeric'}).toUpperCase()+'</div><h1>AGENCY <em>COMMAND</em></h1></div><p>Agency performance. Daily action. One workspace.</p>'+createMenu()+'</header>'
     +stripHtml(p,H)
     +glanceHtml()
+    +'<section class="ws-ds" data-ws-ds></section>'
     +'<div class="ws-r2">'+deskHtml(p,H)+scheduleHtml(p)+'</div>'
     +'<div class="ws-r3">'+talentHtml(p)+financeHtml(p)+'</div>'
     +'<div class="ws-r4">'+signalsHtml(p)+mailHtml()+'</div></div>';
   if(S.last===html&&el.firstChild)return;
-  S.last=html;el.innerHTML=html;
-  H.bind&&H.bind(el);
+  S.last=html;swap(el,html,H);
+  try{if(window.MDV_DS_EMBED&&MDV_DS_EMBED.attach)MDV_DS_EMBED.attach(el);}catch(e){}
+}
+/* repaint only the cards that changed, so the DaySilk band (a live frame) is never rebuilt and reloaded */
+function swap(el,html,H){
+  var root=el.firstElementChild,tmp=document.createElement('div');tmp.innerHTML=html;var nr=tmp.firstElementChild;
+  if(!root||!nr||root.className!==nr.className||root.children.length!==nr.children.length){el.innerHTML=html;H.bind&&H.bind(el);return;}
+  var a=Array.prototype.slice.call(root.children),b=Array.prototype.slice.call(nr.children);
+  a.forEach(function(x,i){
+    if(x.hasAttribute('data-ws-ds')||x.outerHTML===b[i].outerHTML)return;
+    x.replaceWith(b[i]);H.bind&&H.bind(b[i]);
+  });
 }
 function fetchDay(key){
   if(S.dayCache[key])return Promise.resolve();
