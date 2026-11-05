@@ -6,10 +6,11 @@
 'use strict';
 if(window.MDV_SAVE)return;
 
+var VIDEO_CATS=['Motion','Runway','Commercial','Test','Other'];
 var PHOTO_CATS=['Portfolio','Digital','Polaroid','Headshot','Editorial','Runway','Commercial','Test','Other'];
 var DOC_CATS=[['general','Document'],['contract','Contract / agreement'],['identity','Passport / ID'],['visa','Visa / work permit'],['call-sheet','Call sheet'],['comp-card','Comp card'],['other','Other']];
-var IMG=/^image\/(jpeg|png|webp|gif)$/i,DOCM=/^(application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain)$/i;
-var EXT={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',gif:'image/gif',pdf:'application/pdf',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',txt:'text/plain'};
+var VID=/^video\/(mp4|quicktime|webm)$/i,IMG=/^image\/(jpeg|png|webp|gif)$/i,DOCM=/^(application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain)$/i;
+var EXT={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',gif:'image/gif',mp4:'video/mp4',mov:'video/quicktime',m4v:'video/mp4',webm:'video/webm',pdf:'application/pdf',doc:'application/msword',docx:'application/vnd.openxmlformats-officedocument.wordprocessingml.document',txt:'text/plain'};
 var MAX_DOC=50*1048576,MAX_IMG=150*1048576;
 
 var D=null;      /* the open dialog's state */
@@ -32,13 +33,13 @@ function guessPhoto(n){n=norm(n);if(/polaroid|polas|snap/.test(n))return 'Polaro
 function guessDoc(n){n=norm(n);if(/contract|agreement|terms/.test(n))return 'contract';if(/passport|\bid\b|license|licence/.test(n))return 'identity';if(/visa|permit/.test(n))return 'visa';if(/call ?sheet/.test(n))return 'call-sheet';if(/comp ?card|zed/.test(n))return 'comp-card';return 'general';}
 function makeItem(file,extra){
   var mime=mimeOf(file),it=Object.assign({id:++uid,file:file,name:file.name||'file',size:file.size||0,mime:mime,status:'ready',error:'',thumb:'',staging:null},extra||{});
-  it.kind=IMG.test(mime)?'photo':DOCM.test(mime)?'doc':'other';
-  it.as=it.kind==='photo'?'photo':'doc';
-  it.cat=it.kind==='photo'?guessPhoto(it.name):guessDoc(it.name);
+  it.kind=IMG.test(mime)?'photo':VID.test(mime)?'video':DOCM.test(mime)?'doc':'other';
+  it.as=(it.kind==='photo'||it.kind==='video')?'photo':'doc';
+  it.cat=it.kind==='photo'?guessPhoto(it.name):it.kind==='video'?(/runway|walk/.test(norm(it.name))?'Runway':'Motion'):guessDoc(it.name);
   if(it.kind==='photo'){try{it.thumb=URL.createObjectURL(file);}catch(e){}}
-  if(it.kind==='other')it.error='This file type cannot be saved to a profile. Use JPG, PNG, WEBP, GIF, PDF, Word or text.';
+  if(it.kind==='other')it.error='This file type cannot be saved to a profile. Use photos (JPG, PNG, WEBP, GIF), videos (MP4, MOV, WEBM), PDF, Word or text.';
   else if(it.kind==='doc'&&it.size>MAX_DOC)it.error='Over the 50 MB limit.';
-  else if(it.kind==='photo'&&it.size>MAX_IMG)it.error='Over the 150 MB limit.';
+  else if((it.kind==='photo'||it.kind==='video')&&it.size>MAX_IMG)it.error='Over the 150 MB limit.';
   return it;
 }
 function suggest(){
@@ -70,8 +71,8 @@ function onKey(e){if(e.key==='Escape'&&D&&!D.busy)close();}
 function discard(i){try{post('/api/agent/save-to-model',{action:'discard',staging_path:i.staging}).catch(function(){});}catch(e){}}
 
 function fileRow(i){
-  var t=i.kind==='photo'&&i.as==='photo'?(i.thumb?'<img src="'+esc(i.thumb)+'" alt="">':'<span>IMG</span>'):'<span>'+esc((i.name.split('.').pop()||'file').slice(0,4).toUpperCase())+'</span>';
-  var opts=i.as==='photo'?PHOTO_CATS.map(function(c){return '<option'+(i.cat===c?' selected':'')+'>'+c+'</option>';}).join(''):DOC_CATS.map(function(c){return '<option value="'+c[0]+'"'+(i.cat===c[0]?' selected':'')+'>'+c[1]+'</option>';}).join('');
+  var t=i.kind==='video'?'<span>VIDEO</span>':i.kind==='photo'&&i.as==='photo'?(i.thumb?'<img src="'+esc(i.thumb)+'" alt="">':'<span>IMG</span>'):'<span>'+esc((i.name.split('.').pop()||'file').slice(0,4).toUpperCase())+'</span>';
+  var opts=i.as==='photo'?(i.kind==='video'?VIDEO_CATS:PHOTO_CATS).map(function(c){return '<option'+(i.cat===c?' selected':'')+'>'+c+'</option>';}).join(''):DOC_CATS.map(function(c){return '<option value="'+c[0]+'"'+(i.cat===c[0]?' selected':'')+'>'+c[1]+'</option>';}).join('');
   var st=i.status==='done'?'<em class="ok">✓ Saved</em>':i.status==='saving'?'<em>Saving…</em>':i.error?'<em class="bad">'+esc(i.error)+'</em>':'';
   var canEdit=i.status==='ready'&&!i.error&&!D.busy;
   return '<li class="sv-file '+(i.error?'err ':'')+i.status+'" data-id="'+i.id+'"><div class="sv-thumb">'+t+'</div><div class="sv-fi"><b title="'+esc(i.name)+'">'+esc(i.name)+'</b><small>'+esc(size(i.size))+(i.source?' · '+esc(i.source):'')+'</small>'+st
@@ -98,10 +99,10 @@ function paint(){
   r.innerHTML='<div class="sv-card" role="dialog" aria-label="Save to a model profile"><header><div><h3>Save to a model profile</h3><p>'+(ctx.subject||ctx.fromName?'From '+esc(ctx.fromName||'the email')+(ctx.subject?' · “'+esc(ctx.subject)+'”':''):'Choose the profile these files belong to.')+'</p></div><button type="button" class="sv-x big" data-a="close" aria-label="Close">×</button></header>'
    +'<div class="sv-cols"><section class="sv-left"><h4>Files <span>'+D.items.length+'</span></h4><ul class="sv-files">'+(D.items.length?D.items.map(fileRow).join(''):'')+'</ul>'
    +(D.items.length?'':'<p class="sv-none">No files yet.</p>')
-   +'<div class="sv-drop" id="sv-drop"><input type="file" id="sv-file" multiple hidden accept=".jpg,.jpeg,.png,.webp,.gif,.pdf,.doc,.docx,.txt,image/*,application/pdf"><span>Drop files here or</span> <button type="button" class="sv-link" data-a="choose">choose files</button></div>'
+   +'<div class="sv-drop" id="sv-drop"><input type="file" id="sv-file" multiple hidden accept=".jpg,.jpeg,.png,.webp,.gif,.mp4,.mov,.webm,.pdf,.doc,.docx,.txt,image/*,video/*,application/pdf"><span>Drop files here or</span> <button type="button" class="sv-link" data-a="choose">choose files</button></div>'
    +(arr(D.links).length?'<div class="sv-links"><small>Shared links in the email</small>'+D.links.map(function(l,ix){return '<div class="sv-lk"><span title="'+esc(l.url)+'">'+esc(l.label)+'</span>'+(l.folder?'<a class="sv-link" href="'+esc(l.url)+'" target="_blank" rel="noopener">Open folder</a>':'<button type="button" class="sv-link" data-lk="'+ix+'"'+(l.busy?' disabled':'')+'>'+(l.busy?'Fetching…':'Fetch file')+'</button>')+(l.err?'<em class="bad">'+esc(l.err)+'</em>':'')+'</div>';}).join('')+'<p class="sv-hint">Folders cannot be fetched. Open the folder, download the photos, then drop them above.</p></div>':'')
    +'</section><section class="sv-right">'+modelPane()+'</section></div>'
-   +'<footer>'+(photos?'<label class="sv-pub"><input type="checkbox" id="sv-pub"'+(D.pub?' checked':'')+'> Show photos on the website</label>':'<span></span>')+'<div class="sv-act"><button type="button" class="sv-btn" data-a="close"'+(D.busy?' disabled':'')+'>Cancel</button><button type="button" class="sv-btn gold" data-a="save"'+(D.model&&ready.length&&!D.busy?'':' disabled')+'>'+(D.busy?'Saving…':esc(label))+'</button></div></footer></div>';
+   +'<footer>'+(photos?'<label class="sv-pub"><input type="checkbox" id="sv-pub"'+(D.pub?' checked':'')+'> Show photos and videos on the website</label>':'<span></span>')+'<div class="sv-act"><button type="button" class="sv-btn" data-a="close"'+(D.busy?' disabled':'')+'>Cancel</button><button type="button" class="sv-btn gold" data-a="save"'+(D.model&&ready.length&&!D.busy?'':' disabled')+'>'+(D.busy?'Saving…':esc(label))+'</button></div></footer></div>';
   wire(r);
 }
 function wire(r){
@@ -189,7 +190,7 @@ function open(opts){
   document.addEventListener('keydown',onKey);paint();
   loadModels().then(function(){if(!D)return;var sg=suggest();var full=sg.filter(function(s){return /full name/.test(s.why);});if(!D.model&&full.length===1)D.model=full[0].m;paint();});
 }
-function pick(ctx){var i=document.createElement('input');i.type='file';i.multiple=true;i.accept='.jpg,.jpeg,.png,.webp,.gif,.pdf,.doc,.docx,.txt,image/*,application/pdf';i.onchange=function(){open({files:Array.from(i.files||[]),context:ctx});};i.click();}
+function pick(ctx){var i=document.createElement('input');i.type='file';i.multiple=true;i.accept='.jpg,.jpeg,.png,.webp,.gif,.mp4,.mov,.webm,.pdf,.doc,.docx,.txt,image/*,video/*,application/pdf';i.onchange=function(){open({files:Array.from(i.files||[]),context:ctx});};i.click();}
 
 window.MDV_SAVE={open:open,pick:pick,close:close,state:function(){return D;}};
 })();

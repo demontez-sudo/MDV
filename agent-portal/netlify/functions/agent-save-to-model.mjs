@@ -10,8 +10,8 @@ import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge
 import { logModelActivity, actorFor } from './_lib/model-activity.mjs';
 
 const MAX_BYTES = 40 * 1048576;
-const ALLOWED = /^(image\/(jpeg|png|webp|gif)|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain)$/i;
-const EXT_MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', pdf: 'application/pdf', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', txt: 'text/plain' };
+const ALLOWED = /^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm)|application\/pdf|application\/msword|application\/vnd\.openxmlformats-officedocument\.wordprocessingml\.document|text\/plain)$/i;
+const EXT_MIME = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif', mp4: 'video/mp4', mov: 'video/quicktime', webm: 'video/webm', pdf: 'application/pdf', doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', txt: 'text/plain' };
 /* only these places are ever contacted, and every redirect is checked against the same list */
 const HOSTS = /^(drive\.google\.com|docs\.google\.com|drive\.usercontent\.google\.com|[a-z0-9-]+\.googleusercontent\.com|www\.dropbox\.com|dropbox\.com|dl\.dropboxusercontent\.com|[a-z0-9-]+\.dl\.dropboxusercontent\.com|uc[a-z0-9]+\.dl\.dropboxusercontent\.com)$/i;
 
@@ -108,7 +108,7 @@ export const handler = async event => {
       const ext = (name.split('.').pop() || '').toLowerCase();
       if (!ALLOWED.test(mime) && EXT_MIME[ext]) mime = EXT_MIME[ext];
       if (/text\/html/.test(mime)) fail('That link opened a web page, not a file. It may be private. Download the file and drop it into the Save to model window.', 409);
-      if (!ALLOWED.test(mime)) fail('That file type cannot be saved to a profile. Use JPG, PNG, WEBP, GIF, PDF, Word or text files.', 415);
+      if (!ALLOWED.test(mime)) fail('That file type cannot be saved to a profile. Use photos, MP4/MOV/WEBM videos, PDF, Word or text files.', 415);
       if (!/\.[a-z0-9]{2,4}$/i.test(name)) { const e = Object.entries(EXT_MIME).find(([, v]) => v === mime); if (e) name += '.' + e[0]; }
       const path = `${organization.id}/tmp-email/${crypto.randomUUID()}-${name}`;
       const up = await admin.storage.from(bucketName()).upload(path, buffer, { contentType: mime, upsert: false });
