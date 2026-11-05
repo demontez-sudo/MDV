@@ -203,3 +203,10 @@ html body #p-helm .hm .hm-blk.multi .hm-mlmore,html body #p-helmcalendar .hm .hm
 .hm-tcn small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-bottom:2px}.hm-tcn b{display:block;font-size:13.5px}.hm-tcn b.mute{color:var(--mute);font-weight:400}.hm-tcn span{font-size:12px;color:var(--mute)}
 .hm-tcf{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:auto}.hm-tcf span{padding:3px 9px;border-radius:999px;font-size:11px;border:1px solid var(--l2)}.hm-tcf .bad{color:#e5707c;border-color:rgba(229,112,124,.5)}.hm-tcf .warn{color:#e2b04f;border-color:rgba(226,176,79,.5)}.hm-tcf .ok{color:#6fcf97;border-color:rgba(111,207,151,.4)}
 @media(max-width:1000px){.hm-today{grid-template-columns:1fr}.hm-t2{border:0;padding:0}}
+
+/* ---- DaySilk routine and habits ---- */
+.hm{--c-routine:#8fb3a1}.hm-cat.c-routine i{background:var(--c-routine)}.hm-blk.c-routine{border-left-color:var(--c-routine);background:rgba(143,179,161,.1);border-style:dashed}.hm-w.c-routine{border-color:rgba(143,179,161,.4)}
+.hm-rc{padding:14px 18px;border:1px solid var(--l2);border-radius:14px;background:var(--panel)}.hm-rc header{display:flex;align-items:baseline;gap:12px;margin-bottom:10px}.hm-rc h4{margin:0;font:600 10px Inter,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--g)}.hm-rc header span{font-size:12px;color:var(--mute)}
+.hm-hb{display:flex;flex-wrap:wrap;gap:8px}.hm-h{padding:8px 13px;border-radius:999px;border:1px solid var(--l2);background:transparent;color:var(--ink);font:500 12.5px Inter,system-ui,sans-serif;cursor:pointer}.hm-h:hover{border-color:rgba(212,176,119,.5)}.hm-h.on{background:rgba(111,207,151,.15);border-color:rgba(111,207,151,.55);color:#a8e0c0}
+.hm-rc.setup{display:flex;justify-content:space-between;align-items:center;gap:18px;border-style:dashed;background:linear-gradient(135deg,rgba(212,176,119,.1),transparent)}.hm-rc.setup p{margin:6px 0 0;font-size:13px;color:var(--mute);max-width:560px;line-height:1.55}
+.hm-bm .bo{color:#c79bd8;border-color:rgba(199,155,216,.5)}

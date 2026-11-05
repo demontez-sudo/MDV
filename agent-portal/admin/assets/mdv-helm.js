@@ -5,10 +5,10 @@
 'use strict';
 if(window.MDV_HELM)return;
 
-var CATS=[['calls','Interest calls & check-ins'],['meetings','Meetings'],['duties','Duties & desk'],['models','Model items on the schedule'],['moves','Model movement'],['tasks','Tasks']];
+var CATS=[['calls','Interest calls & check-ins'],['meetings','Meetings'],['duties','Duties & desk'],['models','Model items on the schedule'],['moves','Model movement'],['routine','My routine'],['tasks','Tasks']];
 var START_H=6,END_H=22,HH=56,SNAP=15;
 var KEY='mdv.helm.v1';
-var H={mode:'full',day:today(),view:'day',person:'me',cats:{calls:true,meetings:true,duties:true,models:true,moves:true,tasks:true},events:[],moves:[],roster:[],rosterMembers:[],mobRaw:null,calRaw:null,movesLoading:false,scout:[],tasks:[],members:[],myUid:null,week:'',loading:false,err:'',host:null,sel:null,loaded:false};
+var H={mode:'full',day:today(),view:'day',person:'me',cats:{calls:true,meetings:true,duties:true,models:true,moves:true,routine:true,tasks:true},events:[],moves:[],blocks:[],roster:[],rosterMembers:[],mobRaw:null,calRaw:null,movesLoading:false,scout:[],tasks:[],members:[],myUid:null,week:'',loading:false,err:'',host:null,sel:null,loaded:false};
 try{var sv=JSON.parse(localStorage.getItem(KEY)||'{}');if(sv.view==='week'||sv.view==='day'||sv.view==='month'||sv.view==='team')H.view=sv.view;if(typeof sv.person==='string'&&sv.person)H.person=sv.person;if(sv.cats&&typeof sv.cats==='object')Object.keys(H.cats).forEach(function(k){if(sv.cats[k]===false)H.cats[k]=false;});}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify({view:H.view,person:H.person,cats:H.cats}));}catch(e){}}
 
@@ -125,7 +125,23 @@ function buildMoves(d){
   });
   return out;
 }
-function allItems(){return H.events.concat(H.moves,scoutItems(),taskItems());}
+/* the agent's own DaySilk routine (from their questionnaire) shown on their timeline */
+function routineItems(){
+  var D=window.MDV_DS_AGENT;if(!D||!D.plan()||H.view==='month'||H.view==='team')return [];
+  var me=myName();if(!me)return [];
+  var out=[],start=addDays(monday(H.day),-1),n=H.view==='week'?9:3;
+  var skip=H.view==='week'?{meal:1,rest:1,routine:1}:{rest:1};
+  for(var i=0;i<(H.view==='week'?9:1);i++){
+    var day=H.view==='week'?addDays(start,i):H.day,k=dkey(day);
+    D.blocksOn(day).forEach(function(b){
+      if(skip[b.cat])return;
+      var sp=b.start.split(':').map(Number),ep=b.end.split(':').map(Number),s=new Date(day),e=new Date(day);s.setHours(sp[0],sp[1],0,0);e.setHours(ep[0],ep[1],0,0);
+      out.push({kind:'routine',id:'r:'+b.id+':'+k,title:b.title,start:s,end:e,allDay:false,label:'My routine',type:'routine',status:'',location:'',notes:'',meta:{},people:[me],models:[],conflict:'',cat:'routine'});
+    });
+  }
+  return out;
+}
+function allItems(){return H.events.concat(H.moves,routineItems(),scoutItems(),taskItems());}
 
 /* ---------- loading ---------- */
 function uid(){try{var st=bridge().state;return (st.user&&st.user.id)||(st.session&&st.session.user&&st.session.user.id)||(st.profile&&st.profile.user_id)||null;}catch(e){return null;}}
@@ -155,7 +171,7 @@ async function load(force){
 function loadMoves(){
   if(H.movesLoading)return;H.movesLoading=true;
   Promise.all([get('/api/agent/daysilk?organization='+encodeURIComponent(org())+'&_t='+Date.now()).catch(function(){return null;}),get('/api/agent/mobility?organization='+encodeURIComponent(org())+'&_t='+Date.now()).catch(function(){return null;})]).then(function(r){
-    if(r[0]){H.roster=arr(r[0].models);H.rosterMembers=arr(r[0].members);}
+    if(r[0]){H.roster=arr(r[0].models);H.rosterMembers=arr(r[0].members);H.blocks=arr(r[0].blocks);}
     if(r[1])H.mobRaw=r[1];H.moves=buildMoves(H.mobRaw);H.movesLoading=false;paint();
   }).catch(function(){H.movesLoading=false;});
 }
@@ -167,7 +183,7 @@ function itemsFor(day,who){
   var timed=all.filter(function(it){return !it.allDay;}).sort(function(a,b){return a.start-b.start;}),whole=all.filter(function(it){return it.allDay;});
   return{timed:timed,whole:whole};
 }
-function busy(day,who,skipId){return itemsFor(day,who).timed.filter(function(it){return String(it.id)!==String(skipId);}).map(function(it){var s=mins(it.start),e=it.end&&dkey(it.end)===dkey(it.start)?mins(it.end):s+30;return[s,Math.max(e,s+15)];});}
+function busy(day,who,skipId){return itemsFor(day,who).timed.filter(function(it){return it.kind!=='routine'&&String(it.id)!==String(skipId);}).map(function(it){var s=mins(it.start),e=it.end&&dkey(it.end)===dkey(it.start)?mins(it.end):s+30;return[s,Math.max(e,s+15)];});}
 function findSlot(day,who,dur,skipId){
   var b=busy(day,who,skipId),from=9*60,to=18*60,now=new Date();
   if(dkey(day)===dkey(now))from=Math.max(from,Math.ceil((now.getHours()*60+now.getMinutes()+5)/15)*15);
@@ -175,7 +191,7 @@ function findSlot(day,who,dur,skipId){
   return null;
 }
 function freeMinutes(day,who){var b=busy(day,who),total=0,from=9*60,to=17*60+30;for(var t=from;t<to;t+=15){if(!b.some(function(x){return t<x[1]&&t+15>x[0];}))total+=15;}return total;}
-function overlaps(list){var out=[];for(var i=0;i<list.length;i++)for(var j=i+1;j<list.length;j++){var a=list[i],b=list[j];if(a.kind==='task'||b.kind==='task')continue;var ae=a.end||new Date(a.start.getTime()+3600e3),be=b.end||new Date(b.start.getTime()+3600e3);if(a.start<be&&b.start<ae)out.push([a,b]);}return out;}
+function overlaps(list){var out=[];for(var i=0;i<list.length;i++)for(var j=i+1;j<list.length;j++){var a=list[i],b=list[j];if(a.kind==='task'||b.kind==='task'||a.kind==='routine'||b.kind==='routine')continue;var ae=a.end||new Date(a.start.getTime()+3600e3),be=b.end||new Date(b.start.getTime()+3600e3);if(a.start<be&&b.start<ae)out.push([a,b]);}return out;}
 
 
 /* ---------- DaySilk Today: the day at a glance, the agent's Big 3 and where their models are ---------- */
@@ -203,11 +219,12 @@ function boardStrip(who){
   arr(H.mobRaw&&H.mobRaw.travel).forEach(function(t){if(!t.starts_at||/^(cancelled|completed)$/i.test(String(t.status||'')))return;var s=new Date(t.starts_at),e=t.ends_at?new Date(t.ends_at):s;if(s<d1&&e>=d0)trav[String(t.model_id)]=1;});
   var cal=H.calRaw||{};
   [['bookings','booking_models'],['castings','casting_models'],['events','event_models']].forEach(function(p){arr(cal[p[0]]).forEach(function(x){if(!x.starts_at)return;var s=new Date(x.starts_at),e=x.ends_at?new Date(x.ends_at):s;if(!(s<d1&&e>=d0))return;if(p[0]==='events'&&!/booking|casting|shoot|fitting|go.?see|test/i.test(String(x.event_type||'')+' '+String(x.title||'')))return;arr(x[p[1]]).forEach(function(r){var m=r.models||r,n=m&&m.display_name;if(n)jobs[n.toLowerCase()]=1;});});});
+  var bo={};arr(H.blocks).forEach(function(b){if(/^cancel/i.test(String(b.status||'')))return;var s=new Date(b.starts_at),e=new Date(b.ends_at);if(s<d1&&e>=d0){var lbl=String(b.reason||'Booked out').replace(/^DaySilk:\s*/,'');(bo[String(b.model_id)]=bo[String(b.model_id)]||[]).push(lbl);}});
   var by={};
-  roster.forEach(function(m){var k=m.market||'No market',g=by[k]||(by[k]={name:k,t:[],j:[],f:[]});if(trav[String(m.id)])g.t.push(m.name);else if(jobs[String(m.name).toLowerCase()])g.j.push(m.name);else g.f.push(m.name);});
+  roster.forEach(function(m){var k=m.market||'No market',g=by[k]||(by[k]={name:k,t:[],j:[],b:[],f:[]});if(trav[String(m.id)])g.t.push(m.name);else if(jobs[String(m.name).toLowerCase()])g.j.push(m.name);else if(bo[String(m.id)])g.b.push(m.name+' ('+bo[String(m.id)].join(', ')+')');else g.f.push(m.name);});
   var groups=Object.keys(by).sort(function(a,b){return (by[b].t.length+by[b].j.length)-(by[a].t.length+by[a].j.length)||a.localeCompare(b);}).map(function(k){return by[k];});
   function chip(cls,label,l){return '<span class="'+cls+'"'+(l.length?' title="'+esc(l.slice(0,12).join(', '))+(l.length>12?'…':'')+'"':'')+'>'+l.length+' '+label+'</span>';}
-  return '<section class="hm-board"><header><h4>Board today</h4><small>'+roster.length+' model'+(roster.length===1?'':'s')+(who?' with '+esc(who):' on the board')+'</small></header><div class="hm-bg">'+groups.map(function(g){return '<div class="hm-bm"><b>'+esc(g.name)+'</b>'+chip('tv','travelling',g.t)+chip('jb','on a job',g.j)+chip('fr','free',g.f)+'</div>';}).join('')+'</div></section>';
+  return '<section class="hm-board"><header><h4>Board today</h4><small>'+roster.length+' model'+(roster.length===1?'':'s')+(who?' with '+esc(who):' on the board')+'</small></header><div class="hm-bg">'+groups.map(function(g){return '<div class="hm-bm"><b>'+esc(g.name)+'</b>'+chip('tv','travelling',g.t)+chip('jb','on a job',g.j)+chip('bo','booked out',g.b)+chip('fr','free',g.f)+'</div>';}).join('')+'</div></section>';
 }
 function teamView(){
   var names=peopleList(),k=dkey(H.day),isT=k===dkey(new Date()),now=new Date();
@@ -227,6 +244,17 @@ function teamView(){
 function moveBlock(it){
   if(it.kind!=='move')return '';
   return '<div class="hm-ic"><h5>Model movement</h5><p>'+esc(it.label)+(it.status?' · '+esc(String(it.status).replace(/_/g,' ')):'')+'</p><div class="hm-seg"><button type="button" data-hm-gomob="1">Open travel</button><button type="button" data-hm-govisa="1">Visa desk</button></div></div>';
+}
+
+
+/* ---------- DaySilk routine: habits and the setup prompt ---------- */
+function isMe(who){var me=myName();return !who||H.person==='me'||(me&&who.toLowerCase()===me.toLowerCase());}
+function routineCard(who){
+  var D=window.MDV_DS_AGENT;if(!D||!D.state.loaded||!isMe(who)||H.view!=='day')return '';
+  var plan=D.plan();
+  if(!plan){return D.state.hasMember===false?'':'<section class="hm-rc setup"><div><h4>Set up your DaySilk</h4><p>Answer a few questions about your work, rhythm and goals. DaySilk builds your routine, habits and Big 3 around your real day.</p></div><button type="button" class="hm-btn" data-hm-dssetup="1">Start the questions</button></section>';}
+  var done=D.dayDone(H.day),habits=arr(plan.habits),n=habits.filter(function(h){return done.indexOf(h.id)>-1;}).length;
+  return '<section class="hm-rc"><header><h4>Daily habits</h4><span>'+n+' of '+habits.length+'</span><button type="button" class="hm-ghost sm" data-hm-dssetup="1">Edit my answers</button></header><div class="hm-hb">'+habits.map(function(h){var on=done.indexOf(h.id)>-1;return '<button type="button" class="hm-h'+(on?' on':'')+'" data-hm-dshabit="'+esc(h.id)+'">'+(on?'✓ ':'')+esc(h.label)+'</button>';}).join('')+'</div></section>';
 }
 
 /* ---------- painting ---------- */
@@ -360,7 +388,7 @@ function paint(){
   if(H.err&&!H.loaded){el.innerHTML='<div class="hm">'+header(who)+'<div class="hm-state bad"><span>'+esc(H.err)+'</span><button type="button" class="hm-btn" data-hm="retry">Try again</button></div></div>';return;}
   var scroller=el.querySelector('.hm-tlwrap'),sy=scroller?scroller.scrollTop:null;
   var main=H.view==='team'?teamView():H.view==='month'?monthGrid(who):H.view==='week'?'<div class="hm-tlwrap hm-wkwrap" data-hm-scroll>'+weekGrid(who)+'</div>':'<div class="hm-tlwrap" data-hm-scroll>'+timeline(who)+'</div>';
-  el.innerHTML='<div class="hm'+(H.loading?' busy':'')+'">'+header(who)+(H.view==='day'&&H.mode==='full'?todayCard(who):'')+(H.view==='day'||H.view==='team'?boardStrip(H.view==='team'?'':who):'')+signals(who)+chips()+'<div class="hm-grid'+(H.mode==='calendar'&&!H.sel?' solo':'')+'"><div class="hm-main">'+main+'</div>'+(H.mode==='calendar'&&!H.sel?'':'<aside class="hm-rail">'+detail()+(H.mode==='calendar'?'':taskRail(who))+'</aside>')+'</div></div>';
+  el.innerHTML='<div class="hm'+(H.loading?' busy':'')+'">'+header(who)+(H.view==='day'&&H.mode==='full'?todayCard(who)+routineCard(who):'')+(H.view==='day'||H.view==='team'?boardStrip(H.view==='team'?'':who):'')+signals(who)+chips()+'<div class="hm-grid'+(H.mode==='calendar'&&!H.sel?' solo':'')+'"><div class="hm-main">'+main+'</div>'+(H.mode==='calendar'&&!H.sel?'':'<aside class="hm-rail">'+detail()+(H.mode==='calendar'?'':taskRail(who))+'</aside>')+'</div></div>';
   var sc=el.querySelector('.hm-tlwrap');
   if(sc){if(sy!=null)sc.scrollTop=sy;else{var n=new Date(),target=(H.view==='week'||dkey(H.day)===dkey(n))?Math.max(0,(mins(n)-START_H*60)/60*HH-120):(8-START_H)*HH-10;sc.scrollTop=target;}}
 }
@@ -397,8 +425,10 @@ function setBig3(id){
 }
 document.addEventListener('click',function(e){
   var host=H.host;if(!host||!host.contains(e.target))return;
-  var b=e.target.closest&&e.target.closest('[data-hm-big3],[data-hm-openp],[data-hm-gomob],[data-hm-govisa]');if(!b)return;
+  var b=e.target.closest&&e.target.closest('[data-hm-big3],[data-hm-openp],[data-hm-gomob],[data-hm-govisa],[data-hm-dssetup],[data-hm-dshabit]');if(!b)return;
   e.preventDefault();e.stopPropagation();
+  if(b.hasAttribute('data-hm-dssetup')){if(window.MDV_DS_AGENT)MDV_DS_AGENT.ask(true);return;}
+  if(b.hasAttribute('data-hm-dshabit')){var D=window.MDV_DS_AGENT,hid=b.getAttribute('data-hm-dshabit'),dn=D.dayDone(H.day).slice(),ix=dn.indexOf(hid);if(ix>-1)dn.splice(ix,1);else dn.push(hid);D.setDay(H.day,{done:dn});paint();return;}
   if(b.hasAttribute('data-hm-big3'))setBig3(b.getAttribute('data-hm-big3'));
   else if(b.hasAttribute('data-hm-openp')){H.person=b.getAttribute('data-hm-openp');H.view='day';save();H.sel=null;paint();}
   else if(b.hasAttribute('data-hm-gomob'))goto('globalmobility');
@@ -703,5 +733,6 @@ window.renderHelm=function(el){H.mode='full';H.host=el;H.loaded=H.loaded&&H.week
   ['veux:shell-ready','veux:assets-ready','veux:auth-ready'].forEach(function(ev){window.addEventListener(ev,put);});
 })();
 window.renderHelmCalendar=function(el){H.mode='calendar';H.host=el;H.loaded=H.loaded&&H.week===rangeKey();paint();return load(true);};
+(function(){var n=0,t=setInterval(function(){if(window.MDV_DS_AGENT){clearInterval(t);MDV_DS_AGENT.onChange(function(){if(H.host&&document.body.contains(H.host))paint();});}else if(++n>100)clearInterval(t);},300);})();
 window.MDV_HELM={render:window.renderHelm,calendar:window.renderHelmCalendar,state:H,findSlot:findSlot,catOf:catOf};
 })();
