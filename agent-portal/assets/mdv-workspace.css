@@ -238,3 +238,6 @@ html[data-outlook="workspace"] #pm::after{content:"";display:block;height:96px}
   #ws-hubbar{padding:7px 10px 7px 22px}
 }
 
+
+#ws-hubbar .ws-hubsep{flex:0 0 1px;align-self:stretch;margin:6px 4px;background:var(--ws-line,rgba(255,255,255,.14))}
+html body #pm #ws-hubbar .ws-hubtab[data-ds-go]{}

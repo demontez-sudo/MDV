@@ -901,7 +901,7 @@ ${word}</svg>`}
 // Full-screen sunrise. Shown when the app opens and again on sign-in or sign-up; a tap skips it. Runs once per few seconds
 // so a restored session right after opening doesn't play it twice.
 let splashAt=0;
-function splash(){if(Date.now()-splashAt<4000)return;splashAt=Date.now();
+function splash(){if(EMB_CLIENT||Date.now()-splashAt<4000)return;splashAt=Date.now();
  const old=document.querySelector(".ds-splash");if(old)old.remove();
  const d=document.createElement("div");d.className="ds-splash";d.setAttribute("aria-hidden","true");d.innerHTML=logoMark({word:true,rise:true});
  const done=()=>{d.classList.add("out");setTimeout(()=>d.remove(),600)};
@@ -946,7 +946,7 @@ function day(s){s=s||S.date;if(!S.days[s])S.days[s]={};const d=S.days[s];d.block
 // A secret (server) key must never reach the browser; if one was configured by mistake, refuse to use it.
 /* Inside the Maison de Veux portal the person is already signed in there: DaySilk uses that same connection, so there is no second login and each person gets their own DaySilk. */
 const EMB_CLIENT=(()=>{try{const P=window.parent;return P&&P!==window&&P.MDV_DS_EMBED&&P.VEUX_SUPABASE_CLIENT?P.VEUX_SUPABASE_CLIENT:null}catch(_){return null}})();
-if(EMB_CLIENT){const st=document.createElement("style");st.textContent='[data-act="signout"],[data-v="billing"],[data-v="admin"],a[href*="daysilk.com"]{display:none!important}@media(min-width:700px){.kanban{grid-auto-columns:minmax(0,1fr)!important;overflow-x:visible!important}.kanban>*{min-width:0}}';document.head.appendChild(st)}
+if(EMB_CLIENT){const st=document.createElement("style");st.textContent='[data-act="menu"],.rail,.tb-logo{display:none!important}header.top{background:transparent!important}.paper,.sched{background:rgba(16,12,10,.66)!important;color:var(--ink)!important;border-color:var(--line)!important}.paper *{border-color:var(--line)}.app{grid-template-columns:1fr!important;min-height:0!important;background:transparent!important}html,body{background:transparent!important}[data-theme="dark"]{--bg:transparent;--surface:rgba(16,12,10,.66);--sunk:rgba(8,6,5,.5)}.panel,.stat,.xpanel,.hq-card,.hq-flow,.hq-dh,.card{backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:9px}::-webkit-scrollbar-track{background:transparent}[data-act="signout"],[data-v="billing"],[data-v="admin"],a[href*="daysilk.com"]{display:none!important}@media(min-width:700px){.kanban{grid-auto-columns:minmax(0,1fr)!important;overflow-x:visible!important}.kanban>*{min-width:0}}';document.head.appendChild(st)}
 const cloud=()=>!!(CFG.supabaseUrl&&CFG.supabaseAnonKey&&!/^sb_secret_/.test(CFG.supabaseAnonKey)&&window.supabase&&window.supabase.createClient);
 function lsLoad(){try{const o=JSON.parse(localStorage.getItem(LS)||"null");if(o){S.core=o.core||null;S.days=o.days||{};S.pend=o.pend||null;if(!cloud()&&o.acct)S.acct=o.acct}}catch(_){}}
 // pend lists the documents changed on this device that the account doesn't have yet, so they survive a closed tab.
@@ -2118,7 +2118,8 @@ setInterval(()=>{if((S.view==="today"||S.view==="command")&&S.core&&core().onboa
  if(q.get("billing")==="ok")setTimeout(()=>toast("Card saved. Thank you."),300);
  if([...q.keys()].some(k=>["plan","team","code","v","mailok","mailerr","billing"].includes(k)))history.replaceState(null,"",location.pathname+(q.has("join")?"?join":q.has("members")?"?members":""));
  if(!cloud()){lsLoad();const pd=pending();if(pd.plan&&!core().plan){core().plan=pd.plan;S.acct={plan:pd.plan,status:"trial",trial_ends:new Date(Date.now()+TRIAL_DAYS*864e5).toISOString()}}applyTheme();if(core().previewTeam)TS.load();paint();return}
- sb=EMB_CLIENT||window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+ if(EMB_CLIENT){window.__dsGo=v=>{if(PAGEDEF[v])go(v,false)};window.__dsMenu=()=>{try{return pagesNow().map(p=>({k:p[0],l:p[0]==="command"?"Command":p[1]}))}catch(_){return[]}};window.__dsView=()=>S.view}
+  sb=EMB_CLIENT||window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  // A Sign up link always opens the sign-up form. Whether new accounts are allowed is decided by Supabase, and its answer shows on the form.
  if(q.has("join")||q.has("plan")||q.has("team")||q.has("code"))S.auth.mode="up";
  if(q.has("join"))S.joinAsk=true;

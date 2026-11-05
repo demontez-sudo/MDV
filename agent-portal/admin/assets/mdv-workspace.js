@@ -27,7 +27,7 @@ function dayDiff(iso){if(!iso)return null;var d=new Date(iso);if(isNaN(d))return
 var SECTIONS=[
  {cap:'Daily',items:[
   {id:'home',label:'Home',icon:'ti-home-2',page:'overview'},
-  {id:'helm',label:'DaySilk',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','DaySilk'],['tasksconsolidated','Tasks'],['dayschedule','Day schedule'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
+  {id:'helm',label:'DaySilk',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','DaySilk'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
   {id:'inbox',label:'Inbox',icon:'ti-inbox',page:'inbox',badge:'inbox',sub:[['inbox','Messages'],['mail','Mail'],['notes','Notes']]},
   {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Agency Calendar'],['helmcalendar','DaySilk Calendar'],['availability','Availability']]}]},
  {cap:'Agency',items:[
@@ -101,12 +101,17 @@ function hubBar(){
   var bar=document.getElementById('ws-hubbar');
   if(!hub){if(bar)bar.remove();document.documentElement.classList.remove('ws-hub-on');return;}
   var html=arr(hub.sub).map(function(t){return '<button type="button" class="ws-hubtab'+(t[0]===cur?' on':'')+'" data-hub-go="'+esc(t[0])+'">'+esc(t[1])+'</button>';}).join('');
+  var dsKey='';
+  if(cur==='helm'&&window.MDV_DS_EMBED&&MDV_DS_EMBED.menu){
+    var dm=MDV_DS_EMBED.menu();dsKey=MDV_DS_EMBED.active()||'';
+    html=dm.map(function(t){return '<button type="button" class="ws-hubtab'+(t.k===dsKey?' on':'')+'" data-ds-go="'+esc(t.k)+'">'+esc(t.l)+'</button>';}).join('')+'<span class="ws-hubsep" aria-hidden="true"></span>'+arr(hub.sub).filter(function(t){return t[0]!=='helm';}).map(function(t){return '<button type="button" class="ws-hubtab" data-hub-go="'+esc(t[0])+'">'+esc(t[1])+'</button>';}).join('');
+  }
   if(!bar){bar=document.createElement('nav');bar.id='ws-hubbar';bar.setAttribute('aria-label',hub.label);pm.insertBefore(bar,pm.firstChild);}
   else if(bar.parentNode!==pm||pm.firstChild!==bar)pm.insertBefore(bar,pm.firstChild);
   /* the bar is part of the page flow and sticks just under the top bar, so there is no position maths that could differ between browsers */
   var tbar=document.querySelector('#app .topbar');if(tbar&&tbar.offsetHeight)document.documentElement.style.setProperty('--ws-tb',tbar.offsetHeight+'px');
   document.documentElement.classList.add('ws-hub-on');
-  var sig=hub.id+'|'+cur+'|'+html.length;if(bar.dataset.sig!==sig){bar.dataset.sig=sig;bar.innerHTML='<span class="ws-hubname">'+esc(hub.label)+'</span>'+html;}
+  var sig=hub.id+'|'+cur+'|'+html.length+'|'+dsKey;if(bar.dataset.sig!==sig){bar.dataset.sig=sig;bar.innerHTML='<span class="ws-hubname">'+esc(hub.label)+'</span>'+html;}
 }
 document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('#ws-hubbar [data-hub-go]');if(t){e.preventDefault();go(t.getAttribute('data-hub-go'));}});
 function badges(){
