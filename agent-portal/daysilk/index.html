@@ -946,7 +946,7 @@ function day(s){s=s||S.date;if(!S.days[s])S.days[s]={};const d=S.days[s];d.block
 // A secret (server) key must never reach the browser; if one was configured by mistake, refuse to use it.
 /* Inside the Maison de Veux portal the person is already signed in there: DaySilk uses that same connection, so there is no second login and each person gets their own DaySilk. */
 const EMB_CLIENT=(()=>{try{const P=window.parent;return P&&P!==window&&P.MDV_DS_EMBED&&P.VEUX_SUPABASE_CLIENT?P.VEUX_SUPABASE_CLIENT:null}catch(_){return null}})();
-if(EMB_CLIENT){const st=document.createElement("style");st.textContent='[data-act="signout"],[data-v="billing"],[data-v="admin"],a[href*="daysilk.com"]{display:none!important}';document.head.appendChild(st)}
+if(EMB_CLIENT){const st=document.createElement("style");st.textContent='[data-act="signout"],[data-v="billing"],[data-v="admin"],a[href*="daysilk.com"]{display:none!important}@media(min-width:700px){.kanban{grid-auto-columns:minmax(0,1fr)!important;overflow-x:visible!important}.kanban>*{min-width:0}}';document.head.appendChild(st)}
 const cloud=()=>!!(CFG.supabaseUrl&&CFG.supabaseAnonKey&&!/^sb_secret_/.test(CFG.supabaseAnonKey)&&window.supabase&&window.supabase.createClient);
 function lsLoad(){try{const o=JSON.parse(localStorage.getItem(LS)||"null");if(o){S.core=o.core||null;S.days=o.days||{};S.pend=o.pend||null;if(!cloud()&&o.acct)S.acct=o.acct}}catch(_){}}
 // pend lists the documents changed on this device that the account doesn't have yet, so they survive a closed tab.
@@ -2063,7 +2063,7 @@ function paint(){const root=$("#root");
  document.body.classList.toggle("nav-open",S.navOpen);document.body.classList.toggle("is-phone",isPhone());document.body.classList.toggle("sheet-open",!!S.sheet&&isPhone());root.innerHTML=shell();window.scrollTo(0,y);
  open.forEach(k=>{const n=document.querySelector(`details[data-k="${k}"]`);if(n)n.open=true})}
 function go(v,top){S.view=v;S.navOpen=false;S.sheet=null;S.phEarly=false;S.editBlocks=false;if(v==="mail"&&S.mail.accounts&&S.mail.accounts.length&&(!S.mail.at||Date.now()-S.mail.at>120000))mailFetch();paint();if(top!==false)window.scrollTo(0,0)}
-function applyTheme(){const t=(S.core&&S.core.settings&&S.core.settings.theme)||"auto",r=document.documentElement;if(t==="auto")delete r.dataset.theme;else r.dataset.theme=t;try{localStorage.setItem("daysilk-theme",t)}catch(_){}}
+function applyTheme(){const t=(S.core&&S.core.settings&&S.core.settings.theme)||"auto",r=document.documentElement;if(t==="auto"&&!EMB_CLIENT)delete r.dataset.theme;else r.dataset.theme=(t==="auto"?"dark":t);try{localStorage.setItem("daysilk-theme",t)}catch(_){}}
 
 /* ---------- Events ---------- */
 Object.assign(ACT,{
