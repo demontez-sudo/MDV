@@ -173,3 +173,33 @@ html body #p-helm .hm .hm-mlmore,html body #p-helmcalendar .hm .hm-mlmore{border
 .hm-blk.multi{grid-auto-rows:min-content}.hm-blk.multi .hm-ml{min-height:15px;flex:none}.hm-blk.multi .hm-mlmore{min-height:15px}
 
 html body #p-helm .hm .hm-blk.multi .hm-mlmore,html body #p-helmcalendar .hm .hm-blk.multi .hm-mlmore{height:15px!important;line-height:15px!important;padding:0 6px!important;min-height:0!important;max-height:15px!important}
+
+/* ---- DaySilk: Today, Big 3, board and team ---- */
+.hm-today{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,1.1fr);gap:18px;align-items:stretch;padding:18px 20px;border:1px solid var(--l2);border-radius:14px;background:linear-gradient(135deg,rgba(212,176,119,.1),rgba(255,255,255,.02) 55%),var(--panel)}
+.hm-t1{display:flex;gap:16px;align-items:center;min-width:0}
+.hm-ring{--c:var(--g);flex:0 0 74px;width:74px;height:74px;border-radius:50%;display:grid;place-items:center;align-content:center;position:relative;background:conic-gradient(var(--c) calc(var(--p)*1%),rgba(255,255,255,.09) 0)}
+.hm-ring::before{content:"";position:absolute;inset:6px;border-radius:50%;background:var(--panel)}.hm-ring b,.hm-ring small{position:relative;line-height:1}.hm-ring b{font:500 24px "Cormorant Garamond",Georgia,serif}.hm-ring small{font-size:10px;color:var(--mute)}
+.hm-ring.ok{--c:#6fcf97}.hm-ring.warn{--c:#e2b04f}.hm-ring.bad{--c:#e5707c}
+.hm-t1b small{display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--g)}.hm-t1b h2{margin:4px 0 4px;font:500 26px/1.1 "Cormorant Garamond",Georgia,serif}.hm-t1b p{margin:0;font-size:12.5px;color:var(--mute)}
+.hm-t2{display:flex;flex-direction:column;gap:12px;justify-content:center;padding:0 6px;border-left:1px solid var(--l2);border-right:1px solid var(--l2)}
+.hm-nn small{display:block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--mute);margin-bottom:3px}.hm-nn b{display:block;font-weight:500;font-size:14.5px;line-height:1.3}.hm-nn b.mute{color:var(--mute);font-weight:400}.hm-nn span{display:block;font-size:12px;color:var(--mute);margin-top:2px}
+.hm-t3 h4{margin:0 0 8px;font:600 10px Inter,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--g)}
+.hm-b3{list-style:none;margin:0;padding:0;display:grid;gap:7px}.hm-b3 li{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:9px;border:1px solid var(--l2);background:rgba(255,255,255,.03);font-size:13px;min-height:20px}
+.hm-b3 li.done .hm-b3t{text-decoration:line-through;color:var(--mute)}.hm-b3 li.empty{border-style:dashed;color:var(--mute);font-size:12px}.hm-b3 li.empty span{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--l2);font-size:10px}
+.hm-b3t{flex:1;min-width:0;text-align:left;background:none;border:0;color:inherit;font:inherit;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0}.hm-b3x{background:none;border:0;color:var(--mute);cursor:pointer;font-size:16px;line-height:1;padding:0 2px}
+.hm-star{background:none;border:0;color:var(--mute);cursor:pointer;font-size:14px;line-height:1;padding:0 4px;opacity:.55}.hm-star:hover,.hm-star.on{color:var(--g);opacity:1}
+.hm-board{padding:14px 18px;border:1px solid var(--l2);border-radius:14px;background:var(--panel)}
+.hm-board header{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}.hm-board h4{margin:0;font:600 10px Inter,system-ui,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:var(--g)}.hm-board header small{font-size:12px;color:var(--mute)}
+.hm-bg{display:flex;flex-wrap:wrap;gap:10px}.hm-bm{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;padding:9px 12px;border-radius:10px;border:1px solid var(--l2);background:rgba(255,255,255,.025)}.hm-bm b{font-weight:600;font-size:13px;margin-right:4px}
+.hm-bm span{padding:2px 9px;border-radius:999px;font-size:11.5px;border:1px solid var(--l2);color:var(--mute)}.hm-bm .tv{color:#e2b04f;border-color:rgba(226,176,79,.5)}.hm-bm .jb{color:#8fb3d8;border-color:rgba(143,179,216,.5)}.hm-bm .fr{color:#6fcf97;border-color:rgba(111,207,151,.4)}
+.hm-blk.c-moves,.hm-w.c-moves,.hm-ml.c-moves,.hm-mi.c-moves{--cc:var(--c-moves,#c79bd8)}
+.hm{--c-moves:#c79bd8}.hm-cat.c-moves i{background:var(--c-moves)}
+.hm-blk.c-moves{border-left-color:var(--c-moves);background:rgba(199,155,216,.14)}.hm-w.c-moves{border-color:rgba(199,155,216,.5);background:rgba(199,155,216,.12)}
+.hm-team{display:grid;gap:14px}.hm-teamhead h3{margin:0;font:500 26px "Cormorant Garamond",Georgia,serif}.hm-teamhead p{margin:4px 0 0;font-size:13px;color:var(--mute)}
+.hm-tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.hm-tc{padding:16px;border-radius:14px;border:1px solid var(--l2);background:var(--panel);display:flex;flex-direction:column;gap:10px;border-top:3px solid #6fcf97}.hm-tc.warn{border-top-color:#e2b04f}.hm-tc.bad{border-top-color:#e5707c}
+.hm-tc header{display:flex;gap:11px;align-items:center}.hm-av{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--g);color:var(--g2);font:500 17px "Cormorant Garamond",Georgia,serif}.hm-tc b{font-weight:500;font-size:15px}.hm-tc header small{display:block;font-size:11.5px;color:var(--mute);margin-top:2px}
+.hm-ld{height:6px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden}.hm-ld i{display:block;height:100%;background:var(--g)}.hm-ldt{margin:0;font-size:12px;color:var(--mute)}
+.hm-tcn small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-bottom:2px}.hm-tcn b{display:block;font-size:13.5px}.hm-tcn b.mute{color:var(--mute);font-weight:400}.hm-tcn span{font-size:12px;color:var(--mute)}
+.hm-tcf{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:auto}.hm-tcf span{padding:3px 9px;border-radius:999px;font-size:11px;border:1px solid var(--l2)}.hm-tcf .bad{color:#e5707c;border-color:rgba(229,112,124,.5)}.hm-tcf .warn{color:#e2b04f;border-color:rgba(226,176,79,.5)}.hm-tcf .ok{color:#6fcf97;border-color:rgba(111,207,151,.4)}
+@media(max-width:1000px){.hm-today{grid-template-columns:1fr}.hm-t2{border:0;padding:0}}

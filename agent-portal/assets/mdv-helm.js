@@ -1,15 +1,15 @@
-/* Helm: the agent's smart agenda. One timeline per person that joins their schedule (desk blocks, duties, meetings, interest calls)
+/* DaySilk (formerly Helm): the agent's smart agenda and daily plan. One timeline per person that joins their schedule (desk blocks, duties, meetings, interest calls)
    with their Tasks. Complete a task, add one, drag it onto the timeline or let Helm find the next free slot.
    Reads /api/agent/calendar/v9 (events carry metadata.team) and /api/agent/tasks/v11; writes only through the Tasks API. */
 (function(){
 'use strict';
 if(window.MDV_HELM)return;
 
-var CATS=[['calls','Interest calls & check-ins'],['meetings','Meetings'],['duties','Duties & desk'],['models','Model items on the schedule'],['tasks','Tasks']];
+var CATS=[['calls','Interest calls & check-ins'],['meetings','Meetings'],['duties','Duties & desk'],['models','Model items on the schedule'],['moves','Model movement'],['tasks','Tasks']];
 var START_H=6,END_H=22,HH=56,SNAP=15;
 var KEY='mdv.helm.v1';
-var H={mode:'full',day:today(),view:'day',person:'me',cats:{calls:true,meetings:true,duties:true,models:true,tasks:true},events:[],scout:[],tasks:[],members:[],myUid:null,week:'',loading:false,err:'',host:null,sel:null,loaded:false};
-try{var sv=JSON.parse(localStorage.getItem(KEY)||'{}');if(sv.view==='week'||sv.view==='day'||sv.view==='month')H.view=sv.view;if(typeof sv.person==='string'&&sv.person)H.person=sv.person;if(sv.cats&&typeof sv.cats==='object')Object.keys(H.cats).forEach(function(k){if(sv.cats[k]===false)H.cats[k]=false;});}catch(e){}
+var H={mode:'full',day:today(),view:'day',person:'me',cats:{calls:true,meetings:true,duties:true,models:true,moves:true,tasks:true},events:[],moves:[],roster:[],rosterMembers:[],mobRaw:null,calRaw:null,movesLoading:false,scout:[],tasks:[],members:[],myUid:null,week:'',loading:false,err:'',host:null,sel:null,loaded:false};
+try{var sv=JSON.parse(localStorage.getItem(KEY)||'{}');if(sv.view==='week'||sv.view==='day'||sv.view==='month'||sv.view==='team')H.view=sv.view;if(typeof sv.person==='string'&&sv.person)H.person=sv.person;if(sv.cats&&typeof sv.cats==='object')Object.keys(H.cats).forEach(function(k){if(sv.cats[k]===false)H.cats[k]=false;});}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify({view:H.view,person:H.person,cats:H.cats}));}catch(e){}}
 
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -96,6 +96,37 @@ function taskPeople(t){var ids=arr(t.assignments).map(function(a){return a.membe
 function dayOnly(iso){var d=new Date(iso);return d.getHours()===12&&d.getMinutes()===0;}   /* tasks made from the Calendar page carry a 12:00 placeholder; treat as "due that day" */
 function taskItems(){return H.tasks.filter(function(t){return !t.parent_task_id&&taskOpen(t);}).map(function(t){var due=t.due_at?new Date(t.due_at):null;return{kind:'task',id:t.id,title:t.title||'Untitled',start:due,end:due?new Date(due.getTime()+30*60000):null,allDay:!!due&&dayOnly(t.due_at),label:'Task',type:'task',status:t.status||'open',priority:String(t.priority||'').toLowerCase(),people:taskPeople(t),models:[],cat:'tasks',raw:t};});}
 
+
+/* ---------- model movement: travel, visa and housing on the agent's day ---------- */
+function rosterOf(id){return H.roster.filter(function(x){return String(x.id)===String(id);})[0]||null;}
+function buildMoves(d){
+  var out=[];if(!d)return out;
+  var names={};arr(d.lookups&&d.lookups.models).forEach(function(m){names[m.id]=m.display_name;});
+  function nm(id){var r=rosterOf(id);return names[id]||(r&&r.name)||'Model';}
+  function add(o){
+    var r=rosterOf(o.model_id),ag=r&&r.agents&&r.agents.length?r.agents:['Unassigned'],name=nm(o.model_id);
+    out.push({kind:'move',id:o.id,title:o.title.replace('{m}',name),start:o.start,end:o.end||null,allDay:!!o.allDay,label:o.label,type:'travel',status:o.status||'',location:o.location||'',notes:o.notes||'',meta:{},people:ag,models:[name],conflict:o.conflict||'',cat:'moves',move:o.move,market:r?r.market:''});
+  }
+  arr(d.travel).forEach(function(t){
+    if(!t.starts_at||/^(cancelled|completed)$/i.test(String(t.status||'')))return;
+    var route=[t.origin,t.destination].filter(Boolean).join(' → ')||t.destination||'trip',g=t.visa_gate||{},lock=g.blocking?('Visa locks this trip'+(g.message?': '+g.message:'')):'';
+    add({id:'t'+t.id+'s',model_id:t.model_id,title:'{m} departs · '+route,start:new Date(t.starts_at),label:'Travel',status:t.status,location:route,conflict:lock,move:'travel'});
+    if(t.ends_at&&dkey(t.ends_at)!==dkey(t.starts_at))add({id:'t'+t.id+'e',model_id:t.model_id,title:'{m} returns · '+(t.origin||t.destination||'trip'),start:new Date(t.ends_at),label:'Travel',status:t.status,location:route,move:'travel'});
+  });
+  arr(d.visa_cases).forEach(function(v){
+    if(/^(approved|issued|refused|expired|cancelled)$/i.test(String(v.status||'')))return;
+    if(v.appointment_at)add({id:'va'+v.id,model_id:v.model_id,title:'{m} visa appointment'+(v.country_code?' · '+v.country_code:''),start:new Date(v.appointment_at),label:'Visa',status:v.status,move:'visa'});
+    if(v.hard_deadline){var dl=new Date(String(v.hard_deadline).length<=10?v.hard_deadline+'T12:00:00':v.hard_deadline);add({id:'vd'+v.id,model_id:v.model_id,title:'{m} visa deadline'+(v.country_code?' · '+v.country_code:''),start:dl,allDay:true,label:'Visa',status:v.status,conflict:dl<new Date()?'Deadline has passed':'',move:'visa'});}
+  });
+  arr(d.housing).forEach(function(h){
+    if(!h.check_in_at||/^(cancelled)$/i.test(String(h.status||'')))return;
+    var tr=arr(d.travel).filter(function(t){return String(t.id)===String(h.travel_record_id);})[0];
+    add({id:'h'+h.id,model_id:(tr&&tr.model_id)||h.model_id,title:'{m} checks in · '+(h.property_name||h.name||h.hotel||h.address||'housing'),start:new Date(h.check_in_at),label:'Housing',status:h.status,location:h.address||'',move:'housing'});
+  });
+  return out;
+}
+function allItems(){return H.events.concat(H.moves,scoutItems(),taskItems());}
+
 /* ---------- loading ---------- */
 function uid(){try{var st=bridge().state;return (st.user&&st.user.id)||(st.session&&st.session.user&&st.session.user.id)||(st.profile&&st.profile.user_id)||null;}catch(e){return null;}}
 function rangeKey(){return H.view==='month'?'m'+H.day.getFullYear()+'-'+(H.day.getMonth()+1):'w'+dkey(monday(H.day));}
@@ -113,18 +144,26 @@ async function load(force){
       get('/api/agent/calendar/v9?organization='+encodeURIComponent(org())+'&start='+encodeURIComponent(s.toISOString())+'&end='+encodeURIComponent(e.toISOString())+'&_t='+Date.now()),
       get('/api/agent/tasks/v11?organization='+encodeURIComponent(org())+'&_t='+Date.now())
     ]);
-    H.members=arr(res[1].members);H.myUid=uid();H.events=buildEvents(res[0]||{});H.tasks=arr(res[1].tasks);H.scout=buildScoutCalls(H.scoutRaw);H.week=wk;H.loaded=true;H.err='';
+    H.members=arr(res[1].members);H.myUid=uid();H.calRaw=res[0]||{};H.events=buildEvents(res[0]||{});H.moves=buildMoves(H.mobRaw);H.tasks=arr(res[1].tasks);H.scout=buildScoutCalls(H.scoutRaw);H.week=wk;H.loaded=true;H.err='';
     if(H.person==='me'&&!myName())H.person='all';
   }catch(err){H.err=msg(err);}
   H.loading=false;paint();
   /* Scouting calls arrive a moment later and never hold the calendar up */
   get('/api/agent/scouting/calls?organization='+encodeURIComponent(org())+'&_t='+Date.now()).then(function(d){H.scoutRaw=d;H.scout=buildScoutCalls(d);paint();}).catch(function(){});
+  loadMoves();
+}
+function loadMoves(){
+  if(H.movesLoading)return;H.movesLoading=true;
+  Promise.all([get('/api/agent/daysilk?organization='+encodeURIComponent(org())+'&_t='+Date.now()).catch(function(){return null;}),get('/api/agent/mobility?organization='+encodeURIComponent(org())+'&_t='+Date.now()).catch(function(){return null;})]).then(function(r){
+    if(r[0]){H.roster=arr(r[0].models);H.rosterMembers=arr(r[0].members);}
+    if(r[1])H.mobRaw=r[1];H.moves=buildMoves(H.mobRaw);H.movesLoading=false;paint();
+  }).catch(function(){H.movesLoading=false;});
 }
 async function reloadTasks(){try{var r=await get('/api/agent/tasks/v11?organization='+encodeURIComponent(org())+'&_t='+Date.now());H.members=arr(r.members);H.tasks=arr(r.tasks);}catch(e){}paint();}
 
 /* ---------- what is on the agenda for a day ---------- */
 function itemsFor(day,who){
-  var k=dkey(day),all=H.events.concat(scoutItems(),taskItems()).filter(function(it){return it.start&&dkey(it.start)===k&&H.cats[it.cat]!==false&&matches(it,who);});
+  var k=dkey(day),all=allItems().filter(function(it){return it.start&&dkey(it.start)===k&&H.cats[it.cat]!==false&&matches(it,who);});
   var timed=all.filter(function(it){return !it.allDay;}).sort(function(a,b){return a.start-b.start;}),whole=all.filter(function(it){return it.allDay;});
   return{timed:timed,whole:whole};
 }
@@ -138,15 +177,67 @@ function findSlot(day,who,dur,skipId){
 function freeMinutes(day,who){var b=busy(day,who),total=0,from=9*60,to=17*60+30;for(var t=from;t<to;t+=15){if(!b.some(function(x){return t<x[1]&&t+15>x[0];}))total+=15;}return total;}
 function overlaps(list){var out=[];for(var i=0;i<list.length;i++)for(var j=i+1;j<list.length;j++){var a=list[i],b=list[j];if(a.kind==='task'||b.kind==='task')continue;var ae=a.end||new Date(a.start.getTime()+3600e3),be=b.end||new Date(b.start.getTime()+3600e3);if(a.start<be&&b.start<ae)out.push([a,b]);}return out;}
 
+
+/* ---------- DaySilk Today: the day at a glance, the agent's Big 3 and where their models are ---------- */
+function greetWord(){var h=new Date().getHours();return h<12?'Good morning':h<17?'Good afternoon':'Good evening';}
+function isBig(t){return String(t&&t.category||'')==='big3';}
+function mineTasks(who){return H.tasks.filter(function(t){return !t.parent_task_id&&matches({people:taskPeople(t)},who);});}
+function todayCard(who){
+  var now=new Date(),isT=dkey(H.day)===dkey(now),dk=dkey(H.day),mine=mineTasks(who);
+  var dueDay=mine.filter(function(t){return t.due_at&&dkey(new Date(t.due_at))===dk;}),done=dueDay.filter(function(t){return !taskOpen(t);}).length,total=dueDay.length,pct=total?Math.round(done/total*100):0;
+  var big=mine.filter(function(t){return isBig(t)&&(taskOpen(t)||(t.due_at&&dkey(new Date(t.due_at))===dk));}).slice(0,3);
+  var d=itemsFor(H.day,who),timed=d.timed.filter(function(x){return x.kind!=='task';}),cur=null,nxt=null;
+  if(isT){timed.forEach(function(x){var e=x.end||new Date(x.start.getTime()+30*60000);if(x.start<=now&&e>now&&!cur)cur=x;else if(x.start>now&&!nxt)nxt=x;});}else nxt=timed[0]||null;
+  var tone=pct>=80?'ok':pct>=40?'warn':total?'bad':'';
+  var slots=[0,1,2].map(function(i){var t=big[i];return t?'<li class="'+(taskOpen(t)?'':'done')+'"><i class="hm-chk'+(taskOpen(t)?'':' on')+'" tabindex="0" data-hm-done="'+esc(t.id)+'" aria-label="Mark done"></i><button type="button" class="hm-b3t" data-hm-pick="task|'+esc(t.id)+'">'+esc(t.title)+'</button><button type="button" class="hm-b3x" data-hm-big3="'+esc(t.id)+'" aria-label="Unpin">×</button></li>':'<li class="empty"><span>'+(i+1)+'</span> Pin a task as a Big 3 with its ★</li>';}).join('');
+  function line(label,x){return '<div class="hm-nn"><small>'+label+'</small>'+(x?'<b>'+esc(x.title)+'</b><span>'+esc(tlabel(x.start)+(x.end&&x.kind!=='task'?' – '+tlabel(x.end):'')+(x.models&&x.models.length?' · '+x.models.slice(0,2).join(', '):''))+'</span>':'<b class="mute">Nothing '+(label==='Now'?'right now':'else planned')+'</b>')+'</div>';}
+  var name=who||'';
+  return '<section class="hm-today"><div class="hm-t1"><div class="hm-ring '+tone+'" style="--p:'+pct+'"><b>'+pct+'</b><small>%</small></div><div class="hm-t1b"><small>'+esc(H.day.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'}))+'</small><h2>'+(isT?greetWord()+(name?', '+esc(name):''):(name?esc(name)+'’s day':'The team’s day'))+'</h2><p>'+(total?done+' of '+total+' planned task'+(total===1?'':'s')+' done':'No tasks planned for this day')+(d.timed.length?' · '+d.timed.length+' on the schedule':'')+'</p></div></div>'
+   +'<div class="hm-t2">'+(isT?line('Now',cur):'')+line(isT?'Next':'First up',nxt)+'</div>'
+   +'<div class="hm-t3"><h4>Big 3</h4><ul class="hm-b3">'+slots+'</ul></div></section>';
+}
+function boardStrip(who){
+  var roster=H.roster.filter(function(m){return !who||arr(m.agents).some(function(a){return a.toLowerCase()===who.toLowerCase();});});
+  if(!roster.length)return '';
+  var d0=new Date(H.day);d0.setHours(0,0,0,0);var d1=addDays(d0,1),trav={},jobs={};
+  arr(H.mobRaw&&H.mobRaw.travel).forEach(function(t){if(!t.starts_at||/^(cancelled|completed)$/i.test(String(t.status||'')))return;var s=new Date(t.starts_at),e=t.ends_at?new Date(t.ends_at):s;if(s<d1&&e>=d0)trav[String(t.model_id)]=1;});
+  var cal=H.calRaw||{};
+  [['bookings','booking_models'],['castings','casting_models'],['events','event_models']].forEach(function(p){arr(cal[p[0]]).forEach(function(x){if(!x.starts_at)return;var s=new Date(x.starts_at),e=x.ends_at?new Date(x.ends_at):s;if(!(s<d1&&e>=d0))return;if(p[0]==='events'&&!/booking|casting|shoot|fitting|go.?see|test/i.test(String(x.event_type||'')+' '+String(x.title||'')))return;arr(x[p[1]]).forEach(function(r){var m=r.models||r,n=m&&m.display_name;if(n)jobs[n.toLowerCase()]=1;});});});
+  var by={};
+  roster.forEach(function(m){var k=m.market||'No market',g=by[k]||(by[k]={name:k,t:[],j:[],f:[]});if(trav[String(m.id)])g.t.push(m.name);else if(jobs[String(m.name).toLowerCase()])g.j.push(m.name);else g.f.push(m.name);});
+  var groups=Object.keys(by).sort(function(a,b){return (by[b].t.length+by[b].j.length)-(by[a].t.length+by[a].j.length)||a.localeCompare(b);}).map(function(k){return by[k];});
+  function chip(cls,label,l){return '<span class="'+cls+'"'+(l.length?' title="'+esc(l.slice(0,12).join(', '))+(l.length>12?'…':'')+'"':'')+'>'+l.length+' '+label+'</span>';}
+  return '<section class="hm-board"><header><h4>Board today</h4><small>'+roster.length+' model'+(roster.length===1?'':'s')+(who?' with '+esc(who):' on the board')+'</small></header><div class="hm-bg">'+groups.map(function(g){return '<div class="hm-bm"><b>'+esc(g.name)+'</b>'+chip('tv','travelling',g.t)+chip('jb','on a job',g.j)+chip('fr','free',g.f)+'</div>';}).join('')+'</div></section>';
+}
+function teamView(){
+  var names=peopleList(),k=dkey(H.day),isT=k===dkey(new Date()),now=new Date();
+  if(!names.length)return '<p class="hm-empty">No team members yet.</p>';
+  var cards=names.map(function(n){
+    var d=itemsFor(H.day,n),timed=d.timed.filter(function(x){return x.kind!=='task';}),nxt=null;
+    timed.forEach(function(x){if(!nxt&&(!isT||(x.end||x.start)>now))nxt=x;});
+    var over=taskItems().filter(function(t){return matches(t,n)&&t.start&&dkey(t.start)<dkey(new Date());}).length,fm=freeMinutes(H.day,n),mv=d.timed.concat(d.whole).filter(function(x){return x.cat==='moves';}).length,ov=overlaps(d.timed).length,tasks=d.timed.concat(d.whole).filter(function(x){return x.kind==='task';}).length;
+    var load=Math.max(0,Math.min(100,Math.round((1-fm/450)*100))),tone=ov||over>3?'bad':load>85?'warn':'ok';
+    return '<article class="hm-tc '+tone+'"><header><span class="hm-av">'+esc(n.slice(0,1))+'</span><div><b>'+esc(n)+'</b><small>'+timed.length+' scheduled · '+tasks+' task'+(tasks===1?'':'s')+(mv?' · '+mv+' movement':'')+'</small></div></header>'
+     +'<div class="hm-ld"><i style="width:'+load+'%"></i></div><p class="hm-ldt">'+(fm>=60?Math.floor(fm/60)+'h'+(fm%60?' '+fm%60+'m':''):fm+'m')+' free in the working day</p>'
+     +'<div class="hm-tcn"><small>'+(isT?'Next':'First up')+'</small>'+(nxt?'<b>'+esc(nxt.title)+'</b><span>'+esc(tlabel(nxt.start))+'</span>':'<b class="mute">Nothing scheduled</b>')+'</div>'
+     +'<div class="hm-tcf">'+(ov?'<span class="bad">'+ov+' overlap'+(ov===1?'':'s')+'</span>':'')+(over?'<span class="'+(over>3?'bad':'warn')+'">'+over+' overdue</span>':'')+(!ov&&!over?'<span class="ok">On track</span>':'')+'<button type="button" class="hm-ghost sm" data-hm-openp="'+esc(n)+'">Open day →</button></div></article>';
+  }).join('');
+  return '<div class="hm-team"><div class="hm-teamhead"><h3>Team day</h3><p>Everyone’s plan for '+esc(fmtDay(H.day))+'. Open a day to move, add or cover work.</p></div><div class="hm-tgrid">'+cards+'</div></div>';
+}
+function moveBlock(it){
+  if(it.kind!=='move')return '';
+  return '<div class="hm-ic"><h5>Model movement</h5><p>'+esc(it.label)+(it.status?' · '+esc(String(it.status).replace(/_/g,' ')):'')+'</p><div class="hm-seg"><button type="button" data-hm-gomob="1">Open travel</button><button type="button" data-hm-govisa="1">Visa desk</button></div></div>';
+}
+
 /* ---------- painting ---------- */
 function fmtDay(d){return d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'});}
 function header(who){
   var names=peopleList(),me=myName();
   var opts='<option value="all"'+(H.person==='all'?' selected':'')+'>Everyone</option>'+(me?'<option value="me"'+(H.person==='me'?' selected':'')+'>Me ('+esc(me)+')</option>':'')+names.filter(function(n){return n!==me;}).map(function(n){return '<option value="'+esc(n)+'"'+(H.person===n?' selected':'')+'>'+esc(n)+'</option>';}).join('');
   var label=H.view==='month'?H.day.toLocaleDateString([],{month:'long',year:'numeric'}):H.view==='week'?(monday(H.day).toLocaleDateString([],{month:'short',day:'numeric'})+' – '+addDays(monday(H.day),6).toLocaleDateString([],{month:'short',day:'numeric'})):fmtDay(H.day);
-  return '<header class="hm-head"><div class="hm-title"><small>'+(H.mode==='calendar'?'Agent calendar':'Smart agenda')+'</small><h1>'+(H.mode==='calendar'?'Helm Calendar':'Helm')+'</h1></div>'
+  return '<header class="hm-head"><div class="hm-title"><small>'+(H.mode==='calendar'?'Agent calendar':'Smart agenda')+'</small><h1>'+(H.mode==='calendar'?'DaySilk Calendar':'DaySilk')+'</h1></div>'
    +'<div class="hm-nav"><button type="button" data-hm="prev" aria-label="Previous">‹</button><button type="button" data-hm="today">Today</button><button type="button" data-hm="next" aria-label="Next">›</button><strong>'+esc(label)+'</strong></div>'
-   +'<div class="hm-tools">'+(H.mode==='calendar'?'<div class="hm-seg hm-calsw" role="group" aria-label="Calendar"><button type="button" data-hm-go="calendar">Agency</button><button type="button" class="on">Helm</button></div>':'')+'<div class="hm-seg"><button type="button" data-hm-view="day" class="'+(H.view==='day'?'on':'')+'">Day</button><button type="button" data-hm-view="week" class="'+(H.view==='week'?'on':'')+'">Week</button><button type="button" data-hm-view="month" class="'+(H.view==='month'?'on':'')+'">Month</button></div><div class="hm-addwrap"><button type="button" class="hm-btn hm-add" data-hm-add aria-haspopup="true">+ Add</button><div class="hm-addmenu" role="menu"><button type="button" role="menuitem" data-hm-new="event"><b>Event</b><small>A meeting, call, block of time or trip</small></button><button type="button" role="menuitem" data-hm-new="task"><b>Task</b><small>Something to do, with a due date and time</small></button><button type="button" role="menuitem" data-hm-new="call"><b>Interest call</b><small>A call with a prospective model or mother agency</small></button></div></div><label class="hm-who"><span>Agenda for</span><select data-hm-person>'+opts+'</select></label></div></header>';
+   +'<div class="hm-tools">'+(H.mode==='calendar'?'<div class="hm-seg hm-calsw" role="group" aria-label="Calendar"><button type="button" data-hm-go="calendar">Agency</button><button type="button" class="on">DaySilk</button></div>':'')+'<div class="hm-seg"><button type="button" data-hm-view="day" class="'+(H.view==='day'?'on':'')+'">Day</button><button type="button" data-hm-view="week" class="'+(H.view==='week'?'on':'')+'">Week</button><button type="button" data-hm-view="month" class="'+(H.view==='month'?'on':'')+'">Month</button><button type="button" data-hm-view="team" class="'+(H.view==='team'?'on':'')+'">Team</button></div><div class="hm-addwrap"><button type="button" class="hm-btn hm-add" data-hm-add aria-haspopup="true">+ Add</button><div class="hm-addmenu" role="menu"><button type="button" role="menuitem" data-hm-new="event"><b>Event</b><small>A meeting, call, block of time or trip</small></button><button type="button" role="menuitem" data-hm-new="task"><b>Task</b><small>Something to do, with a due date and time</small></button><button type="button" role="menuitem" data-hm-new="call"><b>Interest call</b><small>A call with a prospective model or mother agency</small></button></div></div><label class="hm-who"><span>Agenda for</span><select data-hm-person>'+opts+'</select></label></div></header>';
 }
 function chips(){return '<div class="hm-cats" role="group" aria-label="Show">'+CATS.map(function(c){return '<button type="button" class="hm-cat c-'+c[0]+(H.cats[c[0]]===false?' off':'')+'" data-hm-cat="'+c[0]+'" aria-pressed="'+(H.cats[c[0]]!==false)+'"><i></i>'+esc(c[1])+'</button>';}).join('')+'</div>';}
 function signals(who){
@@ -162,7 +253,7 @@ function signals(who){
   if(who||true){var f=freeMinutes(H.day,who);if(d.timed.length||isToday)out.push(['ok',(f>=60?Math.floor(f/60)+'h'+(f%60?' '+f%60+'m':''):f+'m')+' free in the working day']);}
   var unsched=allTasks.filter(function(t){return !t.start||t.allDay&&dkey(t.start)===k;}).length;
   if(unsched&&who)out.push(['',unsched+' task'+(unsched===1?'':'s')+' without a time']);
-  return '<div class="hm-sig"><span class="hm-veuxi">✦ Helm</span>'+(out.length?out.map(function(s){return s[2]?'<button type="button" class="hm-s '+s[0]+'" data-hm-goto="'+esc(s[2])+'">'+esc(s[1])+' →</button>':'<span class="hm-s '+s[0]+'">'+esc(s[1])+'</span>';}).join(''):'<span class="hm-s">Nothing needs attention.</span>')+'</div>';
+  return '<div class="hm-sig"><span class="hm-veuxi">✦ DaySilk</span>'+(out.length?out.map(function(s){return s[2]?'<button type="button" class="hm-s '+s[0]+'" data-hm-goto="'+esc(s[2])+'">'+esc(s[1])+' →</button>':'<span class="hm-s '+s[0]+'">'+esc(s[1])+'</span>';}).join(''):'<span class="hm-s">Nothing needs attention.</span>')+'</div>';
 }
 function layout(list,maxCols){
   maxCols=maxCols||4;
@@ -201,12 +292,12 @@ function timeline(who){
 }
 function detail(){
   if(!H.sel)return '';
-  var all=H.events.concat(scoutItems(),taskItems()),it=all.filter(function(x){return x.kind===H.sel.kind&&String(x.id)===String(H.sel.id);})[0];if(!it)return '';
+  var all=allItems(),it=all.filter(function(x){return x.kind===H.sel.kind&&String(x.id)===String(H.sel.id);})[0];if(!it)return '';
   var when=it.start?(it.allDay?'All day · '+fmtDay(it.start):tlabel(it.start)+(it.end&&it.kind!=='task'?' – '+tlabel(it.end):'')+' · '+it.start.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})):'No date';
   var cat=CATS.filter(function(c){return c[0]===it.cat;})[0];
   return '<section class="hm-card hm-detail c-'+it.cat+'"><header><small>'+esc(cat?cat[1]:'')+'</small><button type="button" data-hm-close aria-label="Close">×</button></header><h3>'+esc(it.title)+'</h3><p class="hm-when">'+esc(when)+'</p>'
    +(it.people.length?'<p><b>With</b> '+esc(it.people.join(', '))+'</p>':'')+(it.models.length?'<p><b>Models</b> '+esc(it.models.join(', '))+'</p>':'')+(it.location?'<p><b>Where</b> '+esc(it.location)+'</p>':'')
-   +(it.conflict?'<p class="hm-risk">'+esc(it.conflict)+'</p>':'')+(it.notes&&it.kind!=='task'?'<p class="hm-note">'+esc(it.notes)+'</p>':'')+interestBlock(it)+rescheduleBlock(it)
+   +(it.conflict?'<p class="hm-risk">'+esc(it.conflict)+'</p>':'')+(it.notes&&it.kind!=='task'?'<p class="hm-note">'+esc(it.notes)+'</p>':'')+interestBlock(it)+moveBlock(it)+rescheduleBlock(it)
    +'<footer>'+(it.kind==='task'?'<button type="button" class="hm-btn" data-hm-done="'+esc(it.id)+'">Mark done</button><button type="button" class="hm-ghost" data-hm-tasks>Open in Tasks</button>':(it.kind==='scout'?'<button type="button" class="hm-ghost" data-hm-scout>Open in Scouting</button>':'<button type="button" class="hm-ghost" data-hm-cal>Open in Calendar</button>'))+'</footer></section>';
 }
 function rescheduleBlock(it){
@@ -228,7 +319,7 @@ function taskRail(who){
   function row(t){
     var timed=t.start&&!t.allDay,due=!t.start?'':(timed?tlabel(t.start)+' · ':'')+t.start.toLocaleDateString([],{month:'short',day:'numeric'});
     var can=!timed||dkey(t.start)!==dkey(H.day);
-    return '<div class="hm-trow'+(t.start&&dkey(t.start)<todayK?' over':'')+'" draggable="true" data-hm-drag="'+esc(t.id)+'"><i class="hm-chk" tabindex="0" data-hm-done="'+esc(t.id)+'" aria-label="Mark done"></i><button type="button" class="hm-ttl" data-hm-pick="task|'+esc(t.id)+'">'+esc(t.title)+'</button>'+(t.priority==='urgent'||t.priority==='high'?'<i class="hm-pr '+(t.priority==='urgent'?'u':'h')+'" title="'+esc(t.priority)+'"></i>':'')+'<em>'+esc(due)+'</em>'+(can?'<button type="button" class="hm-slot" data-hm-slot="'+esc(t.id)+'" title="Put it in the next free slot on '+esc(fmtDay(H.day))+'">Schedule</button>':'')+'</div>';
+    return '<div class="hm-trow'+(t.start&&dkey(t.start)<todayK?' over':'')+'" draggable="true" data-hm-drag="'+esc(t.id)+'"><i class="hm-chk" tabindex="0" data-hm-done="'+esc(t.id)+'" aria-label="Mark done"></i><button type="button" class="hm-star'+(isBig(t.raw)?' on':'')+'" data-hm-big3="'+esc(t.id)+'" title="Pin to Big 3" aria-label="Pin to Big 3">\u2605</button><button type="button" class="hm-ttl" data-hm-pick="task|'+esc(t.id)+'">'+esc(t.title)+'</button>'+(t.priority==='urgent'||t.priority==='high'?'<i class="hm-pr '+(t.priority==='urgent'?'u':'h')+'" title="'+esc(t.priority)+'"></i>':'')+'<em>'+esc(due)+'</em>'+(can?'<button type="button" class="hm-slot" data-hm-slot="'+esc(t.id)+'" title="Put it in the next free slot on '+esc(fmtDay(H.day))+'">Schedule</button>':'')+'</div>';
   }
   function grp(t,l,cls){return l.length?'<div class="hm-grp '+(cls||'')+'"><h4>'+t+' <em>'+l.length+'</em></h4>'+l.slice(0,8).map(row).join('')+(l.length>8?'<p class="hm-more">+ '+(l.length-8)+' more in Tasks</p>':'')+'</div>':'';}
   var body=grp('Overdue',G.over,'over')+grp(fmtDay(H.day).split(',')[0]+' ('+H.day.toLocaleDateString([],{month:'short',day:'numeric'})+')',G.day)+grp('Next 7 days',G.week)+grp('No date',G.none);
@@ -268,8 +359,8 @@ function paint(){
   if(H.loading&&!H.loaded){el.innerHTML='<div class="hm">'+header(who)+'<div class="hm-state"><i></i><span>Loading your agenda…</span></div></div>';return;}
   if(H.err&&!H.loaded){el.innerHTML='<div class="hm">'+header(who)+'<div class="hm-state bad"><span>'+esc(H.err)+'</span><button type="button" class="hm-btn" data-hm="retry">Try again</button></div></div>';return;}
   var scroller=el.querySelector('.hm-tlwrap'),sy=scroller?scroller.scrollTop:null;
-  var main=H.view==='month'?monthGrid(who):H.view==='week'?'<div class="hm-tlwrap hm-wkwrap" data-hm-scroll>'+weekGrid(who)+'</div>':'<div class="hm-tlwrap" data-hm-scroll>'+timeline(who)+'</div>';
-  el.innerHTML='<div class="hm'+(H.loading?' busy':'')+'">'+header(who)+signals(who)+chips()+'<div class="hm-grid'+(H.mode==='calendar'&&!H.sel?' solo':'')+'"><div class="hm-main">'+main+'</div>'+(H.mode==='calendar'&&!H.sel?'':'<aside class="hm-rail">'+detail()+(H.mode==='calendar'?'':taskRail(who))+'</aside>')+'</div></div>';
+  var main=H.view==='team'?teamView():H.view==='month'?monthGrid(who):H.view==='week'?'<div class="hm-tlwrap hm-wkwrap" data-hm-scroll>'+weekGrid(who)+'</div>':'<div class="hm-tlwrap" data-hm-scroll>'+timeline(who)+'</div>';
+  el.innerHTML='<div class="hm'+(H.loading?' busy':'')+'">'+header(who)+(H.view==='day'&&H.mode==='full'?todayCard(who):'')+(H.view==='day'||H.view==='team'?boardStrip(H.view==='team'?'':who):'')+signals(who)+chips()+'<div class="hm-grid'+(H.mode==='calendar'&&!H.sel?' solo':'')+'"><div class="hm-main">'+main+'</div>'+(H.mode==='calendar'&&!H.sel?'':'<aside class="hm-rail">'+detail()+(H.mode==='calendar'?'':taskRail(who))+'</aside>')+'</div></div>';
   var sc=el.querySelector('.hm-tlwrap');
   if(sc){if(sy!=null)sc.scrollTop=sy;else{var n=new Date(),target=(H.view==='week'||dkey(H.day)===dkey(n))?Math.max(0,(mins(n)-START_H*60)/60*HH-120):(8-START_H)*HH-10;sc.scrollTop=target;}}
 }
@@ -297,6 +388,22 @@ function addTask(title){
 function nav(n){if(H.view==='month')H.day=new Date(H.day.getFullYear(),H.day.getMonth()+n,1);else H.day=addDays(H.day,H.view==='week'?n*7:n);H.sel=null;load();}
 function goto(path){if(typeof window.navTo==='function')window.navTo(path);}
 
+
+function setBig3(id){
+  var t=taskById(id);if(!t)return;var on=!isBig(t),who=viewing(),open=mineTasks(who).filter(function(x){return isBig(x)&&taskOpen(x);});
+  if(on&&open.length>=3){toast('You already have three Big 3. Unpin one first.',true);return;}
+  var prev=t.category||null;t.category=on?'big3':null;paint();
+  post('/api/agent/tasks/v11',{action:'update_task',task_id:t.id,title:t.title,description:t.description||null,priority:t.priority||'normal',due_at:t.due_at||null,category:on?'big3':null,model_id:t.model_id||null}).then(function(r){if(!r||r.verified!==true)throw new Error('The change was not confirmed');toast(on?'Pinned to your Big 3':'Unpinned');}).catch(function(e){t.category=prev;paint();toast('Could not save: '+msg(e),true);});
+}
+document.addEventListener('click',function(e){
+  var host=H.host;if(!host||!host.contains(e.target))return;
+  var b=e.target.closest&&e.target.closest('[data-hm-big3],[data-hm-openp],[data-hm-gomob],[data-hm-govisa]');if(!b)return;
+  e.preventDefault();e.stopPropagation();
+  if(b.hasAttribute('data-hm-big3'))setBig3(b.getAttribute('data-hm-big3'));
+  else if(b.hasAttribute('data-hm-openp')){H.person=b.getAttribute('data-hm-openp');H.view='day';save();H.sel=null;paint();}
+  else if(b.hasAttribute('data-hm-gomob'))goto('globalmobility');
+  else if(b.hasAttribute('data-hm-govisa'))goto('visa');
+},true);
 document.addEventListener('click',function(e){
   var host=H.host;if(!host||!host.contains(e.target))return;
   if(H.dragEnd&&Date.now()-H.dragEnd<350){e.stopPropagation();e.preventDefault();return;}

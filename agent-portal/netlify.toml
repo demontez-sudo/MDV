@@ -886,3 +886,9 @@ force = true
   to = "/.netlify/functions/agent-save-to-model"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/agent/daysilk"
+  to = "/.netlify/functions/agent-daysilk"
+  status = 200
+  force = true

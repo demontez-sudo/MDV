@@ -27,9 +27,9 @@ function dayDiff(iso){if(!iso)return null;var d=new Date(iso);if(isNaN(d))return
 var SECTIONS=[
  {cap:'Daily',items:[
   {id:'home',label:'Home',icon:'ti-home-2',page:'overview'},
-  {id:'helm',label:'Helm',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','Helm'],['tasksconsolidated','Tasks'],['dayschedule','Day schedule'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
+  {id:'helm',label:'DaySilk',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','DaySilk'],['tasksconsolidated','Tasks'],['dayschedule','Day schedule'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
   {id:'inbox',label:'Inbox',icon:'ti-inbox',page:'inbox',badge:'inbox',sub:[['inbox','Messages'],['mail','Mail'],['notes','Notes']]},
-  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Agency Calendar'],['helmcalendar','Helm Calendar'],['availability','Availability']]}]},
+  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Agency Calendar'],['helmcalendar','DaySilk Calendar'],['availability','Availability']]}]},
  {cap:'Agency',items:[
   {id:'roster',label:'Roster',icon:'ti-users',page:'roster',sub:[['roster','Roster'],['scouting','Scouting'],['seasonmanagement','Season'],['modeldevelopment','Development'],['modelevaluations','Evaluations'],['modelsubmissions','Submissions']]},
   {id:'clients',label:'Clients',icon:'ti-user-circle',page:'industrydirectory',sub:[['industrydirectory','Clients'],['outreach','Outreach']]},
@@ -59,7 +59,7 @@ function visible(){
 }
 function pagesOf(it){return [it.page].concat(arr(it.sub).map(function(s){return s[0];}));}
 var sig='',openId='';
-var DOCK=[['helm','Helm','ti-compass'],['multipackage','Packages','ti-package'],['mail','Mail','ti-mail'],['financelegal','Finance','ti-chart-bar'],['globalmobility','Travel','ti-plane']];
+var DOCK=[['helm','DaySilk','ti-compass'],['multipackage','Packages','ti-package'],['mail','Mail','ti-mail'],['financelegal','Finance','ti-chart-bar'],['globalmobility','Travel','ti-plane']];
 function buildDock(){
   var app=document.getElementById('app');if(!app)return;
   var ok=allowed(),items=DOCK.filter(function(d){return ok[d[0]];}),dk=document.getElementById('ws-dock');
