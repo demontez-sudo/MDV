@@ -16,6 +16,57 @@ export const handler=async(event)=>{
         await requirePermission(user.id,organization.id,'members.manage');const {data,error}=await client.rpc('set_member_roles',{target_org:organization.id,target_member:body.member_id,target_role_ids:Array.isArray(body.role_ids)?body.role_ids:[]});if(error)throw error;return json(200,{ok:true,verified:true,result:data,persisted_at:new Date().toISOString()});
       }
       const admin=await requirePermission(user.id,organization.id,'members.manage');
+      /* ---- custom roles: create, change what a role allows, delete ---- */
+      if(['create_role','save_role','delete_role'].includes(action)){
+        const KEY=/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
+        const cleanPerms=async()=>{
+          const want=[...new Set((Array.isArray(body.permissions)?body.permissions:[]).map(x=>String(x||'').trim()).filter(Boolean))];
+          if(want.some(k=>!KEY.test(k)||k.length>80))throw Object.assign(new Error('Unknown permission'),{statusCode:400,publicMessage:'One of the permissions is not valid.'});
+          /* nobody can hand out access they do not have themselves */
+          for(const k of want){if(!await assertPermission(admin,user.id,organization.id,k))throw Object.assign(new Error('No such access'),{statusCode:403,publicMessage:'You can only give a role access that you have yourself ('+k+').'});}
+          return want;
+        };
+        const ownedRole=async(id)=>{
+          const {data,error}=await admin.from('roles').select('*').eq('id',id).maybeSingle();if(error)throw error;
+          if(!data)throw Object.assign(new Error('not found'),{statusCode:404,publicMessage:'That role was not found.'});
+          if(data.organization_id!==organization.id)throw Object.assign(new Error('system role'),{statusCode:403,publicMessage:'Built-in roles cannot be changed. Make a copy of it as a new role instead.'});
+          return data;
+        };
+        const withPerms=async(role)=>{const {data,error}=await admin.from('role_permissions').select('permission_key').eq('role_id',role.id);if(error)throw error;return {...role,permissions:(data||[]).map(x=>x.permission_key)};};
+        const setPerms=async(roleId,keys)=>{
+          const {error:de}=await admin.from('role_permissions').delete().eq('role_id',roleId);if(de)throw de;
+          if(keys.length){const {error:ie}=await admin.from('role_permissions').insert(keys.map(k=>({role_id:roleId,permission_key:k})));if(ie)throw ie;}
+        };
+        if(action==='create_role'){
+          const name=String(body.name||'').trim().slice(0,60);if(!name)throw Object.assign(new Error('name'),{statusCode:400,publicMessage:'Give the role a name.'});
+          const keys=await cleanPerms();
+          const base='custom-'+(name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40)||'role');
+          let role=null,tryKey=base;
+          for(let i=0;i<4&&!role;i++){
+            const {data,error}=await admin.from('roles').insert({organization_id:organization.id,key:tryKey,name}).select('*').single();
+            if(!error){role=data;break;}
+            if(String(error.code)==='23505'){tryKey=base+'-'+Math.random().toString(36).slice(2,6);continue;}
+            throw error;
+          }
+          if(!role)throw Object.assign(new Error('key'),{statusCode:409,publicMessage:'A role with that name already exists.'});
+          await setPerms(role.id,keys);
+          return json(200,{ok:true,verified:true,role:await withPerms(role),persisted_at:new Date().toISOString()});
+        }
+        if(action==='save_role'){
+          const role=await ownedRole(body.role_id);
+          const keys=await cleanPerms();
+          const name=String(body.name||'').trim().slice(0,60);
+          if(name&&name!==role.name){const {error}=await admin.from('roles').update({name}).eq('id',role.id);if(error)throw error;role.name=name;}
+          await setPerms(role.id,keys);
+          return json(200,{ok:true,verified:true,role:await withPerms(role),persisted_at:new Date().toISOString()});
+        }
+        const role=await ownedRole(body.role_id);
+        const {count,error:ce}=await admin.from('member_roles').select('member_id',{count:'exact',head:true}).eq('role_id',role.id);if(ce)throw ce;
+        if(count)throw Object.assign(new Error('in use'),{statusCode:409,publicMessage:'This role is still given to '+count+' '+(count===1?'person':'people')+'. Move them to another role first.'});
+        await admin.from('role_permissions').delete().eq('role_id',role.id);
+        const {error:de}=await admin.from('roles').delete().eq('id',role.id);if(de)throw de;
+        return json(200,{ok:true,verified:true,deleted:role.id,persisted_at:new Date().toISOString()});
+      }
       if(action==='update_member'){
         const payload={};for(const k of ['job_title'])if(body[k]!==undefined)payload[k]=body[k];if(body.metadata!==undefined)payload.metadata=body.metadata;
         const {data,error}=await admin.from('organization_members').update(payload).eq('organization_id',organization.id).eq('id',body.member_id).select('*').single();if(error)throw error;return json(200,{ok:true,verified:true,member:data,persisted_at:data?.updated_at||new Date().toISOString()});
