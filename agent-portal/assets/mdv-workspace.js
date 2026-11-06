@@ -27,7 +27,7 @@ function dayDiff(iso){if(!iso)return null;var d=new Date(iso);if(isNaN(d))return
 var SECTIONS=[
  {cap:'Daily',items:[
   {id:'home',label:'Home',icon:'ti-home-2',page:'overview'},
-  {id:'helm',label:'DaySilk',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','DaySilk'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
+  {id:'helm',label:'DaySilk',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','DaySilk'],['tasksconsolidated','Team Tasks'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
   {id:'inbox',label:'Inbox',icon:'ti-inbox',page:'inbox',badge:'inbox',sub:[['inbox','Messages'],['mail','Mail'],['notes','Notes']]},
   {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Agency Calendar'],['helmcalendar','DaySilk Calendar'],['availability','Availability']]}]},
  {cap:'Agency',items:[
@@ -54,7 +54,8 @@ function visible(){
   var secs=SECTIONS.map(function(sc){return {cap:sc.cap,items:sc.items.map(fix).filter(Boolean)};}).filter(function(sc){return sc.items.length;});
   var settings=fix(SETTINGS);
   var extra=[];groups().forEach(function(g){g.items.forEach(function(i){if(!seen[i[0]]&&i[0]!=='overview'){seen[i[0]]=1;extra.push([i[0],i[1]]);}});});
-  if(extra.length)secs.push({cap:'More',items:[{id:'more',label:'More pages',icon:'ti-dots',page:extra[0][0],sub:extra.length>1?extra:[]}]});
+  /* no separate "More pages": anything not placed above is folded into DaySilk so nothing is lost */
+  if(extra.length){secs.forEach(function(sc){sc.items.forEach(function(it){if(it.id==='helm'){var have={};pagesOf(it).forEach(function(k){have[k]=1;});var add=extra.filter(function(x){return !have[x[0]];});if(add.length){it.sub=arr(it.sub).length?arr(it.sub).concat(add):[[it.page,it.label]].concat(add);}}});});}
   return {secs:secs,settings:settings};
 }
 function pagesOf(it){return [it.page].concat(arr(it.sub).map(function(s){return s[0];}));}
