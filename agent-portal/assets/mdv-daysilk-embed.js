@@ -55,11 +55,15 @@ async function signals(){
   }
   return out;
 }
+function alertsChip(){
+  var on=true;try{on=window.MDV_DS_ALERTS?MDV_DS_ALERTS.state().on:true;}catch(x){}
+  return '<button type="button" class="dse-c alerts" data-dse-alerts>'+(on?'\u25cf Smart alerts on':'\u25cb Smart alerts off')+'</button>';
+}
 function chipsHtml(){
   var c=E.chips;
-  if(E.owner)return '';   /* the owner's DaySilk is only about DaySilk: no agency shortcuts (model travel, portal tasks) above it */
-  if(!c||!c.length)return '';
-  return c.map(function(x){return '<button type="button" class="dse-c '+esc(x.t)+'" data-dse-go="'+esc(x.go)+'">'+esc(x.x)+'</button>';}).join('');
+  if(E.owner)return alertsChip();   /* the owner's DaySilk is only about DaySilk: no agency shortcuts (model travel, portal tasks) above it */
+  if(!c||!c.length)return alertsChip();
+  return alertsChip()+c.map(function(x){return '<button type="button" class="dse-c '+esc(x.t)+'" data-dse-go="'+esc(x.go)+'">'+esc(x.x)+'</button>';}).join('');
 }
 function ensureAccount(){
   if(E.owner){E.ready=true;E.err='';return null;}
@@ -89,6 +93,7 @@ function refresh(force){
 }
 document.addEventListener('click',function(e){
   var h=E.host;if(!h||!h.contains(e.target))return;
+  var al=e.target.closest&&e.target.closest('[data-dse-alerts]');if(al){e.preventDefault();try{MDV_DS_ALERTS.settings();}catch(x){}return;}
   var g=e.target.closest&&e.target.closest('[data-dse-go]');if(g){e.preventDefault();go(g.getAttribute('data-dse-go'));return;}
   var rt=e.target.closest&&e.target.closest('[data-dse-retry]');if(rt){E.err='';E.ready=false;paint(true);ensureAccount();return;}
   var r=e.target.closest&&e.target.closest('[data-dse-reload]');if(r){var f=h.querySelector('.dse-f');if(f)f.src=src();refresh(true);}
@@ -165,7 +170,7 @@ function openView(v,t){
     if(w&&E.host&&E.host.offsetParent!==null){try{w.__dsGo(v,t);}catch(x){}clearInterval(iv);}else if(n>50)clearInterval(iv);
   },150);
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,prepare:function(){return resolveOwner().then(function(o){if(o)return {owner:true,ready:true,src:src()};return Promise.resolve(ensureAccount()).then(function(){return {owner:false,ready:!!E.ready,src:src()};});});},alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */

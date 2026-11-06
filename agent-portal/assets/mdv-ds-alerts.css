@@ -1,0 +1,31 @@
+/* DaySilk Smart Alerts */
+#mdv-dsa{position:fixed;top:86px;right:18px;z-index:2147481000;display:grid;gap:10px;width:min(360px,calc(100vw - 24px));pointer-events:none;font-family:Inter,system-ui,sans-serif}
+.dsa-card{pointer-events:auto;padding:14px 16px 12px;border-radius:16px;border:1px solid rgba(255,255,255,.16);background:rgba(18,14,26,.94);color:#f3efe8;box-shadow:0 18px 50px rgba(0,0,0,.5);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);animation:dsaIn .35s cubic-bezier(.16,1,.3,1);transition:opacity .35s,transform .35s}
+.dsa-card.out{opacity:0;transform:translateX(24px)}
+@keyframes dsaIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+.dsa-k{display:flex;align-items:center;gap:8px;font:600 11px Inter,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#c9a46a}
+.dsa-k i{width:8px;height:8px;border-radius:50%;background:#c9a46a;box-shadow:0 0 0 4px rgba(201,164,106,.2)}
+.dsa-card.wrap .dsa-k{color:#9bb7ff}.dsa-card.wrap .dsa-k i{background:#9bb7ff;box-shadow:0 0 0 4px rgba(155,183,255,.2)}
+.dsa-card.now .dsa-k{color:#8fd6a6}.dsa-card.now .dsa-k i{background:#8fd6a6;box-shadow:0 0 0 4px rgba(143,214,166,.2)}
+.dsa-x{all:unset;cursor:pointer;margin-left:auto;font-size:20px;line-height:1;color:#a9a2b6;padding:0 2px}.dsa-x:hover{color:#fff}
+.dsa-t{display:block;margin:8px 0 3px;font:600 16px/1.25 Inter,system-ui,sans-serif}
+.dsa-b{margin:0;color:#cfc8dc;font-size:13.5px;line-height:1.45}
+.dsa-a{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.dsa-btn{all:unset;box-sizing:border-box;cursor:pointer;padding:7px 13px;border-radius:999px;border:1px solid rgba(255,255,255,.22);font:600 12px Inter,system-ui,sans-serif;color:#f3efe8}
+.dsa-btn:hover{border-color:#fff}.dsa-btn.quiet{border-color:transparent;color:#a9a2b6}.dsa-btn.solid{background:#c9a46a;border-color:#c9a46a;color:#1a140c}
+.dsa-ov{position:fixed;inset:0;z-index:2147482000;background:rgba(6,5,12,.62);display:grid;place-items:center;padding:20px;font-family:Inter,system-ui,sans-serif}
+.dsa-box{width:min(560px,100%);max-height:calc(100vh - 40px);overflow:auto;border-radius:18px;border:1px solid rgba(255,255,255,.14);background:#14101c;color:#f3efe8;box-shadow:0 30px 80px rgba(0,0,0,.55)}
+.dsa-box header{display:flex;justify-content:space-between;gap:16px;padding:22px 26px 8px}
+.dsa-box h2{margin:0;font:500 26px/1.1 "Cormorant Garamond",Georgia,serif}.dsa-box header p{margin:6px 0 0;color:#a9a2b6;font-size:13.5px;line-height:1.5}
+.dsa-xx{all:unset;cursor:pointer;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;font-size:24px;color:#cfc8dc;flex:none}.dsa-xx:hover{background:rgba(255,255,255,.08)}
+.dsa-body{padding:6px 26px 22px}
+.dsa-row{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.dsa-row b{display:block;font-size:14px;font-weight:600}.dsa-row small{display:block;margin-top:3px;color:#a9a2b6;font-size:12.5px;line-height:1.4}
+.dsa-row select,.dsa-row input[type=time]{padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;font:500 13px Inter,system-ui,sans-serif;color-scheme:dark}
+.dsa-row input[type=checkbox]{width:20px;height:20px;accent-color:#c9a46a;flex:none}
+.dsa-q{display:flex;align-items:center;gap:8px;color:#a9a2b6;font-size:13px}
+.dsa-tag{padding:4px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.2);font-size:12px;color:#cfc8dc}
+.dsa-note{margin:14px 0 0;padding:10px 14px;border-radius:10px;background:rgba(201,164,106,.1);border:1px solid rgba(201,164,106,.3);color:#e8d3a8;font-size:13px;line-height:1.5}
+.dsa-body h3{margin:18px 0 6px;font:600 12px Inter,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#c9a46a}
+.dsa-log{list-style:none;margin:0;padding:0;display:grid;gap:6px}.dsa-log li{display:flex;gap:8px;font-size:13px;color:#cfc8dc}.dsa-log b{color:#fff;font-weight:600}.dsa-log small{margin-left:auto;color:#a9a2b6}
+@media(max-width:700px){#mdv-dsa{top:auto;bottom:96px;right:12px;left:12px;width:auto}.dsa-row{flex-wrap:wrap}}
