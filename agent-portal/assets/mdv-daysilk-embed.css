@@ -20,3 +20,7 @@
 .ws-ds{display:block;margin:0 0 14px}.ws-ds[hidden]{display:none}
 .dse-hf{display:block;width:100%;height:520px;border:0;background:transparent;color-scheme:dark}
 .ws-ds:empty{display:none}
+
+/* single scroll: while the DaySilk frame is on screen the portal page itself does not scroll */
+html.mdv-ds-lock,html.mdv-ds-lock body{overflow:hidden!important}
+.dse-f{min-height:0!important}
