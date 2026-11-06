@@ -113,7 +113,7 @@ function fit(){
   if(!on)return;
   var rect=f.getBoundingClientRect(),z=zoomOf(f);
   if(auto){
-    var top=rect.top+(window.pageYOffset||0),minScreen=Math.max(420,window.innerHeight-top-16),px=Math.round(Math.max(E.pagePx||0,minScreen/z))+'px';
+    var minScreen=Math.max(420,window.innerHeight-170),px=Math.round(Math.max(E.pagePx||0,minScreen/z))+'px';
     if(f.style.height!==px)f.style.height=px;
     try{
       var w=f.contentWindow;
