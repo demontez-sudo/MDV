@@ -2088,7 +2088,7 @@ function allTasks(){
 }
 function tState(id){const c=core();if(!c.ts[id])c.ts[id]={};return c.ts[id]}
 function findUser(id){return core().tasks.find(t=>t.id===id)}
-function toggleTask(id){const u=findUser(id);if(u)u.done=!u.done;else{const s=tState(id);s.done=!s.done;if(EMB&&s.done&&String(id).startsWith("pt-")){try{parent.MDV_DS_EMBED.completePortalTask(String(id).slice(3)).then(()=>{try{parent.MDV_DS_EMBED.portalTasks(true)}catch(_){}}).catch(()=>toast("Could not mark it done in the portal. Try again."))}catch(_){}}}markDirty("core")}
+function toggleTask(id){const u=findUser(id);if(u)u.done=!u.done;else{const s=tState(id);s.done=!s.done;if(EMB&&s.done&&String(id).startsWith("pt-")){try{parent.MDV_DS_EMBED.completePortalTask(String(id).slice(3)).then(()=>{const c=core();c.portalTasks=(c.portalTasks||[]).filter(p=>p.id!==id);markDirty("core");render()}).catch(()=>{tState(id).done=false;markDirty("core");render();toast("The portal would not mark it done. Try again, or complete it in the portal.")})}catch(_){}}}markDirty("core")}
 function toggleSub(id,i){const u=findUser(id);if(u){u.subs[i].done=!u.subs[i].done}else{const t=allTasks().find(x=>x.id===id),s=tState(id);if(i<t.base){s.subs=s.subs||{};s.subs[i]=!s.subs[i]}else{s.extra[i-t.base].done=!s.extra[i-t.base].done}}markDirty("core")}
 function addSub(id,txt){const u=findUser(id);if(u)u.subs.push({t:txt,done:false});else{const s=tState(id);s.extra=s.extra||[];s.extra.push({t:txt,done:false})}markDirty("core")}
 function delSub(id,i){const u=findUser(id);if(u)u.subs.splice(i,1);else{const t=allTasks().find(x=>x.id===id);if(i>=t.base)tState(id).extra.splice(i-t.base,1)}markDirty("core")}
@@ -4426,14 +4426,14 @@ function feedBuild(){
 }
 function feedTick(){if(!EMB_ALERTS||!sbUser)return;try{parent.MDV_DS_EMBED.alertFeed(feedBuild())}catch(_){}}
 if(EMB_ALERTS)setInterval(feedTick,30000);
-/* the always-on copy keeps the portal task list current, so DaySilk and the portal agree even when DaySilk is not open */
+/* the copy you are looking at (Home or the DaySilk page) keeps the portal task list current; the hidden alerts copy only reads, so it can never overwrite your changes with an older copy */
 let psBusy=false;
 async function portalSync(){
- if(!EMB_ALERTS||!sbUser||!baseReady||psBusy)return;psBusy=true;
- try{const list=await parent.MDV_DS_EMBED.portalTasks();if(Array.isArray(list)){const c=core();if(JSON.stringify(c.portalTasks||[])!==JSON.stringify(list)){c.portalTasks=list;markDirty("core")}}}catch(_){}
+ if(!EMB||EMB_ALERTS||!sbUser||!baseReady||psBusy)return;psBusy=true;
+ try{await refreshFromCloud();const list=await parent.MDV_DS_EMBED.portalTasks(true);if(Array.isArray(list)){const c=core();if(JSON.stringify(c.portalTasks||[])!==JSON.stringify(list)){c.portalTasks=list;markDirty("core")}}}catch(_){}
  psBusy=false
 }
-if(EMB_ALERTS){setInterval(portalSync,120000);setTimeout(portalSync,7000);setTimeout(portalSync,20000)}
+if(EMB&&!EMB_ALERTS){setInterval(portalSync,90000);setTimeout(portalSync,4000);setTimeout(portalSync,15000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)portalSync()})}
 
 /* ================= Inside the portal ================= */
 function hbSize(){if(!EMB_HOME)return;const m=document.getElementById("main");if(!m)return;const h=Math.ceil(m.getBoundingClientRect().height)+10;try{parent.MDV_DS_EMBED.size(h)}catch(_){}}
