@@ -57,6 +57,7 @@ async function signals(){
 }
 function chipsHtml(){
   var c=E.chips;
+  if(E.owner)return '';   /* the owner's DaySilk is only about DaySilk: no agency shortcuts (model travel, portal tasks) above it */
   if(!c||!c.length)return '';
   return c.map(function(x){return '<button type="button" class="dse-c '+esc(x.t)+'" data-dse-go="'+esc(x.go)+'">'+esc(x.x)+'</button>';}).join('');
 }
@@ -81,6 +82,7 @@ function paint(force){
   el.innerHTML='<div class="dse"><div class="dse-chips">'+chipsHtml()+'</div><div class="dse-body">'+frameHtml()+'</div></div>';
 }
 function refresh(force){
+  if(E.owner)return;
   if(E.loading||(!force&&E.chips&&Date.now()-E.at<120000))return;
   E.loading=true;
   signals().then(function(c){E.chips=c;E.at=Date.now();}).catch(function(){E.chips=[];}).then(function(){E.loading=false;paint();});
