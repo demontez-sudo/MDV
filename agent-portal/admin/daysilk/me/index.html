@@ -2082,13 +2082,13 @@ function setP(o,p,v){const ks=p.split(".");let a=o;for(let i=0;i<ks.length-1;i++
 function allTasks(){
  const c=core(),out=[];
  PLAN.forEach(p=>{const st=c.ts[p.id]||{};const subs=p.s.map((t,i)=>({t,done:!!(st.subs&&st.subs[i])})).concat((st.extra||[]).map(x=>({t:x.t,done:!!x.done})));out.push({id:p.id,kind:"plan",title:p.t,area:p.a,due:st.due||p.due,time:st.time||"",prio:p.p,subs,done:!!st.done,base:p.s.length,notes:st.notes||""})});
- c.portalTasks.forEach(p=>{const st=c.ts[p.id]||{};const subs=(p.subs||[]).map((t,i)=>({t,done:!!(st.subs&&st.subs[i])})).concat((st.extra||[]).map(x=>({t:x.t,done:!!x.done})));out.push({id:p.id,kind:"portal",title:p.title,area:"Portal",due:st.due||p.due||"",time:st.time||"",prio:2,subs,done:!!st.done||p.done,base:(p.subs||[]).length,meta:p.meta,notes:st.notes||""})});
+ c.portalTasks.forEach(p=>{const st=c.ts[p.id]||{};const subs=(p.subs||[]).map((t,i)=>({t,done:!!(st.subs&&st.subs[i])})).concat((st.extra||[]).map(x=>({t:x.t,done:!!x.done})));out.push({id:p.id,kind:"portal",title:p.title,area:"Portal",due:st.due||p.due||"",time:st.time||p.time||"",prio:2,subs,done:!!st.done||p.done,base:(p.subs||[]).length,meta:p.meta,notes:st.notes||""})});
  c.tasks.forEach(u=>out.push({id:u.id,kind:"me",title:u.title,area:u.area,due:u.due||"",time:u.time||"",prio:u.prio||2,subs:u.subs||[],done:!!u.done,base:0,notes:u.notes||""}));
  return ASSIST?out.filter(t=>!PRIVATE_AREAS.test(t.area||"")):out;
 }
 function tState(id){const c=core();if(!c.ts[id])c.ts[id]={};return c.ts[id]}
 function findUser(id){return core().tasks.find(t=>t.id===id)}
-function toggleTask(id){const u=findUser(id);if(u)u.done=!u.done;else{const s=tState(id);s.done=!s.done}markDirty("core")}
+function toggleTask(id){const u=findUser(id);if(u)u.done=!u.done;else{const s=tState(id);s.done=!s.done;if(EMB&&s.done&&String(id).startsWith("pt-")){try{parent.MDV_DS_EMBED.completePortalTask(String(id).slice(3)).then(()=>{try{parent.MDV_DS_EMBED.portalTasks(true)}catch(_){}}).catch(()=>toast("Could not mark it done in the portal. Try again."))}catch(_){}}}markDirty("core")}
 function toggleSub(id,i){const u=findUser(id);if(u){u.subs[i].done=!u.subs[i].done}else{const t=allTasks().find(x=>x.id===id),s=tState(id);if(i<t.base){s.subs=s.subs||{};s.subs[i]=!s.subs[i]}else{s.extra[i-t.base].done=!s.extra[i-t.base].done}}markDirty("core")}
 function addSub(id,txt){const u=findUser(id);if(u)u.subs.push({t:txt,done:false});else{const s=tState(id);s.extra=s.extra||[];s.extra.push({t:txt,done:false})}markDirty("core")}
 function delSub(id,i){const u=findUser(id);if(u)u.subs.splice(i,1);else{const t=allTasks().find(x=>x.id===id);if(i>=t.base)tState(id).extra.splice(i-t.base,1)}markDirty("core")}
@@ -4426,6 +4426,14 @@ function feedBuild(){
 }
 function feedTick(){if(!EMB_ALERTS||!sbUser)return;try{parent.MDV_DS_EMBED.alertFeed(feedBuild())}catch(_){}}
 if(EMB_ALERTS)setInterval(feedTick,30000);
+/* the always-on copy keeps the portal task list current, so DaySilk and the portal agree even when DaySilk is not open */
+let psBusy=false;
+async function portalSync(){
+ if(!EMB_ALERTS||!sbUser||!baseReady||psBusy)return;psBusy=true;
+ try{const list=await parent.MDV_DS_EMBED.portalTasks();if(Array.isArray(list)){const c=core();if(JSON.stringify(c.portalTasks||[])!==JSON.stringify(list)){c.portalTasks=list;markDirty("core")}}}catch(_){}
+ psBusy=false
+}
+if(EMB_ALERTS){setInterval(portalSync,120000);setTimeout(portalSync,7000);setTimeout(portalSync,20000)}
 
 /* ================= Inside the portal ================= */
 function hbSize(){if(!EMB_HOME)return;const m=document.getElementById("main");if(!m)return;const h=Math.ceil(m.getBoundingClientRect().height)+10;try{parent.MDV_DS_EMBED.size(h)}catch(_){}}

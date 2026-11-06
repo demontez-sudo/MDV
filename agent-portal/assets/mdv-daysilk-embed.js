@@ -65,6 +65,31 @@ function chipsHtml(){
   if(!c||!c.length)return alertsChip();
   return alertsChip()+c.map(function(x){return '<button type="button" class="dse-c '+esc(x.t)+'" data-dse-go="'+esc(x.go)+'">'+esc(x.x)+'</button>';}).join('');
 }
+/* Portal tasks that are mine, in DaySilk's own task shape, so the portal's Tasks and DaySilk are one list */
+var PT={at:0,list:null,busy:null};
+function portalTasks(force){
+  if(!force&&PT.list&&Date.now()-PT.at<60000)return Promise.resolve(PT.list);
+  if(PT.busy)return PT.busy;
+  if(!bridge())return Promise.resolve(null);
+  PT.busy=get('/api/agent/tasks/v11?organization='+encodeURIComponent(org())+'&_t='+Date.now()).then(function(t){
+    var me=myId(),mem=arr(t.members).filter(function(m){return m.user_id&&m.user_id===me;})[0];
+    if(!mem)return null;
+    var ids={};arr(t.assignments).forEach(function(a){if(a.member_id===mem.id)ids[a.task_id]=1;});
+    var all=arr(t.tasks),open=function(x){return !/^(completed|done|complete|cancelled|canceled)$/i.test(String(x.status||'open'));};
+    var mine=all.filter(function(x){return !x.parent_task_id&&open(x)&&(ids[x.id]||arr(x.assignments).some(function(a){return a.member_id===mem.id;}));});
+    var kids={};all.forEach(function(x){if(x.parent_task_id&&open(x))(kids[x.parent_task_id]=kids[x.parent_task_id]||[]).push(String(x.title||''));});
+    var list=mine.map(function(x){
+      var d=x.due_at?new Date(x.due_at):null,hh=d&&(d.getHours()||d.getMinutes())?String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'):'';
+      return {id:'pt-'+x.id,title:String(x.title||'Task'),due:d?dayKey(d):'',time:hh,done:false,subs:(kids[x.id]||[]).filter(Boolean),meta:'From the portal'+(x.priority&&x.priority!=='normal'?' \u00b7 '+x.priority:'')};
+    }).sort(function(a,b){return (a.due||'9')<(b.due||'9')?-1:(a.due||'9')>(b.due||'9')?1:0;});
+    PT.list=list;PT.at=Date.now();return list;
+  }).catch(function(){return null;}).then(function(r){PT.busy=null;return r;});
+  return PT.busy;
+}
+function completePortalTask(id){
+  var b=bridge();if(!b)return Promise.reject(new Error('Not ready'));
+  return b.api('/api/agent/tasks/v11',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organization_slug:org(),action:'task_status',task_id:String(id),status:'completed'})}).then(function(r){PT.at=0;PT.list=null;return r;});
+}
 function ensureAccount(){
   if(E.owner){E.ready=true;E.err='';return null;}
   if(E.owner===undefined)return null;
@@ -170,7 +195,7 @@ function openView(v,t){
     if(w&&E.host&&E.host.offsetParent!==null){try{w.__dsGo(v,t);}catch(x){}clearInterval(iv);}else if(n>50)clearInterval(iv);
   },150);
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,prepare:function(){return resolveOwner().then(function(o){if(o)return {owner:true,ready:true,src:src()};return Promise.resolve(ensureAccount()).then(function(){return {owner:false,ready:!!E.ready,src:src()};});});},alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,completePortalTask:completePortalTask,prepare:function(){return resolveOwner().then(function(o){if(o)return {owner:true,ready:true,src:src()};return Promise.resolve(ensureAccount()).then(function(){return {owner:false,ready:!!E.ready,src:src()};});});},alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */
