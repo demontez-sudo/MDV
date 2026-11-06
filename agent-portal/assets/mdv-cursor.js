@@ -4,7 +4,8 @@
    Light by design: the animation frame loop runs only while the circles are catching up, and hover changes are coalesced. */
 (function(){
 'use strict';
-if(window.__MDV_CURSOR__)return;window.__MDV_CURSOR__=true;
+/* guard on the document, not the window: a frame's window is reused when it goes from blank to its page, and must start fresh */
+if(document.__mdvCursor)return;document.__mdvCursor=true;window.__MDV_CURSOR__=true;
 try{if(!window.matchMedia||!matchMedia('(hover:hover) and (pointer:fine)').matches)return;}catch(e){return;}
 var reduce=false;try{reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(e){}
 var root=document.documentElement,seen=typeof WeakMap==='function'?new WeakMap():null;
@@ -86,6 +87,7 @@ function wire(fr){
   if(!SRC)return;
   try{
     var d=fr.contentDocument;if(!d||!d.documentElement||!d.head&&!d.body)return;
+    var h=''+(fr.contentWindow&&fr.contentWindow.location.href);if(h==='about:blank'||h==='')return;
     if(!d.getElementById('mdv-cursor-css')){
       var l=d.createElement('link');l.id='mdv-cursor-css';l.rel='stylesheet';l.href=CSS;(d.head||d.documentElement).appendChild(l);
     }
