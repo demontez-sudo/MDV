@@ -174,5 +174,84 @@ function place(){
   pg.insertBefore(b,pg.firstChild);
 }
 setInterval(place,800);
-window.MDV_ROLES={open:function(){R.open=true;R.tab='roles';paint();load();}};
+
+/* ---- forms for one person: their roles, and where they can work (these used to be pop-up text prompts) ---- */
+var F={el:null};
+function refreshTeam(){try{var el=document.getElementById('p-team');if(el&&typeof window.renderTeamDirectory==='function')window.renderTeamDirectory(el);}catch(e){}}
+function closeForm(){if(F.el){F.el.remove();F.el=null;}}
+function formShell(title,sub,body,foot){
+  closeForm();
+  var d=document.createElement('div');d.className='rl-ov';d.id='mdv-roles-form';d.setAttribute('role','dialog');d.setAttribute('aria-label',title);
+  d.innerHTML='<div class="rl-box rl-small"><header><div><h2>'+esc(title)+'</h2><p>'+esc(sub)+'</p></div><button type="button" class="rl-x" data-rlf-close aria-label="Close">×</button></header><div class="rl-fmsg"></div><div class="rl-body">'+body+'</div><footer class="rl-ff">'+foot+'</footer></div>';
+  document.body.appendChild(d);F.el=d;return d;
+}
+function fmsg(t,bad){var m=F.el&&F.el.querySelector('.rl-fmsg');if(m)m.innerHTML=t?'<div class="'+(bad?'rl-bad':'rl-ok')+'">'+esc(t)+'</div>':'';}
+function memberName(m){return (m&&m.profile&&(m.profile.display_name||((m.profile.first_name||'')+' '+(m.profile.last_name||'')).trim()))||(m&&m.job_title)||'this person';}
+function loadTeam(){return api('GET').then(function(d){R.data=d;return d;});}
+function scopeName(d,sc){
+  var t=sc.scope_type||'organization';if(t==='organization')return 'The whole agency';
+  var key={market:'markets',division:'divisions',board:'boards',office:'offices'}[t],list=arr(d.structure&&d.structure[key]),hit=list.filter(function(x){return x.id===sc.scope_id;})[0];
+  return t.charAt(0).toUpperCase()+t.slice(1)+': '+(hit?hit.name:'(removed)');
+}
+var LEVELS=[['read','Read only','Can look, but not change anything.'],['work','Work','Can do day-to-day work: edit, create and update.'],['manage','Manage','Can also change set-up and who has access.']];
+
+function memberRolesForm(id){
+  loadTeam().then(function(d){
+    var m=arr(d.team).filter(function(x){return x.id===id;})[0];if(!m){window.alert('That person was not found.');return;}
+    var mine={};arr(m.roles).forEach(function(r){mine[r.id]=1;});
+    var body='<p class="rl-lead">Tick every role '+esc(memberName(m))+' should have. They get all the access from every role they hold.</p><div class="rl-rolebox">'+
+      arr(d.roles).map(function(r){
+        var n=arr(r.permissions).length,own=r.organization_id&&d.organization&&r.organization_id===d.organization.id;
+        return '<label class="rl-rcard"><input type="checkbox" data-rlf-role="'+esc(r.id)+'"'+(mine[r.id]?' checked':'')+'><span><b>'+esc(r.name)+'</b><small>'+(own?'Custom':'Built in')+' · '+n+' '+(n===1?'permission':'permissions')+'</small></span></label>';
+      }).join('')+'</div>'+(d.access&&d.access.manage===false?'':'<p class="rl-lead"><button type="button" class="rl-link" data-rlf-editroles>Create or change roles</button></p>');
+    var el=formShell('Roles for '+memberName(m),'Roles decide what this person can see and do in the portal.',body,'<button type="button" class="rl-btn" data-rlf-close>Cancel</button><button type="button" class="rl-btn solid" data-rlf-saveroles="'+esc(id)+'">Save roles</button>');
+  }).catch(function(e){window.alert((e&&e.message)||'Could not load roles.');});
+}
+function memberScopeForm(id){
+  loadTeam().then(function(d){
+    var m=arr(d.team).filter(function(x){return x.id===id;})[0];if(!m){window.alert('That person was not found.');return;}
+    var cur=arr(m.scopes).filter(function(x){return x.enabled!==false;});
+    var curHtml=cur.length?'<ul class="rl-sc">'+cur.map(function(sc,i){var lv=LEVELS.filter(function(l){return l[0]===(sc.access_level||'work');})[0];
+      return '<li><span><b>'+esc(scopeName(d,sc))+'</b><small>'+esc(lv?lv[1]:sc.access_level||'Work')+'</small></span><button type="button" class="rl-btn sm danger" data-rlf-rmscope="'+i+'">Remove</button></li>';}).join('')+'</ul>':'<p class="rl-lead">Right now '+esc(memberName(m))+' has no set limits, so they follow their roles across the whole agency.</p>';
+    var body='<h3 class="rl-h3">Where they can work now</h3>'+curHtml+
+      '<h3 class="rl-h3">Add a limit</h3><div class="rl-form">'+
+      '<label class="rl-fl">Where<select class="rl-in" data-rlf-type><option value="organization">The whole agency</option><option value="market">A market (e.g. New York, Paris)</option><option value="division">A division (e.g. Women, Men)</option><option value="board">A board</option><option value="office">An office</option></select></label>'+
+      '<label class="rl-fl" data-rlf-whichwrap hidden>Which one<select class="rl-in" data-rlf-which></select></label>'+
+      '<fieldset class="rl-fl rl-lv"><legend>What they can do there</legend>'+LEVELS.map(function(l,i){return '<label class="rl-opt"><input type="radio" name="rlf-level" value="'+l[0]+'"'+(i===1?' checked':'')+'><span><b>'+l[1]+'</b><small>'+l[2]+'</small></span></label>';}).join('')+'</fieldset></div>';
+    formShell('Scope for '+memberName(m),'Scope limits where a person can work, such as one market or one board.',body,'<button type="button" class="rl-btn" data-rlf-close>Close</button><button type="button" class="rl-btn solid" data-rlf-addscope="'+esc(id)+'">Add this scope</button>');
+    F.d=d;F.m=m;F.cur=cur;fillWhich();
+  }).catch(function(e){window.alert((e&&e.message)||'Could not load the team.');});
+}
+function fillWhich(){
+  if(!F.el)return;var t=F.el.querySelector('[data-rlf-type]').value,w=F.el.querySelector('[data-rlf-whichwrap]'),sel=F.el.querySelector('[data-rlf-which]');
+  if(t==='organization'){w.hidden=true;sel.innerHTML='';return;}
+  var key={market:'markets',division:'divisions',board:'boards',office:'offices'}[t],list=arr(F.d&&F.d.structure&&F.d.structure[key]);
+  w.hidden=false;sel.innerHTML=list.length?list.map(function(x){return '<option value="'+esc(x.id)+'">'+esc(x.name)+'</option>';}).join(''):'<option value="">Nothing set up yet</option>';
+}
+document.addEventListener('change',function(e){if(e.target&&e.target.matches&&e.target.matches('[data-rlf-type]'))fillWhich();});
+document.addEventListener('click',function(e){
+  var t=e.target;if(!t.closest||!F.el)return;
+  if(t===F.el||t.closest('[data-rlf-close]')){closeForm();return;}
+  if(t.closest('[data-rlf-editroles]')){closeForm();window.MDV_ROLES.open();return;}
+  var sr=t.closest('[data-rlf-saveroles]');if(sr){
+    var ids=[];F.el.querySelectorAll('[data-rlf-role]').forEach(function(c){if(c.checked)ids.push(c.getAttribute('data-rlf-role'));});
+    fmsg('Saving…');
+    api('POST',{action:'set_roles',member_id:sr.getAttribute('data-rlf-saveroles'),role_ids:ids}).then(function(){closeForm();refreshTeam();}).catch(function(err){fmsg((err&&err.message)||'That did not save.',true);});return;}
+  var rm=t.closest('[data-rlf-rmscope]');if(rm){
+    var sc=F.cur[Number(rm.getAttribute('data-rlf-rmscope'))];if(!sc)return;fmsg('Removing…');
+    api('POST',{action:'set_scope',member_id:F.m.id,scope_type:sc.scope_type||'organization',scope_id:sc.scope_id||null,access_level:sc.access_level||'work',enabled:false}).then(function(){refreshTeam();memberScopeForm(F.m.id);}).catch(function(err){fmsg((err&&err.message)||'That did not save.',true);});return;}
+  var as=t.closest('[data-rlf-addscope]');if(as){
+    var type=F.el.querySelector('[data-rlf-type]').value,which=F.el.querySelector('[data-rlf-which]').value,lv=F.el.querySelector('input[name="rlf-level"]:checked');
+    if(type!=='organization'&&!which){fmsg('Pick which '+type+' first.',true);return;}
+    fmsg('Saving…');
+    api('POST',{action:'set_scope',member_id:as.getAttribute('data-rlf-addscope'),scope_type:type,scope_id:type==='organization'?null:which,access_level:lv?lv.value:'work',enabled:true}).then(function(){refreshTeam();memberScopeForm(as.getAttribute('data-rlf-addscope'));setTimeout(function(){fmsg('Scope added.');},60);}).catch(function(err){fmsg((err&&err.message)||'That did not save.',true);});return;}
+});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&F.el)closeForm();});
+/* replace the old pop-up prompts on the Team page */
+function hook(){
+  var a=window.VEUX_V135;if(a&&!a.__rlForms){a.teamRoles=memberRolesForm;a.teamScope=memberScopeForm;a.__rlForms=1;}
+  var b=window.VEUX_V10;if(b&&!b.__rlForms&&('memberRoles' in b||'memberScope' in b)){b.memberRoles=memberRolesForm;b.memberScope=memberScopeForm;b.__rlForms=1;}
+}
+setInterval(hook,700);hook();
+window.MDV_ROLES={open:function(){R.open=true;R.tab='roles';paint();load();},memberRoles:memberRolesForm,memberScope:memberScopeForm};
 })();

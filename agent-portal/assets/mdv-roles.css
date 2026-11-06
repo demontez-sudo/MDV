@@ -47,3 +47,26 @@
 .rl-mh b{display:block;font-size:14.5px}.rl-mh small{color:#a9a2b6;font-size:12px}
 .rl-mr{display:flex;flex-wrap:wrap;gap:4px 18px}
 @media(max-width:820px){.rl-cols{grid-template-columns:1fr}.rl-list{position:static;grid-template-columns:1fr 1fr}.rl-m{grid-template-columns:1fr}.rl-groups{grid-template-columns:1fr}}
+
+.rl-small{width:min(560px,100%)}
+.rl-fmsg:empty{display:none}
+.rl-fmsg .rl-ok,.rl-fmsg .rl-bad{margin:10px 26px 0}
+.rl-ff{display:flex;justify-content:flex-end;gap:10px;padding:14px 26px 20px;border-top:1px solid rgba(255,255,255,.1)}
+.rl-lead{margin:0 0 12px;color:#a9a2b6;font-size:13.5px;line-height:1.5}
+.rl-h3{margin:18px 0 8px;font:600 12px Inter,system-ui,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:#c9a46a}.rl-h3:first-child{margin-top:0}
+.rl-rolebox{display:grid;gap:8px;margin-bottom:12px}
+.rl-rcard,.rl-opt{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);cursor:pointer}
+.rl-rcard:hover,.rl-opt:hover{border-color:rgba(212,176,119,.5)}
+.rl-rcard input,.rl-opt input{margin-top:3px;accent-color:#c9a46a;flex:none}
+.rl-rcard b,.rl-opt b{display:block;font-size:14px;font-weight:600}.rl-rcard small,.rl-opt small{display:block;color:#a9a2b6;font-size:12px;margin-top:2px}
+.rl-link{all:unset;cursor:pointer;color:#e8d3a8;text-decoration:underline;font-size:13.5px}
+.rl-form{display:grid;gap:14px}
+.rl-fl{display:grid;gap:6px;margin:0;padding:0;border:0;font-size:12.5px;color:#a9a2b6;letter-spacing:.03em}
+.rl-fl legend{padding:0;margin-bottom:6px;font-size:12.5px;color:#a9a2b6}
+.rl-lv{display:grid;gap:8px}
+select.rl-in{appearance:auto;color-scheme:dark}
+.rl-sc{list-style:none;margin:0 0 4px;padding:0;display:grid;gap:8px}
+.rl-sc li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03)}
+.rl-sc b{display:block;font-size:14px}.rl-sc small{color:#a9a2b6;font-size:12px}
+.rl-sc .rl-btn.danger{margin-left:0}
+.rl-fl[hidden]{display:none}
