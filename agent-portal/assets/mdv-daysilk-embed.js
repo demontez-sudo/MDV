@@ -101,21 +101,34 @@ document.addEventListener('click',function(e){
   e.preventDefault();var w=frameWin();if(w){try{w.__dsGo(b.getAttribute('data-ds-go'));}catch(x){}}
   b.parentNode.querySelectorAll('[data-ds-go]').forEach(function(x){x.classList.toggle('on',x===b);});
 });
-/* one scroll only: the DaySilk frame is sized to the visible screen down to its bottom edge (it scrolls inside, with room left under the content for the floating bar), and the portal page behind it stays still */
+/* The owner's DaySilk (The Rebuild) is a full page like every other portal page: the frame is as tall as its content and the portal page scrolls.
+   It tells us its height; we also tell it which part of it is on screen, so its pop-ups open where you are looking.
+   The business DaySilk does not report a height, so it keeps the older fixed frame that scrolls inside. */
+function frameEl(){var h=E.host;return h&&h.isConnected&&h.querySelector&&h.querySelector('.dse-f');}
+function zoomOf(f){var set=parseFloat(f.style.height)||0,drawn=f.getBoundingClientRect().height,z=(set>50&&drawn>50)?drawn/set:1;return (z<.5||z>1.5)?1:z;}
 function fit(){
-  var h=E.host,f=h&&h.isConnected&&h.querySelector&&h.querySelector('.dse-f'),on=!!(f&&f.offsetParent!==null),root=document.documentElement;
-  if(root.classList.contains('mdv-ds-lock')!==on){root.classList.toggle('mdv-ds-lock',on);if(on)window.scrollTo(0,0);}
+  var f=frameEl(),on=!!(f&&f.offsetParent!==null),root=document.documentElement,auto=!!E.pageSized;
+  var lock=on&&!auto;
+  if(root.classList.contains('mdv-ds-lock')!==lock){root.classList.toggle('mdv-ds-lock',lock);if(lock)window.scrollTo(0,0);}
   if(!on)return;
-  var top=f.getBoundingClientRect().top+(window.pageYOffset||0),dk=document.getElementById('ws-dock'),dkTop=window.innerHeight;
+  var rect=f.getBoundingClientRect(),z=zoomOf(f);
+  if(auto){
+    var top=rect.top+(window.pageYOffset||0),minScreen=Math.max(420,window.innerHeight-top-16),px=Math.round(Math.max(E.pagePx||0,minScreen/z))+'px';
+    if(f.style.height!==px)f.style.height=px;
+    try{
+      var w=f.contentWindow;
+      if(w&&w.__dsVis){var vt=Math.max(0,-rect.top)/z,vh=(Math.min(rect.bottom,window.innerHeight)-Math.max(rect.top,0))/z;w.__dsVis(Math.round(vt),Math.round(Math.max(200,vh)));}
+    }catch(x){}
+    return;
+  }
+  var top2=rect.top+(window.pageYOffset||0),dk=document.getElementById('ws-dock'),dkTop=window.innerHeight;
   if(dk&&getComputedStyle(dk).display!=='none'){var r=dk.getBoundingClientRect();if(r.height>0)dkTop=r.top;}
-  /* the portal's compact size zooms the page (about .84): measure how much of the set height is actually drawn and correct for it */
-  var want=Math.max(420,Math.round(dkTop-top-12)),set=parseFloat(f.style.height)||0,drawn=f.getBoundingClientRect().height,z=(set>50&&drawn>50)?drawn/set:1;
-  if(z<.5||z>1.5)z=1;
-  var px=Math.round(want/z)+'px';
-  if(f.style.height!==px)f.style.height=px;
+  var want=Math.max(420,Math.round(dkTop-top2-12)),px2=Math.round(want/z)+'px';
+  if(f.style.height!==px2)f.style.height=px2;
 }
-window.addEventListener('resize',fit);
-setInterval(fit,500);
+function pageSize(px){if(!(px>100))return;E.pageSized=true;E.pagePx=px;fit();}
+window.addEventListener('resize',fit);window.addEventListener('scroll',fit,{passive:true,capture:true});
+setInterval(fit,400);
 setInterval(function(){
   var bar=document.getElementById('ws-hubbar');if(!bar||!E.host||!document.body.contains(E.host))return;
   var a=active();bar.querySelectorAll('[data-ds-go]').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-ds-go')===a);});
@@ -137,7 +150,7 @@ function openView(v,t){
     if(w&&E.host&&E.host.offsetParent!==null){try{w.__dsGo(v,t);}catch(x){}clearInterval(iv);}else if(n>50)clearInterval(iv);
   },150);
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */
