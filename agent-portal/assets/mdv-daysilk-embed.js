@@ -108,7 +108,10 @@ function fit(){
   if(!on)return;
   var top=f.getBoundingClientRect().top+(window.pageYOffset||0),dk=document.getElementById('ws-dock'),dkTop=window.innerHeight;
   if(dk&&getComputedStyle(dk).display!=='none'){var r=dk.getBoundingClientRect();if(r.height>0)dkTop=r.top;}
-  var px=Math.max(420,Math.round(dkTop-top-12))+'px';
+  /* the portal's compact size zooms the page (about .84): measure how much of the set height is actually drawn and correct for it */
+  var want=Math.max(420,Math.round(dkTop-top-12)),set=parseFloat(f.style.height)||0,drawn=f.getBoundingClientRect().height,z=(set>50&&drawn>50)?drawn/set:1;
+  if(z<.5||z>1.5)z=1;
+  var px=Math.round(want/z)+'px';
   if(f.style.height!==px)f.style.height=px;
 }
 window.addEventListener('resize',fit);
