@@ -106,8 +106,9 @@ function fit(){
   var h=E.host,f=h&&h.isConnected&&h.querySelector&&h.querySelector('.dse-f'),on=!!(f&&f.offsetParent!==null),root=document.documentElement;
   if(root.classList.contains('mdv-ds-lock')!==on){root.classList.toggle('mdv-ds-lock',on);if(on)window.scrollTo(0,0);}
   if(!on)return;
-  var top=f.getBoundingClientRect().top+(window.pageYOffset||0),reserve=0;
-  var px=Math.max(420,Math.round(window.innerHeight-top-reserve))+'px';
+  var top=f.getBoundingClientRect().top+(window.pageYOffset||0),dk=document.getElementById('ws-dock'),dkTop=window.innerHeight;
+  if(dk&&getComputedStyle(dk).display!=='none'){var r=dk.getBoundingClientRect();if(r.height>0)dkTop=r.top;}
+  var px=Math.max(420,Math.round(dkTop-top-12))+'px';
   if(f.style.height!==px)f.style.height=px;
 }
 window.addEventListener('resize',fit);
