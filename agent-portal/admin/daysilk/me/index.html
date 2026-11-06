@@ -2080,8 +2080,8 @@ function setP(o,p,v){const ks=p.split(".");let a=o;for(let i=0;i<ks.length-1;i++
 /* ================= Tasks engine ================= */
 function allTasks(){
  const c=core(),out=[];
- PLAN.forEach(p=>{const st=c.ts[p.id]||{};const subs=p.s.map((t,i)=>({t,done:!!(st.subs&&st.subs[i])})).concat((st.extra||[]).map(x=>({t:x.t,done:!!x.done})));out.push({id:p.id,kind:"plan",title:p.t,area:p.a,due:st.due||p.due,prio:p.p,subs,done:!!st.done,base:p.s.length,notes:st.notes||""})});
- c.portalTasks.forEach(p=>{const st=c.ts[p.id]||{};const subs=(p.subs||[]).map((t,i)=>({t,done:!!(st.subs&&st.subs[i])})).concat((st.extra||[]).map(x=>({t:x.t,done:!!x.done})));out.push({id:p.id,kind:"portal",title:p.title,area:"Portal",due:st.due||p.due||"",prio:2,subs,done:!!st.done||p.done,base:(p.subs||[]).length,meta:p.meta,notes:st.notes||""})});
+ PLAN.forEach(p=>{const st=c.ts[p.id]||{};const subs=p.s.map((t,i)=>({t,done:!!(st.subs&&st.subs[i])})).concat((st.extra||[]).map(x=>({t:x.t,done:!!x.done})));out.push({id:p.id,kind:"plan",title:p.t,area:p.a,due:st.due||p.due,time:st.time||"",prio:p.p,subs,done:!!st.done,base:p.s.length,notes:st.notes||""})});
+ c.portalTasks.forEach(p=>{const st=c.ts[p.id]||{};const subs=(p.subs||[]).map((t,i)=>({t,done:!!(st.subs&&st.subs[i])})).concat((st.extra||[]).map(x=>({t:x.t,done:!!x.done})));out.push({id:p.id,kind:"portal",title:p.title,area:"Portal",due:st.due||p.due||"",time:st.time||"",prio:2,subs,done:!!st.done||p.done,base:(p.subs||[]).length,meta:p.meta,notes:st.notes||""})});
  c.tasks.forEach(u=>out.push({id:u.id,kind:"me",title:u.title,area:u.area,due:u.due||"",time:u.time||"",prio:u.prio||2,subs:u.subs||[],done:!!u.done,base:0,notes:u.notes||""}));
  return ASSIST?out.filter(t=>!PRIVATE_AREAS.test(t.area||"")):out;
 }
@@ -2092,6 +2092,7 @@ function toggleSub(id,i){const u=findUser(id);if(u){u.subs[i].done=!u.subs[i].do
 function addSub(id,txt){const u=findUser(id);if(u)u.subs.push({t:txt,done:false});else{const s=tState(id);s.extra=s.extra||[];s.extra.push({t:txt,done:false})}markDirty("core")}
 function delSub(id,i){const u=findUser(id);if(u)u.subs.splice(i,1);else{const t=allTasks().find(x=>x.id===id);if(i>=t.base)tState(id).extra.splice(i-t.base,1)}markDirty("core")}
 function setDue(id,v){const u=findUser(id);if(u)u.due=v;else tState(id).due=v;markDirty("core")}
+function setTime(id,v){const u=findUser(id);if(u)u.time=v;else tState(id).time=v;markDirty("core")}
 function setNote(id,v){const u=findUser(id);if(u)u.notes=v;else tState(id).notes=v;markDirty("core")}
 function prog(t){if(!t.subs.length)return t.done?1:0;return t.subs.filter(s=>s.done).length/t.subs.length}
 function urgency(t,ref){
@@ -2101,10 +2102,10 @@ function urgency(t,ref){
  const p=prog(t);if(p>0&&p<1){sc+=5;why.push(Math.round(p*100)+"% done")}
  return{sc,why:why.join(" · ")};
 }
-function dueChip(t){if(!t.due)return`<span class="chip">No deadline</span>`;const d=diffDays(todayIso(),t.due);if(t.done)return`<span class="chip">${fmtMD(t.due)}</span>`;if(d<0)return`<span class="chip over">${-d} day${d===-1?"":"s"} overdue</span>`;if(d===0)return`<span class="chip soon">Due today${t.time?" "+fmtT(t.time):""}</span>`;if(d<=3)return`<span class="chip soon">Due in ${d} day${d===1?"":"s"}</span>`;return`<span class="chip">Due ${fmtMD(t.due)}</span>`}
+function dueChip(t){if(!t.due)return`<span class="chip">No deadline</span>`;const d=diffDays(todayIso(),t.due);if(t.done)return`<span class="chip">${fmtMD(t.due)}</span>`;if(d<0)return`<span class="chip over">${-d} day${d===-1?"":"s"} overdue</span>`;if(d===0)return`<span class="chip soon">Due today${t.time?" "+fmtT(t.time):""}</span>`;if(d<=3)return`<span class="chip soon">Due in ${d} day${d===1?"":"s"}${t.time?" · "+fmtT(t.time):""}</span>`;return`<span class="chip">Due ${fmtMD(t.due)}${t.time?" · "+fmtT(t.time):""}</span>`}
 function taskCard(t,open,why){
  const p=prog(t),done=t.subs.filter(s=>s.done).length,hasN=!!(t.notes&&t.notes.trim());
- return`<div class="task ${t.done?"done":""}"><div class="task-top"><input type="checkbox" data-act="task" data-id="${t.id}" ${t.done?"checked":""} aria-label="Complete ${esc(t.title)}"><div class="task-title">${esc(t.title)}<div class="task-meta">${dueChip(t)}<span class="chip area">${esc(t.area)}</span>${t.prio===1?'<span class="chip">Priority</span>':""}${hasN?'<span class="chip note">Notes</span>':""}${t.subs.length?`<span class="muted small">${done} of ${t.subs.length}</span>`:""}<input type="date" data-act="due" data-id="${t.id}" value="${esc(t.due)}" aria-label="Deadline">${t.kind==="me"?`<button class="del" data-act="deltask" data-id="${t.id}" aria-label="Delete task">×</button>`:""}${t.kind==="portal"?'<span class="muted small">From portal</span>':""}</div>${why?`<div class="why">${esc(why)}</div>`:""}</div></div>
+ return`<div class="task ${t.done?"done":""}"><div class="task-top"><input type="checkbox" data-act="task" data-id="${t.id}" ${t.done?"checked":""} aria-label="Complete ${esc(t.title)}"><div class="task-title">${esc(t.title)}<div class="task-meta">${dueChip(t)}<span class="chip area">${esc(t.area)}</span>${t.prio===1?'<span class="chip">Priority</span>':""}${hasN?'<span class="chip note">Notes</span>':""}${t.subs.length?`<span class="muted small">${done} of ${t.subs.length}</span>`:""}<input type="date" data-act="due" data-id="${t.id}" value="${esc(t.due)}" aria-label="Deadline"><input type="time" data-act="ttime" data-id="${t.id}" value="${esc(t.time||"")}" aria-label="Time">${t.kind==="me"?`<button class="del" data-act="deltask" data-id="${t.id}" aria-label="Delete task">×</button>`:""}${t.kind==="portal"?'<span class="muted small">From portal</span>':""}</div>${why?`<div class="why">${esc(why)}</div>`:""}</div></div>
  ${t.subs.length?`<div class="task-bar">${bar(p)}</div>`:""}
  ${hasN&&!open?`<div class="notepeek">${esc(t.notes)}</div>`:""}
  <details data-tid="${t.id}" ${open?"open":""}><summary>Subtasks and notes</summary><div class="task-body"><div><div class="lbl">Subtasks</div><ul class="subs">${t.subs.map((s,i)=>`<li><label><input type="checkbox" data-act="sub" data-id="${t.id}" data-i="${i}" ${s.done?"checked":""}><span>${esc(s.t)}</span></label>${(t.kind==="me"||i>=t.base)?`<button class="del" data-act="delsub" data-id="${t.id}" data-i="${i}" aria-label="Remove subtask">×</button>`:""}</li>`).join("")}</ul>
@@ -4532,6 +4533,7 @@ document.getElementById("fileIn").addEventListener("change",e=>{
 document.addEventListener("change",e=>{
  const el=e.target;
  if(el.dataset&&el.dataset.act==="due"){setDue(el.dataset.id,el.value);render();return}
+ if(el.dataset&&el.dataset.act==="ttime"){setTime(el.dataset.id,el.value);render();return}
  if(!el.dataset||!el.dataset.path)return;const sc=el.dataset.scope;
  let v=el.type==="checkbox"?el.checked:el.value;if(el.type==="number")v=el.value===""?"":Number(el.value);
  setP(root(sc),el.dataset.path,v);markDirty(sc);
