@@ -79,6 +79,8 @@ function skin(d){
   try{
     var r=d.documentElement,w=root.getAttribute('data-veux-wave');
     if(w!==null&&r.getAttribute('data-veux-wave')!==w)r.setAttribute('data-veux-wave',w);
+    var z=parseFloat(getComputedStyle(document.body).zoom)||1,mz=String(Math.round(100/z)/100);
+    if(r.style.getPropertyValue('--mz')!==mz)r.style.setProperty('--mz',mz);
     var v=getComputedStyle(root).getPropertyValue('--wave').trim();
     if(v&&r.style.getPropertyValue('--wave')!==v)r.style.setProperty('--wave',v);
   }catch(e){}

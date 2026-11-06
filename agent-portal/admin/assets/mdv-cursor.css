@@ -14,17 +14,17 @@ html.mdv-cur a,html.mdv-cur button:not(:disabled),html.mdv-cur [role="button"]:n
    and each skin has its own shape below. Decorations live on ::before so the pointer maths never changes. */
 .mdv-cr{--cr:var(--wave,#efe9df);--cr-hi:color-mix(in srgb,var(--cr) 58%,#fff);--cr-ink:#0a0908;
   --c14:color-mix(in srgb,var(--cr) 14%,transparent);--c22:color-mix(in srgb,var(--cr) 22%,transparent);--c34:color-mix(in srgb,var(--cr) 34%,transparent);--c50:color-mix(in srgb,var(--cr) 50%,transparent);--c75:color-mix(in srgb,var(--cr) 75%,transparent);--c92:color-mix(in srgb,var(--cr) 92%,transparent)}
-.mdv-cr .mdv-cr-r{width:44px;height:44px;margin:-22px 0 0 -22px;border:1.5px solid var(--c92);
+.mdv-cr .mdv-cr-r{width:calc(24px*var(--mz,1));height:calc(24px*var(--mz,1));margin:calc(-12px*var(--mz,1)) 0 0 calc(-12px*var(--mz,1));border:1.25px solid var(--c92);
   background:radial-gradient(circle at 50% 50%,var(--c22),var(--c14) 55%,transparent 100%);
   box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 20px var(--c34),inset 0 0 12px var(--c22);
   transition:width .45s cubic-bezier(.16,1,.3,1),height .45s cubic-bezier(.16,1,.3,1),margin .45s cubic-bezier(.16,1,.3,1),background .3s ease,border-color .3s ease,box-shadow .3s ease,transform .18s ease}
 .mdv-cr .mdv-cr-r::before,.mdv-cr .mdv-cr-d::before,.mdv-cr .mdv-cr-d::after{content:"";position:absolute;pointer-events:none;border-radius:50%;opacity:0}
-.mdv-cr .mdv-cr-d{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:var(--cr-hi);box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 14px 2px var(--c75);transition:width .3s ease,height .3s ease,margin .3s ease,opacity .25s ease}
+.mdv-cr .mdv-cr-d{width:calc(6px*var(--mz,1));height:calc(6px*var(--mz,1));margin:calc(-3px*var(--mz,1)) 0 0 calc(-3px*var(--mz,1));background:var(--cr-hi);box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 14px 2px var(--c75);transition:width .3s ease,height .3s ease,margin .3s ease,opacity .25s ease}
 /* over something you can click: the ring opens and fills, the dot shrinks */
-.mdv-cr.link .mdv-cr-r{width:70px;height:70px;margin:-35px 0 0 -35px;border-color:var(--cr-hi);background:radial-gradient(circle,var(--c34),var(--c14) 65%,transparent);box-shadow:0 0 0 1.5px rgba(10,9,8,.45),0 0 26px var(--c50),inset 0 0 16px var(--c34)}
-.mdv-cr.link .mdv-cr-d{width:5px;height:5px;margin:-2.5px 0 0 -2.5px}
+.mdv-cr.link .mdv-cr-r{width:calc(32px*var(--mz,1));height:calc(32px*var(--mz,1));margin:calc(-16px*var(--mz,1)) 0 0 calc(-16px*var(--mz,1));border-color:var(--cr-hi);background:radial-gradient(circle,var(--c34),var(--c14) 65%,transparent);box-shadow:0 0 0 1.5px rgba(10,9,8,.45),0 0 26px var(--c50),inset 0 0 16px var(--c34)}
+.mdv-cr.link .mdv-cr-d{width:calc(4px*var(--mz,1));height:calc(4px*var(--mz,1));margin:calc(-2px*var(--mz,1)) 0 0 calc(-2px*var(--mz,1))}
 /* over a model or a gateway: a filled disc with a word in it */
-.mdv-cr.label .mdv-cr-r{width:98px;height:98px;margin:-49px 0 0 -49px;border-color:transparent;border-style:solid;background:var(--c92);box-shadow:0 8px 26px rgba(0,0,0,.38),0 0 28px var(--c34)}
+.mdv-cr.label .mdv-cr-r{width:calc(64px*var(--mz,1));height:calc(64px*var(--mz,1));margin:calc(-32px*var(--mz,1)) 0 0 calc(-32px*var(--mz,1));border-color:transparent;border-style:solid;background:var(--c92);box-shadow:0 8px 26px rgba(0,0,0,.38),0 0 28px var(--c34)}
 .mdv-cr.label .mdv-cr-r::after{content:attr(data-label);font:500 9px/1 'Jost',system-ui,sans-serif;letter-spacing:.26em;text-indent:.26em;text-transform:uppercase;color:var(--cr-ink)}
 .mdv-cr.label .mdv-cr-d{opacity:0}
 .mdv-cr.label .mdv-cr-r::before,.mdv-cr.label .mdv-cr-d::before,.mdv-cr.label .mdv-cr-d::after{display:none}
@@ -78,16 +78,16 @@ html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-r::before{inset:-9px;border-radiu
              linear-gradient(var(--cr-hi),var(--cr-hi)) 100% 100%/11px 1.5px,linear-gradient(var(--cr-hi),var(--cr-hi)) 100% 100%/1.5px 11px;
   background-repeat:no-repeat;filter:drop-shadow(0 0 3px rgba(10,9,8,.7))}
 html[data-veux-wave="fallArt"] .mdv-cr.link .mdv-cr-r::before{inset:-3px}
-html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-d{width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:radial-gradient(circle at 35% 30%,#fff 0 12%,var(--cr-hi) 13%,var(--cr) 100%);box-shadow:0 0 0 1.5px rgba(10,9,8,.55),0 0 12px 2px var(--c50)}
+html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-d{border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:radial-gradient(circle at 35% 30%,#fff 0 12%,var(--cr-hi) 13%,var(--cr) 100%);box-shadow:0 0 0 1.5px rgba(10,9,8,.55),0 0 12px 2px var(--c50)}
 /* Art Image runs on a portrait background, so its cursor is a smaller frame: a 30px ring, corner brackets that sit closer, and a finer drop. */
-html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-r{width:24px;height:24px;margin:-12px 0 0 -12px;border-width:1.25px}
+html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-r{border-width:1.25px}
 html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-r::before{inset:-5px;
   background-size:7px 1.25px,1.25px 7px,7px 1.25px,1.25px 7px,7px 1.25px,1.25px 7px,7px 1.25px,1.25px 7px}
-html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-d{width:6px;height:6px;margin:-3px 0 0 -3px}
-html[data-veux-wave="fallArt"] .mdv-cr.link .mdv-cr-r{width:32px;height:32px;margin:-16px 0 0 -16px}
+
+
 html[data-veux-wave="fallArt"] .mdv-cr.link .mdv-cr-r::before{inset:-1px}
-html[data-veux-wave="fallArt"] .mdv-cr.link .mdv-cr-d{width:4px;height:4px;margin:-2px 0 0 -2px}
-html[data-veux-wave="fallArt"] .mdv-cr.label .mdv-cr-r{width:64px;height:64px;margin:-32px 0 0 -32px}
+
+
 /* ---- Fall Leaf: an amber leaf that sways in place of the dot ---- */
 html[data-veux-wave="fallLeaf"] .mdv-cr .mdv-cr-d{background:transparent;box-shadow:none;width:4px;height:4px;margin:-2px 0 0 -2px}
 html[data-veux-wave="fallLeaf"] .mdv-cr .mdv-cr-d::before{left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:0;opacity:1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3.5 20.5C3 10.5 9.5 3.5 20.5 3.5c.6 10.5-5.5 17.5-17 17z' fill='%23E0925A' stroke='%2373340F' stroke-width='1.1' stroke-linejoin='round'/%3E%3Cpath d='M3.8 20.2L15 9M9.5 14.5l.2-4.6M12.6 11.6l4.4.2' fill='none' stroke='%2373340F' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 0 4px rgba(224,146,90,.65)) drop-shadow(0 0 1px rgba(10,9,8,.8));transform-origin:50% 50%;animation:mdvCrSway 3.4s ease-in-out infinite alternate}
