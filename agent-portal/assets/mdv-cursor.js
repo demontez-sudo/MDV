@@ -56,7 +56,7 @@ function start(){
   rx=x;ry=y;dx=x;dy=y;
 }
 document.addEventListener('mousemove',function(e){
-  x=e.clientX;y=e.clientY;
+  px=x;py=y;x=e.clientX;y=e.clientY;lastAt=Date.now();
   if(!started)start();
   el.classList.add('on');kick();
 },{passive:true});
@@ -67,6 +67,21 @@ document.addEventListener('mouseover',function(e){
 },true);
 document.addEventListener('mousedown',function(){el.classList.add('down');},true);
 document.addEventListener('mouseup',function(){el.classList.remove('down');},true);
+/* Over a frame we cannot reach (an email body is sandboxed on purpose) the page gets no mouse events at all, so the circles would stay frozen
+   at the spot where the pointer went in. A frame under the pointer is visible to the browser as :hover, so check for that and step aside. */
+var px=-200,py=-200,lastAt=0;
+function overFrame(){
+  try{
+    if(document.querySelector('iframe:hover'))return true;
+    /* the last move before the pointer went in ended just short of the frame: look a little further along the way it was heading */
+    if(px<0&&py<0)return false;
+    var dx=x-px,dy=y-py,len=Math.sqrt(dx*dx+dy*dy);if(len<.5)return false;
+    var ux=dx/len,uy=dy/len,max=Math.min(100,len+3);
+    for(var s=2;s<=max;s+=3){var t=document.elementFromPoint(x+ux*s,y+uy*s);if(t&&t.tagName==='IFRAME')return true;}
+  }catch(e){}
+  return false;
+}
+setInterval(function(){if(started&&el.classList.contains('on')&&Date.now()-lastAt>140&&overFrame())el.classList.remove('on');},90);
 /* leaving the window, or entering an embedded frame, hands the pointer back to the system */
 document.addEventListener('mouseout',function(e){if(!e.relatedTarget||(e.relatedTarget.tagName==='IFRAME')){el.classList.remove('on');}},true);
 
