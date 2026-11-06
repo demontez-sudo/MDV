@@ -4416,6 +4416,7 @@ if(EMB&&!EMB_HOME){window.__dsVis=(t,h)=>{const r=document.documentElement.style
 if(EMB){
  window.__dsMenu=()=>visDesks().flatMap(d=>d.pages).filter(p=>p[0]!=="command"&&p[0]!=="mail"&&p[0]!=="settings").map(p=>({k:p[0],l:p[1]}));
  window.__dsView=()=>S.view;
+ if(!EMB_HOME)document.addEventListener("click",()=>{try{parent.MDV_DS_EMBED.hold()}catch(_){}},true);
  window.__dsGo=(v,t)=>{if(!PAGES[pageKey(v)])return;S.view=pageKey(v);if(t)S.tabs[S.view]=t;if(!["today","life","health"].includes(S.view))S.date=todayIso();S.navOpen=false;render();try{parent.scrollTo(0,0)}catch(_){}};
  if(EMB_HOME&&window.ResizeObserver)new ResizeObserver(()=>hbSize()).observe(document.documentElement);
 }

@@ -98,11 +98,24 @@ function frameWin(){var f=E.host&&E.host.querySelector&&E.host.querySelector('.d
 function menu(){var w=frameWin(),list=null;try{list=w?w.__dsMenu():null;}catch(x){}return (list&&list.length?list:FALLBACK.map(function(f){return {k:f[0],l:f[1]};})).filter(function(m){return m.k!=='profile'&&m.k!=='settings'&&m.k!=='command';});}
 function active(){var w=frameWin();try{return w?w.__dsView():'today';}catch(x){return 'today';}}
 /* the top bar's DaySilk tabs drive the app, and the highlighted tab follows what the app is showing */
-document.addEventListener('click',function(e){
+/* A DaySilk tab only ever changes the DaySilk page. The click is handled here, first, and no other part of the portal gets to act on it;
+   and for a moment afterwards the portal is not allowed to jump to its own Travel or Mobility pages. */
+window.addEventListener('click',function(e){
   var b=e.target.closest&&e.target.closest('#ws-hubbar [data-ds-go]');if(!b)return;
-  e.preventDefault();var w=frameWin();if(w){try{w.__dsGo(b.getAttribute('data-ds-go'));}catch(x){}}
+  e.preventDefault();e.stopImmediatePropagation();
+  E.hold=Date.now()+1200;
+  var w=frameWin();if(w){try{w.__dsGo(b.getAttribute('data-ds-go'));}catch(x){}}
   b.parentNode.querySelectorAll('[data-ds-go]').forEach(function(x){x.classList.toggle('on',x===b);});
-});
+},true);
+function guardNav(){
+  var n=window.navTo;if(typeof n!=='function'||n.__dsGuard)return;
+  var g=function(p){
+    if(E.hold&&Date.now()<E.hold&&/^(travel|globalmobility|mobility|travelvisa|travel-visa)$/i.test(String(p||''))){try{console.warn('[DaySilk] ignored a jump to',p);}catch(x){}return;}
+    return n.apply(this,arguments);
+  };
+  g.__dsGuard=true;g.__previous=n;window.navTo=g;
+}
+setInterval(guardNav,500);guardNav();
 /* The owner's DaySilk (The Rebuild) is a full page like every other portal page: the frame is as tall as its content and the portal page scrolls.
    It tells us its height; we also tell it which part of it is on screen, so its pop-ups open where you are looking.
    The business DaySilk does not report a height, so it keeps the older fixed frame that scrolls inside. */
@@ -152,7 +165,7 @@ function openView(v,t){
     if(w&&E.host&&E.host.offsetParent!==null){try{w.__dsGo(v,t);}catch(x){}clearInterval(iv);}else if(n>50)clearInterval(iv);
   },150);
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */
