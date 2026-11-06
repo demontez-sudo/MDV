@@ -903,6 +903,14 @@ for = "/daysilk/config.js"
   [headers.values]
   Cache-Control = "no-cache"
 [[headers]]
+for = "/daysilk/me/index.html"
+  [headers.values]
+  Cache-Control = "no-cache"
+[[headers]]
+for = "/admin/daysilk/me/index.html"
+  [headers.values]
+  Cache-Control = "no-cache"
+[[headers]]
 for = "/admin/daysilk/index.html"
   [headers.values]
   Cache-Control = "no-cache"

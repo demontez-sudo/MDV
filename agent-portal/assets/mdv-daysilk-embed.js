@@ -9,7 +9,15 @@ var E={host:null,loaded:false,loading:false,chips:null,at:0,ready:false,setup:nu
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function arr(v){return Array.isArray(v)?v:[];}
 function mount(){return window.__VEUX_AGENT_MOUNT__==null?(/^\/(?:admin|team)(?:\/|$)/.test(location.pathname)?'/admin':''):window.__VEUX_AGENT_MOUNT__;}
-function src(){return mount()+'/daysilk/';}
+/* the owner's own DaySilk (The Rebuild: schedule, models, trips, body) runs on the portal's sign-in; everyone else keeps the business DaySilk */
+var OWNERS=['demontez@maisondeveux.com'];
+function resolveOwner(){
+  if(E.owner!==undefined)return Promise.resolve(E.owner);
+  var c=window.VEUX_SUPABASE_CLIENT;
+  if(!c||!c.auth||!c.auth.getSession)return Promise.resolve(false);
+  return c.auth.getSession().then(function(r){var u=r&&r.data&&r.data.session&&r.data.session.user;E.owner=!!(u&&u.email&&OWNERS.indexOf(String(u.email).toLowerCase())>-1);return E.owner;}).catch(function(){E.owner=false;return false;});
+}
+function src(){return mount()+(E.owner?'/daysilk/me/':'/daysilk/');}
 function bridge(){var b=window.VEUX_AGENT_V4;return b&&b.api?b:null;}
 function org(){try{return bridge().state.org.slug||'maison-de-veux';}catch(e){return 'maison-de-veux';}}
 function get(p){return bridge().api(p,{method:'GET',headers:{},__fresh:true});}
@@ -53,14 +61,16 @@ function chipsHtml(){
   return c.map(function(x){return '<button type="button" class="dse-c '+esc(x.t)+'" data-dse-go="'+esc(x.go)+'">'+esc(x.x)+'</button>';}).join('');
 }
 function ensureAccount(){
+  if(E.owner){E.ready=true;E.err='';return null;}
+  if(E.owner===undefined)return null;
   if(E.ready||E.setup)return E.setup;
   var b=bridge();if(!b)return null;
   E.setup=b.api('/api/agent/daysilk-account',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organization_slug:org()})}).then(function(){E.ready=true;E.err='';}).catch(function(e){E.err=(e&&e.message)||'DaySilk could not be set up for your account.';}).then(function(){E.setup=null;paint(true);if(E.homeRoot)attach(E.homeRoot);});
   return E.setup;
 }
 function frameHtml(){
-  if(E.err)return '<div class="dse-note"><b>DaySilk is not ready yet</b><p>'+esc(E.err)+'</p><button type="button" class="dse-b" data-dse-retry="1">Try again</button></div>';
-  if(!E.ready)return '<div class="dse-note"><p>Setting up your DaySilk\u2026</p></div>';
+  if(E.err&&!E.owner)return '<div class="dse-note"><b>DaySilk is not ready yet</b><p>'+esc(E.err)+'</p><button type="button" class="dse-b" data-dse-retry="1">Try again</button></div>';
+  if(E.owner===undefined||(!E.ready&&!E.owner))return '<div class="dse-note"><p>Setting up your DaySilk\u2026</p></div>';
   return '<iframe class="dse-f" src="'+esc(src())+'" title="DaySilk" allow="clipboard-write; fullscreen" allowtransparency="true"></iframe>';
 }
 function paint(force){
@@ -101,6 +111,7 @@ function attach(root){
   E.homeRoot=root;
   if(h.querySelector('iframe')||h.hidden)return;
   if(E.err){h.hidden=true;return;}
+  if(E.owner===undefined){resolveOwner().then(function(){attach(root);});return;}
   if(!E.ready){if(!E.setup)ensureAccount();return;}
   h.innerHTML='<iframe class="dse-hf" src="'+esc(src()+'?home=1')+'" title="DaySilk today" allowtransparency="true" scrolling="no"></iframe>';
 }
@@ -111,7 +122,7 @@ function openView(v,t){
     if(w&&E.host&&E.host.offsetParent!==null){try{w.__dsGo(v,t);}catch(x){}clearInterval(iv);}else if(n>50)clearInterval(iv);
   },150);
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;paint();ensureAccount();refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */
