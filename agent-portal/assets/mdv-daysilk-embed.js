@@ -101,12 +101,12 @@ document.addEventListener('click',function(e){
   e.preventDefault();var w=frameWin();if(w){try{w.__dsGo(b.getAttribute('data-ds-go'));}catch(x){}}
   b.parentNode.querySelectorAll('[data-ds-go]').forEach(function(x){x.classList.toggle('on',x===b);});
 });
-/* one scroll only: the DaySilk frame is sized to the visible screen (it scrolls inside), and the portal page behind it stays still */
+/* one scroll only: the DaySilk frame is sized to the visible screen down to its bottom edge (it scrolls inside, with room left under the content for the floating bar), and the portal page behind it stays still */
 function fit(){
   var h=E.host,f=h&&h.isConnected&&h.querySelector&&h.querySelector('.dse-f'),on=!!(f&&f.offsetParent!==null),root=document.documentElement;
   if(root.classList.contains('mdv-ds-lock')!==on){root.classList.toggle('mdv-ds-lock',on);if(on)window.scrollTo(0,0);}
   if(!on)return;
-  var top=f.getBoundingClientRect().top+(window.pageYOffset||0),reserve=window.innerWidth>820?92:72;
+  var top=f.getBoundingClientRect().top+(window.pageYOffset||0),reserve=0;
   var px=Math.max(420,Math.round(window.innerHeight-top-reserve))+'px';
   if(f.style.height!==px)f.style.height=px;
 }
