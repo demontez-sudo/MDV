@@ -24,3 +24,6 @@
 /* single scroll: while the DaySilk frame is on screen the portal page itself does not scroll */
 html.mdv-ds-lock,html.mdv-ds-lock body{overflow:hidden!important}
 .dse-f{min-height:0!important}
+
+/* readability: the portal artwork behind the DaySilk frame is blurred and darkened, so text never sits on a busy picture */
+.dse-f{-webkit-backdrop-filter:blur(16px) brightness(.5);backdrop-filter:blur(16px) brightness(.5)}
