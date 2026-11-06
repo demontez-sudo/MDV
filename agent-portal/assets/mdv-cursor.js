@@ -68,4 +68,44 @@ document.addEventListener('mousedown',function(){el.classList.add('down');},true
 document.addEventListener('mouseup',function(){el.classList.remove('down');},true);
 /* leaving the window, or entering an embedded frame, hands the pointer back to the system */
 document.addEventListener('mouseout',function(e){if(!e.relatedTarget||(e.relatedTarget.tagName==='IFRAME')){el.classList.remove('on');}},true);
+
+/* Pages that open inside a frame (DaySilk and the like) are separate documents: the page's pointer events never reach this file from inside them,
+   so the circles would vanish there. Give each same-origin frame its own copy of the cursor, in the same colours as the page's background. */
+var SRC='';try{SRC=(document.currentScript&&document.currentScript.src)||'';}catch(e){}
+if(!SRC){var sc=document.querySelectorAll('script[src*="mdv-cursor.js"]');if(sc.length)SRC=sc[sc.length-1].src;}
+var CSS=SRC?SRC.replace(/mdv-cursor\.js/,'mdv-cursor.css'):'',wired=[];
+function skin(d){
+  try{
+    var r=d.documentElement,w=root.getAttribute('data-veux-wave');
+    if(w!==null&&r.getAttribute('data-veux-wave')!==w)r.setAttribute('data-veux-wave',w);
+    var v=getComputedStyle(root).getPropertyValue('--wave').trim();
+    if(v&&r.style.getPropertyValue('--wave')!==v)r.style.setProperty('--wave',v);
+  }catch(e){}
+}
+function wire(fr){
+  if(!SRC)return;
+  try{
+    var d=fr.contentDocument;if(!d||!d.documentElement||!d.head&&!d.body)return;
+    if(!d.getElementById('mdv-cursor-css')){
+      var l=d.createElement('link');l.id='mdv-cursor-css';l.rel='stylesheet';l.href=CSS;(d.head||d.documentElement).appendChild(l);
+    }
+    if(!d.getElementById('mdv-cursor-js')){
+      var j=d.createElement('script');j.id='mdv-cursor-js';j.src=SRC;(d.body||d.documentElement).appendChild(j);
+    }
+    skin(d);if(wired.indexOf(fr)<0)wired.push(fr);
+  }catch(e){}   /* a frame from another site is left alone */
+}
+function scan(){
+  var f=document.querySelectorAll('iframe');
+  for(var i=0;i<f.length;i++){(function(fr){
+    if(!fr.__mdvCur){fr.__mdvCur=1;fr.addEventListener('load',function(){wire(fr);});}
+    try{var d=fr.contentDocument;if(d&&d.readyState!=='loading'&&!d.getElementById('mdv-cursor-js'))wire(fr);}catch(e){}
+  })(f[i]);}
+}
+setInterval(function(){
+  scan();
+  for(var i=wired.length-1;i>=0;i--){var fr=wired[i];if(!fr.isConnected){wired.splice(i,1);continue;}try{skin(fr.contentDocument);}catch(e){}}
+},1000);
+try{new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+scan();
 })();
