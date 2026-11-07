@@ -29,7 +29,7 @@ var SECTIONS=[
   {id:'home',label:'Home',icon:'ti-home-2',page:'overview'},
   {id:'helm',label:'DaySilk',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','DaySilk'],['tasksconsolidated','Team Tasks'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
   {id:'inbox',label:'Inbox',icon:'ti-inbox',page:'inbox',badge:'inbox',sub:[['inbox','Messages'],['mail','Mail'],['notes','Notes']]},
-  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Agency Calendar'],['helmcalendar','DaySilk Calendar'],['availability','Availability']]}]},
+  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Agency Calendar'],['availability','Availability']]}]},
  {cap:'Agency',items:[
   {id:'roster',label:'Roster',icon:'ti-users',page:'roster',sub:[['roster','Roster'],['scouting','Scouting'],['seasonmanagement','Season'],['modeldevelopment','Development'],['modelevaluations','Evaluations'],['modelsubmissions','Submissions']]},
   {id:'clients',label:'Clients',icon:'ti-user-circle',page:'industrydirectory',sub:[['industrydirectory','Clients'],['outreach','Outreach']]},
@@ -216,7 +216,7 @@ function deskItems(p,H){
     out.push({k:'task',pri:(d!=null&&d<0)||/urgent|critical/.test(pr)?'r':d===0||/high/.test(pr)?'o':/low/.test(pr)?'g':'y',title:t.title||'Task',sub:(mod?nameOf(mod)+' · ':'')+String(t.category||'Task'),model:mod||null,owner:owners[0]?mname(owners[0]):'Unassigned',due:due,btn:'Open',nav:'tasksconsolidated',mine:!owners.length||!me||owners.some(function(o){return o.id===me.id;}),id:t.id});
   });
   arr(p.tasks&&p.tasks.approvals).forEach(function(a){var due=a.due_at||a.created_at||null;out.push({k:'approval',pri:'o',title:a.title||a.subject||'Approval required',sub:a.requested_by_name||a.type||'Needs a decision',owner:(me&&mname(me))||'You',due:due,btn:'Approve',nav:'approvals',mine:true,id:a.id});});
-  H.calList(p.cal).filter(function(x){var t=new Date(x.starts_at).getTime();return t>=Date.now()&&t<=Date.now()+48*36e5&&/pending|hold|tentative|await|invited/i.test(x.status);}).slice(0,3).forEach(function(x){out.push({k:'booking',pri:'y',title:'Confirm '+x.title,sub:(x.models[0]||'')+(x.sub?(x.models[0]?' · ':'')+x.sub:''),owner:'Bookings',due:x.starts_at,btn:'Review',nav:'calendar',mine:true,modelName:x.models[0]});});
+  H.calList(p.cal).filter(function(x){var t=new Date(x.starts_at).getTime();return t>=Date.now()&&t<=Date.now()+48*36e5&&/pending|hold|tentative|await|invited/i.test(x.status);}).slice(0,3).forEach(function(x){out.push({k:'booking',pri:'y',title:'Confirm '+x.title,sub:(x.models[0]||'')+(x.sub?(x.models[0]?' · ':'')+x.sub:''),owner:'Bookings',due:x.starts_at,btn:'Review',nav:'calendar',mine:true,modelName:x.models[0],rt:x.kind||'booking',rid:x.id||''});});
   arr(p.finance&&p.finance.overdue).slice(0,2).forEach(function(x){out.push({k:'invoice',pri:'r',title:'Follow up overdue invoice',sub:((x.companies&&x.companies.name)||'Client')+' · '+(x.invoice_number||'Invoice'),owner:'Finance',due:x.due_date||null,btn:'Open',nav:'agentcommissions',mine:true,overdue:true});});
   H.veuxiSignals(p).filter(function(x){return /blocked|critical/.test(x.severity);}).slice(0,2).forEach(function(x){out.push({k:'veuxi',pri:'r',title:x.title,sub:String(x.domain||'')+' · '+(x.detail||''),owner:'Veux',due:null,btn:'Open',nav:x.nav,mine:true,blocked:true,rt:x.recordType,rid:x.recordId});});
   return out;

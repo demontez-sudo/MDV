@@ -1303,6 +1303,8 @@ html.emb-home,html.emb-home body{background:transparent!important;min-height:0!i
 html.emb-home .app{min-height:0!important}
 html.emb-home main{padding:0!important}
 html.emb-alerts body{display:none!important}
+.sa-top{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 12px}.sa-top b{display:block;font-size:16px}.sa-top span{color:var(--muted);font-size:13px}
+.sa-or{margin:0 0 8px;color:var(--muted);font-size:13.5px}.sa-or b{color:var(--ink);font-weight:600}.sa-help{margin:10px 0 0}
 .hb-od{display:flex;align-items:center;gap:14px;margin:0 0 14px;padding:12px 16px;border:1px solid rgba(224,138,96,.35);border-radius:12px;background:rgba(224,138,96,.08)}
 .hb-od .badge2o{font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:#E08A60;color:#1b1512}
 .hb-od b{font-weight:500;font-size:14px;flex:1}
@@ -2082,13 +2084,13 @@ function setP(o,p,v){const ks=p.split(".");let a=o;for(let i=0;i<ks.length-1;i++
 function allTasks(){
  const c=core(),out=[];
  PLAN.forEach(p=>{const st=c.ts[p.id]||{};const subs=p.s.map((t,i)=>({t,done:!!(st.subs&&st.subs[i])})).concat((st.extra||[]).map(x=>({t:x.t,done:!!x.done})));out.push({id:p.id,kind:"plan",title:p.t,area:p.a,due:st.due||p.due,time:st.time||"",prio:p.p,subs,done:!!st.done,base:p.s.length,notes:st.notes||""})});
- c.portalTasks.forEach(p=>{const st=c.ts[p.id]||{};const subs=(p.subs||[]).map((t,i)=>({t,done:!!(st.subs&&st.subs[i])})).concat((st.extra||[]).map(x=>({t:x.t,done:!!x.done})));out.push({id:p.id,kind:"portal",title:p.title,area:"Portal",due:st.due||p.due||"",time:st.time||p.time||"",prio:2,subs,done:!!st.done||p.done,base:(p.subs||[]).length,meta:p.meta,notes:st.notes||""})});
+ (c.portalTasks||[]).filter(p=>!(c.portalDone&&c.portalDone[p.id])).forEach(p=>{const st=c.ts[p.id]||{};const subs=(p.subs||[]).map((t,i)=>({t,done:!!(st.subs&&st.subs[i])})).concat((st.extra||[]).map(x=>({t:x.t,done:!!x.done})));out.push({id:p.id,kind:"portal",title:p.title,area:"Portal",due:st.due||p.due||"",time:st.time||p.time||"",prio:2,subs,done:!!st.done||p.done,base:(p.subs||[]).length,meta:p.meta,notes:st.notes||""})});
  c.tasks.forEach(u=>out.push({id:u.id,kind:"me",title:u.title,area:u.area,due:u.due||"",time:u.time||"",prio:u.prio||2,subs:u.subs||[],done:!!u.done,base:0,notes:u.notes||""}));
  return ASSIST?out.filter(t=>!PRIVATE_AREAS.test(t.area||"")):out;
 }
 function tState(id){const c=core();if(!c.ts[id])c.ts[id]={};return c.ts[id]}
 function findUser(id){return core().tasks.find(t=>t.id===id)}
-function toggleTask(id){const u=findUser(id);if(u)u.done=!u.done;else{const s=tState(id);s.done=!s.done;if(EMB&&s.done&&String(id).startsWith("pt-")){try{parent.MDV_DS_EMBED.completePortalTask(String(id).slice(3)).then(()=>{const c=core();c.portalTasks=(c.portalTasks||[]).filter(p=>p.id!==id);markDirty("core");render()}).catch(()=>{tState(id).done=false;markDirty("core");render();toast("The portal would not mark it done. Try again, or complete it in the portal.")})}catch(_){}}}markDirty("core")}
+function toggleTask(id){const u=findUser(id);if(u)u.done=!u.done;else{const s=tState(id);s.done=!s.done;if(EMB&&s.done&&String(id).startsWith("pt-")){try{parent.MDV_DS_EMBED.completePortalTask(String(id).slice(3)).then(()=>{const c=core();c.portalDone=c.portalDone||{};c.portalDone[id]=Date.now();c.portalTasks=(c.portalTasks||[]).filter(p=>p.id!==id);markDirty("core");render()}).catch(()=>{tState(id).done=false;markDirty("core");render();toast("The portal would not mark it done. Try again, or complete it in the portal.")})}catch(_){}}}markDirty("core")}
 function toggleSub(id,i){const u=findUser(id);if(u){u.subs[i].done=!u.subs[i].done}else{const t=allTasks().find(x=>x.id===id),s=tState(id);if(i<t.base){s.subs=s.subs||{};s.subs[i]=!s.subs[i]}else{s.extra[i-t.base].done=!s.extra[i-t.base].done}}markDirty("core")}
 function addSub(id,txt){const u=findUser(id);if(u)u.subs.push({t:txt,done:false});else{const s=tState(id);s.extra=s.extra||[];s.extra.push({t:txt,done:false})}markDirty("core")}
 function delSub(id,i){const u=findUser(id);if(u)u.subs.splice(i,1);else{const t=allTasks().find(x=>x.id===id);if(i>=t.base)tState(id).extra.splice(i-t.base,1)}markDirty("core")}
@@ -3556,7 +3558,7 @@ function parseEvent(str){
  return{title:p.title,d:p.due||S.date,t:p.time,e:p.time?en:"",rep,where,cat}}
 function smartChips(v){if(!v.title)return`<span class="muted small">Try: Lunch with Erica fri 1-2pm at Nobu · Board call every mon 9am for 30m · Fitting oct 20 3pm</span>`;
  return`<span class="chip solid">${esc(v.title)}</span><span class="chip">${fmtMD(v.d)}</span><span class="chip">${v.t?rangeTxt({time:v.t,end:v.e}):"All day"}</span>${v.where?`<span class="chip">@ ${esc(v.where)}</span>`:""}${v.rep?`<span class="chip">${esc(EV_REP.find(r=>r[0]===v.rep)[1])}</span>`:""}<span class="chip">${esc(catName(v.cat))}</span>${clashes(v.d,v.t,v.e).length?`<span class="chip warn">Overlaps ${esc(clashes(v.d,v.t,v.e)[0].title)}</span>`:""}`}
-function smartBar(){return`<form class="smartadd" id="smartAdd" autocomplete="off"><div class="sa-in">${xi("plus","xi sm")}<input class="txt" id="saIn" name="q" placeholder="Add to calendar: “Lunch with Erica fri 1-2pm at Nobu”" aria-label="Add to calendar by typing"><button class="btn sm solid" type="submit">Add</button><button class="btn sm" type="button" data-act="newev" data-d="${S.date}">Form</button></div><div class="sa-chips" id="saChips">${smartChips({})}</div></form>`}
+function smartBar(){return`<form class="smartadd" id="smartAdd" autocomplete="off"><div class="sa-top"><div><b>Add an event</b><span>Pick how you want to add it.</span></div><button class="btn solid" type="button" data-act="newev" data-d="${S.date}">${xi("plus","xi sm")} New event</button></div><div class="sa-or">Or type it in plain words and press <b>Add typed event</b>:</div><div class="sa-in">${xi("plus","xi sm")}<input class="txt" id="saIn" name="q" placeholder="Lunch with Erica fri 1-2pm at Nobu" aria-label="Type an event in plain words"><button class="btn sm solid" type="submit">Add typed event</button></div><div class="sa-chips" id="saChips">${smartChips({})}</div><p class="sa-help small muted"><b>New event</b> opens the full form: date, start and end time, repeat, where and notes.</p></form>`}
 document.addEventListener("input",e=>{if(e.target.id!=="saIn")return;const v=parseEvent(e.target.value);document.getElementById("saChips").innerHTML=e.target.value.trim()?smartChips(v):smartChips({})});
 document.addEventListener("submit",e=>{if(e.target.id!=="smartAdd")return;e.preventDefault();const q=e.target.elements.q.value.trim();if(!q)return;const v=parseEvent(q);if(!v.title)return;
  if(msState==="on"&&!v.rep){msCreate({title:v.title,d:v.d,t:v.t,e:v.e,where:v.where}).then(()=>{e.target.reset&&e.target.reset();render()});return}
@@ -4430,7 +4432,7 @@ if(EMB_ALERTS)setInterval(feedTick,30000);
 let psBusy=false;
 async function portalSync(){
  if(!EMB||EMB_ALERTS||!sbUser||!baseReady||psBusy)return;psBusy=true;
- try{await refreshFromCloud();const list=await parent.MDV_DS_EMBED.portalTasks(true);if(Array.isArray(list)){const c=core();if(JSON.stringify(c.portalTasks||[])!==JSON.stringify(list)){c.portalTasks=list;markDirty("core")}}}catch(_){}
+ try{await refreshFromCloud();const list=await parent.MDV_DS_EMBED.portalTasks(true);if(Array.isArray(list)){const c=core(),dn=c.portalDone||{},cut=Date.now()-21*864e5;Object.keys(dn).forEach(k=>{if(dn[k]<cut)delete dn[k]});const next=list.filter(p=>!dn[p.id]);if(JSON.stringify(c.portalTasks||[])!==JSON.stringify(next)){c.portalTasks=next;markDirty("core")}}}catch(_){}
  psBusy=false
 }
 if(EMB&&!EMB_ALERTS){setInterval(portalSync,90000);setTimeout(portalSync,4000);setTimeout(portalSync,15000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)portalSync()})}
