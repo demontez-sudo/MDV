@@ -49,7 +49,7 @@
     var img=row.image_url||fb;
     /* the first screenful loads right away, the rest as you scroll */
     var first=i<4,attrs=(first?' loading="eager"'+(i<2?' fetchpriority="high"':''):' loading="lazy"')+' decoding="async"';
-    var visual=img?'<img src="'+esc(sized(img,800))+'" srcset="'+esc(sized(img,480))+' 480w, '+esc(sized(img,800))+' 800w, '+esc(sized(img,1200))+' 1200w" sizes="(max-width:760px) 50vw, 25vw" alt="'+esc(row.display_name)+'"'+attrs+'>':'<span class="placeholder-label">Image Pending</span>';
+    var visual=img?'<img src="'+esc(sized(img,800))+'" srcset="'+esc(sized(img,480))+' 480w, '+esc(sized(img,800))+' 800w, '+esc(sized(img,1200))+' 1200w" sizes="(max-width:760px) 50vw, 25vw" alt="'+esc(row.display_name)+'" data-o="'+esc(img)+'" data-fb="'+esc(fb)+'"'+attrs+'>':'<span class="placeholder-label">Image Pending</span>';
     return '<a class="roster-tile" data-cursor="View" style="--d:'+((i%4)*.09).toFixed(2)+'s" href="'+esc(row.profile_path||profilePathFor(row.display_name)||'#')+'">'
       +'<div class="roster-image">'+visual+'<i class="rt-c a"></i><i class="rt-c b"></i><i class="rt-c c"></i><i class="rt-c d"></i></div>'
       +'<div class="roster-cap"><span class="roster-name">'+esc(row.display_name)+'</span></div></a>';
@@ -134,4 +134,13 @@
     }
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',run,{once:true}); else run();
+  /* A photo the image host cannot resize (a very large or unusual original) used to leave a broken picture. Try the original file, then the saved fallback, then a neat "Image Pending" tile. */
+  document.addEventListener('error',function(e){
+    var t=e.target;if(!t||t.tagName!=='IMG'||!t.closest||!t.closest('.roster-image'))return;
+    var st=Number(t.getAttribute('data-st')||0),o=t.getAttribute('data-o')||'',fb=t.getAttribute('data-fb')||'';
+    if(st===0&&o&&t.currentSrc!==o){t.setAttribute('data-st','1');t.removeAttribute('srcset');t.removeAttribute('sizes');t.src=o;return;}
+    if(st<=1&&fb&&o!==fb&&t.currentSrc.indexOf(fb)<0){t.setAttribute('data-st','2');t.removeAttribute('srcset');t.removeAttribute('sizes');t.src=fb;return;}
+    var box=t.closest('.roster-image');t.remove();
+    if(box&&!box.querySelector('.placeholder-label')){var sp=document.createElement('span');sp.className='placeholder-label';sp.textContent='Image Pending';box.insertBefore(sp,box.firstChild);}
+  },true);
 })();
