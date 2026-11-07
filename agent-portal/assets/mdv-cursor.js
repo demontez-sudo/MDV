@@ -125,6 +125,6 @@ setInterval(function(){
   scan();
   for(var i=wired.length-1;i>=0;i--){var fr=wired[i];if(!fr.isConnected){wired.splice(i,1);continue;}try{skin(fr.contentDocument);}catch(e){}}
 },1000);
-try{new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
+var scanT=0;try{new MutationObserver(function(){if(scanT)return;scanT=setTimeout(function(){scanT=0;scan();},400);}).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}   /* this portal redraws constantly: look for new frames at most every 0.4s */
 scan();
 })();

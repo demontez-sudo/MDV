@@ -42,6 +42,7 @@ function build(it,phase,now){
 /* ---- the clock ---- */
 function tick(){
   if(!S.on||!feed.length)return;
+  fired=readFired();   /* another open tab may already have raised this one */
   var now=Date.now();if(inQuiet(now))return;
   var lead=S.lead*60000,tw=S.trans>0?S.trans*60000:0,out=[];
   feed.forEach(function(it){
@@ -152,7 +153,7 @@ function boot(){
     if(!(r&&r.data&&r.data.session)||booted)return;
     booted=true;
     E.prepare().then(function(info){
-      if(!info||!info.src||(!info.owner&&!info.ready))return;
+      if(!info||!info.src||(!info.owner&&!info.ready)){booted=false;return;}   /* not set up yet: look again in a few seconds */
       var f=document.createElement('iframe');f.id='mdv-dsa-frame';f.setAttribute('aria-hidden','true');f.tabIndex=-1;f.title='DaySilk alerts';
       f.src=info.src+'?alerts=1';f.style.cssText='position:fixed;left:-9999px;top:0;width:480px;height:320px;border:0;opacity:0;pointer-events:none';
       document.body.appendChild(f);frame=f;

@@ -22,8 +22,17 @@ export const handler=async(event)=>{
         const cleanPerms=async()=>{
           const want=[...new Set((Array.isArray(body.permissions)?body.permissions:[]).map(x=>String(x||'').trim()).filter(Boolean))];
           if(want.some(k=>!KEY.test(k)||k.length>80))throw Object.assign(new Error('Unknown permission'),{statusCode:400,publicMessage:'One of the permissions is not valid.'});
-          /* nobody can hand out access they do not have themselves */
-          for(const k of want){if(!await assertPermission(admin,user.id,organization.id,k))throw Object.assign(new Error('No such access'),{statusCode:403,publicMessage:'You can only give a role access that you have yourself ('+k+').'});}
+          /* nobody can hand out access they do not have themselves (one lookup of what the caller holds, not one per permission) */
+          const mine=new Set();
+          const {data:mem}=await admin.from('organization_members').select('id').eq('organization_id',organization.id).eq('user_id',user.id).eq('status','active').limit(1);
+          if(mem&&mem[0]){
+            const {data:links}=await admin.from('member_roles').select('role_id').eq('member_id',mem[0].id);
+            const rids=(links||[]).map(x=>x.role_id);
+            if(rids.length){const {data:ps}=await admin.from('role_permissions').select('permission_key').in('role_id',rids);(ps||[]).forEach(x=>mine.add(x.permission_key));}
+          }
+          ['messages.read','messages.write'].forEach(k=>mine.add(k));
+          const all=mine.has('*')||mine.has('owner')||mine.has('platform.admin');
+          for(const k of want){if(!all&&!mine.has(k)&&!await assertPermission(admin,user.id,organization.id,k))throw Object.assign(new Error('No such access'),{statusCode:403,publicMessage:'You can only give a role access that you have yourself ('+k+').'});}
           return want;
         };
         const ownedRole=async(id)=>{
@@ -34,8 +43,12 @@ export const handler=async(event)=>{
         };
         const withPerms=async(role)=>{const {data,error}=await admin.from('role_permissions').select('permission_key').eq('role_id',role.id);if(error)throw error;return {...role,permissions:(data||[]).map(x=>x.permission_key)};};
         const setPerms=async(roleId,keys)=>{
-          const {error:de}=await admin.from('role_permissions').delete().eq('role_id',roleId);if(de)throw de;
-          if(keys.length){const {error:ie}=await admin.from('role_permissions').insert(keys.map(k=>({role_id:roleId,permission_key:k})));if(ie)throw ie;}
+          /* change only what differs, so a failure part-way never leaves a role with no access at all */
+          const {data:cur,error:ce}=await admin.from('role_permissions').select('permission_key').eq('role_id',roleId);if(ce)throw ce;
+          const have=new Set((cur||[]).map(x=>x.permission_key)),want=new Set(keys);
+          const add=keys.filter(k=>!have.has(k)),drop=[...have].filter(k=>!want.has(k));
+          if(add.length){const {error:ie}=await admin.from('role_permissions').insert(add.map(k=>({role_id:roleId,permission_key:k})));if(ie)throw ie;}
+          if(drop.length){const {error:de}=await admin.from('role_permissions').delete().eq('role_id',roleId).in('permission_key',drop);if(de)throw de;}
         };
         if(action==='create_role'){
           const name=String(body.name||'').trim().slice(0,60);if(!name)throw Object.assign(new Error('name'),{statusCode:400,publicMessage:'Give the role a name.'});
