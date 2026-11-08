@@ -70,7 +70,7 @@ async function openMessage(id){
   if(had){var rd=document.getElementById('mm-reader');if(rd)rd.classList.add('mm-busy');}else paintReader();
   try{
     var d=await call('message',{id:id});if(S.sel!==id)return;
-    d.message.inline=arr(d.inline_images);S.detail={m:d.message,att:arr(d.attachments)};
+    d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);S.detail={m:d.message,att:arr(d.attachments)};
     var row=S.messages.filter(function(x){return x.id===id;})[0];
     if(row&&!row.is_read){row.is_read=true;var f=S.folders.filter(function(x){return x.id===S.folder;})[0];if(f&&f.unread>0)f.unread--;}
   }catch(e){S.detail={error:msg(e)};}
@@ -151,6 +151,24 @@ function paintList(){
 }
 /* pictures load by default; a person can switch them off (Hide web images) and that choice is remembered */
 function imagesAlways(){try{return localStorage.getItem('mdv-mail-images')!=='0';}catch(e){return true;}}
+/* big embedded photos (phone pictures) come one at a time after the message opens, then the body redraws with them in place */
+function cidsLeft(m){
+  if(!m||m.body_type!=='html')return [];
+  var have={};arr(m.inline).forEach(function(x){if(x&&x.cid&&x.data)have[String(x.cid).toLowerCase()]=1;});
+  return (String(m.body).match(/cid:[^"'\s)>]+/gi)||[]).map(function(c){c=c.slice(4);try{c=decodeURIComponent(c);}catch(e){}return c.toLowerCase();}).filter(function(c){return !have[c];});
+}
+function fillPending(m,repaint){
+  if(!m||m._pend||!arr(m.pending).length||!cidsLeft(m).length)return;
+  m._pend=true;
+  var q=m.pending.slice();
+  (function next(){
+    if(!q.length||!cidsLeft(m).length){m._pend=false;return;}
+    var p=q.shift();
+    call('attachment',{id:m.id,attachment_id:p.id}).then(function(f){
+      if(f&&f.content_id&&f.content_base64){m.inline=arr(m.inline).concat([{cid:f.content_id,content_type:/^image\//i.test(f.content_type||'')?f.content_type:'image/jpeg',data:f.content_base64}]);repaint();}
+    }).catch(function(){}).then(next);
+  })();
+}
 function bodyDoc(m,showImages){
   var csp="default-src 'none'; img-src data: cid:"+(showImages?' https: http:':'')+"; style-src 'unsafe-inline'; font-src data:";
   var inner=m.body_type==='html'?m.body:'<pre style="white-space:pre-wrap;font:inherit">'+esc(m.body)+'</pre>';
@@ -177,6 +195,7 @@ function paintReader(){
     +'<iframe class="mm-body" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Message body"></iframe>'
     +'<div class="mm-thread" id="mm-thread" hidden></div>';
   el.querySelector('iframe').srcdoc=bodyDoc(m,S.showImages);
+  fillPending(m,function(){if(S.sel!==m.id)return;var fr=document.querySelector('#mm-reader .mm-body');if(fr)fr.srcdoc=bodyDoc(m,S.showImages);});
   wire(el);paintReply();loadThread(m.id);
 }
 
@@ -196,7 +215,7 @@ function tBody(id){
   var T=S.thread,m=S.detail&&S.detail.m;
   if(m&&m.id===id)return Promise.resolve(m);
   if(T.bodies[id])return Promise.resolve(T.bodies[id]);
-  return call('message',{id:id,inline:false}).then(function(d){d.message.inline=arr(d.inline_images);T.bodies[id]=d.message;return d.message;});
+  return call('message',{id:id}).then(function(d){d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);T.bodies[id]=d.message;return d.message;});
 }
 function paintThread(){
   var btn=document.getElementById('mm-thr'),box=document.getElementById('mm-thread'),fr=document.querySelector('#mm-reader .mm-body'),T=S.thread;
@@ -229,6 +248,7 @@ function paintThreadBodies(box){
       if(!f.isConnected)return;
       f.onload=function(){try{f.style.height='24px';var h=f.contentDocument.documentElement.scrollHeight;f.style.height=Math.min(Math.max(h,60),640)+'px';}catch(e){}};
       f.srcdoc=bodyDoc(m,S.showImages);
+      fillPending(m,function(){if(f.isConnected)f.srcdoc=bodyDoc(m,S.showImages);});
     }).catch(function(e){if(f.isConnected){f.style.height='auto';f.srcdoc='<p style="font:13px sans-serif;color:#a33;padding:14px">'+esc(msg(e))+'</p>';}});
   });
 }

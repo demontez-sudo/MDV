@@ -110,24 +110,30 @@ export const handler = async event => {
       const attachments = all.filter(x => !x.isInline).map(x => ({ id: x.id, name: x.name, size: x.size, content_type: x.contentType }));
       /* Pictures embedded in the body (signature logos, pasted photos) are referenced as cid:… and never load on their own.
          Only fetch them when the body really points at one, keep it small, and never let it slow the message down much. */
-      let inline_images = [];
+      let inline_images = [], inline_pending = [];
       const html = String(m.body?.content || '');
       if (wantInline && /cid:/i.test(html)) {
-        const want = all.filter(x => x.isInline && /^image\//i.test(x.contentType || '') && Number(x.size || 0) <= 900000).slice(0, 6);
-        if (want.length) {
-          const fetched = Promise.all(want.map(async x => {
+        /* Any picture on the message can be the one the body points at: Outlook does not always flag them as inline.
+           Small ones come back with the message; bigger phone photos are handed over one at a time (inline_pending). */
+        const pics = all.filter(x => (x.isInline || /^image\//i.test(x.contentType || '')) && Number(x.size || 0) <= 4.2 * 1048576).slice(0, 12);
+        const small = pics.filter(x => Number(x.size || 0) <= 1200000).slice(0, 8);
+        const big = pics.filter(x => Number(x.size || 0) > 1200000);
+        const typeOf = x => /^image\//i.test(x.contentType || '') ? x.contentType : ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', svg: 'image/svg+xml' }[String(x.name || '').split('.').pop().toLowerCase()] || 'image/jpeg');
+        if (small.length) {
+          const fetched = Promise.all(small.map(async x => {
             try {
               const f = await G(`/me/messages/${enc}/attachments/${encodeURIComponent(x.id)}`);
               if (!f?.contentBytes || !f.contentId) return null;
-              return { cid: String(f.contentId).replace(/^<|>$/g, ''), content_type: x.contentType, data: f.contentBytes };
+              return { cid: String(f.contentId).replace(/^<|>$/g, ''), content_type: typeOf(x), data: f.contentBytes };
             } catch (_e) { return null; }
           }));
-          const got = await Promise.race([fetched, new Promise(r => setTimeout(() => r([]), 5000))]);
-          let budget = 2500000;
+          const got = await Promise.race([fetched, new Promise(r => setTimeout(() => r([]), 6000))]);
+          let budget = 3000000;
           inline_images = (got || []).filter(Boolean).filter(x => { budget -= x.data.length; return budget >= 0; });
         }
+        inline_pending = big.slice(0, 4).map(x => ({ id: x.id, size: x.size }));
       }
-      return json(200, { ok: true, message: mapMessage(m), attachments, inline_images });
+      return json(200, { ok: true, message: mapMessage(m), attachments, inline_images, inline_pending });
     }
 
     /* Every message in the same conversation (received and sent), oldest first, so a reply can be read
@@ -154,8 +160,8 @@ export const handler = async event => {
       const id = safeId(body.id), aid = safeId(body.attachment_id);
       const a = await G(`/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(aid)}`); /* no $select: contentBytes only exists on fileAttachment, so selecting it on the base type fails */
       if (!a?.contentBytes) throw appError(409, 'That attachment cannot be downloaded here. Open it in Outlook.', 'MAIL_ATTACHMENT_UNSUPPORTED');
-      if ((a.size || 0) > 4.5 * 1048576) throw appError(413, 'That attachment is too large to download here. Open it in Outlook.', 'MAIL_ATTACHMENT_TOO_BIG');
-      return json(200, { ok: true, name: a.name, content_type: a.contentType, content_base64: a.contentBytes });
+      if ((a.size || 0) > 4.2 * 1048576) throw appError(413, 'That attachment is too large to download here. Open it in Outlook.', 'MAIL_ATTACHMENT_TOO_BIG');
+      return json(200, { ok: true, name: a.name, content_type: a.contentType, content_id: String(a.contentId || '').replace(/^<|>$/g, ''), content_base64: a.contentBytes });
     }
 
     if (action === 'signature_save') {
