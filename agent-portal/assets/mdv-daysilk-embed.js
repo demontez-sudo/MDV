@@ -195,7 +195,33 @@ function openView(v,t){
     if(w&&E.host&&E.host.offsetParent!==null){try{w.__dsGo(v,t);}catch(x){}clearInterval(iv);}else if(n>50)clearInterval(iv);
   },150);
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,completePortalTask:completePortalTask,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
+/* Put events on the owner's own DaySilk calendar (used by "Add to calendar / tasks" in Mail).
+   Reads the saved copy, adds the events, saves it back; a DaySilk that is open merges the new events in by itself. */
+function addEvents(list){
+  list=arr(list).filter(function(x){return x&&x.id&&x.title&&x.d;});
+  return resolveOwner().then(function(o){
+    if(!o)throw new Error('DaySilk calendar is only set up for the owner account.');
+    var c=window.VEUX_SUPABASE_CLIENT;if(!c||!c.from||!c.auth)throw new Error('The portal sign-in is not ready yet. Try again in a moment.');
+    return c.auth.getSession().then(function(r){
+      var uid=r&&r.data&&r.data.session&&r.data.session.user&&r.data.session.user.id;if(!uid)throw new Error('Sign in again to add to DaySilk.');
+      function attempt(n){
+        return c.from('rebuild_docs').select('data,updated_at').eq('user_id',uid).eq('doc_id','core').maybeSingle().then(function(q){
+          if(q.error)throw q.error;
+          if(!q.data)throw new Error('Open DaySilk once first so it can set up your calendar, then try again.');
+          var d=q.data.data&&typeof q.data.data==='object'?q.data.data:{},ev=arr(d.events),have={};
+          ev.forEach(function(e){have[e.id]=1;});list.forEach(function(x){if(!have[x.id])ev=ev.concat([x]);});
+          return c.from('rebuild_docs').update({data:Object.assign({},d,{events:ev}),client_id:'mail-plan'}).eq('user_id',uid).eq('doc_id','core').eq('updated_at',q.data.updated_at).select('updated_at');
+        }).then(function(u){
+          if(u.error)throw u.error;
+          if(!u.data||!u.data.length){if(n<2)return attempt(n+1);throw new Error('DaySilk changed while saving. Try again.');}
+          return true;
+        });
+      }
+      return attempt(0);
+    });
+  });
+}
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */

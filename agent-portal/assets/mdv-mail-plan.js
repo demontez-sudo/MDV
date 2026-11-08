@@ -118,6 +118,7 @@ function cleanTitle(s,subject){
   t=t.replace(/[.!?]+$/,'');
   return t.charAt(0).toUpperCase()+t.slice(1)||subject||'From email';
 }
+function meetLink(ctx){var t=bodyText(ctx),m=t.match(/\b((?:https?:\/\/)?(?:meet\.google\.com\/[a-z0-9-]+|(?:[a-z0-9-]+\.)?zoom\.us\/j\/[0-9]+(?:\?pwd=[\w.-]+)?|teams\.microsoft\.com\/l\/meetup-join\/[^\s"'<>]+))/i);return m?(/^https?:/i.test(m[1])?m[1]:'https://'+m[1]):'';}
 function detect(ctx){
   var base=baseDate(ctx),items=[],seen={};
   sentences(bodyText(ctx)).forEach(function(s){
@@ -129,13 +130,18 @@ function detect(ctx){
         var date=iso(d.y,d.m,d.d),taskish=TASK_RE.test(s),type=evType(s),kind=(taskish&&!tm)||/deadline|\bdue\b/i.test(s)&&!tm?'task':'event';
         var key=date+'|'+(tm&&tm.start||'')+'|'+norm(s).slice(0,40);if(seen[key])return;seen[key]=1;
         var strong=!!tm||taskish||type!=='meeting'||/meeting|call|zoom|meet\b/i.test(s);
-        items.push({id:++uid,on:strong,kind:kind,title:cleanTitle(s,ctx.subject),date:date,start:tm?tm.start:'',end:tm?tm.end:'',endDate:range?iso(ds[1].y,ds[1].m,ds[1].d):'',etype:type,snippet:s,status:'ready',error:'',found:d.text});
+        items.push({id:++uid,on:strong,kind:kind,title:cleanTitle(s,ctx.subject),date:date,start:tm?tm.start:'',end:tm?tm.end:'',endDate:range?iso(ds[1].y,ds[1].m,ds[1].d):'',etype:type,snippet:s,status:'ready',error:'',found:d.text,where:'',cal:true,ds:false});
       });
     }else if(/^(please|kindly|could you|can you|would you)\b/i.test(s)&&s.length<200&&TASK_RE.test(s)){
-      items.push({id:++uid,on:false,kind:'task',title:cleanTitle(s.replace(/^(please|kindly|could you|can you|would you)\s+/i,''),ctx.subject),date:'',start:'',end:'',endDate:'',etype:'other',snippet:s,status:'ready',error:'',found:''});
+      items.push({id:++uid,on:false,kind:'task',title:cleanTitle(s.replace(/^(please|kindly|could you|can you|would you)\s+/i,''),ctx.subject),date:'',start:'',end:'',endDate:'',etype:'other',snippet:s,status:'ready',error:'',found:'',where:'',cal:true,ds:false});
     }
   });
-  var dated=items.filter(function(i){return i.date;}).slice(0,10),undated=items.filter(function(i){return !i.date;}).slice(0,4);
+  /* a calendar invitation says the same thing several times (When, the header, the footer): keep one row, named from the subject */
+  var inv=String(ctx.subject||'').match(/^(?:updated invitation|invitation|accepted|declined|tentatively accepted|canceled event|canceled)[^:]*:\s*(.+?)\s*(?:@.*)?$/i),link=meetLink(ctx),byKey={},uniq=[];
+  items.forEach(function(i){var k=i.date?i.date+'|'+i.start+'|'+i.end:'u'+i.id;if(byKey[k])return;byKey[k]=1;uniq.push(i);});
+  if(inv&&inv[1]){var first=uniq.filter(function(i){return i.date;})[0];if(first){first.title=inv[1].trim().slice(0,200);first.kind='event';first.on=true;uniq=uniq.filter(function(i){return !i.date||i===first;});}}
+  uniq.forEach(function(i){if(i.kind==='event'&&link&&!i.where)i.where=link;});
+  var dated=uniq.filter(function(i){return i.date;}).slice(0,10),undated=uniq.filter(function(i){return !i.date;}).slice(0,4);
   return dated.concat(undated);
 }
 
@@ -159,7 +165,8 @@ function guessModel(ctx,models){
   if(!full.length){var k=Object.keys(first).filter(function(x){return first[x].length===1;});if(k.length===1)return first[k[0]][0];}
   return null;
 }
-function memberName(m){return m.display_name||m.name||[m.first_name,m.last_name].filter(Boolean).join(' ')||m.email||'Teammate';}
+function memberName(m){return (m.profile&&m.profile.display_name)||m.display_name||m.name||[m.first_name,m.last_name].filter(Boolean).join(' ')||m.job_title||m.email||'Team member';}
+function activeMembers(list){return arr(list).filter(function(m){return !m.status||/^(active|invited|pending)?$/i.test(String(m.status));}).sort(function(a,b){var am=a.user_id&&a.user_id===myId()?0:1,bm=b.user_id&&b.user_id===myId()?0:1;return am-bm||memberName(a).localeCompare(memberName(b));});}
 
 /* ---------- dialog ---------- */
 function root(){var r=document.getElementById('mdv-mp');if(!r){r=document.createElement('div');r.id='mdv-mp';r.className='mp-back';r.addEventListener('click',function(e){if(e.target===r&&D&&!D.busy)close();});document.body.appendChild(r);}return r;}
@@ -181,8 +188,9 @@ function rowHtml(i){
     +(ev?'<label>Ends<input type="time" data-k="end" value="'+esc(i.end)+'"'+dis+'></label><label>Until (date)<input type="date" data-k="endDate" value="'+esc(i.endDate)+'"'+dis+'></label>':'')
     +(ev?'<label>Type<select data-k="etype"'+dis+'>'+EV_TYPES.map(function(t){return '<option value="'+t[0]+'"'+(i.etype===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select></label>':'')
     +'</div>'
+    +(ev?'<div class="mp-dest"><label class="mp-wh">Where / link<input type="text" data-k="where" maxlength="300" value="'+esc(i.where||'')+'" placeholder="Room, address or meeting link"'+dis+'></label><span class="mp-to">Add to</span><label class="mp-chk"><input type="checkbox" data-k="cal"'+(i.cal?' checked':'')+(i.calDone?' disabled':dis)+'> Agency calendar</label>'+(D.owner?'<label class="mp-chk"><input type="checkbox" data-k="ds"'+(i.ds?' checked':'')+(i.dsDone?' disabled':dis)+'> My DaySilk</label>':'')+'</div>':'')
     +(i.snippet?'<p class="mp-src">From the email: “'+esc(i.snippet.length>170?i.snippet.slice(0,170)+'…':i.snippet)+'”</p>':'')
-    +(done?'<em class="mp-ok">✓ Added to '+(ev?'the calendar':'tasks')+'</em>':i.status==='saving'?'<em class="mp-wait">Adding…</em>':i.error?'<em class="mp-bad">'+esc(i.error)+'</em>':!i.date&&i.kind==='event'?'<em class="mp-bad">Pick a date for an event.</em>':'')
+    +(done?'<em class="mp-ok">✓ Added to '+(ev?(i.calDone&&i.dsDone?'the calendar and DaySilk':i.dsDone?'DaySilk':'the calendar'):'tasks')+'</em>':i.status==='saving'?'<em class="mp-wait">Adding…</em>':i.error?'<em class="mp-bad">'+esc(i.error)+'</em>':!i.date&&i.kind==='event'?'<em class="mp-bad">Pick a date for an event.</em>':'')
     +'</div>'
     +(!lock?'<button type="button" class="mp-x" data-rm="'+i.id+'" aria-label="Remove">×</button>':'')
     +'</li>';
@@ -193,7 +201,7 @@ function paint(){
   var picked=D.items.filter(function(i){return i.on&&i.status!=='done';}).length,left=D.items.filter(function(i){return i.status!=='done';}).length;
   var allDone=D.items.length&&!left;
   var mopts='<option value="">No model</option>'+models.slice().sort(function(a,b){return String(a.name).localeCompare(String(b.name));}).map(function(m){return '<option value="'+esc(m.id)+'"'+(D.model===m.id?' selected':'')+'>'+esc(m.name)+'</option>';}).join('');
-  var members=arr(MEMBERS.list),me=D.assignee;
+  var members=activeMembers(MEMBERS.list),me=D.assignee;
   var aopts='<option value="">Nobody</option>'+members.map(function(m){return '<option value="'+esc(m.id)+'"'+(me===m.id?' selected':'')+'>'+esc(memberName(m))+(m.user_id&&m.user_id===myId()?' (me)':'')+'</option>';}).join('');
   var anyEv=D.items.some(function(i){return i.kind==='event'&&i.status==='done';}),anyTk=D.items.some(function(i){return i.kind==='task'&&i.status==='done';});
   r.innerHTML='<div class="mp-card" role="dialog" aria-modal="true" aria-label="Add to calendar and tasks">'
@@ -210,12 +218,12 @@ function find(id){return D.items.filter(function(i){return String(i.id)===String
 function wire(r){
   r.querySelectorAll('[data-close]').forEach(function(b){b.onclick=function(){if(!D||!D.busy)close();};});
   r.querySelectorAll('[data-go]').forEach(function(b){b.onclick=function(){var p=b.dataset.go;close();try{if(typeof window.navTo==='function')window.navTo(p);}catch(e){}};});
-  r.querySelectorAll('[data-add]').forEach(function(b){b.onclick=function(){var k=b.dataset.add,t=new Date(),dt=iso(t.getFullYear(),t.getMonth(),t.getDate());D.items.push({id:++uid,on:true,kind:k,title:'',date:dt,start:'',end:'',endDate:'',etype:'meeting',snippet:'',status:'ready',error:'',found:''});paint();var ins=r.querySelectorAll('.mp-title');if(ins.length)ins[ins.length-1].focus();};});
+  r.querySelectorAll('[data-add]').forEach(function(b){b.onclick=function(){var k=b.dataset.add,t=new Date(),dt=iso(t.getFullYear(),t.getMonth(),t.getDate());D.items.push({id:++uid,on:true,kind:k,title:'',date:dt,start:'',end:'',endDate:'',etype:'meeting',snippet:'',status:'ready',error:'',found:'',where:'',cal:true,ds:!!(D.owner&&k==='event')});paint();var ins=r.querySelectorAll('.mp-title');if(ins.length)ins[ins.length-1].focus();};});
   r.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=function(){D.items=D.items.filter(function(i){return String(i.id)!==b.dataset.rm;});paint();};});
   r.querySelectorAll('.mp-seg [data-kind]').forEach(function(b){b.onclick=function(){var i=find(b.closest('.mp-row').dataset.id);if(!i)return;i.kind=b.dataset.kind;paint();};});
   r.querySelectorAll('.mp-row [data-k]').forEach(function(el){
     var ev=el.type==='text'?'input':'change';
-    el.addEventListener(ev,function(){var i=find(el.closest('.mp-row').dataset.id);if(!i)return;var k=el.dataset.k;i[k]=k==='on'?el.checked:el.value;i.error='';if(k==='on'){paint();}else if(k==='date'){var row=el.closest('.mp-row'),w=row.querySelector('.mp-bad');if(w&&/Pick a date/.test(w.textContent)&&i.date)w.remove();}});
+    el.addEventListener(ev,function(){var i=find(el.closest('.mp-row').dataset.id);if(!i)return;var k=el.dataset.k;i[k]=el.type==='checkbox'?el.checked:el.value;i.error='';if(k==='on'){paint();}else if(k==='date'){var row=el.closest('.mp-row'),w=row.querySelector('.mp-bad');if(w&&/Pick a date/.test(w.textContent)&&i.date)w.remove();}});
   });
   r.querySelectorAll('[data-o]').forEach(function(el){el.onchange=function(){D[el.dataset.o]=el.value||'';};});
   var s=r.querySelector('[data-save]');if(s)s.onclick=save;
@@ -232,8 +240,17 @@ async function saveOne(i){
   var tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){}
   if(i.kind==='event'){
     if(!i.date)throw new Error('Pick a date for this event.');
-    var body={action:'create_event',title:i.title.trim(),starts_at:startIso(i),ends_at:endIso(i)||(i.endDate&&i.endDate>i.date?new Date(+i.endDate.slice(0,4),+i.endDate.slice(5,7)-1,+i.endDate.slice(8,10),23,59).toISOString():null),all_day:!i.start,timezone:tz||null,status:'scheduled',event_type:i.etype||'meeting',calendar_event_type:i.etype||'meeting',notes:notesFor(i),model_ids:D.model?[D.model]:[]};
+    var toDs=!!(D.owner&&i.ds);
+    if(!i.cal&&!toDs)throw new Error('Choose where to add it: Agency calendar or My DaySilk.');
+    if(i.cal&&!i.calDone){
+    var body={action:'create_event',title:i.title.trim(),starts_at:startIso(i),ends_at:endIso(i)||(i.endDate&&i.endDate>i.date?new Date(+i.endDate.slice(0,4),+i.endDate.slice(5,7)-1,+i.endDate.slice(8,10),23,59).toISOString():null),all_day:!i.start,timezone:tz||null,status:'scheduled',event_type:i.etype||'meeting',calendar_event_type:i.etype||'meeting',notes:notesFor(i),model_ids:D.model?[D.model]:[],location:i.where||null};
     var r=await post('/api/agent/calendar/v9',body);if(!r||r.verified!==true)throw new Error('The calendar did not confirm the save.');
+    i.calDone=true;}
+    if(toDs&&!i.dsDone){
+      var e2='';if(i.start){var sp=i.start.split(':'),mins=(+sp[0])*60+(+sp[1])+60;e2=i.end||pad(Math.min(23,Math.floor(mins/60)))+':'+pad(mins>=1440?59:mins%60);}
+      try{await window.MDV_DS_EMBED.addEvents([{id:'mp'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),title:i.title.trim(),d:i.date,t:i.start||'',e:e2,cat:i.etype==='travel'?'travel':'connect',rep:'',where:i.where||'',notes:notesFor(i)}]);i.dsDone=true;}
+      catch(err){throw new Error((i.calDone?'Added to the calendar, but not to DaySilk: ':'Not added to DaySilk: ')+((err&&err.message)||'try again.'));}
+    }
   }else{
     var due=null;if(i.date){var p=i.date.split('-'),t=i.start?i.start.split(':'):['12','00'];due=new Date(+p[0],+p[1]-1,+p[2],+t[0],+t[1]).toISOString();}
     var tb={action:'create_task',title:i.title.trim(),description:notesFor(i),priority:'normal',category:null,due_at:due,model_id:D.model||null,member_ids:D.assignee?[D.assignee]:[]};
@@ -258,11 +275,13 @@ async function save(){
 
 function open(ctx){
   ctx=ctx||{};if(D)close();
+  var ownerP=(window.MDV_DS_EMBED&&MDV_DS_EMBED.prepare)?MDV_DS_EMBED.prepare().catch(function(){return {owner:false};}):Promise.resolve({owner:false});
   var items=[];try{items=detect(ctx);}catch(e){items=[];}
   D={ctx:ctx,items:items,model:'',assignee:'',busy:false};
   document.addEventListener('keydown',onKey);paint();
+  ownerP.then(function(r){if(!D)return;D.owner=!!(r&&r.owner);if(D.owner)D.items.forEach(function(i){if(i.kind==='event'&&i.start&&i.on)i.ds=true;});paint();});
   loadModels().then(function(list){if(!D)return;var g=guessModel(ctx,arr(list));if(g&&!D.model)D.model=g.id;paint();});
-  loadMembers().then(function(list){if(!D)return;var me=arr(list).filter(function(m){return m.user_id&&m.user_id===myId();})[0];if(me&&!D.assignee)D.assignee=me.id;paint();});
+  loadMembers().then(function(list){if(!D)return;var me=activeMembers(list).filter(function(m){return m.user_id&&m.user_id===myId();})[0];if(me&&!D.assignee)D.assignee=me.id;paint();});
 }
 window.MDV_MAILPLAN={open:open,detect:detect,close:close,state:function(){return D;}};
 })();

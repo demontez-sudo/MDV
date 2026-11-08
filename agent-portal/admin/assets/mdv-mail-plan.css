@@ -33,5 +33,9 @@
 .mp-btn{border:1px solid rgba(255,255,255,.25);background:transparent;color:#f1e4cf;padding:10px 20px;border-radius:8px;font:600 11px var(--fM,system-ui);letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
 .mp-btn.pri{background:#c9a66b;border-color:#c9a66b;color:#17120d}.mp-btn[disabled]{opacity:.5;cursor:default}
 @media(max-width:640px){.mp-back{padding:0;align-items:end}.mp-card{max-height:94vh;border-radius:16px 16px 0 0}.mp-card>header,.mp-opts,.mp-list,.mp-more,.mp-card>footer{padding-left:16px;padding-right:16px}.mp-when label{flex:1 1 40%}}
+.mp-dest{display:flex;gap:10px 16px;flex-wrap:wrap;align-items:flex-end}
+.mp-dest .mp-wh{flex:1 1 240px;display:flex;flex-direction:column;gap:4px;font:600 10px var(--fM,system-ui);letter-spacing:.14em;text-transform:uppercase;color:#a8977f}
+.mp-to{font:600 10px var(--fM,system-ui);letter-spacing:.14em;text-transform:uppercase;color:#a8977f;padding-bottom:10px}
+.mp-chk{display:inline-flex;align-items:center;gap:7px;font:400 13px system-ui;color:#f1e4cf;padding-bottom:8px;cursor:pointer}.mp-chk input{width:16px;height:16px;accent-color:#c9a66b;cursor:pointer}
 /* the mail screen button */
 .mm-btn.mm-plan{border-color:rgba(201,166,107,.6);color:#c9a66b}
