@@ -90,6 +90,33 @@ function completePortalTask(id){
   var b=bridge();if(!b)return Promise.reject(new Error('Not ready'));
   return b.api('/api/agent/tasks/v11',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organization_slug:org(),action:'task_status',task_id:String(id),status:'completed'})}).then(function(r){PT.at=0;PT.list=null;return r;});
 }
+/* Agency calendar events that are mine (I am the owner), in DaySilk's own event shape, read-only. The Calendar's New Event form sets the
+   owner, so a meeting made there for me lands in my DaySilk week without being typed twice. */
+var PE={at:0,list:null,busy:null};
+function portalEvents(force){
+  if(!force&&PE.list&&Date.now()-PE.at<60000)return Promise.resolve(PE.list);
+  if(PE.busy)return PE.busy;
+  if(!bridge())return Promise.resolve(null);
+  var from=new Date(Date.now()-3*864e5),to=new Date(Date.now()+75*864e5),o=encodeURIComponent(org());
+  PE.busy=Promise.all([
+    get('/api/agent/daysilk?me=1&organization='+o+'&_t='+Date.now()).catch(function(){return null;}),
+    get('/api/agent/calendar/v9?organization='+o+'&start='+encodeURIComponent(from.toISOString())+'&end='+encodeURIComponent(to.toISOString())+'&_t='+Date.now()).catch(function(){return null;})
+  ]).then(function(r){
+    var mid=r[0]&&r[0].me&&r[0].me.member_id,cal=r[1];if(!mid||!cal)return null;
+    var hm=function(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');},list=[];
+    arr(cal.events).forEach(function(e){
+      if(!e||String(e.owner_member_id||'')!==String(mid)||!e.starts_at)return;
+      var md=e.metadata||{};if(md.plan==='g90'||/^(cancelled|canceled)$/i.test(String(e.status||'')))return;
+      var s=new Date(e.starts_at),en=e.ends_at?new Date(e.ends_at):null,d=dayKey(s),ev={id:'pe-'+e.id,src:'portal',title:String(e.title||'Event'),cat:'connect',rep:'',where:e.location||'',notes:e.notes||'',web:'',calName:'Agency calendar',
+        models:arr(e.event_models).map(function(m){var q=m.models||{};return q.display_name||'';}).filter(Boolean),video:md.video&&/^https:\/\//i.test(String(md.video.url||''))?md.video:null};
+      if(e.all_day){ev.d=d;ev.t='';ev.e='';if(en&&dayKey(en)>d){ev.rep='d';ev.until=dayKey(new Date(en.getTime()-1));}}
+      else{ev.d=d;ev.t=hm(s);ev.e=en&&dayKey(en)===d?hm(en):'23:59';}
+      list.push(ev);
+    });
+    PE.list=list;PE.at=Date.now();return list;
+  }).catch(function(){return null;}).then(function(x){PE.busy=null;return x;});
+  return PE.busy;
+}
 function ensureAccount(){
   if(E.owner){E.ready=true;E.err='';return null;}
   if(E.owner===undefined)return null;
@@ -221,7 +248,7 @@ function addEvents(list){
     });
   });
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */
