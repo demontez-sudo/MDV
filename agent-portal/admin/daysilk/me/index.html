@@ -456,6 +456,18 @@ h3.grp{font-family:var(--serif);font-weight:500;font-size:22px;margin:8px 0 8px}
 .week.has-lens .wb:not(.wev){right:76%}
 .week.has-lens .wb.wev:not(.wmodel){left:26%;right:38%}
 .week.has-lens .wb.wev.wmodel{left:64%;right:2px}
+/* day brief, tasks on the week, whole agency lane */
+.brief{margin:0 0 18px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.03)}
+.brief-h{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;margin-bottom:10px}.brief-h>div{display:grid;gap:2px}.brief-h b{font-size:15px}
+.brief-g{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}@media(max-width:760px){.brief-g{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.bf{display:grid;gap:2px;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);min-width:0}.bf small{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}.bf b{font-size:22px;font-weight:600}.bf b.late{color:#e08f82}.bf span{font-size:12px;color:var(--muted);line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.wtk{display:block;margin-top:2px;font-size:10px;color:var(--gold-x)}.wtk.od{color:#e08f82}
+.wb.wtask{left:38%;right:2px;height:16px!important;padding:1px 5px;background:rgba(214,170,70,.2);border:1px solid rgba(214,170,70,.8);border-left:3px solid #d6aa46;z-index:4;cursor:pointer}.wb.wtask.od{border-color:#e08f82;border-left-color:#e08f82;background:rgba(224,143,130,.18)}.wb.wtask b{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.week.has-lens .wb.wtask{left:26%;right:38%}
+.wb.wev.wagency{background:rgba(150,160,175,.2);border:1px dashed rgba(170,180,195,.8);border-left:3px solid #8f9bb0;z-index:3}
+.week.has-lens .wb.wev.wagency{left:64%;right:2px}
+.lens-ag{display:inline-flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;margin-left:4px}
+
 .wb.wev.wmodel{background:rgba(141,127,214,.24);border:1px dashed rgba(141,127,214,.95);border-left:3px solid #8d7fd6;z-index:3}
 
 .cal .ev.u{font-weight:600;color:var(--info)}
@@ -1313,6 +1325,8 @@ html.emb .urgent{background:rgba(38,16,12,.7)!important;-webkit-backdrop-filter:
 html.emb .tabs{border-radius:10px;padding-left:8px;padding-right:8px}
 html.emb-home,html.emb-home body{background:transparent!important;min-height:0!important;height:auto!important;overflow:hidden!important}
 html.emb-home .app{min-height:0!important}
+html.emb-home,html.emb-home body{width:100%!important;max-width:100%!important;overflow-x:hidden!important;color-scheme:dark!important}
+html.emb-home .app,html.emb-home main{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box}
 html.emb-home main{padding:0!important}
 html.emb-alerts body{display:none!important}
 .wcol.today{background-color:rgba(212,176,119,.07)}
@@ -1343,7 +1357,7 @@ window.REBUILD_CONFIG={allowSignup:false};
 /* Inside the Maison de Veux portal this app borrows the portal's own sign-in and database connection. */
 (function(){var C=null;try{var P=window.parent;if(P&&P!==window&&P.MDV_DS_EMBED&&P.VEUX_SUPABASE_CLIENT)C=P.VEUX_SUPABASE_CLIENT}catch(_){}
 window.EMB=C;window.EMB_HOME=!!C&&/[?&]home=1/.test(location.search);window.EMB_ALERTS=!!C&&/[?&]alerts=1/.test(location.search);
-var d=document.documentElement;if(C)d.classList.add("emb");if(window.EMB_HOME)d.classList.add("emb-home");if(window.EMB_ALERTS)d.classList.add("emb-alerts");
+var d=document.documentElement;if(C){d.classList.add("emb");d.style.colorScheme="dark";try{var cm=document.createElement("meta");cm.name="color-scheme";cm.content="dark";document.head.appendChild(cm)}catch(_){}}if(C)d.classList.add("emb");if(window.EMB_HOME)d.classList.add("emb-home");if(window.EMB_ALERTS)d.classList.add("emb-alerts");
 if(C){var f=window.fetch.bind(window);window.fetch=function(u,o){if(typeof u==="string"&&/^api\//.test(u))return Promise.resolve(new Response('{"error":"not_configured"}',{status:404,headers:{"content-type":"application/json"}}));return f(u,o)}}})();
 </script>
 </head>
@@ -2272,6 +2286,7 @@ function vSchedule(){
  if(PERSONA)return head("","Calendar","Your routine, goal hours and events"+(S.boss?", plus "+esc((S.boss.owner||"Demontez").split(" ")[0])+"&#39;s calendar and trips (read-only)":"")+". Tap a day to add something.")+schedMonth();
  if(!["week","templates","month","plan"].includes(S.tabs.schedule))S.tabs.schedule="week";const t=S.tabs.schedule;let h=head("Command","Calendar","Your week and month, with today marked. Tap a day to open it, a time to add something. Day templates hold your routine.");
  h+=smartBar();
+ if(t==="week"||t==="month")h+=dayBrief();
  h+=tabs("schedule",[["week","Week"],["month","Month"],["templates","Day templates"],["plan","90-day plan"]]);
  if(t==="week")h+=schedWeek();else if(t==="month")h+=schedMonth();else if(t==="plan")h+=schedPlan();else h+=schedTemplates();
  return h;
@@ -2280,9 +2295,9 @@ function blockSpans(s){const sch=scheduleFor(s),fill={"Flight":"09:00","Arrival"
 function schedWeek(){
  const ws=weekDates(S.date),t0=todayIso(),PX=760/1140,d0=300;
  let h=lensBar()+`<div class="row" style="margin:0 0 14px"><button class="btn sm ghost" data-act="day" data-n="-7">Previous week</button><button class="btn sm ghost" data-act="day" data-n="0">This week</button><button class="btn sm ghost" data-act="day" data-n="7">Next week</button><span class="muted small">Week of ${fmtShort(ws[0])}. Tap any item to open it, a date to see the full day, or + to add an event.</span></div>`;
- h+=`<div class="weekwrap"><div class="week${lensIds().length?" has-lens":""}"><div></div>${ws.map(s=>{const L=locOf(s);return`<div class="wh ${s===t0?"today":""}" data-act="goto" data-d="${s}" role="button" tabindex="0"><b>${parse(s).getDate()}</b>${DOW[parse(s).getDay()].slice(0,3)}<small>${esc(L.label)}</small><i class="cadd" data-act="newev" data-d="${s}" role="button" aria-label="Add event on ${fmtShort(s)}">+</i></div>`}).join("")}`;
+ h+=`<div class="weekwrap"><div class="week${lensOn()?" has-lens":""}"><div></div>${ws.map(s=>{const L=locOf(s);return`<div class="wh ${s===t0?"today":""}" data-act="goto" data-d="${s}" role="button" tabindex="0"><b>${parse(s).getDate()}</b>${DOW[parse(s).getDay()].slice(0,3)}<small>${esc(L.label)}</small>${taskBadge(s,t0)}<i class="cadd" data-act="newev" data-d="${s}" role="button" aria-label="Add event on ${fmtShort(s)}">+</i></div>`}).join("")}`;
  h+=`<div class="hours">${[6,8,10,12,14,16,18,20,22].map(x=>`<span style="top:${(x*60-d0)*PX}px">${x>12?x-12:x}${x>=12?"p":"a"}</span>`).join("")}</div>`;
- ws.forEach(s=>{const d=S.days[s]||{},L=locOf(s);h+=`<div class="wcol ${L.type==="travel"?"travel":""} ${s===t0?"today":""}" data-d="${s}" title="Tap an empty time to add an event">${s===t0&&nowMin()>=d0?`<div class="wnow" style="top:${(nowMin()-d0)*PX}px"><i></i></div>`:""}`;blockSpans(s).forEach(b=>{if(b.st<d0)b.st=d0;const top=(b.st-d0)*PX,ht=Math.max(14,(b.en-b.st)*PX-2);h+=`<div class="wb k-${b.cat} ${d.blocks&&d.blocks["k"+b.i]?"done":""}" style="top:${top}px;height:${ht}px" title="${esc(fmtT(b.time)+" "+b.title)}" data-act="item" data-kind="b" data-id="k${b.i}" data-s="${s}" role="button" tabindex="0"><b>${esc(b.title)}</b></div>`});eventsFor(s).filter(e=>e.t).forEach(e=>{let st=Math.max(d0,tMin(e.t)),en=e.e?tMin(e.e):st+60;if(en<=st)en=st+30;h+=`<div class="wb wev k-${e.cat||"connect"} ${e.src==="model"?"wmodel":""} ${evDone(e,s)?"done":""}" style="top:${(st-d0)*PX}px;height:${Math.max(14,(en-st)*PX-2)}px" title="${esc(evLine(e))}" data-act="item" data-kind="e" data-id="${e.id}" data-s="${s}" role="button" tabindex="0"><b>${esc(e.title)}</b></div>`});if(s===t0){const m=nowMin();if(m>d0)h+=`<div class="nowline" style="top:${(m-d0)*PX}px"></div>`}h+=`</div>`});
+ ws.forEach(s=>{const d=S.days[s]||{},L=locOf(s);h+=`<div class="wcol ${L.type==="travel"?"travel":""} ${s===t0?"today":""}" data-d="${s}" title="Tap an empty time to add an event">${s===t0&&nowMin()>=d0?`<div class="wnow" style="top:${(nowMin()-d0)*PX}px"><i></i></div>`:""}`;blockSpans(s).forEach(b=>{if(b.st<d0)b.st=d0;const top=(b.st-d0)*PX,ht=Math.max(14,(b.en-b.st)*PX-2);h+=`<div class="wb k-${b.cat} ${d.blocks&&d.blocks["k"+b.i]?"done":""}" style="top:${top}px;height:${ht}px" title="${esc(fmtT(b.time)+" "+b.title)}" data-act="item" data-kind="b" data-id="k${b.i}" data-s="${s}" role="button" tabindex="0"><b>${esc(b.title)}</b></div>`});eventsFor(s).filter(e=>e.t).forEach(e=>{let st=Math.max(d0,tMin(e.t)),en=e.e?tMin(e.e):st+60;if(en<=st)en=st+30;h+=`<div class="wb wev k-${e.cat||"connect"} ${e.src==="model"?"wmodel":e.src==="agency"?"wmodel wagency":""} ${evDone(e,s)?"done":""}" style="top:${(st-d0)*PX}px;height:${Math.max(14,(en-st)*PX-2)}px" title="${esc(evLine(e))}" data-act="item" data-kind="e" data-id="${e.id}" data-s="${s}" role="button" tabindex="0"><b>${esc(e.title)}</b></div>`});allTasks().filter(x=>!x.done&&x.due===s&&x.time).forEach(x=>{const st=Math.max(d0,tMin(x.time)-20);h+=`<div class="wb wtask${x.due<t0?" od":""}" style="top:${(st-d0)*PX}px" title="${esc(x.title)} · due ${fmtT(x.time)}" data-act="view" data-v="tasks" role="button" tabindex="0"><b>✓ ${esc(x.title)}</b></div>`});if(s===t0){const m=nowMin();if(m>d0)h+=`<div class="nowline" style="top:${(m-d0)*PX}px"></div>`}h+=`</div>`});
  h+=`</div></div>`;
  const tot={};ws.forEach(s=>blockSpans(s).forEach(b=>{if(/sleep|early night/i.test(b.title))return;tot[b.cat]=(tot[b.cat]||0)+(b.en-b.st)}));const sum=Object.values(tot).reduce((a,b)=>a+b,0)||1;
  h+=`<div class="grid2" style="margin-top:30px"><div class="block"><h3>Where the week's hours go</h3><div class="budget" role="img" aria-label="Hours by category">${CATS.filter(c=>tot[c[0]]).map(c=>`<i class="k-${c[0]}" style="width:${tot[c[0]]/sum*100}%"></i>`).join("")}</div><div class="budget-key">${CATS.filter(c=>tot[c[0]]).map(c=>`<div class="k-${c[0]}">${c[1]}<b>${(tot[c[0]]/60).toFixed(1)} h</b></div>`).join("")}</div>`;
@@ -3176,7 +3191,7 @@ function lensBar(){
  const ids=lensIds(),nm=(core().lens&&core().lens.names)||{};
  const chips=ids.map(id=>`<span class="lens-chip">${esc(nm[id]||"Model")}<button type="button" data-lens-rm="${esc(id)}" aria-label="Remove ${esc(nm[id]||"model")}">×</button></span>`).join("");
  const opts=LENSM.filter(m=>!ids.includes(m.id)).map(m=>`<option value="${esc(m.id)}">${esc(m.name)}${m.market?" · "+esc(m.market):""}</option>`).join("");
- return `<div class="lensbar"><span class="lens-l">Model calendars</span>${chips}${LENSM.length?`<select class="lens-add" data-lens-add aria-label="Add a model calendar"><option value="">+ Add a model</option>${opts}</select>`:`<span class="muted small">Loading models…</span>`}${ids.length?`<span class="lens-key"><i></i>Model items sit in the right lane</span>`:`<span class="muted small">Follow a model to see their calendar next to yours.</span>`}</div>`
+ return `<div class="lensbar"><span class="lens-l">Model calendars</span>${chips}${LENSM.length?`<select class="lens-add" data-lens-add aria-label="Add a model calendar"><option value="">+ Add a model</option>${opts}</select>`:`<span class="muted small">Loading models…</span>`}<label class="lens-ag"><input type="checkbox" data-lens-agency ${agencyOn()?"checked":""}> Whole agency</label>${ids.length?`<span class="lens-key"><i></i>Model items sit in the right lane</span>`:`<span class="muted small">Follow a model to see their calendar next to yours.</span>`}</div>`
 }
 function lensRepaint(){const typing=document.activeElement&&document.activeElement.matches&&document.activeElement.matches("input,textarea,select");if(!EMB_ALERTS&&!typing&&["calendar","schedule","today","command","work"].includes(S.view))render()}
 async function modelLensSync(force){
@@ -3192,9 +3207,58 @@ function lensAdd(id){const m=LENSM.find(x=>x.id===id);if(!m)return;const c=core(
 function lensRemove(id){const c=core();if(!c.lens)return;c.lens.ids=(c.lens.ids||[]).filter(x=>x!==id);if(c.lens.names)delete c.lens.names[id];markDirty("core");LME=LME.filter(e=>(e.modelIds||[]).some(x=>c.lens.ids.includes(x)));render()}
 document.addEventListener("change",e=>{const a=e.target.closest&&e.target.closest("[data-lens-add]");if(a&&a.value)lensAdd(a.value)});
 document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest("[data-lens-rm]");if(r)lensRemove(r.dataset.lensRm)});
+/* ---------- Everything in one view: the whole agency, tasks on the week, and a day brief that plans for you ---------- */
+var AG=[];
+function agencyOn(){return !!((core().lens||{}).agency)}
+function lensOn(){return lensIds().length>0||agencyOn()}
+function agencyEvs(){if(!agencyOn()||EMB_ALERTS)return[];const m=new Set(modelEvs().map(x=>x.ref).filter(Boolean));return AG.filter(e=>!m.has(e.ref))}
+function agFind(id){return AG.find(x=>x.id===id)}
+async function agencySync(force){
+ if(!EMB||EMB_ALERTS||!sbUser||!baseReady)return;
+ try{
+  if(!agencyOn()){if(AG.length){AG=[];lensRepaint()}return}
+  const l=await parent.MDV_DS_EMBED.agencyEvents(!!force);
+  if(Array.isArray(l)&&JSON.stringify(l)!==JSON.stringify(AG)){AG=l;lensRepaint()}
+ }catch(_){}
+}
+function agencyToggle(on){const c=core();c.lens=c.lens||{ids:[],names:{}};c.lens.agency=!!on;markDirty("core");if(!on)AG=[];render();agencySync(true)}
+document.addEventListener("change",e=>{const a=e.target.closest&&e.target.closest("[data-lens-agency]");if(a)agencyToggle(a.checked)});
+const mm2t=m=>pad(Math.floor(m/60))+":"+pad(m%60);
+function evSpanMin(e){const a=hm(e.t);let b=e.e?hm(e.e):a+60;if(b<=a)b=a+30;return[a,b]}
+function dayTimed(s){return eventsFor(s).filter(e=>e.t&&!evDone(e,s))}
+function freeSlots(s,from){const b=dayTimed(s).map(evSpanMin).sort((x,y)=>x[0]-y[0]),out=[];let cur=Math.max(540,from);for(const[a,e]of b){if(a-cur>=45)out.push([cur,a]);cur=Math.max(cur,e)}if(1050-cur>=45)out.push([cur,1050]);return out}
+function dayClashes(s){
+ const l=dayTimed(s).map(e=>({e,sp:evSpanMin(e)})).sort((x,y)=>x.sp[0]-y.sp[0]),out=[],other=e=>e.src==="model"||e.src==="agency";
+ for(let i=0;i<l.length;i++)for(let j=i+1;j<l.length;j++){if(l[j].sp[0]>=l[i].sp[1])break;if(other(l[i].e)&&other(l[j].e))continue;out.push([l[i].e,l[j].e,l[j].sp[0]])}
+ return out
+}
+function taskBadge(s,t0){const all=allTasks().filter(x=>!x.done&&x.due===s),od=s===t0?allTasks().filter(x=>!x.done&&x.due&&x.due<t0).length:0;return(all.length?`<span class="wtk">${all.length} due</span>`:"")+(od?`<span class="wtk od">${od} overdue</span>`:"")}
+function dayBrief(){
+ const t=todayIso(),tm=addDays(t,1),nm=nowMin(),tasks=allTasks().filter(x=>!x.done);
+ const over=tasks.filter(x=>x.due&&x.due<t).sort((a,b)=>a.due<b.due?-1:1),dueT=tasks.filter(x=>x.due===t).sort((a,b)=>(a.time||"99")<(b.time||"99")?-1:1);
+ const cl=dayClashes(t).concat(dayClashes(tm).map(x=>x.concat(["tm"]))),slots=freeSlots(t,nm+10),sl=slots[0];
+ const planned=(core().events||[]).filter(e=>e.taskId&&e.d===t).length,toPlan=tasks.filter(x=>(x.due&&x.due<t||x.due===t&&!x.time)&&!(core().events||[]).some(e=>e.taskId===x.id&&e.d===t)).length;
+ const src=EMB?`${PE.length} of yours from the agency calendar · ${modelEvs().length} model item${modelEvs().length===1?"":"s"}${agencyOn()?` · ${agencyEvs().length} agency-wide`:""}`:"Open DaySilk inside the portal to connect the agency calendar";
+ const cell=(k,v,bad,txt)=>`<div class="bf"><small>${k}</small><b class="${bad?"late":""}">${v}</b><span>${txt}</span></div>`;
+ return `<section class="brief"><div class="brief-h"><div><b>Your day, connected</b><span class="muted small">${esc(src)}</span></div>${toPlan?`<button class="btn sm solid" type="button" data-plan-day>Plan my day · ${Math.min(4,toPlan)} task${Math.min(4,toPlan)===1?"":"s"}</button>`:planned?`<span class="muted small">${planned} task${planned===1?"":"s"} planned today</span>`:""}</div><div class="brief-g">`
+  +cell("Overdue",over.length,over.length,over.length?esc(over.slice(0,2).map(x=>x.title).join(" · "))+(over.length>2?" +"+(over.length-2):""):"Nothing overdue")
+  +cell("Due today",dueT.length,0,dueT.length?esc(dueT.slice(0,3).map(x=>(x.time?fmtT(x.time)+" ":"")+x.title).join(" · ")):"Nothing due")
+  +cell("Clashes",cl.length,cl.length,cl.length?esc(cl[0][0].title)+" and "+esc(cl[0][1].title)+" at "+fmtT(mm2t(cl[0][2]))+(cl[0][3]?" (tomorrow)":""):"None today or tomorrow")
+  +cell("Next free",sl?fmtT(mm2t(sl[0])):"—",0,sl?"until "+fmtT(mm2t(sl[1]))+" ("+Math.round((sl[1]-sl[0])/15)*15+" min)":"No 45 minute gap left today")
+  +`</div></section>`
+}
+function planDay(){
+ const c=core(),t=todayIso(),nm=nowMin();c.events=c.events||[];
+ const list=allTasks().filter(x=>!x.done&&(x.due&&x.due<t||x.due===t&&!x.time)&&!c.events.some(e=>e.taskId===x.id&&e.d===t)).sort((a,b)=>(a.prio||2)-(b.prio||2)||(a.due<b.due?-1:1)).slice(0,4);
+ if(!list.length){toast("Nothing to plan: no overdue or untimed tasks for today.");return}
+ const slots=freeSlots(t,nm+10);let n=0;
+ for(const x of list){let ok=false;for(const sl of slots){if(sl[1]-sl[0]>=45){const a=sl[0],b=a+45;c.events.push({id:"tp-"+x.id+"-"+t,title:"Work on: "+x.title,d:t,t:mm2t(a),e:mm2t(b),cat:"focus",rep:"",where:"",notes:"Planned from your tasks.",taskId:x.id});sl[0]=b+5;n++;ok=true;break}}if(!ok)break}
+ if(n){markDirty("core");toast(`Planned ${n} task${n===1?"":"s"} in your free time today`);render()}else toast("No free 45 minute gaps left today.")
+}
+document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("[data-plan-day]"))planDay()});
 function portalEvs(){return PE||[]}
 function peFind(id){return portalEvs().find(x=>x.id===id)}
-function eventsFor(s){return(core().events||[]).concat(msEvents(),icsEvents(),portalEvs(),modelEvs(),bossEvents()).filter(e=>evOccurs(e,s)).sort((a,b)=>(a.t||"99")<(b.t||"99")?-1:1)}
+function eventsFor(s){return(core().events||[]).concat(msEvents(),icsEvents(),portalEvs(),modelEvs(),agencyEvs(),bossEvents()).filter(e=>evOccurs(e,s)).sort((a,b)=>(a.t||"99")<(b.t||"99")?-1:1)}
 function evDone(e,s){const d=S.days[s];return!!(d&&d.ev&&d.ev[e.id])}
 function evLine(e){return(e.t?fmtT(e.t)+(e.e?" to "+fmtT(e.e):"")+" · ":"All day · ")+e.title}
 function evForm(date){
@@ -3468,7 +3532,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
 /* ---------- Urgent: past-due items ---------- */
 function pastDue(){
  const t=todayIso(),now=new Date(),nm=now.getHours()*60+now.getMinutes(),ev=[];
- for(let i=14;i>=0;i--){const s=addDays(t,-i);eventsFor(s).forEach(e=>{if(e.src==="outlook"||e.src==="ics"||e.src==="portal"||e.src==="model"||evDone(e,s))return;const endM=hm(e.e)??(e.t?hm(e.t)+60:1440);if(s<t||endM<=nm)ev.push({e,s})})}
+ for(let i=14;i>=0;i--){const s=addDays(t,-i);eventsFor(s).forEach(e=>{if(e.src==="outlook"||e.src==="ics"||e.src==="portal"||e.src==="model"||e.src==="agency"||evDone(e,s))return;const endM=hm(e.e)??(e.t?hm(e.t)+60:1440);if(s<t||endM<=nm)ev.push({e,s})})}
  const tk=allTasks().filter(x=>!x.done&&x.due&&x.due<t).sort((a,b)=>a.due<b.due?-1:1);
  return{ev,tk,n:ev.length+tk.length}}
 const agoTxt=s=>{const n=Math.round((parse(todayIso())-parse(s))/864e5);return n<=0?"Today":n===1?"Yesterday":n+" days ago"};
@@ -3494,9 +3558,9 @@ function schedDay(){const s=S.date,dt=parse(s),L=locOf(s),ev=eventsFor(s);
  return h}
 
 /* ================= Smart calendar: open, create, edit, reschedule ================= */
-const evById=id=>(core().events||[]).find(x=>x.id===id)||msFind(id)||peFind(id)||meFind(id);
+const evById=id=>(core().events||[]).find(x=>x.id===id)||msFind(id)||peFind(id)||meFind(id)||agFind(id);
 const catName=k=>(EV_CATS.find(c=>c[0]===k)||["","Event"])[1];
-const evTag=e=>e.src==="model"?((e.models||[]).length===1?e.models[0]:"Models"):e.src==="portal"?"Agency":e.src==="ics"?(e.calName||"Calendar"):e.src==="outlook"?(e.calName||"Outlook"):({move:"Body",travel:"Travel",recharge:"Personal",close:"Personal",focus:"Focus",connect:"Meeting"}[e.cat]||"Meeting");
+const evTag=e=>e.src==="agency"?"Agency":e.src==="model"?((e.models||[]).length===1?e.models[0]:"Models"):e.src==="portal"?"Agency":e.src==="ics"?(e.calName||"Calendar"):e.src==="outlook"?(e.calName||"Outlook"):({move:"Body",travel:"Travel",recharge:"Personal",close:"Personal",focus:"Focus",connect:"Meeting"}[e.cat]||"Meeting");
 const longDate=s=>{const d=parse(s);return DOW[d.getDay()]+", "+MON[d.getMonth()]+" "+d.getDate()};
 function repTxt(e){if(!e.rep)return"";const r=(EV_REP.find(x=>x[0]===e.rep)||["",""])[1];return r+(e.until?" until "+fmtMD(e.until):"")}
 
@@ -3528,10 +3592,10 @@ function itemHTML(it){
   let h=sheetHead(tag,e.title,`${longDate(s)} · ${e.t?rangeTxt({time:e.t,end:e.e}):"All day"}`);
   h+=`<div class="sheet-body">`;
   if(S.itemEdit)return h+editHTML(e,s)+`</div>`;
-  const px=e.src==="portal"||e.src==="model",vn={zoom:"Zoom",meet:"Google Meet",teams:"Microsoft Teams"};
+  const px=e.src==="portal"||e.src==="model"||e.src==="agency",vn={zoom:"Zoom",meet:"Google Meet",teams:"Microsoft Teams"};
   h+=`<div class="sheet-act">${e.video?`<a class="btn sm solid" href="${esc(e.video.url)}" target="_blank" rel="noopener noreferrer">Join ${esc(vn[e.video.provider]||"video meeting")}</a>`:""}<button class="btn sm ${done?"":"solid"}" data-act="itdone">${done?"Mark not done":"Mark done"}</button>${px?"":`<button class="btn sm" data-act="itedit">Edit</button><button class="btn sm" data-act="itdup">Duplicate</button>`}<button class="btn sm" data-act="itday">Open day</button>${e.web?`<a class="btn sm" href="${esc(e.web)}" target="_blank" rel="noopener">Open in Outlook ${xi("arrow","xi sm")}</a>`:""}</div>`;
   if(cl.length)h+=`<div class="sheet-warn">${xi("alert","xi sm")}<span>Overlaps with ${cl.map(x=>`<b>${esc(x.title)}</b> (${rangeTxt({time:x.t,end:x.e})})`).join(", ")}</span></div>`;
-  h+=`<div class="sheet-info">${row("cal",e.src==="model"?"On "+esc((e.models||[]).join(", "))+"'s calendar · "+esc(e.kind||"event")+" (change it in the agency calendar)":e.src==="portal"?"From the agency calendar"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" (change it there)":e.src==="ics"?"From "+esc(e.calName||"a linked calendar")+" (read-only)":e.src==="outlook"?"From your Outlook calendar"+(e.calName?" · "+esc(e.calName):"")+(e.org?" · organised by "+esc(e.org):""):esc(catName(e.cat))+(e.rep?" · "+esc(repTxt(e)):""))}${row("pin",esc(e.where||""))}${e.notes?`<div class="sheet-notes">${esc(e.notes)}</div>`:""}${row("check",done?"Done for this day":s<todayIso()||(s===todayIso()&&e.t&&hm(e.e||e.t)<nowMin())?"<b class='late'>Not marked done</b>":"")}</div>`;
+  h+=`<div class="sheet-info">${row("cal",e.src==="agency"?"On the agency calendar"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" · "+esc(e.kind||"event")+" (change it there)":e.src==="model"?"On "+esc((e.models||[]).join(", "))+"'s calendar · "+esc(e.kind||"event")+" (change it in the agency calendar)":e.src==="portal"?"From the agency calendar"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" (change it there)":e.src==="ics"?"From "+esc(e.calName||"a linked calendar")+" (read-only)":e.src==="outlook"?"From your Outlook calendar"+(e.calName?" · "+esc(e.calName):"")+(e.org?" · organised by "+esc(e.org):""):esc(catName(e.cat))+(e.rep?" · "+esc(repTxt(e)):""))}${row("pin",esc(e.where||""))}${e.notes?`<div class="sheet-notes">${esc(e.notes)}</div>`:""}${row("check",done?"Done for this day":s<todayIso()||(s===todayIso()&&e.t&&hm(e.e||e.t)<nowMin())?"<b class='late'>Not marked done</b>":"")}</div>`;
   if(!px)h+=reschedForm(s,{kind:"e",ev:e,time:e.t,end:e.e});
   if(!px)h+=`<div class="sheet-danger">${e.rep?`<button class="linkbtn" data-act="itskip">Remove just ${fmtMD(s)}</button><button class="linkbtn" data-act="itdel">Delete the whole series</button>`:`<button class="linkbtn" data-act="itdel">Delete event</button>`}</div>`;
   return h+`</div>`}
@@ -4495,7 +4559,7 @@ async function portalSync(){
  psBusy=false
 }
 async function portalEventsSync(){if(!EMB||!sbUser||!baseReady)return;try{const l=await parent.MDV_DS_EMBED.portalEvents(true);if(Array.isArray(l)&&JSON.stringify(l)!==JSON.stringify(PE)){PE=l;const typing=document.activeElement&&document.activeElement.matches&&document.activeElement.matches("input,textarea,select");if(!EMB_ALERTS&&!typing&&["calendar","schedule","today","command","work"].includes(S.view))render()}}catch(_){}}
-if(EMB){setTimeout(portalEventsSync,3500);setTimeout(portalEventsSync,16000);setTimeout(lensModels,3000);setTimeout(()=>modelLensSync(true),4500);setInterval(()=>{if(!document.hidden){portalEventsSync();modelLensSync()}},120000);document.addEventListener("visibilitychange",()=>{if(!document.hidden){portalEventsSync();modelLensSync()}})}
+if(EMB){setTimeout(portalEventsSync,3500);setTimeout(portalEventsSync,16000);setTimeout(lensModels,3000);setTimeout(()=>modelLensSync(true),4500);setTimeout(()=>agencySync(true),5500);setInterval(()=>{if(!document.hidden){portalEventsSync();modelLensSync();agencySync()}},120000);document.addEventListener("visibilitychange",()=>{if(!document.hidden){portalEventsSync();modelLensSync();agencySync()}})}
 if(EMB&&!EMB_ALERTS){setInterval(portalSync,90000);setTimeout(portalSync,4000);setTimeout(portalSync,15000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)portalSync()})}
 
 /* ================= Inside the portal ================= */
