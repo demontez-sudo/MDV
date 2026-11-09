@@ -39,6 +39,10 @@ where status not in ('completed', 'cancelled', 'done') and id::text in (select e
 
 update public.tasks set event_id = null where event_id in (select id from _gone);
 
+-- the same order the portal's delete uses: release everything that points at the event, then delete it
+update public.availability_blocks set source_event_id = null where source_event_id in (select id from _gone);
+delete from public.event_members where event_id in (select id from _gone);
+delete from public.event_models where event_id in (select id from _gone);
 delete from public.events where id in (select id from _gone);
 
 -- people who are archived, released or inactive come off the events still ahead (these have other people on them)
