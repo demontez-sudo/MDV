@@ -353,6 +353,7 @@ window.renderNotes=function(el){
 var PNC=null,panelCtx=null;
 function ensureFab(){
   if(document.getElementById('nt-fab')||document.documentElement.classList.contains('is-login'))return;
+  try{if(window.matchMedia&&window.matchMedia('(max-width:820px)').matches)return;}catch(_e){}   /* phones reach Notes from the menu; a floating pill covers the page */
   var b=document.createElement('button');b.id='nt-fab';b.type='button';b.setAttribute('aria-label','Notes for this page');b.title='Notes (Ctrl/Cmd+Shift+N)';b.innerHTML='<i class="ti ti-notes"></i><span>Notes</span><em hidden></em>';
   b.onclick=function(){togglePanel();};document.documentElement.appendChild(b);
 }

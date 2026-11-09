@@ -1313,6 +1313,8 @@ html.emb .urgent{background:rgba(38,16,12,.7)!important;-webkit-backdrop-filter:
 html.emb .tabs{border-radius:10px;padding-left:8px;padding-right:8px}
 html.emb-home,html.emb-home body{background:transparent!important;min-height:0!important;height:auto!important;overflow:hidden!important}
 html.emb-home .app{min-height:0!important}
+html.emb-home,html.emb-home body{width:100%!important;max-width:100%!important;overflow-x:hidden!important;color-scheme:dark!important}
+html.emb-home .app,html.emb-home main{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box}
 html.emb-home main{padding:0!important}
 html.emb-alerts body{display:none!important}
 .wcol.today{background-color:rgba(212,176,119,.07)}
@@ -1343,7 +1345,7 @@ window.REBUILD_CONFIG={allowSignup:false};
 /* Inside the Maison de Veux portal this app borrows the portal's own sign-in and database connection. */
 (function(){var C=null;try{var P=window.parent;if(P&&P!==window&&P.MDV_DS_EMBED&&P.VEUX_SUPABASE_CLIENT)C=P.VEUX_SUPABASE_CLIENT}catch(_){}
 window.EMB=C;window.EMB_HOME=!!C&&/[?&]home=1/.test(location.search);window.EMB_ALERTS=!!C&&/[?&]alerts=1/.test(location.search);
-var d=document.documentElement;if(C)d.classList.add("emb");if(window.EMB_HOME)d.classList.add("emb-home");if(window.EMB_ALERTS)d.classList.add("emb-alerts");
+var d=document.documentElement;if(C){d.classList.add("emb");d.style.colorScheme="dark";try{var cm=document.createElement("meta");cm.name="color-scheme";cm.content="dark";document.head.appendChild(cm)}catch(_){}}if(C)d.classList.add("emb");if(window.EMB_HOME)d.classList.add("emb-home");if(window.EMB_ALERTS)d.classList.add("emb-alerts");
 if(C){var f=window.fetch.bind(window);window.fetch=function(u,o){if(typeof u==="string"&&/^api\//.test(u))return Promise.resolve(new Response('{"error":"not_configured"}',{status:404,headers:{"content-type":"application/json"}}));return f(u,o)}}})();
 </script>
 </head>
