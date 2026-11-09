@@ -117,7 +117,11 @@ export const handler=async(event)=>{
         if(current.ends_at)patch.ends_at=new Date(new Date(current.ends_at).getTime()+delta).toISOString();
         patch.metadata={...(current.metadata||{}),calendar_dragged_at:new Date().toISOString(),calendar_dragged_by:user.id};
         const eventRow=await one(admin.from('events').update(patch).eq('organization_id',organization.id).eq('id',body.event_id).select('*').single());
-        return json(200,{ok:true,event:eventRow,moved:true});
+        if(!eventRow||Date.parse(eventRow.starts_at)!==newStart.getTime()){const e=new Error('Calendar move could not be verified.');e.statusCode=500;e.publicMessage='The event was not moved. Please try again.';throw e;}
+        /* a meeting that is also an agent task: the task moves with it */
+        const linkedTask=eventRow.metadata&&eventRow.metadata.task_id;
+        if(linkedTask){const tu=await admin.from('tasks').update({due_at:eventRow.starts_at}).eq('organization_id',organization.id).eq('id',linkedTask);if(tu&&tu.error)console.warn('[calendar] linked task did not move',tu.error.message);}
+        return json(200,{ok:true,verified:true,event:eventRow,moved:true});
       }
       if(action==='create_event'||action==='update_event'){
         const title=String(body.title||'').trim();

@@ -24,9 +24,12 @@ export async function safeDeleteEvent(admin,organizationId,eventId){
   await must(admin.from('tasks').update({event_id:null}).eq('organization_id',organizationId).eq('event_id',eventId),'Detach event tasks',{optional:true});
   await must(admin.from('event_members').delete().eq('organization_id',organizationId).eq('event_id',eventId),'Delete event members',{optional:true});
   await must(admin.from('event_models').delete().eq('organization_id',organizationId).eq('event_id',eventId),'Delete event models');
-  const deleted=await must(admin.from('events').delete().eq('organization_id',organizationId).eq('id',eventId).select('id').single(),'Delete event');
-  if(deleted?.id!==eventId)throw new Error('Event deletion could not be verified');
-  return {ok:true,verified:true,event_id:eventId};
+  const deleted=await must(admin.from('events').delete().eq('organization_id',organizationId).eq('id',eventId).select('id').maybeSingle(),'Delete event');
+  if(deleted?.id===eventId)return {ok:true,verified:true,event_id:eventId};
+  /* nothing was deleted: either it was already gone (a stale copy on another page, a second click) or it is still there and could not be removed */
+  const still=await must(admin.from('events').select('id').eq('organization_id',organizationId).eq('id',eventId).maybeSingle(),'Check the event');
+  if(still?.id===eventId)throw new Error('Event deletion could not be verified');
+  return {ok:true,verified:true,event_id:eventId,already_gone:true};
 }
 
 export async function safeDeleteBooking(admin,organizationId,bookingId){
