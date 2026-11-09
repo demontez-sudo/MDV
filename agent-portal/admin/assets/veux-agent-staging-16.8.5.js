@@ -46,6 +46,21 @@ async function api(path,options){
   if(method==='GET')state.inflight.set(key,work);
   try{return await work;}finally{if(method==='GET')state.inflight.delete(key);}
 }
+/* Big photos are shrunk before they are uploaded: longest side 4000 px, JPEG at 90%. Phone and camera files of 10 to 47 MB become
+   about 2 to 4 MB with no visible loss on screen or on a comp card. Only done when it really saves space; videos, GIFs and small
+   images go up untouched. If the browser cannot do it, the original is uploaded as before. */
+async function shrinkImage(file,mime){
+  try{
+    if(!/^image\/(jpeg|png|webp)$/i.test(mime)||Number(file.size||0)<3*1048576||!window.createImageBitmap)return file;
+    var bmp=await createImageBitmap(file,{imageOrientation:'from-image'});
+    var k=Math.min(1,4000/Math.max(bmp.width,bmp.height)),w=Math.max(1,Math.round(bmp.width*k)),h=Math.max(1,Math.round(bmp.height*k));
+    var cv=document.createElement('canvas');cv.width=w;cv.height=h;var cx=cv.getContext('2d');cx.fillStyle='#fff';cx.fillRect(0,0,w,h);cx.drawImage(bmp,0,0,w,h);
+    if(bmp.close)bmp.close();
+    var blob=await new Promise(function(r){cv.toBlob(r,'image/jpeg',0.9);});
+    if(!blob||blob.size>=file.size*0.85)return file;
+    return new File([blob],String(file.name||'photo').replace(/\.[a-z0-9]+$/i,'')+'.jpg',{type:'image/jpeg',lastModified:Date.now()});
+  }catch(e){return file;}
+}
 async function uploadModelMedia(file,modelId,options){
   options=options||{};
   if(!file)throw new Error('Choose a file first.');
@@ -53,6 +68,7 @@ async function uploadModelMedia(file,modelId,options){
   var mime=String(file.type||options.mime_type||'application/octet-stream');
   if(!/^(image\/(jpeg|png|webp|gif)|video\/(mp4|quicktime|webm))$/i.test(mime))throw new Error('Use JPG, PNG, WEBP, GIF, MP4, MOV or WEBM media.');
   var max=150*1024*1024;if(Number(file.size||0)>max)throw new Error('Model media must be 150 MB or smaller.');
+  file=await shrinkImage(file,mime);mime=String(file.type||mime);
   var signPayload={organization_slug:(state.org&&state.org.slug)||orgSlug,model_id:modelId,name:file.name||'model-media',mime_type:mime,size_bytes:file.size||0,category:options.category||null};
   var sign;
   try{
