@@ -68,6 +68,13 @@ async function validateModelIds(admin,organizationId,ids){
 }
 
 
+/* Did the saved row really take the values that were asked for? Compared field by field (times as instants, so time zone spelling does not matter). */
+function eventMismatch(ev,payload){
+  if(!ev)return true;
+  const same=(a,b)=>String(a==null?'':a)===String(b==null?'':b);
+  const at=(a,b)=>(a==null&&b==null)||(Number.isFinite(Date.parse(a))&&Number.isFinite(Date.parse(b))&&Date.parse(a)===Date.parse(b));
+  return !same(ev.title,payload.title)||!at(ev.starts_at,payload.starts_at)||!at(ev.ends_at||null,payload.ends_at||null)||!same(ev.location,payload.location);   /* only what a person sees and edits; status and type may be normalised by the save function */
+}
 function rpcUnavailable(error){
   const code=String(error?.code||'').toUpperCase(),msg=String(error?.message||error||'').toLowerCase();
   return code==='PGRST202'||code==='42883'||msg.includes('could not find the function')||msg.includes('function')&&msg.includes('does not exist')||msg.includes('schema cache');
@@ -170,6 +177,12 @@ export const handler=async(event)=>{
           saved=await fallbackSaveEvent(admin,organization.id,user.id,action,body.event_id,payload,ids);
         }else saved=rpcResult.data;
         if(!saved?.verified||!saved?.event){const e=new Error('Calendar save could not be verified.');e.statusCode=500;e.publicMessage='Calendar event was not confirmed as saved. Please retry.';throw e;}
+        /* An update that comes back unchanged is written directly; if even that does not stick, say so instead of reporting a save that did nothing. */
+        if(action==='update_event'&&eventMismatch(saved.event,payload)){
+          console.warn('[calendar] the save function returned the event unchanged; writing the update directly',body.event_id);
+          saved=await fallbackSaveEvent(admin,organization.id,user.id,'update_event',body.event_id,payload,ids);
+          if(eventMismatch(saved.event,payload)){const e=new Error('Calendar update did not apply.');e.statusCode=500;e.publicMessage='Your changes were not applied to the calendar. Please try again, or tell support which event this was.';throw e;}
+        }
         let linked=null;
         try{
           const at=body.agent_task&&typeof body.agent_task==='object'?body.agent_task:{};
