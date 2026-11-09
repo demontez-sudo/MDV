@@ -446,6 +446,18 @@ h3.grp{font-family:var(--serif);font-weight:500;font-size:22px;margin:8px 0 8px}
 .gk{display:inline-block;width:12px;height:8px;border-radius:2px}.gsk{background:var(--sunk);border:1px solid var(--line)}
 @media (max-width:700px){.grow{grid-template-columns:120px 1fr}.mcard .mbody th{width:90px}}
 .wb.wev{left:38%;right:2px;border:1px solid var(--bg);box-shadow:0 1px 4px rgba(0,0,0,.25);z-index:2}
+/* Model calendars beside mine */
+.lensbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 14px}.lens-l{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lens-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 12px;border-radius:999px;background:rgba(141,127,214,.22);border:1px solid rgba(141,127,214,.7);font-size:13px}
+.lens-chip button{width:22px;height:22px;border-radius:50%;border:0;background:rgba(255,255,255,.1);color:inherit;cursor:pointer;line-height:1}
+.lens-add{min-height:34px;border-radius:999px;border:1px dashed var(--line);background:transparent;color:inherit;padding:0 12px;font:inherit;font-size:13px;max-width:240px}
+.lens-key{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}.lens-key i{width:14px;height:10px;border-radius:3px;border:1px dashed rgba(141,127,214,.95);background:rgba(141,127,214,.3)}
+.week.has-lens{min-width:1260px}
+.week.has-lens .wb:not(.wev){right:76%}
+.week.has-lens .wb.wev:not(.wmodel){left:26%;right:38%}
+.week.has-lens .wb.wev.wmodel{left:64%;right:2px}
+.wb.wev.wmodel{background:rgba(141,127,214,.24);border:1px dashed rgba(141,127,214,.95);border-left:3px solid #8d7fd6;z-index:3}
+
 .cal .ev.u{font-weight:600;color:var(--info)}
 details.medit{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px}
 details.block>summary{cursor:pointer}
@@ -2267,10 +2279,10 @@ function vSchedule(){
 function blockSpans(s){const sch=scheduleFor(s),fill={"Flight":"09:00","Arrival":"14:00","Evening":"19:00"};const bl=sch.blocks.map(b=>({...b,time:b.time||fill[b.title]||"12:00"}));return bl.map((b,i)=>{const st=tMin(b.time);let en=i<bl.length-1?tMin(bl[i+1].time):Math.min(1440,st+60);if(/sleep|early night/i.test(b.title))en=Math.min(1440,st+30);if(b.title==="Flight")en=st+300;return{...b,st,en:Math.max(en,st+15),i}})}
 function schedWeek(){
  const ws=weekDates(S.date),t0=todayIso(),PX=760/1140,d0=300;
- let h=`<div class="row" style="margin:0 0 14px"><button class="btn sm ghost" data-act="day" data-n="-7">Previous week</button><button class="btn sm ghost" data-act="day" data-n="0">This week</button><button class="btn sm ghost" data-act="day" data-n="7">Next week</button><span class="muted small">Week of ${fmtShort(ws[0])}. Tap any item to open it, a date to see the full day, or + to add an event.</span></div>`;
- h+=`<div class="weekwrap"><div class="week"><div></div>${ws.map(s=>{const L=locOf(s);return`<div class="wh ${s===t0?"today":""}" data-act="goto" data-d="${s}" role="button" tabindex="0"><b>${parse(s).getDate()}</b>${DOW[parse(s).getDay()].slice(0,3)}<small>${esc(L.label)}</small><i class="cadd" data-act="newev" data-d="${s}" role="button" aria-label="Add event on ${fmtShort(s)}">+</i></div>`}).join("")}`;
+ let h=lensBar()+`<div class="row" style="margin:0 0 14px"><button class="btn sm ghost" data-act="day" data-n="-7">Previous week</button><button class="btn sm ghost" data-act="day" data-n="0">This week</button><button class="btn sm ghost" data-act="day" data-n="7">Next week</button><span class="muted small">Week of ${fmtShort(ws[0])}. Tap any item to open it, a date to see the full day, or + to add an event.</span></div>`;
+ h+=`<div class="weekwrap"><div class="week${lensIds().length?" has-lens":""}"><div></div>${ws.map(s=>{const L=locOf(s);return`<div class="wh ${s===t0?"today":""}" data-act="goto" data-d="${s}" role="button" tabindex="0"><b>${parse(s).getDate()}</b>${DOW[parse(s).getDay()].slice(0,3)}<small>${esc(L.label)}</small><i class="cadd" data-act="newev" data-d="${s}" role="button" aria-label="Add event on ${fmtShort(s)}">+</i></div>`}).join("")}`;
  h+=`<div class="hours">${[6,8,10,12,14,16,18,20,22].map(x=>`<span style="top:${(x*60-d0)*PX}px">${x>12?x-12:x}${x>=12?"p":"a"}</span>`).join("")}</div>`;
- ws.forEach(s=>{const d=S.days[s]||{},L=locOf(s);h+=`<div class="wcol ${L.type==="travel"?"travel":""} ${s===t0?"today":""}" data-d="${s}" title="Tap an empty time to add an event">${s===t0&&nowMin()>=d0?`<div class="wnow" style="top:${(nowMin()-d0)*PX}px"><i></i></div>`:""}`;blockSpans(s).forEach(b=>{if(b.st<d0)b.st=d0;const top=(b.st-d0)*PX,ht=Math.max(14,(b.en-b.st)*PX-2);h+=`<div class="wb k-${b.cat} ${d.blocks&&d.blocks["k"+b.i]?"done":""}" style="top:${top}px;height:${ht}px" title="${esc(fmtT(b.time)+" "+b.title)}" data-act="item" data-kind="b" data-id="k${b.i}" data-s="${s}" role="button" tabindex="0"><b>${esc(b.title)}</b></div>`});eventsFor(s).filter(e=>e.t).forEach(e=>{let st=Math.max(d0,tMin(e.t)),en=e.e?tMin(e.e):st+60;if(en<=st)en=st+30;h+=`<div class="wb wev k-${e.cat||"connect"} ${evDone(e,s)?"done":""}" style="top:${(st-d0)*PX}px;height:${Math.max(14,(en-st)*PX-2)}px" title="${esc(evLine(e))}" data-act="item" data-kind="e" data-id="${e.id}" data-s="${s}" role="button" tabindex="0"><b>${esc(e.title)}</b></div>`});if(s===t0){const m=nowMin();if(m>d0)h+=`<div class="nowline" style="top:${(m-d0)*PX}px"></div>`}h+=`</div>`});
+ ws.forEach(s=>{const d=S.days[s]||{},L=locOf(s);h+=`<div class="wcol ${L.type==="travel"?"travel":""} ${s===t0?"today":""}" data-d="${s}" title="Tap an empty time to add an event">${s===t0&&nowMin()>=d0?`<div class="wnow" style="top:${(nowMin()-d0)*PX}px"><i></i></div>`:""}`;blockSpans(s).forEach(b=>{if(b.st<d0)b.st=d0;const top=(b.st-d0)*PX,ht=Math.max(14,(b.en-b.st)*PX-2);h+=`<div class="wb k-${b.cat} ${d.blocks&&d.blocks["k"+b.i]?"done":""}" style="top:${top}px;height:${ht}px" title="${esc(fmtT(b.time)+" "+b.title)}" data-act="item" data-kind="b" data-id="k${b.i}" data-s="${s}" role="button" tabindex="0"><b>${esc(b.title)}</b></div>`});eventsFor(s).filter(e=>e.t).forEach(e=>{let st=Math.max(d0,tMin(e.t)),en=e.e?tMin(e.e):st+60;if(en<=st)en=st+30;h+=`<div class="wb wev k-${e.cat||"connect"} ${e.src==="model"?"wmodel":""} ${evDone(e,s)?"done":""}" style="top:${(st-d0)*PX}px;height:${Math.max(14,(en-st)*PX-2)}px" title="${esc(evLine(e))}" data-act="item" data-kind="e" data-id="${e.id}" data-s="${s}" role="button" tabindex="0"><b>${esc(e.title)}</b></div>`});if(s===t0){const m=nowMin();if(m>d0)h+=`<div class="nowline" style="top:${(m-d0)*PX}px"></div>`}h+=`</div>`});
  h+=`</div></div>`;
  const tot={};ws.forEach(s=>blockSpans(s).forEach(b=>{if(/sleep|early night/i.test(b.title))return;tot[b.cat]=(tot[b.cat]||0)+(b.en-b.st)}));const sum=Object.values(tot).reduce((a,b)=>a+b,0)||1;
  h+=`<div class="grid2" style="margin-top:30px"><div class="block"><h3>Where the week's hours go</h3><div class="budget" role="img" aria-label="Hours by category">${CATS.filter(c=>tot[c[0]]).map(c=>`<i class="k-${c[0]}" style="width:${tot[c[0]]/sum*100}%"></i>`).join("")}</div><div class="budget-key">${CATS.filter(c=>tot[c[0]]).map(c=>`<div class="k-${c[0]}">${c[1]}<b>${(tot[c[0]]/60).toFixed(1)} h</b></div>`).join("")}</div>`;
@@ -2280,7 +2292,7 @@ function schedWeek(){
 }
 function schedMonth(){
  const [Y,M]=S.calMonth.split("-").map(Number),first=new Date(Y,M-1,1),t=todayIso(),start=mondayOf(iso(first)),all=allTasks();
- let h=`<div class="cal-head"><h3>${MON[M-1]} ${Y}</h3><button class="btn sm ghost" data-act="mon" data-n="-1">Previous</button><button class="btn sm ghost" data-act="mon" data-n="0">This month</button><button class="btn sm ghost" data-act="mon" data-n="1">Next</button></div><div class="cal">${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(x=>`<div class="dow">${x}</div>`).join("")}`;
+ let h=lensBar()+`<div class="cal-head"><h3>${MON[M-1]} ${Y}</h3><button class="btn sm ghost" data-act="mon" data-n="-1">Previous</button><button class="btn sm ghost" data-act="mon" data-n="0">This month</button><button class="btn sm ghost" data-act="mon" data-n="1">Next</button></div><div class="cal">${["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map(x=>`<div class="dow">${x}</div>`).join("")}`;
  for(let i=0;i<42;i++){const s=addDays(start,i),dd=parse(s);if(i===35&&dd.getMonth()!==M-1)break;
   const L=locOf(s),due=all.filter(x=>x.due===s&&!x.done),evs=EVENTS[s]||[],ce=CITY_EVENTS.filter(e=>e.start===s||(e.end===s&&e.start!==e.end));
   const lines=[];if(L.type==="travel")lines.push(`<div class="ev t">${esc(L.label)}</div>`);const X=(cls,txt,attrs)=>`<span class="ev ${cls}" role="button" tabindex="0" ${attrs}>${txt}</span>`;ce.forEach(e=>lines.push(X("e",esc(e.t),`data-act="item" data-kind="x" data-s="${s}" data-tag="Event" data-title="${esc(e.t)}" data-sub="${esc(e.start===e.end?"":"Runs "+fmtMD(e.start)+" to "+fmtMD(e.end))}"`)));mdvOnDay(s).forEach(m=>lines.push(X("e mdv",`${m.t?fmtT(m.t).replace(":00","")+" ":""}${esc(m.title)}`,`data-act="item" data-kind="x" data-s="${s}" data-tag="Maison de Veux · ${esc(m.kind)}" data-title="${esc(m.title)}" data-sub="${esc(m.sub)}"`)));eventsFor(s).forEach(e=>lines.push(X("u "+(evDone(e,s)?"done":""),`${e.t?fmtT(e.t).replace(":00","")+" ":""}${esc(e.title)}`,`data-act="item" data-kind="e" data-id="${e.id}" data-s="${s}"`)));evs.forEach(e=>lines.push(X("",esc(e),`data-act="item" data-kind="x" data-s="${s}" data-tag="Plan" data-title="${esc(e)}"`)));if(OUT_DAYS.includes(dd.getDay())&&L.type==="atl")lines.push(`<div class="ev muted">Dinner out</div>`);due.slice(0,3).forEach(x=>lines.push(X("tk","◦ "+esc(x.title),`data-act="item" data-kind="t" data-id="${x.id}" data-s="${s}"`)));if(due.length>3)lines.push(`<div class="ev muted">+${due.length-3} more</div>`);
@@ -3154,9 +3166,35 @@ const EV_REP=[["","Once"],["w","Every week"],["wd","Every weekday"],["d","Every 
 function evOccurs(e,s){if(!e.d)return false;if(s<e.d)return false;if(e.until&&s>e.until)return false;if(e.skip&&e.skip.includes(s))return false;
  if(!e.rep)return s===e.d;if(e.rep==="d")return true;const dw=parse(s).getDay();if(e.rep==="wd")return dw>0&&dw<6;if(e.rep==="w")return dw===parse(e.d).getDay();return false}
 var PE=[];
+var LME=[],LENSM=[];
+function lensIds(){const l=(core().lens)||{};return Array.isArray(l.ids)?l.ids:[]}
+function modelEvs(){return lensIds().length?LME:[]}
+function meFind(id){return LME.find(x=>x.id===id)}
+/* Model calendars beside mine: pick models and their events, bookings and castings join the week in their own lane (and the smart alerts). */
+function lensBar(){
+ if(!EMB||EMB_ALERTS)return"";
+ const ids=lensIds(),nm=(core().lens&&core().lens.names)||{};
+ const chips=ids.map(id=>`<span class="lens-chip">${esc(nm[id]||"Model")}<button type="button" data-lens-rm="${esc(id)}" aria-label="Remove ${esc(nm[id]||"model")}">×</button></span>`).join("");
+ const opts=LENSM.filter(m=>!ids.includes(m.id)).map(m=>`<option value="${esc(m.id)}">${esc(m.name)}${m.market?" · "+esc(m.market):""}</option>`).join("");
+ return `<div class="lensbar"><span class="lens-l">Model calendars</span>${chips}${LENSM.length?`<select class="lens-add" data-lens-add aria-label="Add a model calendar"><option value="">+ Add a model</option>${opts}</select>`:`<span class="muted small">Loading models…</span>`}${ids.length?`<span class="lens-key"><i></i>Model items sit in the right lane</span>`:`<span class="muted small">Follow a model to see their calendar next to yours.</span>`}</div>`
+}
+function lensRepaint(){const typing=document.activeElement&&document.activeElement.matches&&document.activeElement.matches("input,textarea,select");if(!EMB_ALERTS&&!typing&&["calendar","schedule","today","command","work"].includes(S.view))render()}
+async function modelLensSync(force){
+ if(!EMB||!sbUser||!baseReady)return;const ids=lensIds();
+ try{
+  if(!ids.length){if(LME.length){LME=[];lensRepaint()}return}
+  const l=await parent.MDV_DS_EMBED.modelEvents(ids,!!force);
+  if(Array.isArray(l)&&JSON.stringify(l)!==JSON.stringify(LME)){LME=l;lensRepaint()}
+ }catch(_){}
+}
+async function lensModels(){if(!EMB||EMB_ALERTS||LENSM.length)return;try{const l=await parent.MDV_DS_EMBED.modelList();if(Array.isArray(l)&&l.length){LENSM=l;lensRepaint()}}catch(_){}}
+function lensAdd(id){const m=LENSM.find(x=>x.id===id);if(!m)return;const c=core();c.lens=c.lens||{ids:[],names:{}};c.lens.names=c.lens.names||{};if(!c.lens.ids.includes(id))c.lens.ids.push(id);c.lens.names[id]=m.name;markDirty("core");render();modelLensSync(true)}
+function lensRemove(id){const c=core();if(!c.lens)return;c.lens.ids=(c.lens.ids||[]).filter(x=>x!==id);if(c.lens.names)delete c.lens.names[id];markDirty("core");LME=LME.filter(e=>(e.modelIds||[]).some(x=>c.lens.ids.includes(x)));render()}
+document.addEventListener("change",e=>{const a=e.target.closest&&e.target.closest("[data-lens-add]");if(a&&a.value)lensAdd(a.value)});
+document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest("[data-lens-rm]");if(r)lensRemove(r.dataset.lensRm)});
 function portalEvs(){return PE||[]}
 function peFind(id){return portalEvs().find(x=>x.id===id)}
-function eventsFor(s){return(core().events||[]).concat(msEvents(),icsEvents(),portalEvs(),bossEvents()).filter(e=>evOccurs(e,s)).sort((a,b)=>(a.t||"99")<(b.t||"99")?-1:1)}
+function eventsFor(s){return(core().events||[]).concat(msEvents(),icsEvents(),portalEvs(),modelEvs(),bossEvents()).filter(e=>evOccurs(e,s)).sort((a,b)=>(a.t||"99")<(b.t||"99")?-1:1)}
 function evDone(e,s){const d=S.days[s];return!!(d&&d.ev&&d.ev[e.id])}
 function evLine(e){return(e.t?fmtT(e.t)+(e.e?" to "+fmtT(e.e):"")+" · ":"All day · ")+e.title}
 function evForm(date){
@@ -3430,7 +3468,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
 /* ---------- Urgent: past-due items ---------- */
 function pastDue(){
  const t=todayIso(),now=new Date(),nm=now.getHours()*60+now.getMinutes(),ev=[];
- for(let i=14;i>=0;i--){const s=addDays(t,-i);eventsFor(s).forEach(e=>{if(e.src==="outlook"||e.src==="ics"||e.src==="portal"||evDone(e,s))return;const endM=hm(e.e)??(e.t?hm(e.t)+60:1440);if(s<t||endM<=nm)ev.push({e,s})})}
+ for(let i=14;i>=0;i--){const s=addDays(t,-i);eventsFor(s).forEach(e=>{if(e.src==="outlook"||e.src==="ics"||e.src==="portal"||e.src==="model"||evDone(e,s))return;const endM=hm(e.e)??(e.t?hm(e.t)+60:1440);if(s<t||endM<=nm)ev.push({e,s})})}
  const tk=allTasks().filter(x=>!x.done&&x.due&&x.due<t).sort((a,b)=>a.due<b.due?-1:1);
  return{ev,tk,n:ev.length+tk.length}}
 const agoTxt=s=>{const n=Math.round((parse(todayIso())-parse(s))/864e5);return n<=0?"Today":n===1?"Yesterday":n+" days ago"};
@@ -3456,9 +3494,9 @@ function schedDay(){const s=S.date,dt=parse(s),L=locOf(s),ev=eventsFor(s);
  return h}
 
 /* ================= Smart calendar: open, create, edit, reschedule ================= */
-const evById=id=>(core().events||[]).find(x=>x.id===id)||msFind(id)||peFind(id);
+const evById=id=>(core().events||[]).find(x=>x.id===id)||msFind(id)||peFind(id)||meFind(id);
 const catName=k=>(EV_CATS.find(c=>c[0]===k)||["","Event"])[1];
-const evTag=e=>e.src==="portal"?"Agency":e.src==="ics"?(e.calName||"Calendar"):e.src==="outlook"?(e.calName||"Outlook"):({move:"Body",travel:"Travel",recharge:"Personal",close:"Personal",focus:"Focus",connect:"Meeting"}[e.cat]||"Meeting");
+const evTag=e=>e.src==="model"?((e.models||[]).length===1?e.models[0]:"Models"):e.src==="portal"?"Agency":e.src==="ics"?(e.calName||"Calendar"):e.src==="outlook"?(e.calName||"Outlook"):({move:"Body",travel:"Travel",recharge:"Personal",close:"Personal",focus:"Focus",connect:"Meeting"}[e.cat]||"Meeting");
 const longDate=s=>{const d=parse(s);return DOW[d.getDay()]+", "+MON[d.getMonth()]+" "+d.getDate()};
 function repTxt(e){if(!e.rep)return"";const r=(EV_REP.find(x=>x[0]===e.rep)||["",""])[1];return r+(e.until?" until "+fmtMD(e.until):"")}
 
@@ -3490,10 +3528,10 @@ function itemHTML(it){
   let h=sheetHead(tag,e.title,`${longDate(s)} · ${e.t?rangeTxt({time:e.t,end:e.e}):"All day"}`);
   h+=`<div class="sheet-body">`;
   if(S.itemEdit)return h+editHTML(e,s)+`</div>`;
-  const px=e.src==="portal",vn={zoom:"Zoom",meet:"Google Meet",teams:"Microsoft Teams"};
+  const px=e.src==="portal"||e.src==="model",vn={zoom:"Zoom",meet:"Google Meet",teams:"Microsoft Teams"};
   h+=`<div class="sheet-act">${e.video?`<a class="btn sm solid" href="${esc(e.video.url)}" target="_blank" rel="noopener noreferrer">Join ${esc(vn[e.video.provider]||"video meeting")}</a>`:""}<button class="btn sm ${done?"":"solid"}" data-act="itdone">${done?"Mark not done":"Mark done"}</button>${px?"":`<button class="btn sm" data-act="itedit">Edit</button><button class="btn sm" data-act="itdup">Duplicate</button>`}<button class="btn sm" data-act="itday">Open day</button>${e.web?`<a class="btn sm" href="${esc(e.web)}" target="_blank" rel="noopener">Open in Outlook ${xi("arrow","xi sm")}</a>`:""}</div>`;
   if(cl.length)h+=`<div class="sheet-warn">${xi("alert","xi sm")}<span>Overlaps with ${cl.map(x=>`<b>${esc(x.title)}</b> (${rangeTxt({time:x.t,end:x.e})})`).join(", ")}</span></div>`;
-  h+=`<div class="sheet-info">${row("cal",e.src==="portal"?"From the agency calendar"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" (change it there)":e.src==="ics"?"From "+esc(e.calName||"a linked calendar")+" (read-only)":e.src==="outlook"?"From your Outlook calendar"+(e.calName?" · "+esc(e.calName):"")+(e.org?" · organised by "+esc(e.org):""):esc(catName(e.cat))+(e.rep?" · "+esc(repTxt(e)):""))}${row("pin",esc(e.where||""))}${e.notes?`<div class="sheet-notes">${esc(e.notes)}</div>`:""}${row("check",done?"Done for this day":s<todayIso()||(s===todayIso()&&e.t&&hm(e.e||e.t)<nowMin())?"<b class='late'>Not marked done</b>":"")}</div>`;
+  h+=`<div class="sheet-info">${row("cal",e.src==="model"?"On "+esc((e.models||[]).join(", "))+"'s calendar · "+esc(e.kind||"event")+" (change it in the agency calendar)":e.src==="portal"?"From the agency calendar"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" (change it there)":e.src==="ics"?"From "+esc(e.calName||"a linked calendar")+" (read-only)":e.src==="outlook"?"From your Outlook calendar"+(e.calName?" · "+esc(e.calName):"")+(e.org?" · organised by "+esc(e.org):""):esc(catName(e.cat))+(e.rep?" · "+esc(repTxt(e)):""))}${row("pin",esc(e.where||""))}${e.notes?`<div class="sheet-notes">${esc(e.notes)}</div>`:""}${row("check",done?"Done for this day":s<todayIso()||(s===todayIso()&&e.t&&hm(e.e||e.t)<nowMin())?"<b class='late'>Not marked done</b>":"")}</div>`;
   if(!px)h+=reschedForm(s,{kind:"e",ev:e,time:e.t,end:e.e});
   if(!px)h+=`<div class="sheet-danger">${e.rep?`<button class="linkbtn" data-act="itskip">Remove just ${fmtMD(s)}</button><button class="linkbtn" data-act="itdel">Delete the whole series</button>`:`<button class="linkbtn" data-act="itdel">Delete event</button>`}</div>`;
   return h+`</div>`}
@@ -4457,7 +4495,7 @@ async function portalSync(){
  psBusy=false
 }
 async function portalEventsSync(){if(!EMB||!sbUser||!baseReady)return;try{const l=await parent.MDV_DS_EMBED.portalEvents(true);if(Array.isArray(l)&&JSON.stringify(l)!==JSON.stringify(PE)){PE=l;const typing=document.activeElement&&document.activeElement.matches&&document.activeElement.matches("input,textarea,select");if(!EMB_ALERTS&&!typing&&["calendar","schedule","today","command","work"].includes(S.view))render()}}catch(_){}}
-if(EMB){setTimeout(portalEventsSync,3500);setTimeout(portalEventsSync,16000);setInterval(()=>{if(!document.hidden)portalEventsSync()},120000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)portalEventsSync()})}
+if(EMB){setTimeout(portalEventsSync,3500);setTimeout(portalEventsSync,16000);setTimeout(lensModels,3000);setTimeout(()=>modelLensSync(true),4500);setInterval(()=>{if(!document.hidden){portalEventsSync();modelLensSync()}},120000);document.addEventListener("visibilitychange",()=>{if(!document.hidden){portalEventsSync();modelLensSync()}})}
 if(EMB&&!EMB_ALERTS){setInterval(portalSync,90000);setTimeout(portalSync,4000);setTimeout(portalSync,15000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)portalSync()})}
 
 /* ================= Inside the portal ================= */

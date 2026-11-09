@@ -90,32 +90,73 @@ function completePortalTask(id){
   var b=bridge();if(!b)return Promise.reject(new Error('Not ready'));
   return b.api('/api/agent/tasks/v11',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organization_slug:org(),action:'task_status',task_id:String(id),status:'completed'})}).then(function(r){PT.at=0;PT.list=null;return r;});
 }
-/* Agency calendar events that are mine (I am the owner), in DaySilk's own event shape, read-only. The Calendar's New Event form sets the
-   owner, so a meeting made there for me lands in my DaySilk week without being typed twice. */
+/* One cached read of the agency calendar (about 80 days around today), shared by "my events" and the model lens below. */
+var CS={at:0,data:null,busy:null};
+function calSnap(force){
+  if(!force&&CS.data&&Date.now()-CS.at<60000)return Promise.resolve(CS.data);
+  if(CS.busy)return CS.busy;
+  if(!bridge())return Promise.resolve(null);
+  var from=new Date(Date.now()-3*864e5),to=new Date(Date.now()+75*864e5),o=encodeURIComponent(org());
+  CS.busy=get('/api/agent/calendar/v9?organization='+o+'&start='+encodeURIComponent(from.toISOString())+'&end='+encodeURIComponent(to.toISOString())+'&_t='+Date.now())
+    .then(function(d){CS.data=d;CS.at=Date.now();return d;}).catch(function(){return null;}).then(function(x){CS.busy=null;return x;});
+  return CS.busy;
+}
+/* a calendar row in DaySilk's own event shape */
+function dsShape(e,extra){
+  var md=e.metadata||{},s=new Date(e.starts_at),en=e.ends_at?new Date(e.ends_at):null,d=dayKey(s);
+  var hm=function(x){return String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0');};
+  var ev={title:String(e.title||'Event'),cat:'connect',rep:'',where:e.location||'',notes:e.notes||'',web:'',
+    video:md.video&&/^https:\/\//i.test(String(md.video.url||''))?md.video:null};
+  if(e.all_day){ev.d=d;ev.t='';ev.e='';if(en&&dayKey(en)>d){ev.rep='d';ev.until=dayKey(new Date(en.getTime()-1));}}
+  else{ev.d=d;ev.t=hm(s);ev.e=en&&dayKey(en)===d?hm(en):'23:59';}
+  return Object.assign(ev,extra||{});
+}
+/* Agency calendar events that are mine (I am the owner), read-only. The Calendar's New Event form sets the owner, so a meeting made
+   there for me lands in my DaySilk week without being typed twice. */
 var PE={at:0,list:null,busy:null};
 function portalEvents(force){
   if(!force&&PE.list&&Date.now()-PE.at<60000)return Promise.resolve(PE.list);
   if(PE.busy)return PE.busy;
   if(!bridge())return Promise.resolve(null);
-  var from=new Date(Date.now()-3*864e5),to=new Date(Date.now()+75*864e5),o=encodeURIComponent(org());
-  PE.busy=Promise.all([
-    get('/api/agent/daysilk?me=1&organization='+o+'&_t='+Date.now()).catch(function(){return null;}),
-    get('/api/agent/calendar/v9?organization='+o+'&start='+encodeURIComponent(from.toISOString())+'&end='+encodeURIComponent(to.toISOString())+'&_t='+Date.now()).catch(function(){return null;})
-  ]).then(function(r){
+  var o=encodeURIComponent(org());
+  PE.busy=Promise.all([get('/api/agent/daysilk?me=1&organization='+o+'&_t='+Date.now()).catch(function(){return null;}),calSnap(force)]).then(function(r){
     var mid=r[0]&&r[0].me&&r[0].me.member_id,cal=r[1];if(!mid||!cal)return null;
-    var hm=function(d){return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');},list=[];
+    var list=[];
     arr(cal.events).forEach(function(e){
       if(!e||String(e.owner_member_id||'')!==String(mid)||!e.starts_at)return;
       var md=e.metadata||{};if(md.plan==='g90'||/^(cancelled|canceled)$/i.test(String(e.status||'')))return;
-      var s=new Date(e.starts_at),en=e.ends_at?new Date(e.ends_at):null,d=dayKey(s),ev={id:'pe-'+e.id,src:'portal',title:String(e.title||'Event'),cat:'connect',rep:'',where:e.location||'',notes:e.notes||'',web:'',calName:'Agency calendar',
-        models:arr(e.event_models).map(function(m){var q=m.models||{};return q.display_name||'';}).filter(Boolean),video:md.video&&/^https:\/\//i.test(String(md.video.url||''))?md.video:null};
-      if(e.all_day){ev.d=d;ev.t='';ev.e='';if(en&&dayKey(en)>d){ev.rep='d';ev.until=dayKey(new Date(en.getTime()-1));}}
-      else{ev.d=d;ev.t=hm(s);ev.e=en&&dayKey(en)===d?hm(en):'23:59';}
-      list.push(ev);
+      list.push(dsShape(e,{id:'pe-'+e.id,src:'portal',calName:'Agency calendar',models:arr(e.event_models).map(function(m){var q=m.models||{};return q.display_name||'';}).filter(Boolean)}));
     });
     PE.list=list;PE.at=Date.now();return list;
   }).catch(function(){return null;}).then(function(x){PE.busy=null;return x;});
   return PE.busy;
+}
+/* The model lens: the calendars of the models you follow (events, bookings, castings), so they can sit beside yours.
+   Each one is titled "Name: ..." so it is clear whose it is, in the week, the day sheet and the smart alerts. */
+function modelList(){
+  return calSnap(false).then(function(cal){
+    return arr(cal&&cal.lookups&&cal.lookups.models).filter(function(m){return m&&m.id&&m.display_name&&!/^(archiv|releas|inactive|former)/i.test(String(m.status||''));})
+      .map(function(m){return {id:m.id,name:m.display_name,market:m.primary_market_label||''};}).sort(function(a,b){return a.name.localeCompare(b.name);});
+  });
+}
+function modelEvents(ids,force){
+  ids=arr(ids).map(String);if(!ids.length)return Promise.resolve([]);
+  return calSnap(force).then(function(cal){
+    if(!cal)return null;
+    var nm={};arr(cal.lookups&&cal.lookups.models).forEach(function(m){nm[String(m.id)]=m.display_name;});
+    var out=[];
+    function add(kind,row,links){
+      if(!row||!row.starts_at||/^(cancelled|canceled|declined)$/i.test(String(row.status||'')))return;
+      var mine=arr(links).map(function(l){return String(l.model_id);}).filter(function(id,i,a){return ids.indexOf(id)>=0&&a.indexOf(id)===i;});
+      if(!mine.length)return;
+      var names=mine.map(function(id){return nm[id]||'Model';}),who=names.length===1?names[0].split(' ')[0]:names.length+' models';
+      out.push(dsShape(row,{id:'pm-'+kind+'-'+row.id,src:'model',kind:kind,modelIds:mine,models:names,calName:names.join(', '),title:who+': '+String(row.title||kind)}));
+    }
+    arr(cal.events).forEach(function(e){add('event',e,e.event_models);});
+    arr(cal.bookings).forEach(function(e){add('booking',e,e.booking_models);});
+    arr(cal.castings).forEach(function(e){add('casting',e,e.casting_models);});
+    return out;
+  });
 }
 function ensureAccount(){
   if(E.owner){E.ready=true;E.err='';return null;}
@@ -248,7 +289,7 @@ function addEvents(list){
     });
   });
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,modelList:modelList,modelEvents:modelEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */

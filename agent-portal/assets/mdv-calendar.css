@@ -734,3 +734,15 @@ html body #p-calendar .mp-row,html body #p-calendar .mp-task,html body #p-calend
 .mdv-join-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 20px;border-radius:999px;background:var(--mdv-gold,#d4b077);color:#15110c!important;font:600 14px Inter,system-ui,sans-serif;text-decoration:none}.mdv-join-btn:hover{filter:brightness(1.08)}
 .mdv-join-btn::before{content:"";width:18px;height:12px;border-radius:3px;background:currentColor;opacity:.85;clip-path:polygon(0 15%,70% 15%,70% 38%,100% 12%,100% 88%,70% 62%,70% 85%,0 85%)}
 .mdv-join-copy{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--mdv-line-2);background:none;color:var(--mdv-ink);font:13px Inter,system-ui,sans-serif;cursor:pointer}
+
+/* Agenda: Split (team on the left, models on the right) */
+.pl-splitbtn{height:36px;padding:0 14px;border-radius:999px;border:1px solid var(--mdv-line-2);background:transparent;color:var(--mdv-ink);font:500 13px Inter,system-ui,sans-serif;cursor:pointer;flex:0 0 auto}
+.pl-splitbtn.on{background:var(--mdv-gold);border-color:var(--mdv-gold);color:#15110c}
+.pl-smart{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin:8px 0 12px;padding:9px 12px;border-radius:10px;background:rgba(141,127,214,.12);border:1px solid rgba(141,127,214,.35);font-size:13px}.pl-smart em{font-style:normal;color:#e0a23f}.pl-smart em.risk{color:#e08f82}
+.pl-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+.pl-col{min-width:0;border:1px solid var(--mdv-line-2);border-radius:12px;padding:10px}.pl-col.models{border-color:rgba(141,127,214,.5);background:rgba(141,127,214,.05)}
+.pl-col>h3{margin:0 0 8px;font:600 11px Inter,system-ui,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mdv-mute)}.pl-col>h3 em{font-style:normal;opacity:.7;margin-left:4px}
+.pl-cols .pl-row{grid-template-columns:62px 3px minmax(0,1fr)}.pl-cols .pl-end{display:none}
+.pl-mgroup{margin:0 0 10px}.pl-mgroup:last-child{margin:0}.pl-mh{margin:0 0 4px}
+@media(max-width:900px){.pl-cols{grid-template-columns:1fr}}
+.pl-xclash{margin:-2px 0 6px 65px;padding:3px 8px;border-radius:6px;background:rgba(224,143,130,.14);color:#e08f82;font-size:11px}

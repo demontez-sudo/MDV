@@ -533,7 +533,7 @@ function modelsHtml(items,weekKeys,sel){
 }
 function paintModels(){var el=document.getElementById('pl-models');if(el&&MP.last)el.innerHTML=modelsHtml(MP.last.items,MP.last.weekKeys,MP.last.sel);}
 document.addEventListener('click',function(e){
-  var b=e.target&&e.target.closest&&e.target.closest('#pl-models [data-mp-scope],#pl-models [data-tk-open],#pl-models [data-mp-model]');if(!b)return;
+  var b=e.target&&e.target.closest&&e.target.closest('#pl-models [data-mp-scope],#pl-models [data-tk-open],#pl-models [data-mp-model],.pl-split-host [data-tk-open],.pl-split-host [data-mp-model]');if(!b)return;
   if(b.dataset.mpScope){MP.scope=b.dataset.mpScope;paintModels();return;}
   if(b.dataset.mpModel){S.model=b.dataset.mpModel;S.selected=null;try{saveWorkspace();}catch(_e){}redrawCurrent();return;}
   if(b.hasAttribute('data-tk-open')&&typeof window.navTo==='function')window.navTo('tasksconsolidated');
@@ -545,6 +545,33 @@ function stepDay(n){var nx=add(new Date(planSel()+'T12:00:00'),n),r=range(),k=ke
   document.addEventListener('touchend',function(e){if(!sx)return;var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;sx=0;if(Math.abs(dx)<70||Math.abs(dy)>45||Date.now()-st>700)return;if(window.getSelection&&String(window.getSelection()))return;
     var card=document.querySelector('.mdv-plan .pl-card');if(card)card.style.setProperty('--pl-from',dx<0?'28px':'-28px');stepDay(dx<0?1:-1);},{passive:true});
 })();
+/* ---------- Split: the team's day on the left, the models' day on the right, with clashes called out ---------- */
+function splitOn(){try{return localStorage.getItem('mdv-agenda-split')==='1';}catch(e){return false;}}
+function splitSet(v){try{localStorage.setItem('mdv-agenda-split',v?'1':'0');}catch(e){}}
+function timeOverlap(a,b){var as=+new Date(a.starts_at),ae=+new Date(a.ends_at||as+3600000),bs=+new Date(b.starts_at),be=+new Date(b.ends_at||bs+3600000);return as<be&&bs<ae;}
+function splitHasData(day,sel){if(day.length)return true;var look={};arr(S.data&&S.data.lookups&&S.data.lookups.models).forEach(function(m){look[m.id]=m.display_name;});return arr(TK.list).some(function(t){return t.model_id&&look[t.model_id]&&mpOpenTask(t)&&t.due_at&&key(t.due_at)===sel&&(S.model==='all'||S.model===look[t.model_id]);});}
+function splitHtml(day,sel,nowMs){
+  /* the team column ignores the model filter: picking one model should still show your own day beside theirs */
+  var team=arr(S.items).filter(function(x){return key(x.starts_at)===sel&&!models(x).length;}).sort(function(a,b){return new Date(a.starts_at)-new Date(b.starts_at);}),mod=day.filter(function(x){return models(x).length;});
+  var look={};arr(S.data&&S.data.lookups&&S.data.lookups.models).forEach(function(m){look[m.id]=m.display_name;});
+  var by={},order=[];
+  function add(n,it){if(!by[n]){by[n]={ev:[],tk:[]};order.push(n);}by[n][it.task?'tk':'ev'].push(it.task||it.x);}
+  mod.forEach(function(x){models(x).forEach(function(m){add(m.name,{x:x});});});
+  arr(TK.list).filter(function(t){return t.model_id&&look[t.model_id]&&mpOpenTask(t)&&t.due_at&&key(t.due_at)===sel;}).forEach(function(t){var n=look[t.model_id];if(S.model==='all'||S.model===n)add(n,{task:t});});
+  var clashes=mod.filter(function(x){return team.some(function(y){return timeOverlap(x,y);});});
+  var tkN=order.reduce(function(n,k){return n+by[k].tk.length;},0),first=mod.slice().sort(function(a,b){return new Date(a.starts_at)-new Date(b.starts_at);})[0];
+  var bits=[];
+  if(mod.length||tkN)bits.push('<b>'+mod.length+'</b> model item'+(mod.length===1?'':'s')+(tkN?' and <b>'+tkN+'</b> plan deadline'+(tkN===1?'':'s'):''));
+  if(first)bits.push('first at '+esc(time(first.starts_at)));
+  var smart=bits.length?'<div class="pl-smart"><span class="pl-veuxi">✦ Veux</span><span>'+bits.join(' · ')+'. '+(clashes.length?'<em class="risk">'+clashes.length+' overlap'+(clashes.length===1?'s':'')+' your day: '+esc(clashes[0].title||'event')+' at '+esc(time(clashes[0].starts_at))+'</em>':'No clashes with your day.')+'</span></div>':'';
+  var left=team.length?team.map(function(x,i){return planRow(x,i,team,nowMs);}).join(''):'<p class="pl-none">Nothing for the team that is not tied to a model.</p>';
+  var right=order.length?order.map(function(n){var g=by[n];
+    return '<div class="pl-mgroup"><div class="pl-mh"><button type="button" class="mp-name" data-mp-model="'+esc(n)+'" title="Open '+esc(n)+'\'s calendar">'+esc(n)+'</button></div>'
+      +g.ev.map(function(x){var hit=team.filter(function(y){return timeOverlap(x,y);})[0];return planRow(x,0,[x].concat(team),nowMs)+(hit?'<div class="pl-xclash">Overlaps your '+esc(hit.title||'event')+' ('+esc(time(hit.starts_at))+')</div>':'');}).join('')
+      +g.tk.map(function(t){return '<button type="button" class="mp-task" data-tk-open="'+esc(t.id)+'"><span class="mp-due">Due<small>'+esc(time(t.due_at))+'</small></span><b>'+esc(t.title||'Task')+'</b>'+(t.metadata&&t.metadata.is_hard_stop?'<i class="mp-hard" title="Hard stop"></i>':'<i></i>')+'<em>'+esc(mpLabel(t))+'</em></button>';}).join('')+'</div>';}).join(''):'<p class="pl-none">No model events or plan deadlines today.</p>';
+  return smart+'<div class="pl-cols"><section class="pl-col"><h3>Team &amp; agency <em>'+team.length+'</em></h3>'+left+'</section><section class="pl-col models"><h3>Models <em>'+(mod.length+tkN)+'</em></h3>'+right+'</section></div>';
+}
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-ag-split]');if(!b)return;splitSet(!splitOn());redrawCurrent();});
 function planPanels(sel){try{if(window.MDV_SCHEDULE&&MDV_SCHEDULE.embeddedHtml)return MDV_SCHEDULE.embeddedHtml(S.items,sel);}catch(e){console.error('[calendar] panels',e);}return '';}
 function planView(items){
   var r=range(),nowMs=Date.now(),todayKey=key(new Date()),sel=planSel(),typeF=S.agendaType||'all';
@@ -560,7 +587,8 @@ function planView(items){
   var seasonSel=S.seasonList.length?'<select class="pl-sel" data-pl-season aria-label="Season"><option value="none"'+(S.season==='none'?' selected':'')+'>Agency only</option>'+S.seasonList.map(function(z){return '<option value="'+esc(z.id)+'"'+(S.season===z.id?' selected':'')+'>'+esc(z.name)+'</option>';}).join('')+'<option value="all"'+(S.season==='all'?' selected':'')+'>All seasons</option></select>':'';
   var kindLabel={booking:'Bookings',casting:'Castings',travel:'Travel',other:'Other'},kinds=[['all','All']].concat(PLAN_KINDS.map(function(q){return [q[0],kindLabel[q[0]]];})).filter(function(c){return c[0]==='all'||counts[c[0]];});
   var kindChips='<div class="pl-seg" role="group" aria-label="Show">'+kinds.map(function(c){return '<button type="button" class="'+(typeF===c[0]?'on':'')+'" data-ag-type="'+c[0]+'">'+c[1]+' <em>'+counts[c[0]]+'</em></button>';}).join('')+'</div>';
-  var bar='<div class="pl-bar">'+peopleSel+modelSel+seasonSel+kindChips+'<button type="button" class="pl-primary" data-act="fullbooking">+ Full booking</button></div>';
+  var splitBtn='<button type="button" class="pl-splitbtn'+(splitOn()?' on':'')+'" data-ag-split aria-pressed="'+(splitOn()?'true':'false')+'" title="Team on the left, models on the right">Split</button>';
+  var bar='<div class="pl-bar">'+peopleSel+modelSel+seasonSel+kindChips+splitBtn+'<button type="button" class="pl-primary" data-act="fullbooking">+ Full booking</button></div>';
   /* one summary line (no repeated tiles) */
   var sigs=planSignals(week),sigHtml=sigs.map(function(g){return '<button type="button" class="pl-sig '+g.sev+'" data-pl-go="'+g.day+'">'+esc(g.text)+'</button>';}).join('');
   var strip='<div class="pl-strip"><span class="pl-facts"><b>'+week.length+'</b> event'+(week.length===1?'':'s')+' this week<i>·</i><b>'+planH(hrs)+'</b> scheduled<i>·</i><b>'+Object.keys(working).length+'</b> model'+(Object.keys(working).length===1?'':'s')+'</span>'+(sigHtml?'<span class="pl-signals"><span class="pl-veuxi">✦ Veux</span>'+sigHtml+'</span>':'')+'</div>';
@@ -574,9 +602,9 @@ function planView(items){
   var dayHrs=day.reduce(function(n,x){return n+planHrs(x);},0),nowLine=false;
   var rowsHtml=day.map(function(x,i){var line='';if(isToday&&!nowLine&&new Date(x.starts_at).getTime()>nowMs){nowLine=true;line='<div class="pl-now"><span>Now · '+esc(time(new Date()))+'</span></div>';}return line+planRow(x,i,day,nowMs);}).join('');
   if(isToday&&day.length&&!nowLine)rowsHtml+='<div class="pl-now"><span>Now · '+esc(time(new Date()))+'</span></div>';
-  var card='<section class="pl-card"><header><h2>'+esc(date(sd,{weekday:'long'}))+'</h2><small>'+esc(date(sd,{month:'long',day:'numeric'}))+'</small>'+(isToday?'<span class="pl-today">Today</span>':'')+'<span class="pl-meta">'+day.length+' event'+(day.length===1?'':'s')+(dayHrs?' · '+planH(dayHrs):'')+'</span></header>'
+  var card='<section class="pl-card'+(splitOn()?' pl-split-host':'')+'"><header><h2>'+esc(date(sd,{weekday:'long'}))+'</h2><small>'+esc(date(sd,{month:'long',day:'numeric'}))+'</small>'+(isToday?'<span class="pl-today">Today</span>':'')+'<span class="pl-meta">'+day.length+' event'+(day.length===1?'':'s')+(dayHrs?' · '+planH(dayHrs):'')+'</span></header>'
     +(chips?'<div class="pl-chips">'+chips+'</div>':'')
-    +(day.length?'<div class="pl-rows">'+rowsHtml+'</div>':'<div class="pl-empty"><b>'+(isToday?'Nothing scheduled today':'A free day')+'</b><span>Add an event, or drag one here from another day.</span><button type="button" class="pl-primary" data-act="add-day" data-day="'+sel+'">+ Add an event</button></div>')+'</section>';
+    +(splitOn()&&splitHasData(day,sel)?splitHtml(day,sel,nowMs):day.length?'<div class="pl-rows">'+rowsHtml+'</div>':'<div class="pl-empty"><b>'+(isToday?'Nothing scheduled today':'A free day')+'</b><span>Add an event, or drag one here from another day.</span><button type="button" class="pl-primary" data-act="add-day" data-day="'+sel+'">+ Add an event</button></div>')+'</section>';
   return '<div class="mdv-plan">'+bar+strip+'<nav class="pl-pills" aria-label="Days this week">'+pills+'</nav>'
     +'<div class="pl-grid"><div class="pl-left">'+card+'<section class="pl-side pl-models" id="pl-models">'+modelsHtml(every,weekKeys,sel)+'</section><section class="pl-side pl-tasks" id="pl-tasks" data-tkday="'+sel+'">'+tasksHtml(sel)+'</section></div><aside class="pl-right" data-pl-panels>'+planPanels(sel)+'</aside></div></div>';
 }
