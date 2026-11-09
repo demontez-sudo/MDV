@@ -1,8 +1,16 @@
-async function must(result,label){
+/* "The table or column is not in this database" (undefined table / column / not in the schema cache). */
+const NOT_THERE = new Set(['42P01', '42703', 'PGRST200', 'PGRST204', 'PGRST205']);
+const notThere = err => NOT_THERE.has(String(err?.code || '').toUpperCase()) || /does not exist|schema cache|could not find (the )?(table|column)/i.test(String(err?.message || ''));
+/* optional steps only tidy up related rows. If the table or column they touch does not exist here there is nothing to tidy, so the
+   delete carries on; any other failure (a row still referenced, no permission) still stops it, and now says why. */
+async function must(result,label,{optional=false}={}){
   const out=await result;
   if(out?.error){
-    const e=new Error(`Delete blocked while ${label.toLowerCase()}.`);
+    if(optional&&notThere(out.error)){console.warn('[calendar delete] skipped "'+label+'": '+String(out.error.message||out.error.code||'').slice(0,120));return null;}
+    const reason=String(out.error.message||'').replace(/\s+/g,' ').slice(0,160);
+    const e=new Error(`Delete blocked while ${label.toLowerCase()}${reason?': '+reason:''}.`);
     e.statusCode=409;
+    e.publicMessage=e.message;
     e.code=out.error.code||null;
     e.details=out.error.details||null;
     throw e;
@@ -12,9 +20,9 @@ async function must(result,label){
 
 export async function safeDeleteEvent(admin,organizationId,eventId){
   if(!eventId)throw new Error('event_id is required');
-  await must(admin.from('availability_blocks').update({source_event_id:null}).eq('organization_id',organizationId).eq('source_event_id',eventId),'Detach event availability');
-  await must(admin.from('tasks').update({event_id:null}).eq('organization_id',organizationId).eq('event_id',eventId),'Detach event tasks');
-  await must(admin.from('event_members').delete().eq('organization_id',organizationId).eq('event_id',eventId),'Delete event members');
+  await must(admin.from('availability_blocks').update({source_event_id:null}).eq('organization_id',organizationId).eq('source_event_id',eventId),'Detach event availability',{optional:true});
+  await must(admin.from('tasks').update({event_id:null}).eq('organization_id',organizationId).eq('event_id',eventId),'Detach event tasks',{optional:true});
+  await must(admin.from('event_members').delete().eq('organization_id',organizationId).eq('event_id',eventId),'Delete event members',{optional:true});
   await must(admin.from('event_models').delete().eq('organization_id',organizationId).eq('event_id',eventId),'Delete event models');
   const deleted=await must(admin.from('events').delete().eq('organization_id',organizationId).eq('id',eventId).select('id').single(),'Delete event');
   if(deleted?.id!==eventId)throw new Error('Event deletion could not be verified');
