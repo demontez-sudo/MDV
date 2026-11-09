@@ -462,7 +462,7 @@ async function loadTasks(force){
     if(!TK.me&&TK.scope==='mine')TK.scope='all';
     TK.list=arr(d.tasks).filter(function(t){return !t.parent_task_id;});TK.err='';
   }catch(e){TK.err=(e&&e.message)||'Tasks could not load';TK.list=TK.list||[];}
-  TK.loading=false;paintTasks();
+  TK.loading=false;paintTasks();paintModels();
 }
 function tkMine(t){return !!TK.me&&arr(t.assignments).some(function(a){return a.member_id===TK.me.id;});}
 function tkOpen(){return arr(TK.list).filter(function(t){var s=String(t.status||'open').toLowerCase();return s!=='completed'&&s!=='done'&&s!=='complete'&&s!=='cancelled'&&s!=='canceled';}).filter(function(t){return TK.scope==='all'||tkMine(t);});}
@@ -493,8 +493,54 @@ document.addEventListener('submit',function(e){
   var inp=f.querySelector('input'),title=inp.value.trim();if(!title)return;var box=document.getElementById('pl-tasks'),day=box&&box.dataset.tkday;
   var body={organization_slug:org(),action:'create_task',title:title,priority:'normal',category:null,member_ids:TK.me?[TK.me.id]:[]};if(day)body.due_at=new Date(day+'T12:00:00').toISOString();
   inp.disabled=true;
-  window.VEUX_AGENT_V4.api('/api/agent/tasks/v11',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(function(r){if(!r||r.verified!==true)throw new Error('Not verified');toastMove('Task added');TK.list=null;return loadTasks(true);}).catch(function(err){inp.disabled=false;toastMove('Could not add: '+(err&&err.message||err),true);});
+  window.VEUX_AGENT_V4.api('/api/agent/tasks/v11',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)}).then(function(r){if(!r||r.verified!==true)throw new Error('Not verified');toastMove('Task added');var t=r.task;if(t&&t.id){t.assignments=TK.me?[{member_id:TK.me.id}]:[];TK.list=arr(TK.list).concat([t]);paintTasks();paintModels();}else TK.list=null;return loadTasks(true);}).catch(function(err){inp.disabled=false;toastMove('Could not add: '+(err&&err.message||err),true);});
 });
+/* ---------- Model plans and movement: what each model has due and where they are moving, beside the day ---------- */
+var MP={scope:'week',last:null};
+function mpIsMove(x){var q=(type(x)+' '+(x.title||'')+' '+((x.raw&&x.raw.metadata&&x.raw.metadata.event_kind)||'')).toLowerCase();return agendaKindOf(x)==='travel'||/visa|arriv|depart|flight|housing|airport|\bstay\b/.test(q);}
+function mpOpenTask(t){var s=String(t.status||'open').toLowerCase();return s!=='completed'&&s!=='done'&&s!=='complete'&&s!=='cancelled'&&s!=='canceled';}
+function mpLabel(t){var c=(t.metadata&&t.metadata.task_type)||t.category||'';return String(c).replace(/_/g,' ').replace(/^./,function(m){return m.toUpperCase();});}
+function modelsHtml(items,weekKeys,sel){
+  MP.last={items:items,weekKeys:weekKeys,sel:sel};
+  var day=MP.scope==='day',inRange=function(k){return day?k===sel:weekKeys.indexOf(k)>=0;};
+  var hdr='<header><h3>Model plans &amp; movement</h3><span class="tk-count">'+(day?'This day':'This week')+'</span><div class="pl-seg"><button type="button" class="'+(day?'':'on')+'" data-mp-scope="week">Week</button><button type="button" class="'+(day?'on':'')+'" data-mp-scope="day">Day</button></div></header>';
+  if(!TK.list){loadTasks();return hdr+'<p class="pl-none">Loading plans…</p>';}
+  var lookups={};arr(S.data&&S.data.lookups&&S.data.lookups.models).forEach(function(m){lookups[m.id]=m;});
+  var move=items.filter(function(x){return mpIsMove(x)&&inRange(key(x.starts_at));}).sort(function(a,b){return new Date(a.starts_at)-new Date(b.starts_at);});
+  var now=Date.now(),byModel={};
+  arr(TK.list).filter(function(t){return t.model_id&&lookups[t.model_id]&&mpOpenTask(t)&&t.due_at;}).forEach(function(t){
+    var nm=lookups[t.model_id].display_name;if(S.model!=='all'&&S.model!==nm)return;
+    (byModel[nm]=byModel[nm]||{m:lookups[t.model_id],all:[],due:[]}).all.push(t);
+    var k=key(t.due_at);if(inRange(k)||(new Date(t.due_at).getTime()<now&&k<weekKeys[0]))byModel[nm].due.push(t);
+  });
+  var names=Object.keys(byModel).filter(function(n){return byModel[n].due.length;}).sort(function(a,b){return new Date(byModel[a].due[0].due_at)-new Date(byModel[b].due[0].due_at);});
+  var moveHtml=move.length?'<h4 class="mp-h">Movement <em>'+move.length+'</em></h4><div class="mp-list">'+move.map(function(x){var ms=displayModels(x),who=ms.length===1?ms[0].name:ms.length>1?ms.length+' models':'';
+    return '<button type="button" class="mp-row k-travel" data-open="'+esc(x.kind)+'|'+esc(x.id)+'"><span class="mp-day"><small>'+esc(date(x.starts_at,{weekday:'short'}))+'</small><b>'+new Date(x.starts_at).getDate()+'</b></span><span class="mp-main"><b>'+esc(x.title||'Movement')+'</b><small>'+esc([who,x.location,time(x.starts_at)].filter(Boolean).join(' · '))+'</small></span><span class="pl-tag k-travel">'+esc(type(x))+'</span></button>';}).join('')+'</div>':'';
+  var plansHtml=names.length?'<h4 class="mp-h">Plans <em>'+names.reduce(function(n,k){return n+byModel[k].due.length;},0)+' due</em></h4>'+names.map(function(nm){
+    var g=byModel[nm],due=g.due.sort(function(a,b){return new Date(a.due_at)-new Date(b.due_at);}),hard=g.all.filter(function(t){return t.metadata&&t.metadata.is_hard_stop&&new Date(t.due_at).getTime()>=now;}).sort(function(a,b){return new Date(a.due_at)-new Date(b.due_at);})[0];
+    var moves=move.filter(function(x){return models(x).some(function(m){return m.name===nm;});}).length;
+    var base=g.m.primary_market_label||'';
+    var meta=[base?'Base '+esc(base):'',g.all.length+' open',moves?moves+' moving':'',hard?'next hard stop '+esc(date(hard.due_at,{weekday:'short',month:'short',day:'numeric'})+' '+time(hard.due_at)):''].filter(Boolean).join(' · ');
+    return '<div class="mp-model"><div class="mp-mh"><button type="button" class="mp-name" data-mp-model="'+esc(nm)+'" title="Open '+esc(nm)+'\'s calendar">'+esc(nm)+'</button><small>'+meta+'</small></div>'
+      +due.slice(0,4).map(function(t){var over=new Date(t.due_at).getTime()<now;return '<button type="button" class="mp-task'+(over?' over':'')+'" data-tk-open="'+esc(t.id)+'"><span class="mp-due">'+esc(tkDue(t.due_at))+'<small>'+esc(time(t.due_at))+'</small></span><b>'+esc(t.title||'Task')+'</b>'+(t.metadata&&t.metadata.is_hard_stop?'<i class="mp-hard" title="Hard stop"></i>':'')+'<em>'+esc(mpLabel(t))+'</em></button>';}).join('')
+      +(due.length>4?'<button type="button" class="tk-more" data-tk-open="">+ '+(due.length-4)+' more</button>':'')+'</div>';}).join(''):'';
+  var empty=(!move.length&&!names.length)?'<p class="pl-none">No model plans or movement '+(day?'on this day':'this week')+(S.model!=='all'?' for '+esc(S.model):'')+'. Use ‹ › to look at another week.</p>':'';
+  return hdr+moveHtml+plansHtml+empty;
+}
+function paintModels(){var el=document.getElementById('pl-models');if(el&&MP.last)el.innerHTML=modelsHtml(MP.last.items,MP.last.weekKeys,MP.last.sel);}
+document.addEventListener('click',function(e){
+  var b=e.target&&e.target.closest&&e.target.closest('#pl-models [data-mp-scope],#pl-models [data-tk-open],#pl-models [data-mp-model]');if(!b)return;
+  if(b.dataset.mpScope){MP.scope=b.dataset.mpScope;paintModels();return;}
+  if(b.dataset.mpModel){S.model=b.dataset.mpModel;S.selected=null;try{saveWorkspace();}catch(_e){}redrawCurrent();return;}
+  if(b.hasAttribute('data-tk-open')&&typeof window.navTo==='function')window.navTo('tasksconsolidated');
+});
+/* Swipe the day card left or right to step through the week (phone). Crossing the end of the week turns the page. */
+function stepDay(n){var nx=add(new Date(planSel()+'T12:00:00'),n),r=range(),k=key(nx);S.planDay=k;S.selected=null;if(k<key(r.start)||k>key(add(r.start,6))){S.anchor=nx;render();}else redrawCurrent();}
+(function(){var sx=0,sy=0,st=0;
+  document.addEventListener('touchstart',function(e){var c=e.target&&e.target.closest&&e.target.closest('.mdv-plan .pl-card');if(!c||e.touches.length!==1){sx=0;return;}sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();},{passive:true});
+  document.addEventListener('touchend',function(e){if(!sx)return;var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;sx=0;if(Math.abs(dx)<70||Math.abs(dy)>45||Date.now()-st>700)return;if(window.getSelection&&String(window.getSelection()))return;
+    var card=document.querySelector('.mdv-plan .pl-card');if(card)card.style.setProperty('--pl-from',dx<0?'28px':'-28px');stepDay(dx<0?1:-1);},{passive:true});
+})();
 function planPanels(sel){try{if(window.MDV_SCHEDULE&&MDV_SCHEDULE.embeddedHtml)return MDV_SCHEDULE.embeddedHtml(S.items,sel);}catch(e){console.error('[calendar] panels',e);}return '';}
 function planView(items){
   var r=range(),nowMs=Date.now(),todayKey=key(new Date()),sel=planSel(),typeF=S.agendaType||'all';
@@ -528,7 +574,7 @@ function planView(items){
     +(chips?'<div class="pl-chips">'+chips+'</div>':'')
     +(day.length?'<div class="pl-rows">'+rowsHtml+'</div>':'<div class="pl-empty"><b>'+(isToday?'Nothing scheduled today':'A free day')+'</b><span>Add an event, or drag one here from another day.</span><button type="button" class="pl-primary" data-act="add-day" data-day="'+sel+'">+ Add an event</button></div>')+'</section>';
   return '<div class="mdv-plan">'+bar+strip+'<nav class="pl-pills" aria-label="Days this week">'+pills+'</nav>'
-    +'<div class="pl-grid"><div class="pl-left">'+card+'<section class="pl-side pl-tasks" id="pl-tasks" data-tkday="'+sel+'">'+tasksHtml(sel)+'</section></div><aside class="pl-right" data-pl-panels>'+planPanels(sel)+'</aside></div></div>';
+    +'<div class="pl-grid"><div class="pl-left">'+card+'<section class="pl-side pl-models" id="pl-models">'+modelsHtml(every,weekKeys,sel)+'</section><section class="pl-side pl-tasks" id="pl-tasks" data-tkday="'+sel+'">'+tasksHtml(sel)+'</section></div><aside class="pl-right" data-pl-panels>'+planPanels(sel)+'</aside></div></div>';
 }
 function renderBody(){var r=range(),items=scoped(S.items).filter(function(x){var d=new Date(x.starts_at);return d>=r.start&&d<add(r.end,1);});if(S.view==='plan')return planView(items);if(window.matchMedia&&window.matchMedia('(max-width: 900px)').matches)return mobileView(items);return S.view==='day'?dayView(items):S.view==='3day'?threeView(items):S.view==='week'?weekView(items):monthView85(items);}
 function vxLimit(pr,ms){return Promise.race([pr,new Promise(function(_,rej){setTimeout(function(){rej(new Error('The calendar took too long to respond. Tap Retry.'));},ms);})]);}

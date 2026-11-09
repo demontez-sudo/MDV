@@ -22,9 +22,16 @@ export const handler = async event => {
       rows(admin.from('profiles').select('user_id,display_name,first_name,last_name').limit(2000)),
       rows(admin.from('events').select('id,updated_at,metadata').eq('organization_id', organization.id).eq('metadata->>import_set', SCHEDULE_SET.id).limit(5000)),
     ]);
+    /* what the 90-day gameplan already put on the calendar, so the import does not add a second copy */
+    const gpEvents = await rows(admin.from('events').select('id,event_type,starts_at').eq('organization_id', organization.id).eq('metadata->>plan', 'g90').limit(5000)).catch(() => []);
+    const gpLinks = gpEvents.length ? await rows(admin.from('event_models').select('event_id,model_id').eq('organization_id', organization.id).in('event_id', gpEvents.map(g => g.id)).limit(20000)).catch(() => []) : [];
+    const gpById = new Map(gpEvents.map(g => [g.id, g]));
+    const zone = organization.timezone || SCHEDULE_SET.timezone || 'America/New_York';
+    const dayOf = iso => new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(iso));
+    const covered = gpLinks.map(l => { const g = gpById.get(l.event_id); return g ? { model_id: l.model_id, event_type: g.event_type, day: dayOf(g.starts_at) } : null; }).filter(Boolean);
     const byUser = new Map(profiles.map(p => [p.user_id, p]));
     const members = memberRows.map(m => { const p = byUser.get(m.user_id) || {}; return { id: m.id, user_id: m.user_id, display_name: p.display_name || [p.first_name, p.last_name].filter(Boolean).join(' '), first_name: p.first_name || '' }; });
-    const plan = planImport({ set: SCHEDULE_SET, models, members, existing, userId: user.id, tz: organization.timezone || SCHEDULE_SET.timezone });
+    const plan = planImport({ set: SCHEDULE_SET, models, members, existing, userId: user.id, tz: organization.timezone || SCHEDULE_SET.timezone, covered });
 
     if (action === 'preview') {
       return json(200, { ok: true, set: { id: SCHEDULE_SET.id, week_start: SCHEDULE_SET.weekStart, events: SCHEDULE_SET.events.length }, summary: plan.summary });

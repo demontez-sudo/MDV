@@ -23,8 +23,12 @@ export function vapidHeader(endpoint, cfg, now = Date.now()) {
   const sig = crypto.sign('sha256', Buffer.from(data), { key: keyObject(cfg.pub, cfg.priv), dsaEncoding: 'ieee-p1363' });
   return `vapid t=${data}.${b64u(sig)}, k=${cfg.pub}`;
 }
-export async function sendWake(endpoint, cfg) {
-  const r = await fetch(endpoint, { method: 'POST', headers: { Authorization: vapidHeader(endpoint, cfg), TTL: '3600', Urgency: 'high' }, signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined });
+/* How hard to push the wake-up, by level. Urgent and soon alerts jump the queue (Urgency high) and are not held long if the
+   device is off; heads-ups and good news are quiet (normal) and wait up to a day for a phone that is asleep or offline. */
+export const LEVELS = { info: { urgency: 'normal', ttl: 86400 }, soon: { urgency: 'high', ttl: 7200 }, urgent: { urgency: 'high', ttl: 1800 }, win: { urgency: 'normal', ttl: 86400 } };
+export async function sendWake(endpoint, cfg, level = 'info') {
+  const L = LEVELS[level] || LEVELS.info;
+  const r = await fetch(endpoint, { method: 'POST', headers: { Authorization: vapidHeader(endpoint, cfg), TTL: String(L.ttl), Urgency: L.urgency }, signal: AbortSignal.timeout ? AbortSignal.timeout(8000) : undefined });
   return { status: r.status, ok: r.status >= 200 && r.status < 300 };
 }
 
@@ -34,7 +38,7 @@ export async function staffUserIds(admin, orgId) {
 }
 
 /* queue an alert for every device of the given people, then wake those devices. Never throws: an alert must not break the action that caused it. */
-export async function notify(admin, { orgId, userIds, title, body, url, category = 'general', tag, exceptUserId = null }) {
+export async function notify(admin, { orgId, userIds, title, body, url, category = 'general', tag, exceptUserId = null, level = 'info', icon = null, image = null }) {
   try {
     const cfg = vapidConfig(); if (!cfg.configured) return { sent: 0, skipped: 'not_configured' };
     let ids = userIds && userIds.length ? userIds : await staffUserIds(admin, orgId);
@@ -43,13 +47,16 @@ export async function notify(admin, { orgId, userIds, title, body, url, category
     if (error) { console.warn('[push] subscriptions unavailable:', error.message); return { sent: 0, skipped: 'no_table' }; }
     const targets = (subs || []).filter(s => !(s.prefs && s.prefs[category] === false));
     if (!targets.length) return { sent: 0 };
-    const rows = targets.map(s => ({ organization_id: orgId, subscription_id: s.id, user_id: s.user_id, category, title: String(title || 'Maison de Veux').slice(0, 120), body: String(body || '').slice(0, 300), url: url || null, tag: tag || null }));
-    const ins = await admin.from('push_alerts').insert(rows);
+    const lvl = LEVELS[level] ? level : 'info';
+    const rows = targets.map(s => ({ organization_id: orgId, subscription_id: s.id, user_id: s.user_id, category, title: String(title || 'Maison de Veux').slice(0, 120), body: String(body || '').slice(0, 300), url: url || null, tag: tag || null, meta: { level: lvl, icon: icon || null, image: image || null } }));
+    let ins = await admin.from('push_alerts').insert(rows);
+    /* the meta column comes from 2026-11-09-push-alerts-meta.sql; until that has been run, queue the alert without it (plain styling) */
+    if (ins.error && /meta/i.test(String(ins.error.message || '') + String(ins.error.details || ''))) ins = await admin.from('push_alerts').insert(rows.map(({ meta, ...r }) => r));
     if (ins.error) { console.warn('[push] alerts could not be queued:', ins.error.message); return { sent: 0, skipped: 'no_table' }; }
     let sent = 0;
     await Promise.allSettled(targets.map(async s => {
       try {
-        const r = await sendWake(s.endpoint, cfg);
+        const r = await sendWake(s.endpoint, cfg, lvl);
         if (r.status === 404 || r.status === 410) await admin.from('push_subscriptions').delete().eq('id', s.id);
         else if (r.ok) sent++; else console.warn('[push] wake refused', r.status);
       } catch (e) { console.warn('[push] wake failed', e?.message || e); }

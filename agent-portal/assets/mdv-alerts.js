@@ -61,9 +61,9 @@ async function disable(){
   catch(e){toast(msg(e),true);}
   S.busy=false;paint();
 }
-async function test(){
+async function test(level){
   if(S.busy)return;S.busy=true;paint();
-  try{var r=await post({action:'test'});toast('Test sent to '+r.devices+' device'+(r.devices===1?'':'s')+'. It should arrive in a few seconds.');}
+  try{var r=await post({action:'test',level:level||'info'});toast('Test sent to '+r.devices+' device'+(r.devices===1?'':'s')+'. It should arrive in a few seconds.');}
   catch(e){toast(msg(e),true);}
   S.busy=false;paint();
 }
@@ -80,7 +80,7 @@ function statusHtml(){
   if(!supported())return '<div class="al-state warn"><i class="ti ti-bell-off"></i><div><h3>This browser cannot receive alerts</h3><p>Use Safari 16 or newer, Chrome or Edge on your MacBook.</p></div></div>';
   if(S.perm==='denied')return '<div class="al-state warn"><i class="ti ti-bell-off"></i><div><h3>Alerts are blocked</h3><p>'+(IOS?'Open Settings → Notifications → the portal, and allow notifications.':'Allow notifications for this site: in Safari, Settings → Websites → Notifications; in Chrome, the lock icon next to the address.')+' Then press the button below.</p><button type="button" class="al-btn gold" data-act="on">Try again</button></div></div>';
   var on=!!S.sub&&!!thisDevice();
-  return on?'<div class="al-state ok"><i class="ti ti-bell-ringing"></i><div><h3>Alerts are on for this device</h3><p>You will be told about the things ticked below, even when the portal is closed.</p><div class="al-row"><button type="button" class="al-btn gold" data-act="test">Send a test alert</button><button type="button" class="al-btn" data-act="off">Turn off on this device</button></div></div></div>'
+  return on?'<div class="al-state ok"><i class="ti ti-bell-ringing"></i><div><h3>Alerts are on for this device</h3><p>You will be told about the things ticked below, even when the portal is closed.</p><div class="al-row"><button type="button" class="al-btn gold" data-act="test">Send a test alert</button><button type="button" class="al-btn" data-act="test-urgent">Try an urgent one</button><button type="button" class="al-btn" data-act="test-win">Try good news</button><button type="button" class="al-btn" data-act="off">Turn off on this device</button></div></div></div>'
     :'<div class="al-state"><i class="ti ti-bell"></i><div><h3>Alerts are off on this device</h3><p>Turn them on to be told about mentions, new tasks, applications and client activity. You choose what.</p><button type="button" class="al-btn gold" data-act="on">Turn on alerts</button></div></div>';
 }
 function installHtml(){
@@ -105,7 +105,7 @@ function paint(){
     +(S.err?'<p class="al-err">'+esc(S.err)+'</p>':'')+installHtml()+'<section class="al-card big">'+statusHtml()+(S.busy?'<div class="al-busy">Working…</div>':'')+'</section>'+prefsHtml()+devicesHtml()
     +'<section class="al-card"><h3>What triggers an alert</h3><ul class="al-list"><li><b>Mentions</b> Someone @mentions you in a Smart Note.</li><li><b>Tasks</b> A task is assigned to you.</li><li><b>Applications</b> Someone submits the Get Scouted form.</li><li><b>Packages</b> A client first opens a package, or replies to one.</li><li><b>Follow-ups</b> A reminder you set on a note comes due.</li></ul></section></div>';
   el.querySelectorAll('[data-install]').forEach(function(b){b.onclick=function(){window.MDV_APP&&MDV_APP.install().then(paint);};});
-  el.querySelectorAll('[data-act]').forEach(function(b){b.onclick=function(){var a=b.dataset.act;if(a==='on')enable();else if(a==='off')disable();else if(a==='test')test();else if(a==='recheck')load(true).then(paint);};});
+  el.querySelectorAll('[data-act]').forEach(function(b){b.onclick=function(){var a=b.dataset.act;if(a==='on')enable();else if(a==='off')disable();else if(a==='test')test();else if(a==='test-urgent')test('urgent');else if(a==='test-win')test('win');else if(a==='recheck')load(true).then(paint);};});
   el.querySelectorAll('[data-pref]').forEach(function(c){c.onchange=function(){var p={};el.querySelectorAll('[data-pref]').forEach(function(x){p[x.dataset.pref]=x.checked;});savePrefs(p);};});
   el.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=async function(){try{await post({action:'remove_device',id:b.dataset.rm});S.cfg=await get();var t=await currentSub();if(t&&!mine().some(function(d){return d.endpoint_tail===String(t.endpoint).slice(-12);})){S.sub=null;}paint();}catch(e){toast(msg(e),true);}};});
 }
@@ -121,7 +121,33 @@ function openFromUrl(u){
   try{var page=new URL(u,location.href).searchParams.get('page');if(page&&typeof window.navTo==='function'){window.navTo(page);return true;}}catch(e){}
   return false;
 }
-if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',function(e){if(e.data&&e.data.type==='mdv-alert-open')openFromUrl(e.data.url);});
+/* An alert that arrives while the portal is open also shows here as a banner, with a chime and a buzz that match its level. */
+var CHIME={urgent:[[880,0,.14],[660,.16,.14],[880,.32,.22]],soon:[[740,0,.12],[740,.15,.16]],win:[[523,0,.1],[659,.1,.1],[784,.2,.2]],info:[[660,0,.12]]};
+function chime(level){
+  try{var AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;var ctx=new AC(),t0=ctx.currentTime;
+    (CHIME[level]||CHIME.info).forEach(function(n){var o=ctx.createOscillator(),g=ctx.createGain();o.type='sine';o.frequency.value=n[0];g.gain.setValueAtTime(0.0001,t0+n[1]);g.gain.exponentialRampToValueAtTime(0.09,t0+n[1]+0.02);g.gain.exponentialRampToValueAtTime(0.0001,t0+n[1]+n[2]);o.connect(g);g.connect(ctx.destination);o.start(t0+n[1]);o.stop(t0+n[1]+n[2]+0.05);});
+    setTimeout(function(){try{ctx.close();}catch(e){}},1200);}catch(e){}
+}
+function banner(a){
+  if(document.visibilityState!=='visible')return;
+  var lv=a.level||'info',box=document.querySelector('.al-stack');
+  if(!box){box=document.createElement('div');box.className='al-stack';box.setAttribute('role','status');box.setAttribute('aria-live','polite');document.body.appendChild(box);}
+  var d=document.createElement('button');d.type='button';d.className='al-banner lv-'+lv;
+  d.innerHTML='<b>'+esc(a.title||'')+'</b><span>'+esc(a.body||'')+'</span>';
+  d.onclick=function(){d.remove();if(a.url)openFromUrl(a.url);};
+  box.appendChild(d);while(box.children.length>3)box.firstChild.remove();
+  chime(lv);try{if(navigator.vibrate&&(lv==='urgent'||lv==='soon'))navigator.vibrate(lv==='urgent'?[300,120,300]:[200,100,200]);}catch(e){}
+  if(lv!=='urgent')setTimeout(function(){d.remove();},lv==='soon'?12000:7000);
+}
+if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',function(e){
+  var m=e.data||{};
+  if(m.type==='mdv-alert-open')openFromUrl(m.url);
+  else if(m.type==='mdv-alert-show')arr(m.alerts).forEach(banner);
+});
+/* opening the portal clears the number on the app icon */
+function clearBadge(){try{if(navigator.clearAppBadge)navigator.clearAppBadge();}catch(e){}}
+document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')clearBadge();});
+clearBadge();
 (function landing(){
   try{var pg=new URLSearchParams(location.search).get('page');if(!pg)return;var n=0,t=setInterval(function(){if(typeof window.navTo==='function'&&document.getElementById('app')&&getComputedStyle(document.getElementById('app')).display!=='none'){clearInterval(t);window.navTo(pg);if(new URLSearchParams(location.search).get('new')&&window.MDV_NOTES)setTimeout(function(){MDV_NOTES.open();},900);}else if(++n>60)clearInterval(t);},500);}catch(e){}
 })();

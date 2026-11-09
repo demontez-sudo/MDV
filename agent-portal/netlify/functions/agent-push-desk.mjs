@@ -1,6 +1,7 @@
 import { requireUser, parseBody, json, errorResponse, adminClient } from './_lib/auth.mjs';
 import { requireStaffOrganization } from './_lib/agent-bridge.mjs';
 import { vapidConfig, notify, DEFAULT_PREFS } from './_lib/push.mjs';
+import { sample } from './_lib/push-copy.mjs';
 
 const clean = (v, n = 400) => String(v == null ? '' : v).trim().slice(0, n);
 const bad = m => { const e = new Error(m); e.statusCode = 400; return e; };
@@ -55,7 +56,8 @@ export const handler = async event => {
       return json(200, { ok: true, verified: true });
     }
     if (action === 'test') {
-      const r = await notify(admin, { orgId, userIds: [user.id], title: 'Alerts are on', body: 'This is a test from the portal. You will get alerts like this on this device.', url: '?page=alerts', category: 'test', tag: 'mdv-test-' + Date.now() });
+      const lvl = ['info', 'soon', 'urgent', 'win'].includes(body.level) ? body.level : 'info', c = sample(lvl);
+      const r = await notify(admin, { orgId, userIds: [user.id], title: c.title, body: c.body, url: '?page=alerts', category: 'test', tag: 'mdv-test-' + Date.now(), level: c.level, icon: c.icon });
       if (!r.devices) throw bad('No device is set up for alerts yet. Turn alerts on for this device first.');
       return json(200, { ok: true, verified: true, devices: r.devices, sent: r.sent });
     }

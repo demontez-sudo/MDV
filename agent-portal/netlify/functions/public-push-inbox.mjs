@@ -12,7 +12,9 @@ export const handler = async event => {
     const admin = adminClient();
     const sub = await admin.from('push_subscriptions').select('id').eq('endpoint', endpoint).maybeSingle();
     if (sub.error || !sub.data) return json(200, { ok: true, alerts: [] }, headers);
-    const { data, error } = await admin.from('push_alerts').select('id,title,body,url,tag,category,created_at').eq('subscription_id', sub.data.id).is('delivered_at', null).order('created_at', { ascending: true }).limit(5);
+    const pending = cols => admin.from('push_alerts').select(cols).eq('subscription_id', sub.data.id).is('delivered_at', null).order('created_at', { ascending: true }).limit(5);
+    let { data, error } = await pending('id,title,body,url,tag,category,created_at,meta');
+    if (error) ({ data, error } = await pending('id,title,body,url,tag,category,created_at'));   /* meta column not added yet */
     if (error) return json(200, { ok: true, alerts: [] }, headers);
     const alerts = data || [];
     if (alerts.length) await admin.from('push_alerts').update({ delivered_at: new Date().toISOString() }).in('id', alerts.map(a => a.id));

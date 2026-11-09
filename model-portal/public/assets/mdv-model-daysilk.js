@@ -73,6 +73,16 @@ var QS=[
 /* ---------- from answers to a plan ---------- */
 function spread(n,pool){n=Math.max(0,Math.min(Number(n)||0,pool.length));if(!n)return [];var out=[],step=pool.length/n;for(var i=0;i<n;i++)out.push(pool[Math.floor(i*step)]);return out;}
 function overlap(a1,a2,b1,b2){return a1<b2&&b1<a2;}
+/* The gameplan adds routine blocks, habits and weekly items beside the plan (ds.gameplan). They are merged for display only, so saving the questionnaire never erases them. */
+function withGp(ds){
+  if(!ds||!ds.plan||!ds.gameplan)return ds;
+  var g=ds.gameplan,p=ds.plan,seen={};
+  function add(base,extra,key){var have={};arr(base).forEach(function(x){have[x[key]]=1;});return arr(base).concat(arr(extra).filter(function(x){return !have[x[key]];}));}
+  var out={};for(var k in ds)out[k]=ds[k];
+  var np={};for(var j in p)np[j]=p[j];
+  np.blocks=add(p.blocks,g.blocks,'id');np.habits=add(p.habits,g.habits,'id');np.weekly=add(p.weekly,g.weekly,'k');
+  out.plan=np;return out;
+}
 function buildPlan(a){
   var T=U(),tm=T.tMin,mt=T.m2t,all=['0','1','2','3','4','5','6'];
   var wake=a.wake||'07:00',sleep=a.sleep||'22:30',blocks=[],fixed=[];
@@ -132,7 +142,7 @@ function bookoutBlocks(plan,weeks){
 function load(force){
   if(S.loading||(S.loaded&&!force))return Promise.resolve();
   S.loading=true;S.err='';
-  return api('/api/model/daysilk').then(function(r){S.ds=r&&r.daysilk||null;S.loaded=true;}).catch(function(e){S.err=(e&&e.message)||'Could not load DaySilk.';S.loaded=true;}).then(function(){S.loading=false;paint();if(!S.ds&&!S.err)ask(false);});
+  return api('/api/model/daysilk').then(function(r){S.ds=withGp(r&&r.daysilk||null);S.loaded=true;}).catch(function(e){S.err=(e&&e.message)||'Could not load DaySilk.';S.loaded=true;}).then(function(){S.loading=false;paint();if(!S.ds&&!S.err)ask(false);});
 }
 function dayData(date){var d=(S.ds&&S.ds.days&&S.ds.days[dk(date)])||{};return {done:arr(d.done),big3:arr(d.big3),review:d.review||null};}
 var timers={};
@@ -145,7 +155,7 @@ function ask(force){
   if(!window.DS||(S.asked&&!force))return;S.asked=true;
   var a=Object.assign({first:firstName()},(S.ds&&S.ds.answers)||{});
   DS.wizard({title:'Set up your DaySilk',brand:'DaySilk · for models',sections:QS,answers:a,intro:'About 4 minutes. You can change any answer later.',saveLabel:'Build my DaySilk',skipLabel:force?'Cancel':'Do this later',
-    onSave:function(ans){var plan=buildPlan(ans);return api('/api/model/daysilk',{action:'save_profile',answers:ans,plan:plan}).then(function(r){S.ds=r.daysilk;return syncBookouts(ans.share!=='No',true);});}
+    onSave:function(ans){var plan=buildPlan(ans);return api('/api/model/daysilk',{action:'save_profile',answers:ans,plan:plan}).then(function(r){S.ds=withGp(r.daysilk);return syncBookouts(ans.share!=='No',true);});}
   }).then(function(ans){if(ans){toast('Your DaySilk is ready');S.tab='today';}paint();});
 }
 function syncBookouts(share,quiet){

@@ -1,5 +1,6 @@
 import { requireUser, parseBody, json, errorResponse, assertPermission } from './_lib/auth.mjs';
 import { notify } from './_lib/push.mjs';
+import { newTask as newTaskCopy } from './_lib/push-copy.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 
 // PostgREST returns at most 1000 rows per request, so page through with range() until exhausted.
@@ -46,7 +47,7 @@ export const handler=async(event)=>{
           if(memberIds.length&&data){
             const {data:ms}=await admin.from('organization_members').select('user_id').in('id',memberIds);
             const ids=(ms||[]).map(m=>m.user_id).filter(x=>x&&x!==user.id);
-            if(ids.length)await notify(admin,{orgId:organization.id,userIds:ids,title:'New task for you',body:String(data.title||body.title||'').slice(0,140)+(data.due_at?' · due '+new Date(data.due_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''),url:'?page=tasksconsolidated',category:'tasks',tag:'task-'+data.id});
+            if(ids.length){const c=newTaskCopy({title:data.title||body.title,due:data.due_at?new Date(data.due_at).toLocaleDateString('en-US',{month:'short',day:'numeric'}):''});await notify(admin,{orgId:organization.id,userIds:ids,title:c.title,body:c.body,url:'?page=tasksconsolidated',category:'tasks',tag:'task-'+data.id,level:c.level,icon:c.icon});}
           }
         }catch(e){console.warn('[push] task alert skipped',e&&e.message||e);}
         return json(200,{ok:true,verified:true,task:data,persisted_at:new Date().toISOString()});

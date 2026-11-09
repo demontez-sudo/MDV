@@ -133,13 +133,22 @@ export const handler=async(event)=>{
     }
 
     const admin=await requirePermission(user.id,organization.id,'calendar.read');
-    const start=p.start||new Date(Date.now()-30*864e5).toISOString();
-    const end=p.end||new Date(Date.now()+180*864e5).toISOString();
+    const iso=v=>{const t=Date.parse(v);return Number.isFinite(t)?new Date(t).toISOString():null;};
+    const start=iso(p.start)||new Date(Date.now()-30*864e5).toISOString();
+    const end=iso(p.end)||new Date(Date.now()+180*864e5).toISOString();
+    /* Ask the database only for what falls in the window (plus anything that repeats). Before, it read the first 1,500
+       rows by date and filtered afterwards, so once the calendar held more than that, later dates silently disappeared. */
+    const inWindow=table=>rows(admin.from(table).select('*').eq('organization_id',organization.id).gte('starts_at',start).lte('starts_at',end).order('starts_at').limit(5000));
+    const repeating=table=>Promise.all([
+      rows(admin.from(table).select('*').eq('organization_id',organization.id).not('recurrence_rule','is',null).limit(1000)).catch(()=>[]),
+      rows(admin.from(table).select('*').eq('organization_id',organization.id).not('metadata->repeat','is',null).limit(1000)).catch(()=>[])
+    ]).then(l=>l.flat());
+    const windowed=async table=>{const [a,b]=await Promise.all([inWindow(table),repeating(table)]);const m=new Map();for(const x of [...a,...b])m.set(x.id,x);return [...m.values()];};
 
     const [allEvents,allBookings,allCastings,blocks,tasks,models,modelPrimaryMedia,companies,contacts,markets,members,profiles]=await Promise.all([
-      rows(admin.from('events').select('*').eq('organization_id',organization.id).order('starts_at').limit(1500)),
-      rows(admin.from('bookings').select('*').eq('organization_id',organization.id).order('starts_at',{ascending:true,nullsFirst:false}).limit(1500)),
-      rows(admin.from('castings').select('*').eq('organization_id',organization.id).order('starts_at',{ascending:true,nullsFirst:false}).limit(1500)),
+      windowed('events'),
+      windowed('bookings'),
+      windowed('castings'),
       rows(admin.from('availability_blocks').select('*').eq('organization_id',organization.id).gte('ends_at',start).lte('starts_at',end).in('status',['approved','pending']).order('starts_at')),
       rows(admin.from('tasks').select('id,title,status,priority,due_at,model_id').eq('organization_id',organization.id).gte('due_at',start).lte('due_at',end).neq('status','completed').order('due_at')),
       rows(admin.from('models').select('id,display_name,public_slug,primary_market_label,status,active').eq('organization_id',organization.id).limit(1500)),

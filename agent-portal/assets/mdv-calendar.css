@@ -679,3 +679,52 @@ html body #p-calendar .vx75-calendar>.vx75-control>:not(.vx75-identity){flex:0 0
 html body #vx1043-smart-note{display:block!important;line-height:1.55;white-space:normal;font-size:12px!important;padding:10px 14px!important}
 html body #vx1043-smart-note>b,html body #vx1043-smart-note>span{display:inline!important;flex:none!important;width:auto!important;max-width:none!important}
 html body #vx1043-smart-note>button,html body #vx1043-smart-note>a{display:inline-flex!important;margin-left:10px;vertical-align:middle;width:auto!important}
+
+/* Model plans & movement (Agenda) */
+.mp-h{margin:12px 0 4px;font:600 10px Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--mdv-mute)}.mp-h em{font-style:normal;opacity:.7}
+.mp-list{display:grid;gap:2px}
+html body #p-calendar .mp-row,html body #p-calendar .mp-task,html body #p-calendar .mp-name{min-height:0!important;letter-spacing:0!important;text-transform:none!important;box-shadow:none!important}
+.mp-row{display:grid;grid-template-columns:44px 1fr auto;gap:10px;align-items:center;width:100%;border:0;background:rgba(255,255,255,.03);border-radius:9px;padding:7px 10px;color:inherit;text-align:left;cursor:pointer}.mp-row:hover{background:rgba(255,255,255,.07)}
+.mp-day{display:flex;flex-direction:column;align-items:center;line-height:1.1}.mp-day small{font-size:10px;color:var(--mdv-mute);text-transform:uppercase;letter-spacing:.08em}.mp-day b{font:500 17px Inter,sans-serif}
+.mp-main{min-width:0}.mp-main b{display:block;font:500 13px Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mp-main small{display:block;font-size:11px;color:var(--mdv-mute);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-model{margin:8px 0 0;padding:8px 10px;border:1px solid var(--mdv-line-2);border-radius:10px}
+.mp-mh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;margin-bottom:4px}.mp-name{border:0;background:none;color:var(--mdv-gold);font:600 14px Inter,sans-serif;padding:0;cursor:pointer}.mp-name:hover{text-decoration:underline}.mp-mh small{font-size:11px;color:var(--mdv-mute)}
+.mp-task{display:grid;grid-template-columns:62px 1fr auto auto;gap:8px;align-items:center;width:100%;border:0;background:none;color:inherit;text-align:left;padding:5px 2px;cursor:pointer;border-top:1px solid rgba(255,255,255,.05)}.mp-task:hover{background:rgba(255,255,255,.04)}
+.mp-due{font-size:12px;line-height:1.15}.mp-due small{display:block;font-size:10px;color:var(--mdv-mute)}.mp-task.over .mp-due{color:#e08f82}
+.mp-task b{font:400 13px Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mp-task em{font-style:normal;font-size:10px;color:var(--mdv-mute);letter-spacing:.06em;text-transform:uppercase}
+.mp-hard{width:7px;height:7px;border-radius:50%;background:#d65a4a}
+
+/* ===== Agenda as a phone app screen (<= 700px). The app bar already names the page, so the page's own title goes. ===== */
+@media(max-width:700px){
+  html body #p-calendar{--ag-top:calc(var(--ma-bar,52px) + var(--ma-top,env(safe-area-inset-top,0px)));--ag-tab:calc(var(--ma-tab,60px) + var(--ma-bot,env(safe-area-inset-bottom,0px)))}
+  html body #p-calendar .vx75-calendar{padding-bottom:calc(var(--ag-tab) + 84px)}
+  html body #p-calendar .vx75-identity small,html body #p-calendar .vx75-identity h1{display:none}
+  html body #p-calendar .vx75-control{display:grid;gap:8px;padding:6px 0 4px;border:0;background:none}
+  html body #p-calendar .vx75-date{display:grid;grid-template-columns:44px auto 1fr 44px;align-items:center;gap:8px}
+  html body #p-calendar .vx75-date button{height:44px;min-height:44px;min-width:44px;border-radius:12px;background:rgba(255,255,255,.07);color:var(--mdv-ink);border:1px solid var(--mdv-line-2)}
+  html body #p-calendar .vx75-date strong{font:600 15px Inter,system-ui,sans-serif;text-align:center}
+  html body #p-calendar .vx75-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:0;padding:3px;border-radius:12px;background:rgba(255,255,255,.06)}
+  html body #p-calendar .vx75-tabs button{height:38px;min-height:38px;border-radius:10px;border:0;font-size:14px;background:transparent;color:var(--mdv-mute)}
+  html body #p-calendar .vx75-tabs button.on{background:var(--mdv-gold);color:#15110c;font-weight:600}
+  /* add: a round button above the tab bar, where a thumb lands */
+  html body #p-calendar .vx75-add{position:fixed;right:16px;bottom:calc(var(--ag-tab) + 16px);z-index:6900;width:58px;height:58px;min-height:58px;padding:0;border-radius:50%;font-size:0;display:grid;place-items:center;background:var(--mdv-gold);color:#15110c;border:0;box-shadow:0 10px 26px rgba(0,0,0,.5)}
+  html body #p-calendar .vx75-add b{font-size:30px;line-height:1;font-weight:400}
+  html body #p-calendar .vx75-add:active{transform:scale(.94)}
+  /* filters: one swipeable row instead of a stack */
+  .mdv-plan .pl-bar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -2px;padding:2px}.mdv-plan .pl-bar::-webkit-scrollbar{display:none}
+  .mdv-plan .pl-bar>*{flex:0 0 auto}.mdv-plan .pl-primary{flex:0 0 auto;margin-left:0;height:40px;padding:0 14px}.mdv-plan .pl-sel{flex:0 0 auto;max-width:190px;height:40px}
+  .mdv-plan .pl-strip{font-size:12px}
+  /* the week's days stay in view while the page scrolls */
+  .mdv-plan .pl-pills{position:sticky;top:var(--ag-top);z-index:30;margin:0 -12px;padding:8px 12px;background:rgba(14,12,9,.94);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);scroll-snap-type:x proximity;scrollbar-width:none}
+  .mdv-plan .pl-pills::-webkit-scrollbar{display:none}
+  .mdv-plan .pl-pill{flex:1 0 50px;height:60px;border-radius:16px;scroll-snap-align:center}
+  .mdv-plan .pl-card,.mdv-plan .pl-side{border-radius:18px;padding:14px}
+  .mdv-plan .pl-card{touch-action:pan-y}
+  .mdv-plan .pl-row,.mp-row,.mp-task,.tk-row{min-height:52px}
+  .mdv-plan .pl-seg button,.mdv-plan .tk-add button{min-height:40px}
+  .mdv-plan .tk-add input{height:46px;font-size:16px}   /* 16px stops iOS zooming into the field */
+  .mp-task{grid-template-columns:56px 1fr auto}.mp-task em{display:none}
+}
+@media(max-width:700px) and (prefers-reduced-motion:no-preference){.mdv-plan .pl-card{animation:pl-swap .22s ease}@keyframes pl-swap{from{opacity:.4;transform:translateX(var(--pl-from,0))}to{opacity:1;transform:none}}}
+
+@media(max-width:700px){.sc-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.sc-tabs::-webkit-scrollbar{display:none}.sc-tabs button{flex:0 0 auto;min-height:44px}.sc-head h1{font-size:26px}.sc-pills{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}.sc-pill{flex:0 0 auto;min-height:44px}}

@@ -51,7 +51,7 @@ export const handler = async event => {
       member ? rows(admin.from('task_assignments').select('task_id').eq('organization_id', org.id).eq('member_id', member.id)) : Promise.resolve([]),
       rows(admin.from('models').select('id,display_name,status').eq('organization_id', org.id).limit(3000)),
       admin.from('companies').select('id', { count: 'exact', head: true }).eq('organization_id', org.id).then(r => r.count || 0).catch(() => 0),
-      rows(admin.from('events').select('id,title,starts_at,ends_at,location,status,metadata,event_type').eq('organization_id', org.id).gte('starts_at', from.toISOString()).lte('starts_at', to.toISOString()).order('starts_at').limit(600)).catch(() => []),
+      rows(admin.from('events').select('id,title,starts_at,ends_at,location,status,metadata,event_type,owner_member_id').eq('organization_id', org.id).gte('starts_at', from.toISOString()).lte('starts_at', to.toISOString()).order('starts_at').limit(600)).catch(() => []),
       rows(admin.from('bookings').select('id,title,starts_at,ends_at,location,status').eq('organization_id', org.id).gte('starts_at', from.toISOString()).lte('starts_at', to.toISOString()).order('starts_at').limit(400)).catch(() => []),
       rows(admin.from('castings').select('id,title,starts_at,ends_at,location,status').eq('organization_id', org.id).gte('starts_at', from.toISOString()).lte('starts_at', to.toISOString()).order('starts_at').limit(400)).catch(() => []),
       rows(admin.from('travel_records').select('id,model_id,origin,destination,purpose,status,starts_at,ends_at').eq('organization_id', org.id).gte('starts_at', from.toISOString()).lte('starts_at', to.toISOString()).order('starts_at').limit(300)).catch(() => []),
@@ -62,7 +62,9 @@ export const handler = async event => {
     const todayKey = now.toISOString().slice(0, 10);
     const open = allTasks.filter(t => !t.parent_task_id && !/^(completed|done|complete|cancelled|canceled)$/i.test(String(t.status || 'open')) && mine.has(String(t.id)));
     const due = t => (t.due_at ? String(t.due_at).slice(0, 10) : null);
-    const mineEvent = e => !member ? false : (Array.isArray(e.metadata?.team) && e.metadata.team.some(n => first(n) === myFirst));
+    /* An event is mine if I own it (the Calendar's "owner" field) or I am named on its team. Events made in the Calendar
+       set the owner but not the team list, so matching only on the list left them off DaySilk. */
+    const mineEvent = e => !member ? false : (String(e.owner_member_id || '') === String(member.id) || (Array.isArray(e.metadata?.team) && e.metadata.team.some(n => first(n) === myFirst)));
 
     const schedule = []
       .concat(events.filter(mineEvent).map(e => ({ kind: 'event', id: e.id, title: e.title, starts_at: e.starts_at, ends_at: e.ends_at, where: e.location || '', status: e.status || '' })))

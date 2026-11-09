@@ -9,12 +9,12 @@ const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 const keep = 45;                    // days of check-ins kept
 
 async function loadMeta(admin, org, modelId) {
-  const { data, error } = await admin.from('model_private_profiles').select('id,metadata').eq('organization_id', org.id).eq('model_id', modelId).maybeSingle();
+  const { data, error } = await admin.from('model_private_profiles').select('model_id,metadata').eq('organization_id', org.id).eq('model_id', modelId).maybeSingle();
   if (error) throw error;
   return { row: data || null, meta: (data && data.metadata && typeof data.metadata === 'object') ? data.metadata : {} };
 }
 async function saveMeta(admin, org, modelId, row, meta) {
-  if (row) { const { error } = await admin.from('model_private_profiles').update({ metadata: meta }).eq('id', row.id); if (error) throw error; }
+  if (row) { const { error } = await admin.from('model_private_profiles').update({ metadata: meta }).eq('organization_id', org.id).eq('model_id', modelId); if (error) throw error; }
   else { const { error } = await admin.from('model_private_profiles').insert({ organization_id: org.id, model_id: modelId, metadata: meta }); if (error) throw error; }
 }
 const size = o => { try { return JSON.stringify(o).length; } catch (_e) { return Infinity; } };

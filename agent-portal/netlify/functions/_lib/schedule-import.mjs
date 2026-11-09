@@ -45,7 +45,10 @@ export function matchMember(name, members) {
 const hashOf = e => crypto.createHash('sha1').update(JSON.stringify([e.title, e.date, e.end_date, e.start, e.end, e.all_day, e.event_type, e.label, e.status, e.location, e.notes, e.models, e.team, e.owner, e.model_visible, e.notes_hidden_from_model, e.personal_for, e.conflict || null, e.on_outlook || false])).digest('hex').slice(0, 16);
 
 /* Decide, for every event in the set, what should happen. Pure: no writes. */
-export function planImport({ set, models, members, existing, userId, tz }) {
+/* Events the 90-day gameplan already carries (metadata.plan = 'g90'): { model_id, event_type, day }. An imported event for the same model,
+   the same kind (visa, travel, housing...) on a day the gameplan already covers is left out, so the calendar never holds both versions. */
+export function planImport({ set, models, members, existing, userId, tz, covered = [] }) {
+  const coveredBy = (modelIds, type, from, to) => covered.some(c => modelIds.includes(c.model_id) && c.event_type === type && c.day >= from && c.day <= to);
   const zone = tz || set.timezone || 'America/New_York';
   const me = members.find(m => m.user_id === userId) || null;
   const meFirst = norm(me?.first_name || String(me?.display_name || '').split(' ')[0]);
@@ -87,6 +90,7 @@ export function planImport({ set, models, members, existing, userId, tz }) {
     };
 
     let action = 'create';
+    if (!prior && modelIds.length && coveredBy(modelIds, e.event_type, e.date, e.end_date || e.date)) action = 'skip-covered';
     if (prior) {
       const editedAt = Date.parse(prior.updated_at || ''), importedAt = Date.parse(prior.metadata?.imported_at || '');
       if (prior.metadata?.import_hash === hash) action = 'same';
@@ -99,7 +103,7 @@ export function planImport({ set, models, members, existing, userId, tz }) {
   const count = f => rows.filter(f).length;
   const perModel = {}, perPerson = {};
   for (const r of rows) {
-    if (!r.payload || r.action === 'skip-edited') continue;
+    if (!r.payload || r.action === 'skip-edited' || r.action === 'skip-covered') continue;
     for (const nm of r.models) perModel[nm] = (perModel[nm] || 0) + 1;
     for (const nm of r.team) perPerson[nm] = (perPerson[nm] || 0) + 1;
   }
@@ -107,8 +111,8 @@ export function planImport({ set, models, members, existing, userId, tz }) {
     rows,
     summary: {
       total: rows.length, create: count(r => r.action === 'create'), update: count(r => r.action === 'update'), same: count(r => r.action === 'same'),
-      kept_edits: count(r => r.action === 'skip-edited'), skipped_personal: count(r => r.action === 'skip-personal'),
-      on_model_calendars: count(r => r.payload && r.model_ids.length), shown_to_models: count(r => r.payload && r.to_model), agency_only_with_models: count(r => r.payload && r.model_ids.length && !r.to_model),
+      kept_edits: count(r => r.action === 'skip-edited'), skipped_personal: count(r => r.action === 'skip-personal'), covered_by_gameplan: count(r => r.action === 'skip-covered'),
+      on_model_calendars: count(r => r.payload && r.action !== 'skip-covered' && r.model_ids.length), shown_to_models: count(r => r.payload && r.action !== 'skip-covered' && r.to_model), agency_only_with_models: count(r => r.payload && r.action !== 'skip-covered' && r.model_ids.length && !r.to_model),
       per_model: perModel, per_person: perPerson,
       conflicts: rows.filter(r => r.payload?.metadata?.conflict && r.action !== 'skip-edited').map(r => ({ title: r.title, date: r.date, note: r.payload.metadata.conflict })),
       unmatched_models: [...missingModels].map(([name, events]) => ({ name, events })), ambiguous_models: [...ambiguousModels].map(([name, events]) => ({ name, events })),

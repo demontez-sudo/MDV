@@ -39,6 +39,19 @@ export const handler = async event => {
         const days = { ...(ds.days || {}), [date]: { done: Array.isArray(day.done) ? day.done.slice(0, 40).map(x => clip(x, 40)) : [], review: day.review && typeof day.review === 'object' ? { win: clip(day.review.win, 300), hard: clip(day.review.hard, 300) } : null } };
         const keys = Object.keys(days).sort(); while (keys.length > 45) delete days[keys.shift()];
         next = { ...ds, days };
+      } else if (action === 'save_schedule') {
+        /* The Daily Schedule (day templates, date overrides, market focus) belongs to the person, not the browser.
+           Kept on the same member record so it follows them to every device and login. */
+        const sc = body.schedule && typeof body.schedule === 'object' ? body.schedule : null;
+        if (!sc) return json(400, { error: 'schedule is required' });
+        const clean = {
+          templates: sc.templates && typeof sc.templates === 'object' && !Array.isArray(sc.templates) ? sc.templates : {},
+          overrides: sc.overrides && typeof sc.overrides === 'object' && !Array.isArray(sc.overrides) ? sc.overrides : {},
+          market: ['auto', 'New York', 'Paris'].includes(sc.market) ? sc.market : 'auto',
+          updated_at: new Date().toISOString(),
+        };
+        if (size(clean) > 60000) return json(413, { error: 'That schedule is too large to save. Reset a template or two.' });
+        next = { ...ds, schedule: clean };
       } else return json(400, { error: 'Unsupported action' });
       const { error: ue } = await admin.from('organization_members').update({ metadata: { ...meta, daysilk: next } }).eq('id', mine.id);
       if (ue) throw ue;
