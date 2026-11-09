@@ -4559,6 +4559,7 @@ async function portalSync(){
  psBusy=false
 }
 async function portalEventsSync(){if(!EMB||!sbUser||!baseReady)return;try{const l=await parent.MDV_DS_EMBED.portalEvents(true);if(Array.isArray(l)&&JSON.stringify(l)!==JSON.stringify(PE)){PE=l;const typing=document.activeElement&&document.activeElement.matches&&document.activeElement.matches("input,textarea,select");if(!EMB_ALERTS&&!typing&&["calendar","schedule","today","command","work"].includes(S.view))render()}}catch(_){}}
+window.__dsRefreshEvents=function(){portalEventsSync();modelLensSync(true);agencySync(true)};
 if(EMB){setTimeout(portalEventsSync,3500);setTimeout(portalEventsSync,16000);setTimeout(lensModels,3000);setTimeout(()=>modelLensSync(true),4500);setTimeout(()=>agencySync(true),5500);setInterval(()=>{if(!document.hidden){portalEventsSync();modelLensSync();agencySync()}},120000);document.addEventListener("visibilitychange",()=>{if(!document.hidden){portalEventsSync();modelLensSync();agencySync()}})}
 if(EMB&&!EMB_ALERTS){setInterval(portalSync,90000);setTimeout(portalSync,4000);setTimeout(portalSync,15000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)portalSync()})}
 
