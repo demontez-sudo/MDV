@@ -198,6 +198,10 @@ export const handler=async(event)=>{
         const result=await safeDeleteEvent(admin,organization.id,body.event_id);
         const linkedTask=gone&&gone.data&&gone.data.metadata&&gone.data.metadata.task_id;
         if(result?.verified===true&&linkedTask)await admin.from('tasks').update({status:'cancelled'}).eq('organization_id',organization.id).eq('id',linkedTask);
+        /* An event that came from the prepared-schedule import stays deleted: remember its key so the import does not add it back.
+           (The table comes from 2026-11-09-calendar-import-skips.sql; until it exists, deleting works as before.) */
+        const gm=gone&&gone.data&&gone.data.metadata;
+        if(result?.verified===true&&gm&&gm.import_set&&gm.import_key){try{await admin.from('calendar_import_skips').upsert({organization_id:organization.id,import_set:String(gm.import_set),import_key:String(gm.import_key),deleted_by:user.id},{onConflict:'organization_id,import_set,import_key'});}catch(e){console.warn('[calendar] could not remember the deleted import event',e?.message||e);}}
         return json(200,{ok:true,verified:result?.verified===true,deleted:'event',event_id:body.event_id,persisted_at:new Date().toISOString()});
       }
       return json(400,{error:'Unsupported calendar action'});

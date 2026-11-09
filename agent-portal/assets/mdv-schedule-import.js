@@ -43,6 +43,7 @@ function open(){
   if(s.unmatched_people.length)warn.push('<p><b>Team members not found:</b> '+s.unmatched_people.map(esc).join(', ')+'. Their events are added with their name and show under their name in the Team filter, but are not assigned to a login.</p>');
   if(s.skipped_personal)warn.push('<p><b>'+s.skipped_personal+' personal blocks</b> (training, meals, home time) belong to Demontez and are only added when Demontez runs this. They are never shown to anyone else.</p>');
   if(s.covered_by_gameplan)warn.push('<p><b>'+s.covered_by_gameplan+' event'+(s.covered_by_gameplan===1?'':'s')+' are already in the 90-day gameplan</b> (same model, same kind, same day) and are left out, so nothing appears twice.</p>');
+  if(s.deleted_on_purpose)warn.push('<p><b>'+s.deleted_on_purpose+' event'+(s.deleted_on_purpose===1?'':'s')+' you deleted</b> stay deleted and are not added back.</p>');
   if(s.kept_edits)warn.push('<p><b>'+s.kept_edits+' event'+(s.kept_edits===1?'':'s')+' you changed in the portal</b> are left exactly as you set them.</p>');
   (s.conflicts||[]).forEach(function(c){warn.push('<p class="sch-risk"><b>Conflict, not moved:</b> '+esc(c.title)+' on '+esc(c.date)+'. '+esc(c.note)+'</p>');});
   m.innerHTML='<div class="sch-card" role="dialog" aria-modal="true" aria-label="Add prepared schedule"><header><div><small>Calendar</small><h2>Add the prepared schedule</h2></div><button type="button" class="sch-x" data-sch-close aria-label="Close">×</button></header>'
