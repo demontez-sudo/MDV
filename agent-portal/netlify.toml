@@ -776,6 +776,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/storage-shrink"
+to = "/.netlify/functions/agent-storage-shrink"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/calendar/intelligence"
 to = "/.netlify/functions/agent-calendar-intelligence-v16"
 status = 200
