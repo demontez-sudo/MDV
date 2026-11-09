@@ -34,6 +34,10 @@ export function weekAhead({ count, hard, first }) {
 export function newTask({ title, due }) {
   return { icon: 'pin', level: 'info', title: '📌 New on your plate', body: `${clip(title, 120)}${due ? ` · due ${due}` : ''}` };
 }
+export function meeting({ title, when, provider }) {
+  const via = provider ? ` on ${provider}` : '';
+  return { icon: 'video', level: 'info', title: `📹 Meeting${via}: ${clip(title, 70)}`, body: `${when || 'Time set in your calendar'}. The join link is in the event and in your task.` };
+}
 export function gameplanLive({ audience, count, first }) {
   if (audience === 'model') return { icon: 'sparkle', level: 'win', title: '✨ Your season plan is live', body: 'Open Gameplan to see every step with its date and time: skin, walk, health, test shoots and travel.' };
   return { icon: 'sparkle', level: 'win', title: '🎉 The 90-day gameplan is live', body: `You own ${count} deadline${count === 1 ? '' : 's'}.${first ? ` The first is ${first}.` : ''} Open Tasks to see each date and time.` };

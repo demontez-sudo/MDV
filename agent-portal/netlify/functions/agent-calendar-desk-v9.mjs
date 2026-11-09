@@ -2,6 +2,48 @@ import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 import { safeDeleteEvent } from './_lib/calendar-safe-delete.mjs';
 import { visibleToUser } from './_lib/calendar-privacy.mjs';
+import { notify } from './_lib/push.mjs';
+import { meeting as meetingCopy } from './_lib/push-copy.mjs';
+
+/* Video meeting links: Zoom, Google Meet and Microsoft Teams links are recognised by their address; any other https link is kept as "other".
+   Only https links are accepted, so nothing odd can be stored and then opened from a calendar. */
+const VIDEO_NAMES={zoom:'Zoom',meet:'Google Meet',teams:'Microsoft Teams',other:'Video meeting'};
+function cleanVideo(v){
+  const raw=String(v&&typeof v==='object'?v.url:v||'').trim();
+  if(!raw)return null;
+  let u;try{u=new URL(raw);}catch(_e){throw validationError('The meeting link is not a valid web address.','VIDEO_LINK_INVALID');}
+  if(u.protocol!=='https:'||raw.length>600)throw validationError('The meeting link must start with https:// and be under 600 characters.','VIDEO_LINK_INVALID');
+  const h=u.hostname.toLowerCase();
+  const provider=/(^|\.)zoom\.(us|com)$/.test(h)?'zoom':h==='meet.google.com'?'meet':/(^|\.)teams\.(microsoft\.com|live\.com|microsoft\.us)$/.test(h)?'teams':'other';
+  return {provider,url:u.toString()};
+}
+/* A meeting can also be an agent task: due when the meeting starts, with the join link inside it, assigned to the people picked.
+   Moving the event moves the task. The task never carries a model_id, because the model portal lists every task that has one. */
+async function syncMeetingTask(admin,orgId,userId,ev,{memberIds=[],video=null,create=false}={}){
+  const meta=ev.metadata&&typeof ev.metadata==='object'?ev.metadata:{};
+  const desc=['Meeting from the calendar.',video?`Join (${VIDEO_NAMES[video.provider]||'video'}): ${video.url}`:'',ev.location?`Where: ${ev.location}`:'',ev.notes?String(ev.notes).slice(0,800):''].filter(Boolean).join('\n');
+  const taskId=meta.task_id||null;
+  if(taskId){
+    const up=await admin.from('tasks').update({title:ev.title,description:desc,due_at:ev.starts_at}).eq('organization_id',orgId).eq('id',taskId);
+    if(up.error)console.warn('[calendar] linked task update failed',up.error.message);
+    return {task_id:taskId,created:false};
+  }
+  if(!create||!memberIds.length)return {task_id:null,created:false};
+  const base={organization_id:orgId,title:ev.title,description:desc,priority:'normal',due_at:ev.starts_at,category:'meeting',status:'open',metadata:{source:'calendar_event',event_id:ev.id,video:video||null}};
+  let ins=await admin.from('tasks').insert({...base,created_by:userId,visibility:'organization'}).select('id,title,due_at').single();
+  if(ins.error)ins=await admin.from('tasks').insert(base).select('id,title,due_at').single();
+  if(ins.error)throw ins.error;
+  const tid=ins.data.id;
+  const asg=await admin.from('task_assignments').insert([...new Set(memberIds.map(String))].map(member_id=>({organization_id:orgId,task_id:tid,member_id,assignment_role:'assignee',assigned_by:userId})));
+  if(asg.error)console.warn('[calendar] task assignment failed',asg.error.message);
+  await admin.from('events').update({metadata:{...meta,task_id:tid}}).eq('organization_id',orgId).eq('id',ev.id);
+  try{
+    const {data:ms}=await admin.from('organization_members').select('user_id').in('id',memberIds);
+    const uids=(ms||[]).map(m=>m.user_id).filter(x=>x&&x!==userId);
+    if(uids.length){const when=new Date(ev.starts_at).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});const c=meetingCopy({title:ev.title,when,provider:video?VIDEO_NAMES[video.provider]:''});await notify(admin,{orgId,userIds:uids,title:c.title,body:c.body,url:'?page=tasksconsolidated',category:'tasks',tag:'meet-'+ev.id,level:c.level,icon:c.icon});}
+  }catch(e){console.warn('[calendar] meeting alert skipped',e?.message||e);}
+  return {task_id:tid,created:true};
+}
 
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 async function one(q){const {data,error}=await q;if(error)throw error;return data||null;}
@@ -84,8 +126,14 @@ export const handler=async(event)=>{
           prior=await one(admin.from('events').select('metadata').eq('organization_id',organization.id).eq('id',body.event_id).maybeSingle());
           if(!prior){const e=new Error('Calendar event not found.');e.statusCode=404;e.code='CALENDAR_EVENT_NOT_FOUND';throw e;}
         }
+        const hasVideo=Object.prototype.hasOwnProperty.call(body,'video');
+        const video=hasVideo?cleanVideo(body.video):null;
+        const shareFlag=typeof body.share_with_models==='boolean'?body.share_with_models:null;
         const metadata={
           ...(prior?.metadata||{}),
+          ...(hasVideo?{video}:{}),
+          ...(shareFlag===null?{}:{share_with_models:shareFlag}),
+          ...(shareFlag===true&&ids.length&&!prior?.metadata?.event_kind?{event_kind:'model meeting'}:{}),
           category:body.category||null,
           calendar_event_type:body.calendar_event_type||body.event_type||prior?.metadata?.calendar_event_type||null,
           pipeline_stage:body.pipeline_stage||null,
@@ -110,7 +158,7 @@ export const handler=async(event)=>{
           company_id:body.company_id||null,
           contact_id:body.contact_id||null,
           owner_member_id:body.owner_member_id||null,
-          visibility:normalizeVisibility(body.visibility||(ids.length?'model_shared':'organization')),
+          visibility:normalizeVisibility(body.visibility||(ids.length&&shareFlag!==false?'model_shared':'organization')),
           notes:body.notes||null,
           recurrence_rule:body.recurrence_rule||null,
           metadata
@@ -122,11 +170,21 @@ export const handler=async(event)=>{
           saved=await fallbackSaveEvent(admin,organization.id,user.id,action,body.event_id,payload,ids);
         }else saved=rpcResult.data;
         if(!saved?.verified||!saved?.event){const e=new Error('Calendar save could not be verified.');e.statusCode=500;e.publicMessage='Calendar event was not confirmed as saved. Please retry.';throw e;}
-        return json(action==='create_event'?201:200,{ok:true,verified:true,event:saved.event,model_ids:saved.model_ids,persisted_at:saved.persisted_at});
+        let linked=null;
+        try{
+          const at=body.agent_task&&typeof body.agent_task==='object'?body.agent_task:{};
+          const mids=(Array.isArray(at.member_ids)&&at.member_ids.length?at.member_ids:(body.owner_member_id?[body.owner_member_id]:[])).filter(Boolean);
+          const vid=hasVideo?video:(saved.event.metadata&&saved.event.metadata.video)||null;
+          linked=await syncMeetingTask(admin,organization.id,user.id,saved.event,{memberIds:mids,video:vid,create:!!at.create});
+        }catch(e){console.warn('[calendar] meeting task skipped',e?.message||e);linked={error:String(e?.message||e).slice(0,160)};}
+        return json(action==='create_event'?201:200,{ok:true,verified:true,event:saved.event,model_ids:saved.model_ids,task:linked,persisted_at:saved.persisted_at});
       }
       if(action==='delete_event'){
         if(!body.event_id)throw validationError('event_id is required.');
+        const gone=await admin.from('events').select('metadata').eq('organization_id',organization.id).eq('id',body.event_id).maybeSingle();
         const result=await safeDeleteEvent(admin,organization.id,body.event_id);
+        const linkedTask=gone&&gone.data&&gone.data.metadata&&gone.data.metadata.task_id;
+        if(result?.verified===true&&linkedTask)await admin.from('tasks').update({status:'cancelled'}).eq('organization_id',organization.id).eq('id',linkedTask);
         return json(200,{ok:true,verified:result?.verified===true,deleted:'event',event_id:body.event_id,persisted_at:new Date().toISOString()});
       }
       return json(400,{error:'Unsupported calendar action'});
