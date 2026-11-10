@@ -6,7 +6,7 @@ html.mdv-cur [data-mdv-cur]:not([data-mdv-cur="nat"]){cursor:none!important}
 /* things that are always clickable never flash the system hand while the page redraws */
 html.mdv-cur a,html.mdv-cur button:not(:disabled),html.mdv-cur [role="button"]:not([aria-disabled="true"]),html.mdv-cur summary,html.mdv-cur label,html.mdv-cur select:not(:disabled){cursor:none!important}
 
-.mdv-cr{position:fixed;left:0;top:0;width:0;height:0;z-index:2147483000;pointer-events:none;opacity:0;transition:opacity .25s ease;contain:layout style}
+.mdv-cr{position:fixed;left:0;top:0;width:0;height:0;z-index:2147483647;/* above every dialog (they go up to 2147483644), or the pointer disappears behind them */pointer-events:none;opacity:0;transition:opacity .25s ease;contain:layout style}
 .mdv-cr.on{opacity:1}
 .mdv-cr.off{opacity:0!important}
 .mdv-cr i{position:absolute;left:0;top:0;border-radius:50%;display:grid;place-items:center;backface-visibility:hidden}
