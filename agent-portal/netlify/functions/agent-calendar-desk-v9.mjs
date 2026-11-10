@@ -51,6 +51,8 @@ const group=(list,key)=>{const m=new Map();for(const x of list){const k=x[key];i
 const cleanIds=a=>Array.from(new Set((Array.isArray(a)?a:[]).filter(Boolean)));
 const inRange=(v,start,end)=>{if(!v)return false;const t=Date.parse(v);return Number.isFinite(t)&&t>=Date.parse(start)&&t<=Date.parse(end);};
 const hasRepeat=x=>!!(x?.recurrence_rule||x?.metadata?.repeat);
+/* started before the window but is still running at its start (a stay, a trip, a multi-day shoot) */
+const runsInto=(x,start)=>{if(!x?.starts_at||!x?.ends_at)return false;const a=Date.parse(x.starts_at),b=Date.parse(x.ends_at);return Number.isFinite(a)&&Number.isFinite(b)&&a<Date.parse(start)&&b>=Date.parse(start);};
 const EVENT_STATUSES=new Set(['draft','scheduled','tentative','confirmed','completed','cancelled']);
 const EVENT_TYPES=new Set(['meeting','casting','callback','option','hold','booking','fitting','job','test','training','travel','housing','visa','deadline','press','personal','bookout','other']);
 const EVENT_VISIBILITIES=new Set(['private','organization','assigned','model_shared','partner_shared']);
@@ -222,7 +224,9 @@ export const handler=async(event)=>{
       rows(admin.from(table).select('*').eq('organization_id',organization.id).not('recurrence_rule','is',null).limit(1000)).catch(()=>[]),
       rows(admin.from(table).select('*').eq('organization_id',organization.id).not('metadata->repeat','is',null).limit(1000)).catch(()=>[])
     ]).then(l=>l.flat());
-    const windowed=async table=>{const [a,b]=await Promise.all([inWindow(table),repeating(table)]);const m=new Map();for(const x of [...a,...b])m.set(x.id,x);return [...m.values()];};
+    /* Long events (stays, trips, multi-day shoots) that began before the window but are still running inside it. Without this they vanished once their first day scrolled out of view. */
+    const spanning=table=>rows(admin.from(table).select('*').eq('organization_id',organization.id).lt('starts_at',start).gte('ends_at',start).order('starts_at').limit(1000)).catch(()=>[]);
+    const windowed=async table=>{const [a,b,c]=await Promise.all([inWindow(table),repeating(table),spanning(table)]);const m=new Map();for(const x of [...a,...b,...c])m.set(x.id,x);return [...m.values()];};
 
     const [allEvents,allBookings,allCastings,blocks,tasks,models,modelPrimaryMedia,companies,contacts,markets,members,profiles]=await Promise.all([
       windowed('events'),
@@ -239,9 +243,9 @@ export const handler=async(event)=>{
       rows(admin.from('profiles').select('user_id,display_name,first_name,last_name').limit(1500))
     ]);
 
-    const events=allEvents.filter(x=>visibleToUser(x,user.id)&&(inRange(x.starts_at,start,end)||hasRepeat(x)));
-    const bookings=allBookings.filter(x=>inRange(x.starts_at,start,end)||hasRepeat(x));
-    const castings=allCastings.filter(x=>inRange(x.starts_at,start,end)||hasRepeat(x));
+    const events=allEvents.filter(x=>visibleToUser(x,user.id)&&(inRange(x.starts_at,start,end)||hasRepeat(x)||runsInto(x,start)));
+    const bookings=allBookings.filter(x=>inRange(x.starts_at,start,end)||hasRepeat(x)||runsInto(x,start));
+    const castings=allCastings.filter(x=>inRange(x.starts_at,start,end)||hasRepeat(x)||runsInto(x,start));
 
     const eventIds=events.map(x=>x.id),bookingIds=bookings.map(x=>x.id),castingIds=castings.map(x=>x.id);
 

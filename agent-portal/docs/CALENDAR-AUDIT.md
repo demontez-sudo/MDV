@@ -12,7 +12,7 @@ Create with validation, update with read-back, replacing attached models, move w
 4. (Earlier, same branch) Delete no longer stops on an optional clean-up table or column that is missing, and says why when it is blocked. Every open view refreshes after a save or delete.
 
 ## Known gaps (not changed)
-- **Multi-day events** (stays, "November movement", "In Paris") are matched on their start date only, so they drop off the Agenda and the server window after the first day. Fix needs the engine to expand occurrences across days and the server window to include events that overlap it.
+- **Multi-day events** (stays, trips, multi-day shoots): fixed on 9 Nov. The calendar now returns events that began earlier but are still running, and the Agenda, Orbit and DaySilk show them on every day they cover (continuation days are labelled "day 2 of 11", open the original, and cannot be dragged). Period totals count each real event once. Not changed: the model portal's own calendar, and the Month (Season Matrix) view, which lists by model rather than by day.
 - `Option 1/2/3` and `Task` form types are stored as `other`.
 - Moving an event does not move availability blocks that came from it.
 - DaySilk copies of agency and model events are read-only by design.

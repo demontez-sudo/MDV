@@ -112,7 +112,8 @@ function dsShape(e,extra){
   var hm=function(x){return String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0');};
   var ev={title:String(e.title||'Event'),cat:'connect',rep:'',where:e.location||'',notes:e.notes||'',web:'',
     video:md.video&&/^https:\/\//i.test(String(md.video.url||''))?md.video:null};
-  if(e.all_day){ev.d=d;ev.t='';ev.e='';if(en&&dayKey(en)>d){ev.rep='d';ev.until=dayKey(new Date(en.getTime()-1));}}
+  /* An all-day event, or any event running a full day or more (a stay, a trip), shows on every day it covers. An overnight one (under 24 hours) keeps its times. */
+  if(e.all_day||(en&&dayKey(en)>d&&en-s>=864e5)){ev.d=d;ev.t='';ev.e='';if(en&&dayKey(en)>d){ev.rep='d';ev.until=dayKey(new Date(en.getTime()-1));}}
   else{ev.d=d;ev.t=hm(s);ev.e=en&&dayKey(en)===d?hm(en):'23:59';}
   return Object.assign(ev,extra||{});
 }
