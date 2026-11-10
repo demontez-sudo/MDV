@@ -47,7 +47,7 @@ export const handler=async event=>{
       model_status:eventLinkMap.get(String(e.id))?.attendance_status||null
     }));
     const bookingRows=bookings.filter(b=>{
-      const t=Date.parse(b.call_time||b.starts_at);return Number.isFinite(t)&&t>=Date.parse(start)&&t<=Date.parse(end);
+      const t=Date.parse(b.call_time||b.starts_at),z=Date.parse(b.wrap_time||b.ends_at);return Number.isFinite(t)&&((t>=Date.parse(start)&&t<=Date.parse(end))||(t<Date.parse(start)&&Number.isFinite(z)&&z>=Date.parse(start)));/* or a multi-day booking that began earlier and is still running */
     }).map(b=>({
       id:b.id,kind:'booking',title:b.title,event_type:'booking',status:b.status,
       starts_at:b.call_time||b.starts_at,ends_at:b.wrap_time||b.ends_at||b.call_time||b.starts_at,
