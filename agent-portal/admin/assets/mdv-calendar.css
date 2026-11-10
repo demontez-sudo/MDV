@@ -791,3 +791,12 @@ html body #p-calendar .so-att,html body #p-calendar .so-task,html body #p-calend
 @media(max-width:900px){.so-grid{grid-template-columns:1fr}.so-dial{position:relative;top:auto;max-width:520px}.so-head b{font-size:24px}.so-legend em{margin-left:0;width:100%}}
 @media(max-width:700px){.so-wrap{padding-bottom:calc(var(--ag-tab,70px) + 90px)}.so-row{grid-template-columns:24px 66px minmax(0,1fr) auto;gap:8px}.so-card{padding:12px}}
 @media(prefers-reduced-motion:reduce){.so-arc.cur{animation:none}}
+
+/* Orbit colour coding by type */
+.so-wrap .c-travel{--cc:#4f86d4}.so-wrap .c-stay{--cc:#3fae9f}.so-wrap .c-visa{--cc:#e0654f}.so-wrap .c-work{--cc:#4aa56a}.so-wrap .c-dev{--cc:#9b7be0}.so-wrap .c-meet{--cc:#d9d2c3}.so-wrap .c-other{--cc:#c9a23d}
+.so-arc[class*="c-"]{stroke:var(--cc)}.so-badge[class*="c-"] circle{stroke:var(--cc)}.so-row[class*="c-"] .so-n{border-color:var(--cc)}
+.so-arc.risk,.so-badge.risk circle,.so-row.risk .so-n{stroke:var(--risk);border-color:var(--risk)}
+.so-row[class*="c-"]{border-left:3px solid var(--cc)}
+.so-legend div{display:flex;flex-wrap:wrap;gap:8px 14px}.so-key{display:inline-flex;align-items:center;gap:6px;font:500 12px Inter,sans-serif;color:var(--mdv-ink)}
+.so-key i{width:10px;height:10px;border-radius:50%;background:var(--cc);display:inline-block}.so-key em{font-style:normal;color:var(--mdv-mute)}
+.so-row.sel{border-left-color:var(--mdv-gold)}
