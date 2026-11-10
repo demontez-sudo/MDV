@@ -140,7 +140,9 @@ function portalEvents(force){
 /* The model lens: the calendars of the models you follow (events, bookings, castings), so they can sit beside yours.
    Each one is titled "Name: ..." so it is clear whose it is, in the week, the day sheet and the smart alerts. */
 function modelList(){
-  return calSnap(false).then(function(cal){
+  /* the model list rides along with any calendar read, so if the big 80-day read fails or is slow, a one-day read is enough */
+  var small=function(){var a=new Date(),b=new Date(Date.now()+864e5);return get('/api/agent/calendar/v9?organization='+encodeURIComponent(org())+'&start='+encodeURIComponent(a.toISOString())+'&end='+encodeURIComponent(b.toISOString())+'&_t='+Date.now()).catch(function(){return null;});};
+  return calSnap(false).then(function(c){return c||small();}).then(function(cal){
     return arr(cal&&cal.lookups&&cal.lookups.models).filter(function(m){return m&&m.id&&m.display_name&&!/^(archiv|releas|inactive|former)/i.test(String(m.status||''));})
       .map(function(m){return {id:m.id,name:m.display_name,market:m.primary_market_label||''};}).sort(function(a,b){return a.name.localeCompare(b.name);});
   });

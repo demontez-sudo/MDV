@@ -3191,7 +3191,7 @@ function lensBar(){
  const ids=lensIds(),nm=(core().lens&&core().lens.names)||{};
  const chips=ids.map(id=>`<span class="lens-chip">${esc(nm[id]||"Model")}<button type="button" data-lens-rm="${esc(id)}" aria-label="Remove ${esc(nm[id]||"model")}">×</button></span>`).join("");
  const opts=LENSM.filter(m=>!ids.includes(m.id)).map(m=>`<option value="${esc(m.id)}">${esc(m.name)}${m.market?" · "+esc(m.market):""}</option>`).join("");
- return `<div class="lensbar"><span class="lens-l">Model calendars</span>${chips}${LENSM.length?`<select class="lens-add" data-lens-add aria-label="Add a model calendar"><option value="">+ Add a model</option>${opts}</select>`:`<span class="muted small">Loading models…</span>`}<label class="lens-ag"><input type="checkbox" data-lens-agency ${agencyOn()?"checked":""}> Whole agency</label>${ids.length?`<span class="lens-key"><i></i>Model items sit in the right lane</span>`:`<span class="muted small">Follow a model to see their calendar next to yours.</span>`}</div>`
+ return `<div class="lensbar"><span class="lens-l">Model calendars</span>${chips}${LENSM.length?`<select class="lens-add" data-lens-add aria-label="Add a model calendar"><option value="">+ Add a model</option>${opts}</select>`:`${LENS_TRIES>=6?`<a class="muted small" href="#" data-lens-retry>Could not load models. Tap to retry</a>`:`<span class="muted small">Loading models…</span>`}`}<label class="lens-ag"><input type="checkbox" data-lens-agency ${agencyOn()?"checked":""}> Whole agency</label>${ids.length?`<span class="lens-key"><i></i>Model items sit in the right lane</span>`:`<span class="muted small">Follow a model to see their calendar next to yours.</span>`}</div>`
 }
 function lensRepaint(){const typing=document.activeElement&&document.activeElement.matches&&document.activeElement.matches("input,textarea,select");if(!EMB_ALERTS&&!typing&&["calendar","schedule","today","command","work"].includes(S.view))render()}
 async function modelLensSync(force){
@@ -3202,10 +3202,13 @@ async function modelLensSync(force){
   if(Array.isArray(l)&&JSON.stringify(l)!==JSON.stringify(LME)){LME=l;lensRepaint()}
  }catch(_){}
 }
-async function lensModels(){if(!EMB||EMB_ALERTS||LENSM.length)return;try{const l=await parent.MDV_DS_EMBED.modelList();if(Array.isArray(l)&&l.length){LENSM=l;lensRepaint()}}catch(_){}}
+var LENS_TRIES=0;
+async function lensModels(){if(!EMB||EMB_ALERTS||LENSM.length)return;try{const l=await parent.MDV_DS_EMBED.modelList();if(Array.isArray(l)&&l.length){LENSM=l;lensRepaint();return}}catch(_){}
+ if(!LENSM.length){LENS_TRIES++;if(LENS_TRIES<6)setTimeout(lensModels,5000*LENS_TRIES);else lensRepaint()}}
 function lensAdd(id){const m=LENSM.find(x=>x.id===id);if(!m)return;const c=core();c.lens=c.lens||{ids:[],names:{}};c.lens.names=c.lens.names||{};if(!c.lens.ids.includes(id))c.lens.ids.push(id);c.lens.names[id]=m.name;markDirty("core");render();modelLensSync(true)}
 function lensRemove(id){const c=core();if(!c.lens)return;c.lens.ids=(c.lens.ids||[]).filter(x=>x!==id);if(c.lens.names)delete c.lens.names[id];markDirty("core");LME=LME.filter(e=>(e.modelIds||[]).some(x=>c.lens.ids.includes(x)));render()}
 document.addEventListener("change",e=>{const a=e.target.closest&&e.target.closest("[data-lens-add]");if(a&&a.value)lensAdd(a.value)});
+document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest("[data-lens-retry]");if(r){e.preventDefault();LENS_TRIES=0;lensRepaint();lensModels()}});
 document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest("[data-lens-rm]");if(r)lensRemove(r.dataset.lensRm)});
 /* ---------- Everything in one view: the whole agency, tasks on the week, and a day brief that plans for you ---------- */
 var AG=[];

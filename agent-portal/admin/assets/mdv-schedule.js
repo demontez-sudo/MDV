@@ -211,6 +211,8 @@ async function loadLive(force){
   S.loading=false;
 }
 function liveOn(date){var k=dkey(date);return (S.data||[]).filter(function(x){return dkey(x.starts_at)===k;});}
+/* a date-only marker, or anything running 20 hours or more, is the backdrop of the day: it does not cut into a work window */
+function bgEv(x){var s=new Date(x.starts_at),e=x.ends_at?new Date(x.ends_at):null;if(isNaN(s))return false;if(e&&e-s>=20*36e5)return true;return !e&&!s.getHours()&&!s.getMinutes()&&!s.getSeconds();}
 function evSpan(x){var s=new Date(x.starts_at),e=x.ends_at?new Date(x.ends_at):new Date(s.getTime()+3600000);var sm=s.getHours()*60+s.getMinutes(),em=dkey(e)===dkey(s)?e.getHours()*60+e.getMinutes():1440;if(em<=sm)em=sm+60;return[sm,em];}
 
 /* ---------- tasks from the Tasks board: mine on my days, everyone's on the Team tab ---------- */
@@ -258,7 +260,7 @@ function teamHtml(){
 }
 
 /* ---------- rules (each returns {s:'ok'|'warn'|'na', t:text, fix?}) ---------- */
-function ctxFor(id,date){var tpl=S.tpl[id],spans=tpl?blockSpans(tpl.blocks):[],live=date?liveOn(date).filter(function(x){return x.k!=='travel';}):[];return{id:id,date:date,spans:spans,live:live};}
+function ctxFor(id,date){var tpl=S.tpl[id],spans=tpl?blockSpans(tpl.blocks):[],live=date?liveOn(date).filter(function(x){return x.k!=='travel'&&!bgEv(x);}):[];return{id:id,date:date,spans:spans,live:live};}
 function evalRule(key,c){
   var biz=c.spans.filter(isBiz),bizMin=biz.reduce(function(n,b){return n+(b.end-b.s);},0);
   if(key==='deep'){

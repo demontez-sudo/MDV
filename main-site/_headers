@@ -30,11 +30,20 @@
   Cache-Control: no-cache, no-store, must-revalidate
 /admin/api/*
   Cache-Control: no-cache, no-store, must-revalidate
-# Portal scripts/styles/fonts are all loaded with a ?v= release stamp, so a
-# new release is a new URL. Letting browsers keep them means the ~150 files
-# the portal needs are not re-downloaded on every visit (this was the slowness).
+# DaySilk, the storage tool and the model sign-in page are plain pages inside /admin: never serve an old copy
+/admin/daysilk/*
+  Cache-Control: no-cache, no-store, must-revalidate
+/admin/model-invites/*
+  Cache-Control: no-cache, no-store, must-revalidate
+/admin/storage-shrink/*
+  Cache-Control: no-cache, no-store, must-revalidate
+# Portal scripts/styles are loaded with a ?v= release stamp, but not every file's stamp changes
+# when the file does. A one-hour cache therefore kept some pages on the old script while others
+# had the new one (calendar, DaySilk and tasks disagreeing for up to an hour after a release).
+# One minute is long enough to avoid re-downloading ~150 files on every click and short enough
+# that a release reaches everyone together; after that the browser only asks "changed?" (a 304).
 /admin/assets/*
-  Cache-Control: public, max-age=3600
+  Cache-Control: public, max-age=60, must-revalidate
 /admin/assets/fonts/*
   Cache-Control: public, max-age=31536000, immutable
 /admin/assets/backdrops/*

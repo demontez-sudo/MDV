@@ -217,6 +217,8 @@ export const handler=async(event)=>{
     const iso=v=>{const t=Date.parse(v);return Number.isFinite(t)?new Date(t).toISOString():null;};
     const start=iso(p.start)||new Date(Date.now()-30*864e5).toISOString();
     const end=iso(p.end)||new Date(Date.now()+180*864e5).toISOString();
+    /* A meeting task is a reminder made from a calendar event. Once the meeting is over it stops being a to-do, so close it instead of letting it sit "1 day overdue". */
+    try{await admin.from('tasks').update({status:'completed'}).eq('organization_id',organization.id).eq('status','open').filter('metadata->>source','eq','calendar_event').lt('due_at',new Date(Date.now()-36e5).toISOString());}catch(e){console.warn('[calendar] could not close past meeting tasks',e?.message||e);}
     /* Ask the database only for what falls in the window (plus anything that repeats). Before, it read the first 1,500
        rows by date and filtered afterwards, so once the calendar held more than that, later dates silently disappeared. */
     const inWindow=table=>rows(admin.from(table).select('*').eq('organization_id',organization.id).gte('starts_at',start).lte('starts_at',end).order('starts_at').limit(5000));
