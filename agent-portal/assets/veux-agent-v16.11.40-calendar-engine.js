@@ -75,15 +75,99 @@ function orbitSignals(rows){
   if(!out.length)out.push({k:'ok',t:'Day is clear',ref:''});
   return out;
 }
-function dayView(items){var rows=items.filter(function(x){return key(x.starts_at)===key(S.anchor);}),sel=S.selected&&rows.find(function(x){return x.id===S.selected.id;})||null,R=[298,228,160];S.selected=sel;
-var placed=rows.map(function(x){var m0=orbitMins(x.starts_at),m1=x.ends_at&&key(x.ends_at)===key(x.starts_at)?orbitMins(x.ends_at):(x.ends_at?1439:m0+45);if(m1<=m0)m1=m0+30;m1=Math.min(1439,Math.max(m1,m0+18));return{x:x,lane:orbitLane(x),m0:m0,m1:m1};}).sort(function(a,b){return a.m0-b.m0;}),seen=[[],[],[]];
-placed.forEach(function(p){var bump=0;seen[p.lane].forEach(function(q){if(Math.abs(p.m0-q.m0)<130)bump++;});var step=Math.ceil(bump/2)*(bump%2?-1:1);p.r=Math.max(95,Math.min(320,R[p.lane]+step*46));p.m0d=p.m0+step*26;seen[p.lane].push(p);});
-var ticks='',labels='';for(var h=0;h<24;h++){var maj=h%3===0,a=orbitPt(h*60,338),b=orbitPt(h*60,maj?318:328);ticks+='<line class="mo-tick'+(maj?' maj':'')+'" x1="'+a.x.toFixed(1)+'" y1="'+a.y.toFixed(1)+'" x2="'+b.x.toFixed(1)+'" y2="'+b.y.toFixed(1)+'"/>';if(maj){var l=orbitPt(h*60,368);labels+='<i class="mo-hr" style="left:calc(50% + '+l.x.toFixed(1)+'px);top:calc(50% + '+l.y.toFixed(1)+'px)">'+(h===0?'12A':h===12?'12P':(h%12)+(h<12?'A':'P'))+'</i>';}}
-var arcs=placed.map(function(p){return '<path class="mo-arc '+tone(p.x)+(sel&&sel.id===p.x.id?' sel':'')+'" d="'+orbitArc(p.r,p.m0,p.m1)+'"/>';}).join('');
-var nodes=placed.map(function(p){var x=p.x,pt=orbitPt(p.m0d,p.r),dm=displayModels(x),ini=dm[0]&&dm[0].name.split(' ').map(function(n){return n[0];}).join('').slice(0,2)||type(x).slice(0,2);return '<button class="mo-node '+tone(x)+(sel&&sel.id===x.id?' selected':'')+'" style="left:calc(50% + '+pt.x.toFixed(1)+'px);top:calc(50% + '+pt.y.toFixed(1)+'px)" data-event-select="'+esc(x.kind)+'|'+esc(x.id)+'"'+dragAttrs(x)+'><b>'+esc(ini)+'</b><small>'+esc(time(x.starts_at))+'</small><span>'+esc(x.title)+'</span></button>';}).join('');
-var hub='<div class="mo-hub"><small>Daily command</small><b>'+rows.length+'</b><span>focus point'+(rows.length===1?'':'s')+' today</span><em data-mo-clock></em></div>';
-var sig=orbitSignals(rows),sigRow='<div class="mo-title"><div class="mo-title-lead"><small>'+esc(date(S.anchor,{weekday:'long',month:'long',day:'numeric'}))+'</small><b>Orbit <em>'+rows.length+' movement'+(rows.length===1?'':'s')+'</em></b></div><div class="mo-signals"><i>✦</i><b>Veux</b>'+sig.map(function(s){return '<button type="button" class="mo-chip '+s.k+'"'+(s.ref?' data-event-select="'+esc(s.ref)+'"':' disabled')+'>'+esc(s.t)+'</button>';}).join('')+'</div></div>';
-return '<div class="vx75-orbit"><main class="mo-main" data-mo-orbit>'+sigRow+'<div class="mo-scene"><div class="mo-stage" data-vx-drop-orbit="'+key(S.anchor)+'"><div class="mo-floor"></div><div class="mo-sweep"></div><svg class="mo-svg" viewBox="-340 -340 680 680" aria-hidden="true"><circle class="mo-rim" r="330"/>'+R.map(function(r){return '<circle class="mo-lane" r="'+r+'"/>';}).join('')+'<circle class="mo-lane inner" r="84"/>'+ticks+arcs+'<g class="mo-hand"><line x1="0" y1="-84" x2="0" y2="-334"/><circle cx="0" cy="-334" r="6"/></g></svg>'+labels+nodes+hub+'</div></div><div class="mo-legend"><span class="travel">Travel</span><span class="pending">Pending</span><span class="risk">Conflict</span><span class="ok">Confirmed</span><em>Outer travel · mid bookings · inner castings · drag to rotate</em></div><div class="mo-controls"><button type="button" data-mo-act="auto">⟳ Auto-rotate</button><button type="button" data-mo-act="reset">Reset</button></div>'+'</main>'+nativeIntelDrawer(eventIntelligence(sel,rows,'Model Intelligence'),{title:date(S.anchor,{weekday:'long',month:'long',day:'numeric'}),movements:rows.filter(function(x){return tone(x)==='travel';}).length,events:rows.length,risks:conflicts(rows).length,mode:'agenda-side'})+'</div>';}
+/* ---------- Orbit: the day as a dial that knows what is happening ----------
+   The dial covers only the hours the day uses. One ring per model (and one for the team), each event an arc, numbered to match the
+   timeline beside it. A hand shows now, past events fade, the hub says what is next and in how long, and the panel gathers what needs
+   attention, the open windows and the tasks due that day. */
+function soMins(v){var d=new Date(v);return d.getHours()*60+d.getMinutes();}
+function soEnd(x){var a=soMins(x.starts_at);if(x.ends_at&&key(x.ends_at)===key(x.starts_at)){var e=soMins(x.ends_at);return e>a?e:a+30;}return x.ends_at?1439:a+45;}
+function soWindow(rows){
+  var first=9,last=17;rows.forEach(function(x){var a=soMins(x.starts_at)/60,e=soEnd(x)/60;if(a<first)first=a;if(e>last)last=e;});
+  var h0=Math.max(0,Math.floor(first)-1),h1=Math.min(24,Math.ceil(last)+1);
+  if(h1-h0<10){var pad=Math.ceil((10-(h1-h0))/2);h0=Math.max(0,h0-pad);h1=Math.min(24,h1+pad);}
+  return{h0:h0,h1:h1};
+}
+function soPt(m,r,w){var a=(m-w.h0*60)/((w.h1-w.h0)*60)*Math.PI*2-Math.PI/2;return{x:Math.cos(a)*r,y:Math.sin(a)*r};}
+function soArc(r,m0,m1,w){var span=(w.h1-w.h0)*60;if(m1-m0>span*0.985)m1=m0+span*0.985;var p0=soPt(m0,r,w),p1=soPt(m1,r,w);return 'M'+p0.x.toFixed(1)+' '+p0.y.toFixed(1)+' A'+r+' '+r+' 0 '+((m1-m0)/span>0.5?1:0)+' 1 '+p1.x.toFixed(1)+' '+p1.y.toFixed(1);}
+function soIn(ms){var m=Math.max(1,Math.round(ms/60000));return m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+(m%60)+' min':'');}
+function soClock(m){var h=Math.floor(m/60)%24,mm=m%60;return (h%12||12)+(mm?':'+String(mm).padStart(2,'0'):'')+(h>=12?' PM':' AM');}
+function soLanes(rows){
+  var cnt={},team=0;rows.forEach(function(x){var ms=models(x);if(!ms.length)team++;else cnt[ms[0].name]=(cnt[ms[0].name]||0)+1;});
+  var names=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]||a.localeCompare(b);}),lanes=names.slice(0,4).map(function(n){return{key:n,name:n};});
+  if(names.length>4)lanes.push({key:'__more',name:'Other models'});
+  if(team||!lanes.length)lanes.unshift({key:'__team',name:'Team & agency'});
+  return lanes;
+}
+function soLaneOf(x,lanes){var ms=models(x);if(!ms.length)return '__team';var n=ms[0].name;return lanes.some(function(l){return l.key===n;})?n:'__more';}
+function soFree(rows,w,from){
+  var lo=Math.max(w.h0*60,9*60,from||0),hi=Math.min(w.h1*60,18*60),busy=rows.map(function(x){return[soMins(x.starts_at),soEnd(x)];}).sort(function(a,b){return a[0]-b[0];}),out=[],cur=lo;
+  busy.forEach(function(b){if(b[0]-cur>=60)out.push([cur,b[0]]);if(b[1]>cur)cur=b[1];});if(hi-cur>=60)out.push([cur,hi]);return out;
+}
+function soAttention(rows){
+  var out=[],cf=conflicts(rows),seen={};
+  cf.slice(0,3).forEach(function(x){out.push({k:'risk',t:'Overlap',s:x.title,ref:x.kind+'|'+x.id});seen[x.id]=1;});
+  rows.forEach(function(x){var md=(x.raw&&x.raw.metadata)||{};if(seen[x.id])return;
+    if(md.visa_blocking)out.push({k:'risk',t:'Visa locked',s:x.title,ref:x.kind+'|'+x.id});
+    else if(/pending|hold|tentative|await|option/i.test(x.status||''))out.push({k:'pending',t:'Awaiting reply',s:x.title,ref:x.kind+'|'+x.id});
+    else if(x.kind==='booking'&&/confirm/i.test(x.status||'')&&!value(x))out.push({k:'warn',t:'Rate missing',s:x.title,ref:x.kind+'|'+x.id});});
+  return out.slice(0,6);
+}
+function soTasksHtml(){
+  var day=key(S.anchor);
+  if(!TK.list){loadTasks();return '<h4>Tasks due</h4><p class="so-none">Loading…</p>';}
+  var look={};arr(S.data&&S.data.lookups&&S.data.lookups.models).forEach(function(m){look[m.id]=m.display_name;});
+  var l=arr(TK.list).filter(function(t){return mpOpenTask(t)&&t.due_at&&key(t.due_at)===day&&(S.model==='all'||!t.model_id||look[t.model_id]===S.model);}).sort(function(a,b){return new Date(a.due_at)-new Date(b.due_at);});
+  if(!l.length)return '<h4>Tasks due</h4><p class="so-none">Nothing due this day.</p>';
+  return '<h4>Tasks due <em>'+l.length+'</em></h4>'+l.slice(0,5).map(function(t){var hard=t.metadata&&t.metadata.is_hard_stop;return '<button type="button" class="so-task" data-tk-open="'+esc(t.id)+'"><span>'+esc(time(t.due_at))+'</span><b>'+esc(t.title||'Task')+'</b>'+(t.model_id&&look[t.model_id]?'<small>'+esc(look[t.model_id])+'</small>':'')+(hard?'<i title="Hard stop"></i>':'')+'</button>';}).join('')+(l.length>5?'<button type="button" class="tk-more" data-tk-open="">+ '+(l.length-5)+' more</button>':'');
+}
+function paintOrbitTasks(){var el=document.getElementById('so-tasks');if(el)el.innerHTML=soTasksHtml();}
+function dayView(items){
+  var day=key(S.anchor),rows=items.filter(function(x){return key(x.starts_at)===day;}).sort(function(a,b){return new Date(a.starts_at)-new Date(b.starts_at);}),
+      sel=S.selected&&rows.find(function(x){return x.kind===S.selected.kind&&String(x.id)===String(S.selected.id);})||null;S.selected=sel;
+  var w=soWindow(rows),lanes=soLanes(rows),isToday=day===key(new Date()),now=new Date(),nowM=now.getHours()*60+now.getMinutes(),n=lanes.length;
+  var R0=262,step=Math.max(26,Math.min(48,Math.floor(170/n))),bw=step-8;
+  var laneIdx={};lanes.forEach(function(l,i){laneIdx[l.key]=i;});
+  /* pack overlapping arcs inside a ring side by side so none hides another */
+  var byLane={};rows.forEach(function(x,i){var k=soLaneOf(x,lanes);(byLane[k]=byLane[k]||[]).push({x:x,n:i+1,a:soMins(x.starts_at),b:soEnd(x)});});
+  Object.keys(byLane).forEach(function(k){var tracks=[];byLane[k].forEach(function(p){var t=0;while(tracks[t]&&tracks[t]>p.a)t++;p.t=t;tracks[t]=p.b;});byLane[k].subs=Math.max(1,tracks.length);});
+  var track='',arcs='',badges='';
+  lanes.forEach(function(l,i){track+='<circle class="so-track" r="'+(R0-i*step)+'" style="stroke-width:'+bw+'px"/>';});
+  var free=soFree(rows,w,isToday?nowM:0).map(function(f){return '<path class="so-free" d="'+soArc(R0+bw/2+9,f[0],f[1],w)+'"><title>Open '+esc(soClock(f[0])+' to '+soClock(f[1]))+'</title></path>';}).join('');
+  rows.forEach(function(x,idx){
+    var k=soLaneOf(x,lanes),i=laneIdx[k],L=byLane[k],p=L.find(function(q){return q.x===x;}),subs=L.subs,aw=bw/subs,r=R0-i*step+((p.t-(subs-1)/2)*aw)*-1;
+    var cls=tone(x),past=isToday&&soEnd(x)<nowM,cur=isToday&&soMins(x.starts_at)<=nowM&&nowM<soEnd(x),isSel=sel&&sel.id===x.id&&sel.kind===x.kind;
+    var ref=esc(x.kind)+'|'+esc(x.id),pt=soPt(p.a,r,w);
+    arcs+='<path class="so-arc '+cls+(past?' past':'')+(cur?' cur':'')+(isSel?' sel':'')+'" data-so-n="'+(idx+1)+'" data-event-select="'+ref+'" style="stroke-width:'+Math.max(6,aw-2).toFixed(1)+'px" d="'+soArc(r,p.a,Math.max(p.b,p.a+14),w)+'"><title>'+esc(time(x.starts_at)+' · '+x.title)+'</title></path>';
+    badges+='<g class="so-badge '+cls+(past?' past':'')+(isSel?' sel':'')+'" data-so-n="'+(idx+1)+'" data-event-select="'+ref+'" transform="translate('+pt.x.toFixed(1)+' '+pt.y.toFixed(1)+')"><circle r="'+Math.max(8,Math.min(12,aw/2+3)).toFixed(1)+'"/><text dy=".35em">'+(idx+1)+'</text></g>';
+  });
+  var span=w.h1-w.h0,lbl=span>14?3:2,ticks='',labels='';
+  for(var h=w.h0;h<w.h1;h++){var maj=(h-w.h0)%lbl===0,a=soPt(h*60,R0+bw/2+4,w),b=soPt(h*60,R0+bw/2+(maj?18:11),w);ticks+='<line class="so-tick'+(maj?' maj':'')+'" x1="'+a.x.toFixed(1)+'" y1="'+a.y.toFixed(1)+'" x2="'+b.x.toFixed(1)+'" y2="'+b.y.toFixed(1)+'"/>';
+    if(maj){var t=soPt(h*60,R0+bw/2+32,w);labels+='<text class="so-hr" x="'+t.x.toFixed(1)+'" y="'+t.y.toFixed(1)+'" dy=".35em">'+((h%12)||12)+(h<12||h===24?'A':'P')+'</text>';}}
+  var rIn=Math.max(84,R0-(n-1)*step-bw/2-8),showNow=isToday&&nowM>=w.h0*60&&nowM<=w.h1*60,np=soPt(nowM,R0+bw/2+6,w),ip=soPt(nowM,rIn,w),hand=showNow?'<g class="so-hand" data-so-hand><line x1="'+ip.x.toFixed(1)+'" y1="'+ip.y.toFixed(1)+'" x2="'+np.x.toFixed(1)+'" y2="'+np.y.toFixed(1)+'"/><circle cx="'+np.x.toFixed(1)+'" cy="'+np.y.toFixed(1)+'" r="6"/></g>':'';
+  /* hub: what is next, and in how long */
+  var cur=isToday?rows.filter(function(x){return soMins(x.starts_at)<=nowM&&nowM<soEnd(x);})[0]:null,nxt=rows.filter(function(x){return !isToday||soMins(x.starts_at)>nowM;})[0];
+  var hub=cur?'<small>Now</small><b>'+esc(cur.title)+'</b><span>ends in '+soIn((soEnd(cur)-nowM)*60000)+'</span>':nxt?'<small>'+(isToday?'Next':'Starts')+'</small><b>'+esc(nxt.title)+'</b><span>'+(isToday?'in '+soIn((soMins(nxt.starts_at)-nowM)*60000):esc(time(nxt.starts_at)))+'</span>':'<small>'+(rows.length?'Done':'Open day')+'</small><b>'+(rows.length?'All done':'Nothing booked')+'</b><span>'+(rows.length?'for today':'Add an event to start')+'</span>';
+  var legend=lanes.map(function(l,i){return '<span><i style="--i:'+i+'"></i>'+esc(l.name)+'</span>';}).join('');
+  /* panel */
+  var att=soAttention(rows),fr=soFree(rows,w,isToday?nowM:0);
+  function rowHtml(x,i){var ms=models(x),isSel=sel&&sel.id===x.id&&sel.kind===x.kind,past=isToday&&soEnd(x)<nowM,v=videoOf(x);
+    return '<button type="button" class="so-row '+tone(x)+(isSel?' sel':'')+(past?' past':'')+'" data-so-n="'+(i+1)+'" data-event-select="'+esc(x.kind)+'|'+esc(x.id)+'"><i class="so-n">'+(i+1)+'</i><span class="so-time"><b>'+esc(time(x.starts_at))+'</b><small>'+esc(time(x.ends_at||x.starts_at))+'</small></span><span class="so-what"><b>'+esc(x.title||'Untitled')+'</b><small>'+esc([ms.length===1?ms[0].name:ms.length>1?ms.length+' models':'Team',x.location].filter(Boolean).join(' · '))+'</small></span>'+(v?'<em class="so-vid" title="'+esc(VID_NAMES[v.provider]||'Video')+'">📹</em>':'')+'</button>';}
+  var selCard='';
+  if(sel){var ms=models(sel),v=videoOf(sel),idx=rows.indexOf(sel)+1;
+    selCard='<section class="so-card so-selcard"><header><small>#'+idx+' · '+esc(type(sel))+' · '+esc(runwayStatus(sel))+'</small><button type="button" class="so-x" data-act="clear" aria-label="Clear selection">×</button></header><h3>'+esc(sel.title)+'</h3><p>'+esc(time(sel.starts_at)+' – '+time(sel.ends_at||sel.starts_at))+' · '+esc(planH(planHrs(sel))||'')+'</p>'+(ms.length?'<p class="so-ppl">'+esc(ms.map(function(m){return m.name;}).join(', '))+'</p>':'')+(sel.location?'<p>'+esc(sel.location)+'</p>':'')
+      +'<div class="so-acts">'+(v?'<a class="so-join" href="'+esc(v.url)+'" target="_blank" rel="noopener noreferrer">Join '+esc(VID_NAMES[v.provider]||'video')+'</a>':'')+'<button type="button" class="so-open" data-open="'+esc(sel.kind)+'|'+esc(sel.id)+'">Open event</button></div></section>';}
+  else{
+    selCard='<section class="so-card so-now"><small>'+(isToday?'Right now':date(S.anchor,{weekday:'long'}))+'</small>'+(cur?'<h3>'+esc(cur.title)+'</h3><p>Ends in '+soIn((soEnd(cur)-nowM)*60000)+'</p>':'')+(nxt?'<p class="so-next">'+(cur?'Then ':isToday?'Next: ':'First: ')+'<b>'+esc(nxt.title)+'</b> '+(isToday?'in '+soIn((soMins(nxt.starts_at)-nowM)*60000):'at '+esc(time(nxt.starts_at)))+'</p>':(!cur?'<h3>'+(rows.length?'Nothing left today':'A clear day')+'</h3>':''))+'</section>';}
+  var attHtml='<section class="so-card"><h4>Needs attention <em>'+att.length+'</em></h4>'+(att.length?att.map(function(a){return '<button type="button" class="so-att '+a.k+'" data-event-select="'+esc(a.ref)+'"><b>'+esc(a.t)+'</b><span>'+esc(a.s)+'</span></button>';}).join(''):'<p class="so-none">Nothing needs you. The day is clean.</p>')+'</section>';
+  var frHtml='<section class="so-card"><h4>Open windows</h4>'+(fr.length?'<div class="so-wins">'+fr.map(function(f){return '<span>'+esc(soClock(f[0])+' – '+soClock(f[1]))+'<small>'+soIn((f[1]-f[0])*60000)+'</small></span>';}).join('')+'</div>':'<p class="so-none">No hour-long gap between 9 AM and 6 PM.</p>')+'</section>';
+  var sig=orbitSignals(rows),sigRow='<div class="so-head"><div><small>'+esc(date(S.anchor,{weekday:'long',month:'long',day:'numeric'}))+(isToday?' · today':'')+'</small><b>Orbit <em>'+rows.length+' movement'+(rows.length===1?'':'s')+'</em></b></div><div class="so-sigs"><i>✦</i><b>Veux</b>'+sig.map(function(s){return '<button type="button" class="so-chip '+s.k+'"'+(s.ref?' data-event-select="'+esc(s.ref)+'"':' disabled')+'>'+esc(s.t)+'</button>';}).join('')+'</div></div>';
+  return '<div class="so-wrap">'+sigRow+'<div class="so-grid"><div class="so-dial" data-so-h0="'+w.h0+'" data-so-h1="'+w.h1+'" data-so-r="'+(R0+bw/2+6)+'" data-so-ri="'+rIn+'"><svg class="so-svg" viewBox="-310 -310 620 620" role="img" aria-label="The day as a dial">'+track+free+ticks+labels+arcs+hand+badges+'</svg><div class="so-hub">'+hub+'</div></div>'
+    +'<aside class="so-panel">'+selCard+attHtml+frHtml+'<section class="so-card" id="so-tasks">'+soTasksHtml()+'</section><section class="so-card so-list"><h4>Timeline</h4>'+(rows.length?rows.map(rowHtml).join(''):'<p class="so-none">No events on this day.</p>')+'</section></aside></div><div class="so-legend">'+legend+'<em>Ring per person · arc = duration · numbers match the timeline</em></div></div>';
+}
+/* the hand moves with the clock, and hovering a number or a row lights the other */
+setInterval(function(){document.querySelectorAll('.so-dial[data-so-h0]').forEach(function(d){var h=d.querySelector('[data-so-hand]');if(!h)return;var h0=+d.dataset.soH0,h1=+d.dataset.soH1,r=+d.dataset.soR,ri=+d.dataset.soRi,n=new Date(),m=n.getHours()*60+n.getMinutes();if(m<h0*60||m>h1*60)return;var a=(m-h0*60)/((h1-h0)*60)*Math.PI*2-Math.PI/2,x=(Math.cos(a)*r).toFixed(1),y=(Math.sin(a)*r).toFixed(1),ln=h.querySelector('line'),c=h.querySelector('circle');ln.setAttribute('x1',(Math.cos(a)*ri).toFixed(1));ln.setAttribute('y1',(Math.sin(a)*ri).toFixed(1));ln.setAttribute('x2',x);ln.setAttribute('y2',y);c.setAttribute('cx',x);c.setAttribute('cy',y);});},30000);
+document.addEventListener('mouseover',function(e){var t=e.target&&e.target.closest&&e.target.closest('.so-wrap [data-so-n]');document.querySelectorAll('.so-wrap .hl').forEach(function(n){n.classList.remove('hl');});if(!t)return;var n=t.getAttribute('data-so-n');document.querySelectorAll('.so-wrap [data-so-n="'+n+'"]').forEach(function(el){el.classList.add('hl');});});
+document.addEventListener('click',function(e){var t=e.target&&e.target.closest&&e.target.closest('.so-wrap [data-tk-open]');if(!t)return;if(typeof window.navTo==='function')window.navTo('tasksconsolidated');});
 function modelFocus(items){if(S.model==='all'){var names=modelNames();return '<aside class="vx78-model-focus all"><small>Agency calendar</small><h2>'+names.length+' active models</h2><p>Select a model above to isolate their canonical evaluation, availability and movement plan.</p><div class="vx78-avatar-stack">'+names.slice(0,8).map(function(n){var found=null;S.items.some(function(x){return models(x).some(function(m){if(m.name===n){found=m;return true;}return false;});});return found?avatar(found):'';}).join('')+'</div><dl><dt>Visible events</dt><dd>'+items.length+'</dd><dt>Conflicts</dt><dd>'+conflicts(items).length+'</dd><dt>Travel</dt><dd>'+items.filter(function(x){return tone(x)==='travel';}).length+'</dd></dl></aside>';}var found=null;S.items.some(function(x){return models(x).some(function(m){if(m.name===S.model){found=m;return true;}return false;});});var n=items.length,confirmed=items.filter(function(x){return /confirm|paid|complete/i.test(x.status);}).length,travel=items.filter(function(x){return tone(x)==='travel';}).length,evaluation=evaluationFor(S.model);return '<aside class="vx78-model-focus">'+(found?avatar(found):'<i>'+esc(S.model.slice(0,2))+'</i>')+'<small>Model calendar</small><h2>'+esc(S.model)+'</h2><p>'+esc(items[0]?market(items[0]):'Agency roster')+' · '+n+' movements in view</p><div class="vx78-rating"><b>'+esc(ratingLabel(evaluation))+'</b><span>'+(evaluation?'Latest canonical evaluation'+(evaluation.evaluated_on?' · '+esc(date(evaluation.evaluated_on)):''):'No completed evaluation connected')+'</span></div><dl><dt>Availability</dt><dd>'+(conflicts(items).length?'Attention needed':'Open between events')+'</dd><dt>Confirmed</dt><dd>'+confirmed+'</dd><dt>Travel movements</dt><dd>'+travel+'</dd><dt>Schedule load</dt><dd>'+(n>8?'High':n>4?'Balanced':'Light')+'</dd></dl></aside>';}
 function avatar(m){return m.image?'<img src="'+esc(m.image)+'" alt="'+esc(m.name)+'">':'<i aria-hidden="true">'+esc(m.name.split(' ').map(function(n){return n[0];}).join('').slice(0,2))+'</i>';}
 function runwayStatus(x){var t=tone(x),raw=String(x.status||'').trim();if(t==='ok')return 'Confirmed';if(t==='risk')return /cancel/i.test(raw)?'Cancelled':'To Confirm';if(t==='travel')return 'Scheduled';if(/hold|pending|tentative|await/i.test(raw))return 'Pending';return raw?raw.replace(/_/g,' ').replace(/\b\w/g,function(m){return m.toUpperCase();}):'Planned';}
@@ -359,7 +443,14 @@ document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&
 var DECK_FILTERS=[['travel','Travel / Movement','✈'],['visa','Visa / Immigration','▣'],['casting','Casting','☆'],['fitting','Fitting','⌒'],['booking','Booking','▤'],['other','Training / Other','↔'],['risk','Conflicts / Risks','!']];
 var DECK_ICONS={movements:'<path d="M10.5 13.5 3 11l1.5-2 8 .8L17 5.5a2 2 0 0 1 3 3l-4.3 4.5.8 8-2 1.5-2.5-7.5L8 18l.5-3.2z"/>',events:'<rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',people:'<circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c.9-3.6 3.8-5.4 7.5-5.4s6.6 1.8 7.5 5.4"/>',risk:'<path d="M12 3.5 21 19.5H3z"/><path d="M12 10v4.5M12 17.2v.1"/>'};
 function deckIcon(k){return '<i class="mdv-deck-ico"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+DECK_ICONS[k]+'</svg></i>';}
-function deck(){if(S.view==='plan')return '';
+/* Orbit keeps the Agenda's own filters in one slim bar instead of the big intelligence deck (the panel beside the dial says all of that). */
+function soBar(){
+  var names=modelNames(),modelSel='<select class="pl-sel" data-ag-model aria-label="Model"><option value="all">All models ('+names.length+')</option>'+names.map(function(n){return '<option value="'+esc(n)+'"'+(S.model===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select>';
+  var peopleSel=S.people.length?'<select class="pl-sel" data-ag-person aria-label="Team member"><option value="all">Everyone ('+S.people.length+')</option>'+S.people.map(function(n){return '<option value="'+esc(n)+'"'+(S.person===n?' selected':'')+'>'+esc(n)+'</option>';}).join('')+'</select>':'';
+  var seasonSel=S.seasonList.length?'<select class="pl-sel" data-pl-season aria-label="Season"><option value="none"'+(S.season==='none'?' selected':'')+'>Agency only</option>'+S.seasonList.map(function(z){return '<option value="'+esc(z.id)+'"'+(S.season===z.id?' selected':'')+'>'+esc(z.name)+'</option>';}).join('')+'<option value="all"'+(S.season==='all'?' selected':'')+'>All seasons</option></select>':'';
+  return '<div class="pl-bar so-bar">'+peopleSel+modelSel+seasonSel+'<button type="button" class="pl-primary" data-act="fullbooking">+ Full booking</button></div>';
+}
+function deck(){if(S.view==='plan')return '';if(S.view==='day')return soBar();
 var names=modelNames(),r=range(),inRange=scopedModel(S.items).filter(function(x){var d=new Date(x.starts_at);return d>=r.start&&d<add(r.end,1);}),shown=inRange.filter(function(x){return S.monthFilters[monthCategory(x)]!==false;}),travel=shown.filter(function(x){return monthCategory(x)==='travel';}),travelModels={};
 travel.forEach(function(x){models(x).forEach(function(m){travelModels[m.name]=1;});});
 var risks=conflicts(shown).length,ny=shown.filter(function(x){return market(x)==='New York';}).length,pa=shown.length-ny,cat=function(k){return inRange.filter(function(x){return monthCategory(x)===k;}).length;};
@@ -466,7 +557,7 @@ async function loadTasks(force){
     if(!TK.me&&TK.scope==='mine')TK.scope='all';
     TK.list=arr(d.tasks).filter(function(t){return !t.parent_task_id;});TK.err='';
   }catch(e){TK.err=(e&&e.message)||'Tasks could not load';TK.list=TK.list||[];}
-  TK.loading=false;paintTasks();paintModels();
+  TK.loading=false;paintTasks();paintModels();paintOrbitTasks();
 }
 function tkMine(t){return !!TK.me&&arr(t.assignments).some(function(a){return a.member_id===TK.me.id;});}
 function tkOpen(){return arr(TK.list).filter(function(t){var s=String(t.status||'open').toLowerCase();return s!=='completed'&&s!=='done'&&s!=='complete'&&s!=='cancelled'&&s!=='canceled';}).filter(function(t){return TK.scope==='all'||tkMine(t);});}
@@ -608,7 +699,7 @@ function planView(items){
   return '<div class="mdv-plan">'+bar+strip+'<nav class="pl-pills" aria-label="Days this week">'+pills+'</nav>'
     +'<div class="pl-grid"><div class="pl-left">'+card+'<section class="pl-side pl-models" id="pl-models">'+modelsHtml(every,weekKeys,sel)+'</section><section class="pl-side pl-tasks" id="pl-tasks" data-tkday="'+sel+'">'+tasksHtml(sel)+'</section></div><aside class="pl-right" data-pl-panels>'+planPanels(sel)+'</aside></div></div>';
 }
-function renderBody(){var r=range(),items=scoped(S.items).filter(function(x){var d=new Date(x.starts_at);return d>=r.start&&d<add(r.end,1);});if(S.view==='plan')return planView(items);if(window.matchMedia&&window.matchMedia('(max-width: 900px)').matches)return mobileView(items);return S.view==='day'?dayView(items):S.view==='3day'?threeView(items):S.view==='week'?weekView(items):monthView85(items);}
+function renderBody(){var r=range(),items=scoped(S.items).filter(function(x){var d=new Date(x.starts_at);return d>=r.start&&d<add(r.end,1);});if(S.view==='plan')return planView(items);if(S.view!=='day'&&window.matchMedia&&window.matchMedia('(max-width: 900px)').matches)return mobileView(items);return S.view==='day'?dayView(items):S.view==='3day'?threeView(items):S.view==='week'?weekView(items):monthView85(items);}
 function vxLimit(pr,ms){return Promise.race([pr,new Promise(function(_,rej){setTimeout(function(){rej(new Error('The calendar took too long to respond. Tap Retry.'));},ms);})]);}
 async function load(host){var seq=S.seq=(S.seq||0)+1;S.loading=true;host.innerHTML='<div class="vx75-loading"><i></i><b>Building '+title()+'</b><span>Synchronizing live agency operations…</span></div>';try{var r=range(),end=add(r.end,1);var q='?organization='+encodeURIComponent(org())+'&start='+encodeURIComponent(r.start.toISOString())+'&end='+encodeURIComponent(end.toISOString());S.data=await vxLimit(window.VEUX_AGENT_V4.api('/api/agent/calendar/v9'+q,{method:'GET',headers:{},__fresh:true}),25000);if(seq!==S.seq)return;await vxLimit(loadSeasons(),15000);if(seq!==S.seq)return;S.items=withSeason(normalize(S.data||{}));if(window.VEUX_V132&&VEUX_V132.setCalendarContext)VEUX_V132.setCalendarContext(S.data,S.data.lookups||{});host.innerHTML='<div class="vx75-calendar'+(S.intelOpen?' mdv-intel-open':'')+'">'+controls()+deck()+renderBody()+'</div>';bind(host);var sb0=host.querySelector('.vx76-scopebar');if(sb0)sb0.remove();}catch(e){if(seq!==S.seq)return;host.innerHTML='<div class="vx75-error"><small>VEUX DESK · CALENDAR</small><h1>Calendar could not load.</h1><p>'+esc(e&&e.message||e)+'</p><button data-act="retry">Retry page</button></div>';bind(host);}finally{if(seq===S.seq)S.loading=false;}}
 function enhanceMonth(){var grid=document.querySelector('.vx75-month-grid');if(!grid)return;grid.querySelectorAll('.vx75-ribbon').forEach(function(n){n.remove();});grid.querySelectorAll('[data-day]').forEach(function(cell){if(cell.querySelector('.vx84-live-ribbon'))return;var k=cell.dataset.day,d=new Date(k+'T12:00:00'),html=liveRibbons(scoped(S.items),d);if(html)cell.insertAdjacentHTML('afterbegin',html);});bind(grid);}
