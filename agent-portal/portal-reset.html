@@ -48,6 +48,18 @@ var STORAGE_KEY='sb-'+PROJECT+'-auth-token';
 var qs=new URLSearchParams(location.search);
 var token=qs.get('recovery_token')||qs.get('token')||'';
 var btn=document.getElementById('activate'),err=document.getElementById('error'),ok=document.getElementById('ok');
+/* an invitation (not a forgotten-password reset) says welcome */
+if(qs.get('invite')==='1'){
+  try{
+    document.querySelector('.brand h1').textContent='Welcome to your Model Portal.';
+    document.querySelector('.brand p').textContent='Your schedule, bookings, castings, travel and documents in one place. Choose a password and you are signed in.';
+    document.querySelector('.form .eyebrow').textContent='SET UP YOUR ACCOUNT';
+    document.querySelector('.form h2').textContent='Choose your password';
+    btn.textContent='Set my password and enter →';
+    document.querySelector('.note').textContent='This invitation is just for you and lasts 7 days. If it has expired, ask your agency to send you a new one.';
+    document.title='Model Portal · Welcome';
+  }catch(e){}
+}
 
 function showErr(m){err.textContent=m||'';err.style.display=m?'block':'none';ok.style.display='none'}
 function showOk(m){ok.textContent=m||'';ok.style.display=m?'block':'none';err.style.display='none'}

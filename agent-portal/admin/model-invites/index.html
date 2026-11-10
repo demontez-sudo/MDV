@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Model sign-in</title><meta name="robots" content="noindex">
+<style>
+:root{color-scheme:dark;--bg:#0e0c09;--panel:#15130f;--ink:#f3efe8;--mute:#a89f92;--gold:#d4b077;--line:rgba(255,255,255,.12);--bad:#e08f82;--ok:#7ccf97;--blue:#7fb0ee;--violet:#b9a2ee}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:28px 18px 90px}h1{font:500 30px Georgia,serif;margin:0 0 6px}p{margin:.3em 0}.mute{color:var(--mute)}
+.card{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:16px 18px;margin:16px 0}
+button{font:inherit;border-radius:999px;border:1px solid var(--line);background:none;color:var(--ink);padding:8px 16px;cursor:pointer;min-height:40px}
+button.go{background:var(--gold);border-color:var(--gold);color:#15110c;font-weight:600}button:disabled{opacity:.45;cursor:default}button.sm{padding:5px 12px;min-height:32px;font-size:13px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.grow{flex:1}
+.tabs button.on{border-color:var(--gold);color:var(--gold)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:14px 0}.stat{border:1px solid var(--line);border-radius:12px;padding:10px 14px}.stat b{display:block;font:500 24px Georgia,serif}.stat span{font-size:12px;color:var(--mute)}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:9px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}th{color:var(--mute);font-weight:500;font-size:12px}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;border:1px solid var(--line)}
+.pill.not_linked{color:var(--bad);border-color:rgba(224,143,130,.5)}.pill.ready{color:var(--gold);border-color:rgba(212,176,119,.5)}.pill.invited{color:var(--blue);border-color:rgba(127,176,238,.5)}.pill.signed_in{color:var(--ok);border-color:rgba(124,207,151,.5)}.pill.disabled{color:var(--mute)}
+small{color:var(--mute);display:block}
+#msg{padding:12px 14px;border-radius:10px;display:none;margin:12px 0;border:1px solid var(--line)}#msg.bad{background:rgba(224,143,130,.12);border-color:rgba(224,143,130,.4);color:var(--bad)}#msg.ok{background:rgba(124,207,151,.1);border-color:rgba(124,207,151,.35);color:var(--ok)}
+textarea{width:100%;min-height:200px;background:#0c0a07;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:12px;font:14px/1.5 Inter,system-ui,sans-serif}
+.how{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.how div{border:1px solid var(--line);border-radius:12px;padding:12px 14px}.how b{color:var(--gold)}
+@media(max-width:700px){th.hide,td.hide{display:none}}
+</style></head><body><main>
+<h1>Model sign-in</h1>
+<p class="mute">Send each model a personal invitation. They tap one button, choose their own password and they are in. No temporary passwords to copy and paste.</p>
+<div class="how card"><div><b>1 · Invite</b><p class="mute">By email, or copy the message and send it on WhatsApp, text or Instagram.</p></div><div><b>2 · Set up</b><p class="mute">The link is personal and lasts 7 days. The model picks a password and is signed in straight away.</p></div><div><b>3 · Signed in</b><p class="mute">The model shows as signed in here once they have set their own password. Resend any time.</p></div></div>
+<div id="msg"></div>
+<div class="stats" id="stats"></div>
+<div class="card">
+  <div class="row tabs" id="tabs"></div>
+  <div class="row" style="margin:12px 0"><input id="q" type="search" placeholder="Find a model" style="flex:1;min-width:180px;background:#0c0a07;color:var(--ink);border:1px solid var(--line);border-radius:999px;padding:9px 16px;font:inherit"><button id="selNot">Select everyone not signed in</button><button id="selNone">Clear</button><button class="go" id="sendSel" disabled>Send invites to selected</button></div>
+  <div id="prog" class="mute"></div>
+  <div style="overflow-x:auto"><table><thead><tr><th style="width:34px"></th><th>Model</th><th>Status</th><th class="hide">Email</th><th class="hide">Last invite</th><th></th></tr></thead><tbody id="rows"><tr><td colspan="6" class="mute">Loading…</td></tr></tbody></table></div>
+</div>
+<div class="card" id="copybox" hidden><p><b id="copytitle">Message</b> <span class="mute">Paste it into WhatsApp, a text or a DM.</span></p><textarea id="copytext" readonly></textarea><div class="row" style="margin-top:10px"><button class="go" id="copybtn">Copy message</button><a id="wa" target="_blank" rel="noopener"><button type="button">Open in WhatsApp</button></a><button id="copyclose">Close</button></div></div>
+</main><script src="app.js"></script></body></html>
