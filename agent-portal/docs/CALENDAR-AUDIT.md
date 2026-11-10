@@ -21,3 +21,11 @@ Create with validation, update with read-back, replacing attached models, move w
 
 ## Live data check
 Run `docs/sql/2026-11-09-calendar-integrity-scan.sql` in the Supabase SQL editor. It is read-only and returns one scorecard (20 rows). Anything marked `problem` with found above 0 is worth a look.
+
+## Live data, 9 Nov 2026
+Scan of 1,649 events, then cleanup. Done: 2 real duplicates removed, 13 archived/released people taken off future events (2 events deleted), 54 time zones filled in.
+Scripts written for the rest, all under `docs/sql/` with a `2026-11-09-calendar-` prefix:
+- `clash-review.sql` then `clash-fix.sql`: takes a person off a group session that overlaps their own trip, and moves one-person check-ins/calls that sit inside another event to start when it ends (task moves too). Everything else stays listed for a person to decide.
+- `data-fixes.sql`: import-made visa, deadline, meeting and booking events become visible to their model (notes stay on the agency side); other team-only items with a model attached are marked agent-only (`share_with_models = false`); travel events get a time zone from the city they leave.
+- The model portal now also hides any event marked `share_with_models = false` (`model-portal-schedule.mjs`).
+Still open: the model portal's own calendar shows long events on their first day only.

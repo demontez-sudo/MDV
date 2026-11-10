@@ -4,7 +4,8 @@ import { requireModelPortal } from './_lib/portal-bridge.mjs';
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 const iso=v=>{const d=new Date(v);return Number.isFinite(d.getTime())?d.toISOString():null;};
 const activeStatus=v=>!/declined|cancelled|canceled|released|void/i.test(String(v||''));
-const eventVisible=e=>String(e?.visibility||'').toLowerCase()!=='private';
+// private events, and anything the team marked agent-only (share_with_models = false), never reach a model
+const eventVisible=e=>String(e?.visibility||'').toLowerCase()!=='private'&&e?.metadata?.share_with_models!==false;
 // Imported schedule rows keep team, ownership and agency notes on the agency side; the model sees the event itself.
 const modelSafeMeta=m=>{const x={...(m||{})};for(const k of ['team','owner_name','model_names','import_set','import_key','import_hash','import_source','imported_at','imported_by','private_to_user_id','conflict','on_outlook','notes_internal','category'])delete x[k];return x;};
 
