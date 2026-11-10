@@ -1,6 +1,0 @@
-
-[[redirects]]
-  from = "/api/model/daysilk"
-  to = "/.netlify/functions/model-daysilk"
-  status = 200
-  force = true
