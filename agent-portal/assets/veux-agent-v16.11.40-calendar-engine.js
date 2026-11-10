@@ -674,7 +674,7 @@ function splitHtml(day,sel,nowMs){
 document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('[data-ag-split]');if(!b)return;splitSet(!splitOn());redrawCurrent();});
 function planPanels(sel){try{if(window.MDV_SCHEDULE&&MDV_SCHEDULE.embeddedHtml)return MDV_SCHEDULE.embeddedHtml(S.items,sel);}catch(e){console.error('[calendar] panels',e);}return '';}
 /* ---------- The full day: every hour on one timeline (and the whole week as a grid), so nothing is cut off at "now" ---------- */
-function tlMode(){try{var m=localStorage.getItem('mdv.plan.mode');return m==='time'||m==='week'?m:'list';}catch(e){return 'list';}}
+function tlMode(){try{var m=localStorage.getItem('mdv.plan.mode');return m==='list'||m==='week'?m:'time';}catch(e){return 'time';}}   /* the full day is the default; List and Week grid are one tap away */
 function tlSetMode(m){try{localStorage.setItem('mdv.plan.mode',m);}catch(e){}}
 function tlClock(m){var h=Math.floor(m/60)%24,mm=m%60;return (h%12||12)+(mm?':'+String(mm).padStart(2,'0'):'')+(h>=12?' PM':' AM');}
 function tlDur(m){return m<60?m+' min':Math.floor(m/60)+' h'+(m%60?' '+(m%60)+' min':'');}
