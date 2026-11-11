@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
-import { sendResendEmail } from './_lib/email.mjs';
+import { sendResendEmail, emailDeliveryStatus } from './_lib/email.mjs';
 import { issueCompactRecoveryToken } from './_lib/model-recovery-token.mjs';
 import { verifyModelPassword } from './_lib/model-auth-verifier.mjs';
 
@@ -14,6 +14,7 @@ const DISABLED='cavyre_portal_disabled';
 const INVITE_AT='cavyre_invited_at',INVITE_N='cavyre_invite_count',INVITE_BY='cavyre_invited_by',INVITE_CH='cavyre_invite_channel';
 const PORTAL_URL='https://maisondeveux.com/portal';
 const INVITE_TTL_MS=7*24*60*60*1000;
+const BULK_MAX=3;
 const NOT_ON_ROSTER=/^(archiv|releas|inactive|former)/i;
 
 function tempPassword(){
@@ -199,15 +200,38 @@ export const handler=async(event)=>{
     const modelId=String(body.model_id||event.queryStringParameters?.model_id||'').trim();
     if(!modelId){
       const {organization}=await requireStaffOrganization({user,client,organizationSlug:slug});
+      if(event.httpMethod==='GET'&&event.queryStringParameters?.email_check==='1'){
+        const admin=await requirePermission(user.id,organization.id,'models.read');
+        const st=emailDeliveryStatus();
+        const {data:settings}=await admin.from('organization_settings').select('sender_name,sender_email,reply_to_email').eq('organization_id',organization.id).maybeSingle();
+        const sender=String(settings?.sender_email||process.env.VEUX_DEFAULT_SENDER_EMAIL||'').trim().toLowerCase();
+        const {data:recent}=await admin.from('email_messages').select('*').eq('organization_id',organization.id).in('template_key',['model_portal_invite','model_password_recovery']).order('created_at',{ascending:false}).limit(15);
+        const problems=[];
+        if(!st.configured)problems.push('Email is not switched on: the RESEND_API_KEY setting is missing on this deployment.');
+        if(!EMAIL_RX.test(sender))problems.push('No sender address is set. Add one in Settings, or set VEUX_DEFAULT_SENDER_EMAIL.');
+        return json(200,{ok:true,email:{resend_configured:!!st.configured,sender_email:sender||null,sender_name:settings?.sender_name||organization.name||null,reply_to:settings?.reply_to_email||null,problems},recent:(recent||[]).map(x=>({at:x.sent_at||x.created_at,status:x.status,kind:x.template_key==='model_portal_invite'?'Invite':'Reset',to:(x.to_emails||[])[0]||'',id:x.provider_message_id||''})),your_email:user.email||null});
+      }
+      if(event.httpMethod==='POST'&&String(body.action||'')==='send_test_email'){
+        const admin=await requirePermission(user.id,organization.id,'models.write');
+        const to=String(user.email||'').trim().toLowerCase();
+        if(!EMAIL_RX.test(to))return json(409,{error:'Your own account has no email address to send a test to.'});
+        try{
+          const {fromEmail,senderName,replyTo}=await senderFor(admin,organization);
+          const d=await sendResendEmail({from_name:senderName,from_email:fromEmail,reply_to:replyTo,to_emails:[to],cc_emails:[],bcc_emails:[],subject:'Model Portal email test',html_body:'<p style="font-family:Arial,sans-serif">This is a test from the Model Portal. If you can read this, invites and password emails can be sent.</p>',text_body:'This is a test from the Model Portal. If you can read this, invites and password emails can be sent.',idempotency_key:`model-test:${user.id}:${Date.now()}`});
+          return json(200,{ok:true,verified:true,sent_to:to,from:fromEmail,id:d.providerMessageId||null});
+        }catch(e){return json(502,{ok:false,error:String(e.message||e).slice(0,300)});}   /* the provider's own words, e.g. "domain is not verified" */
+      }
       if(event.httpMethod==='GET'&&event.queryStringParameters?.list==='1'){
         const admin=await requirePermission(user.id,organization.id,'models.read');
         return json(200,{ok:true,models:await roster(admin,organization)});
       }
       if(event.httpMethod==='POST'&&String(body.action||'')==='bulk_invite'){
         const admin=await requirePermission(user.id,organization.id,'models.write');
-        const ids=[...new Set((Array.isArray(body.model_ids)?body.model_ids:[]).map(String))].slice(0,8);   /* a few per call keeps each call short; the page sends them in batches */
-        const out=[];
+        const ids=[...new Set((Array.isArray(body.model_ids)?body.model_ids:[]).map(String))].slice(0,BULK_MAX);   /* a few per call keeps each call short; the page sends them in batches */
+        const out=[],t0=Date.now();
         for(const id of ids){
+          if(Date.now()-t0>7000){out.push({model_id:id,ok:false,deferred:true,reason:'Run out of time on this batch. Send again.'});continue;}   /* the function has about 10 seconds */
+          if(out.some(x=>x.ok))await new Promise(r=>setTimeout(r,650));   /* the email provider accepts about two a second */
           try{
             const c=await linked(admin,organization.id,id),stage=stageOf(c);
             if(stage==='disabled'){out.push({model_id:id,name:c.model.display_name,ok:false,skipped:true,reason:'Portal access is switched off'});continue;}

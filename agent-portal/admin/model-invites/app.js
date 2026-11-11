@@ -79,15 +79,31 @@ async function sendSelected(){
   var ids=Object.keys(S.sel).filter(function(k){return S.sel[k];});if(!ids.length)return;
   if(!confirm('Email an invitation to '+ids.length+' model'+(ids.length===1?'':'s')+'?'))return;
   S.busy=true;paint();var sent=0,skipped=[],failed=[];
-  for(var i=0;i<ids.length;i+=8){
-    $('prog').textContent='Sending… '+Math.min(i+8,ids.length)+' of '+ids.length;
-    try{var out=await call('POST',{action:'bulk_invite',model_ids:ids.slice(i,i+8)});
-      (out.results||[]).forEach(function(x){var r=find(x.model_id);var nm=(r&&r.name)||x.name||'a model';if(x.ok)sent++;else if(x.skipped)skipped.push(nm+' ('+x.reason+')');else failed.push(nm+': '+x.reason);});
-    }catch(e){failed.push('Batch '+(i/8+1)+': '+(e.message||e));break;}
+  var queue=ids.slice(),done=0,guard=0;
+  while(queue.length&&guard++<60){
+    var batch=queue.splice(0,3);
+    $('prog').textContent='Sending… '+done+' of '+ids.length;
+    try{var out=await call('POST',{action:'bulk_invite',model_ids:batch});
+      (out.results||[]).forEach(function(x){var r=find(x.model_id);var nm=(r&&r.name)||x.name||'a model';if(x.ok){sent++;done++;}else if(x.deferred){queue.push(x.model_id);}else if(x.skipped){skipped.push(nm+' ('+x.reason+')');done++;}else{failed.push(nm+': '+x.reason);done++;}});
+    }catch(e){failed.push(batch.length+' invite'+(batch.length===1?'':'s')+' did not go: '+(e.message||e));done+=batch.length;}
   }
   S.sel={};S.busy=false;$('prog').textContent='';
   msg(sent+' invitation'+(sent===1?'':'s')+' sent.'+(skipped.length?' Skipped: '+skipped.join(', ')+'.':'')+(failed.length?' Failed: '+failed.join(' · ')+'.':''),failed.length?'bad':'ok');
   await load(true);
+}
+async function checkMail(){
+  $('mailsum').textContent='Checking…';
+  try{
+    var r=await call('GET',null,'email_check=1&organization=maison-de-veux'),m=r.email||{},bad=(m.problems||[]).length;
+    $('mailsum').innerHTML=(bad?'<span style="color:var(--bad)">Not ready</span>':'<span style="color:var(--ok)">Ready to send</span>')+' · from '+esc(m.sender_email||'no sender set');
+    var rows=(r.recent||[]).map(function(x){return '<tr><td>'+esc(ago(x.at)||'')+'</td><td>'+esc(x.kind)+'</td><td>'+esc(x.to)+'</td><td>'+esc(x.status)+'</td></tr>';}).join('');
+    $('maildet').innerHTML=(bad?'<p style="color:var(--bad)">'+m.problems.map(esc).join('<br>')+'</p>':'')+(rows?'<p>Last emails the portal handed to the email service ("sent" means accepted by it; if one never arrives, look it up in your Resend dashboard):</p><table><tbody>'+rows+'</tbody></table>':'<p>No invite or reset email has been sent yet.</p>');
+  }catch(e){$('mailsum').innerHTML='<span style="color:var(--bad)">Could not check</span>';$('maildet').textContent=e.message||String(e);}
+}
+async function testMail(){
+  $('mailsum').textContent='Sending a test…';
+  try{var r=await call('POST',{action:'send_test_email'});$('mailsum').innerHTML='<span style="color:var(--ok)">Test sent to '+esc(r.sent_to)+'</span> · check your inbox (and spam) in a minute';}
+  catch(e){$('mailsum').innerHTML='<span style="color:var(--bad)">The test did not send</span>';$('maildet').textContent=(e.message||String(e));}
 }
 document.addEventListener('click',function(e){
   var t=e.target.closest&&e.target.closest('[data-tab],[data-send],[data-copy]');
@@ -96,9 +112,11 @@ document.addEventListener('click',function(e){
   if(e.target.id==='selNone'){S.sel={};paint();}
   if(e.target.id==='sendSel')sendSelected();
   if(e.target.id==='copyclose')$('copybox').hidden=true;
+  if(e.target.id==='mailbtn')checkMail();
+  if(e.target.id==='mailtest')testMail();
   if(e.target.id==='copybtn'){var ta=$('copytext');ta.select();(navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(function(){e.target.textContent='Copied ✓';setTimeout(function(){e.target.textContent='Copy message';},1800);},function(){document.execCommand&&document.execCommand('copy');});}
 });
 document.addEventListener('change',function(e){if(e.target.dataset&&e.target.dataset.sel){S.sel[e.target.dataset.sel]=e.target.checked;paint();}});
 $('q').addEventListener('input',function(){S.q=this.value;paint();});
-load();
+load();checkMail();
 })();
