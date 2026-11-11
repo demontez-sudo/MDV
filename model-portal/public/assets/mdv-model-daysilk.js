@@ -182,7 +182,7 @@ function greet(){var h=new Date().getHours();return h<12?'Good morning':h<17?'Go
 
 /* ---------- the day, hour by hour: agency items, tasks and time off beside her own routine ---------- */
 function dayTimeline(d,ag,blocks,isT){
-  var PX=44,items=[],allDay=[];
+  var PX=64,items=[],allDay=[];
   ag.forEach(function(x){
     var s=x.start.getHours()*60+x.start.getMinutes();
     if(s===0){allDay.push(x);return;}
@@ -194,24 +194,24 @@ function dayTimeline(d,ag,blocks,isT){
     var s=U().tMin(b.start),e=U().tMin(b.end);if(!(e>s))e=s+30;
     items.push({s:s,e:Math.max(e,s+20),title:b.title,sub:'Your plan',cls:b.cat||'own',own:true});
   });
-  var lo=6,hi=22;
-  items.forEach(function(x){lo=Math.min(lo,Math.floor(x.s/60));hi=Math.max(hi,Math.ceil(x.e/60));});
-  lo=Math.max(0,lo);hi=Math.min(24,hi);
+  /* the whole day by default; "Show daytime only" narrows it to 6am – 10pm (wider only if something falls outside) */
+  var lo=0,hi=24;
+  if(S.tlCompact){lo=6;hi=22;items.forEach(function(x){lo=Math.min(lo,Math.floor(x.s/60));hi=Math.max(hi,Math.ceil(x.e/60));});lo=Math.max(0,lo);hi=Math.min(24,hi);}
   items.sort(function(a,b){return a.s-b.s||a.e-b.e;});
   var cluster=[],clusterEnd=-1;
   function flush(){var lanes=[];cluster.forEach(function(it){var ln=0;while(lanes[ln]!==undefined&&lanes[ln]>it.s)ln++;lanes[ln]=it.e;it.lane=ln;});cluster.forEach(function(it){it.cols=lanes.length;});cluster=[];}
   items.forEach(function(it){if(cluster.length&&it.s>=clusterEnd){flush();clusterEnd=-1;}cluster.push(it);clusterEnd=Math.max(clusterEnd,it.e);});
   flush();
   var hours='',i;
-  for(i=lo;i<=hi;i++)hours+='<div class="mds-tl-h" style="top:'+((i-lo)*PX)+'px"><span>'+(i===0||i===24?'12am':i===12?'12pm':i>12?(i-12)+'pm':i+'am')+'</span></div>';
+  for(i=lo;i<=hi;i++){hours+='<div class="mds-tl-h" style="top:'+((i-lo)*PX)+'px"><span>'+(i===0||i===24?'12am':i===12?'12pm':i>12?(i-12)+'pm':i+'am')+'</span></div>';if(i<hi)hours+='<div class="mds-tl-hh" style="top:'+((i-lo)*PX+PX/2)+'px"></div>';}
   var body=items.map(function(it){
     var top=(it.s/60-lo)*PX,h=Math.max(24,(it.e-it.s)/60*PX-2),w=100/it.cols;
     return '<div class="mds-tli '+esc(it.cls)+(it.own?' own':'')+'" style="top:'+top.toFixed(1)+'px;height:'+h.toFixed(1)+'px;left:calc('+(it.lane*w)+'% + 2px);width:calc('+w+'% - 4px)"><b>'+esc(it.title)+'</b><small>'+esc(tl(U().m2t(it.s))+' – '+tl(U().m2t(it.e)))+(it.sub?' · '+esc(it.sub):'')+'</small></div>';
   }).join('');
   var now='';
-  if(isT){var n=new Date(),nm=n.getHours()*60+n.getMinutes();if(nm>=lo*60&&nm<=hi*60)now='<div class="mds-tl-now" style="top:'+((nm/60-lo)*PX).toFixed(1)+'px"><i></i></div>';}
+  if(isT){var n=new Date(),nm=n.getHours()*60+n.getMinutes();if(nm>=lo*60&&nm<=hi*60){now='<div class="mds-tl-now" style="top:'+((nm/60-lo)*PX).toFixed(1)+'px"><i></i></div>';if(!S.tlScrolled)setTimeout(function(){var n=document.querySelector('.mds-tl-now');if(n&&!S.tlScrolled){S.tlScrolled=true;try{n.scrollIntoView({block:'center'});}catch(e){}}},80);}}
   var strip=allDay.length?'<div class="mds-tl-all">'+allDay.map(function(x){return '<span class="'+esc(x.kind)+'"><b>All day</b> '+esc(x.title)+'</span>';}).join('')+'</div>':'';
-  return '<section class="mds-card mds-tl-card"><header><h3>Today, hour by hour</h3><span>'+ag.length+' on your calendar</span></header>'+strip+'<div class="mds-tl" style="height:'+((hi-lo)*PX)+'px">'+hours+body+now+'</div></section>';
+  return '<section class="mds-card mds-tl-card"><header><h3>Today, hour by hour</h3><span>'+ag.length+' on your calendar</span></header>'+strip+'<div class="mds-tl" style="height:'+((hi-lo)*PX)+'px">'+hours+body+now+'</div><button type="button" class="mds-tl-toggle" data-mds-tlfull>'+(S.tlCompact?'Show all 24 hours':'Show daytime only (6am – 10pm)')+'</button></section>';
 }
 function todayTab(){
   var d=S.day,plan=S.ds.plan,dd=dayData(d),isT=dk(d)===dk(new Date()),blocks=blocksOn(plan,d),ag=agencyItems(d),now=new Date();
@@ -268,9 +268,10 @@ function paint(){
 }
 document.addEventListener('click',function(e){
   var host=S.host;if(!host||!host.contains(e.target)||!S.ds)return;
-  var b=e.target.closest&&e.target.closest('[data-mds-nav],[data-mds-tab],[data-mds-go],[data-mds-habit],[data-mds-block],[data-mds-big],[data-mds-mood],[data-mds-sync],[data-mds-redo]');
+  var b=e.target.closest&&e.target.closest('[data-mds-nav],[data-mds-tab],[data-mds-go],[data-mds-habit],[data-mds-block],[data-mds-big],[data-mds-mood],[data-mds-sync],[data-mds-redo],[data-mds-tlfull]');
   if(!b&&!e.target.closest('[data-mds-redo]'))return;
   if(!b)return;
+  if(b.hasAttribute('data-mds-tlfull')){S.tlCompact=!S.tlCompact;paint();return;}
   if(b.hasAttribute('data-mds-nav')){var n=Number(b.getAttribute('data-mds-nav'));S.day=n===0?today():addD(S.day,n*(S.tab==='week'?7:1));paint();return;}
   if(b.hasAttribute('data-mds-tab')){S.tab=b.getAttribute('data-mds-tab');paint();return;}
   if(b.hasAttribute('data-mds-go')){var p=b.getAttribute('data-mds-go').split('-').map(Number);S.day=new Date(p[0],p[1]-1,p[2]);S.tab='today';paint();return;}
