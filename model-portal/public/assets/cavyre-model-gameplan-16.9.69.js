@@ -27,14 +27,60 @@ async function load(container){
 
 function page(inner){return '<div class="v15m-page cvymg-wrap">'+inner+'</div>';}
 
-function heroBlock(gp,model){
+function when(v){if(!v)return null;var d=new Date(v);return isNaN(d)?null:d;}
+function dayKey(d){return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate();}
+function startOfToday(){var t=new Date();t.setHours(0,0,0,0);return t;}
+function timeOf(v){var s=String(v||'');if(s.length<=10)return '';var d=when(v);return d?d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'';}
+function nl2p(text){return esc(text).split(/\n{2,}/).map(function(p){return '<p>'+p.replace(/\n/g,'<br>')+'</p>';}).join('');}
+
+function heroBlock(gp,model,tasks){
   if(!gp)return '';
   var days=null;
   if(gp.key_date){try{var today=new Date();today.setHours(12,0,0,0);var target=new Date(String(gp.key_date).slice(0,10)+'T12:00:00');days=Math.ceil((target-today)/86400000);}catch(e){}}
-  var countLabel=days!=null&&days>0?String(days):'—';
-  return '<header class="cvymg-hero"><p class="cvymg-hello">Your gameplan,</p><h1 class="cvymg-name">'+esc((model&&model.display_name)||'')+'</h1>'
-   +(gp.key_date?'<div class="cvymg-count"><div class="cvymg-count-v">'+countLabel+'</div><p>'+esc(gp.key_date_label||('until '+fmtDate(gp.key_date)))+(days!=null&&days<=0?' — that date has arrived.':'')+'</p></div>':'')
+  var label=gp.key_date_label||(gp.key_date?'until '+fmtDate(gp.key_date):'');
+  var first=String((model&&model.display_name)||'').trim();
+  return '<header class="cvymg-hero"><div class="cvymg-hero-main"><p class="cvymg-hello">Your 90-day gameplan</p><h1 class="cvymg-name">'+esc(first)+'</h1>'
+   +(gp.key_date?'<p class="cvymg-sub">'+esc(label)+'</p>':'')+'</div>'
+   +(gp.key_date?'<div class="cvymg-count"><div class="cvymg-count-v">'+(days!=null&&days>0?days:'0')+'</div><div class="cvymg-count-l"><b>'+(days!=null&&days>0?(days===1?'day to go':'days to go'):'Today')+'</b><span>'+esc(fmtDate(gp.key_date,{weekday:'short',month:'short',day:'numeric',year:'numeric'}))+'</span></div></div>':'')
    +'</header>';
+}
+
+function summaryStrip(tasks){
+  var total=tasks.length,done=tasks.filter(function(t){return t.status==='completed';}).length;
+  var open=tasks.filter(function(t){return t.status!=='completed';});
+  var t0=startOfToday(),wk=new Date(t0.getTime()+7*86400000);
+  var overdue=open.filter(function(t){var d=when(t.due_at);return d&&d<t0;}).length;
+  var week=open.filter(function(t){var d=when(t.due_at);return d&&d>=t0&&d<wk;}).length;
+  var pct=total?Math.round(done/total*100):0;
+  var C=2*Math.PI*26,off=C*(1-pct/100);
+  return '<div class="cvymg-strip">'
+   +'<div class="cvymg-stat cvymg-ringstat"><svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><circle cx="32" cy="32" r="26" class="cvymg-ring-bg"/><circle cx="32" cy="32" r="26" class="cvymg-ring-fg" stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 32 32)"/></svg><div><b>'+pct+'%</b><span>'+done+' of '+total+' done</span></div></div>'
+   +'<div class="cvymg-stat"><b>'+week+'</b><span>Due in the next 7 days</span></div>'
+   +'<div class="cvymg-stat'+(overdue?' warn':'')+'"><b>'+overdue+'</b><span>'+(overdue?'Overdue':'Nothing overdue')+'</span></div>'
+   +'</div>';
+}
+
+function dateBlock(v){
+  var d=when(v);if(!d)return '<div class="cvymg-date none"><b>—</b><span>No date</span></div>';
+  return '<div class="cvymg-date"><span>'+esc(d.toLocaleDateString([],{weekday:'short'}))+'</span><b>'+d.getDate()+'</b><span>'+esc(d.toLocaleDateString([],{month:'short'}))+'</span></div>';
+}
+
+function nextUp(tasks){
+  var open=tasks.filter(function(t){return t.status!=='completed';}).sort(function(a,b){return String(a.due_at||'9999').localeCompare(String(b.due_at||'9999'));});
+  var t=open[0];if(!t)return tasks.length?'<div class="cvymg-next done"><b>All caught up.</b><span>Everything on your list is done. Nice work.</span></div>':'';
+  var d=when(t.due_at),late=d&&d<startOfToday(),pending=t.reschedule_status==='pending';
+  return '<section class="cvymg-focus"><p class="cvymg-label">Do this next</p><div class="cvymg-focus-card">'+dateBlock(t.due_at)
+   +'<div class="cvymg-focus-body"><h2>'+esc(t.title||'')+'</h2>'
+   +'<p class="cvymg-meta">'+(late?'<span class="cvymg-chip bad">Overdue</span>':'')+(t.is_hard_stop?'<span class="cvymg-chip key">Must happen</span>':'')+(d?'<span>'+esc(d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'}))+(timeOf(t.due_at)?' · '+esc(timeOf(t.due_at)):'')+'</span>':'')+'</p>'
+   +(t.description?'<p class="cvymg-focus-desc">'+esc(t.description)+'</p>':'')
+   +'<div class="cvymg-actions"><button type="button" class="cvymg-btn primary" onclick="CAVYRE_MODEL_GAMEPLAN.complete(\''+t.id+'\')">Mark complete</button>'
+   +(pending?'<span class="cvymg-chip gold">New time requested</span>':'<button type="button" class="cvymg-btn" onclick="CAVYRE_MODEL_GAMEPLAN.openReschedule(\''+t.id+'\')">Request a new time</button>')+'</div>'
+   +(STATE.reschedulingTaskId===t.id?rescheduleForm(t.id):'')
+   +'</div></div></section>';
+}
+
+function rescheduleForm(id){
+  return '<div class="cvymg-reschedule-form"><label>New date<input type="date" id="cvymg-rs-date"></label><label class="grow">Note (optional)<input type="text" id="cvymg-rs-note" placeholder="Why you need a new time"></label><div class="cvymg-actions"><button type="button" class="cvymg-btn" onclick="CAVYRE_MODEL_GAMEPLAN.cancelReschedule()">Cancel</button><button type="button" class="cvymg-btn primary" onclick="CAVYRE_MODEL_GAMEPLAN.submitReschedule(\''+id+'\')">Send request</button></div></div>';
 }
 
 function statCard(measurements){
@@ -46,28 +92,27 @@ function statCard(measurements){
 
 function todoSection(tasks){
   var sorted=tasks.slice().sort(function(a,b){return String(a.due_at||'9999').localeCompare(String(b.due_at||'9999'));});
-  var completed=sorted.filter(function(t){return t.status==='completed';}).length;
-  var pct=sorted.length?Math.round(completed/sorted.length*100):0;
-  var h='<section class="cvymg-section"><p class="cvymg-label">Your to-do list</p><h2>What you do, and when.</h2>'
-   +'<div class="cvymg-progress"><span class="cvymg-pct">'+pct+'%</span><div class="cvymg-bar"><i style="width:'+pct+'%"></i></div></div>';
-  var month='';
+  var t0=startOfToday();
+  var h='<section class="cvymg-section"><p class="cvymg-label">Your to-do list</p><h2>What you do, and when.</h2><div class="cvymg-tl">';
+  var month='',counts={};
+  sorted.forEach(function(t){var mm=t.due_at?fmtMonth(t.due_at):'No date';counts[mm]=counts[mm]||{n:0,d:0};counts[mm].n++;if(t.status==='completed')counts[mm].d++;});
   sorted.forEach(function(t){
     var mm=t.due_at?fmtMonth(t.due_at):'No date';
-    if(mm!==month){month=mm;h+='<div class="cvymg-month">'+esc(mm)+'</div>';}
-    var done=t.status==='completed';
-    var pending=t.reschedule_status==='pending';
-    h+='<div class="cvymg-todo '+(done?'done':'')+(t.is_hard_stop?' key':'')+'">'
-     +'<input type="checkbox" '+(done?'checked':'')+(done?' disabled':' onchange="CAVYRE_MODEL_GAMEPLAN.complete(\''+t.id+'\')"')+'>'
-     +'<span class="cvymg-dt">'+fmtDate(t.due_at,{weekday:'short',day:'numeric',month:'short'})+'</span>'
-     +'<span class="cvymg-tx">'+esc(t.title||'')+(t.description?'<small>'+esc(t.description)+'</small>':'')
-     +(pending?'<small class="cvymg-pending">Reschedule to '+fmtDate(t.reschedule_requested_date)+' requested — waiting on your agent.</small>':(done?'':'<button type="button" class="cvymg-linkbtn" onclick="CAVYRE_MODEL_GAMEPLAN.openReschedule(\''+t.id+'\')">Request a new time</button>'))
-     +'</span></div>';
-    if(STATE.reschedulingTaskId===t.id){
-      h+='<div class="cvymg-reschedule-form"><label>New date<input type="date" id="cvymg-rs-date"></label><label>Note (optional)<input type="text" id="cvymg-rs-note" placeholder="Why you need a new time"></label><div><button type="button" class="cvymg-btn" onclick="CAVYRE_MODEL_GAMEPLAN.cancelReschedule()">Cancel</button><button type="button" class="cvymg-btn primary" onclick="CAVYRE_MODEL_GAMEPLAN.submitReschedule(\''+t.id+'\')">Send Request</button></div></div>';
-    }
+    if(mm!==month){month=mm;h+='<div class="cvymg-month"><span>'+esc(mm)+'</span><small>'+counts[mm].d+'/'+counts[mm].n+' done</small></div>';}
+    var done=t.status==='completed',pending=t.reschedule_status==='pending',d=when(t.due_at),late=!done&&d&&d<t0;
+    h+='<article class="cvymg-todo'+(done?' done':'')+(t.is_hard_stop?' key':'')+(late?' late':'')+'">'
+     +dateBlock(t.due_at)
+     +'<div class="cvymg-tx"><h3>'+esc(t.title||'')+'</h3>'
+     +'<p class="cvymg-meta">'+(done?'<span class="cvymg-chip good">Done</span>':'')+(late?'<span class="cvymg-chip bad">Overdue</span>':'')+(t.is_hard_stop&&!done?'<span class="cvymg-chip key">Must happen</span>':'')+(pending?'<span class="cvymg-chip gold">New time requested</span>':'')+(timeOf(t.due_at)?'<span>'+esc(timeOf(t.due_at))+'</span>':'')+'</p>'
+     +(t.description?'<details class="cvymg-more"><summary>Details</summary><p>'+esc(t.description)+'</p></details>':'')
+     +(pending?'<p class="cvymg-pending">Asked for '+esc(fmtDate(t.reschedule_requested_date))+'. Waiting on your agent.</p>':'')
+     +(STATE.reschedulingTaskId===t.id?rescheduleForm(t.id):'')
+     +'</div>'
+     +(done?'<span class="cvymg-tick" aria-label="Completed">✓</span>':'<div class="cvymg-row-actions"><button type="button" class="cvymg-btn small primary" onclick="CAVYRE_MODEL_GAMEPLAN.complete(\''+t.id+'\')">Complete</button>'+(pending?'':'<button type="button" class="cvymg-btn small" onclick="CAVYRE_MODEL_GAMEPLAN.openReschedule(\''+t.id+'\')">New time</button>')+'</div>')
+     +'</article>';
   });
   if(!sorted.length)h+='<div class="cvymg-empty">No tasks yet.</div>';
-  h+='</section>';
+  h+='</div></section>';
   return h;
 }
 
@@ -98,9 +143,9 @@ function checkinSection(cadence){
    +'<div class="cvymg-cal">'+cells+'</div></section>';
 }
 
-function ruleSection(text,label,heading){
+function ruleSection(text,label,heading,cls){
   if(!text)return '';
-  return '<section class="cvymg-section"><p class="cvymg-label">'+esc(label)+'</p><h2>'+esc(heading)+'</h2><div class="cvymg-prose">'+esc(text).split(/\n{2,}/).map(function(p){return '<p>'+p.replace(/\n/g,'<br>')+'</p>';}).join('')+'</div></section>';
+  return '<section class="cvymg-section cvymg-callout '+(cls||'')+'"><p class="cvymg-label">'+esc(label)+'</p><h2>'+esc(heading)+'</h2><div class="cvymg-prose">'+nl2p(text)+'</div></section>';
 }
 
 function teamSection(contact){
@@ -109,13 +154,16 @@ function teamSection(contact){
 }
 
 function render(){
-  var d=STATE.data||{},gp=d.gameplan,model=(window.VEUX_MODEL.getBoot()||{}).model||{};
+  var d=STATE.data||{},gp=d.gameplan,boot=window.VEUX_MODEL.getBoot()||{},model=boot.model||{},tasks=arr(d.tasks);
   if(!gp)return page('<div class="cvymg-empty">Your agent hasn\'t published a gameplan yet.</div>');
+  var card=statCard(boot.measurements);
   return page(
-    heroBlock(gp,model)
-    +'<div class="cvymg-two">'+ruleSection(gp.welcome_message,'Welcome to the board','A note from your agency')+statCard((window.VEUX_MODEL.getBoot()||{}).measurements)+'</div>'
-    +ruleSection(gp.image_rules,'Your look','Image and grooming rules')
-    +todoSection(arr(d.tasks))
+    heroBlock(gp,model,tasks)
+    +summaryStrip(tasks)
+    +nextUp(tasks)
+    +'<div class="cvymg-two">'+ruleSection(gp.welcome_message,'Welcome to the board','A note from your agency')+card+'</div>'
+    +ruleSection(gp.image_rules,'Your look','Image and grooming rules','look')
+    +todoSection(tasks)
     +visaSection(d.mobility)
     +checkinSection(gp.checkin_cadence)
     +teamSection(d.agent_contact)
