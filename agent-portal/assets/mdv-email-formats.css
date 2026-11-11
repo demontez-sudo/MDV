@@ -46,3 +46,4 @@
 .mf-form{display:grid;gap:12px}.mf-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .mf-ins{display:grid;gap:6px}.mf-ins small{color:var(--mute)}.mf-ins code{background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px}
 @media(max-width:820px){.mf-cols{grid-template-columns:1fr;overflow:auto}.mf-left{border-right:0;border-bottom:1px solid var(--l2);max-height:240px}.mf-who,.mf-two{grid-template-columns:1fr}.mf-table li{flex-direction:column}.mf-acts{justify-content:flex-start}}
+.mf-dlg [hidden]{display:none!important}
