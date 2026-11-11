@@ -114,6 +114,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/model/daysilk"
+  to = "/.netlify/functions/model-daysilk"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/portal/message"
   to = "/.netlify/functions/model-legacy-gateway?endpoint=/api/portal/message"
   status = 200
