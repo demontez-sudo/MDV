@@ -38,11 +38,34 @@ export const handler = async event => {
     const { organization } = await requireStaffOrganization({ user, client, organizationSlug: body.organization_slug || p.organization || 'maison-de-veux' });
     const admin = adminClient(), cfg = mailConfig();
     /* every email that goes out is written to the Outreach log (who, when, to whom), and the recipient is locked in as a contact */
-    const autoLog = async (list, subject, text) => {
+    const autoLog = async (list, subject, text, link) => {
       try {
-        const recipients = (list || []).map(r => ({ email: r?.emailAddress?.address || r?.address || '', name: r?.emailAddress?.name || r?.name || '' }));
+        const isId = v => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v);
+        /* an email sent from an Email format knows who it was for: tie it to that contact, company, model and scouted person (only records of this agency) */
+        let lk = null;
+        if (link && typeof link === 'object') {
+          lk = { to_email: String(link.to_email || '').toLowerCase(), template_id: isId(link.template_id) ? link.template_id : null, template_name: String(link.template_name || '').slice(0, 120) || null, model_name: String(link.model_name || '').slice(0, 120) || null };
+          const own = async (table, id) => { if (!isId(id)) return null; const { data } = await admin.from(table).select('id').eq('organization_id', organization.id).eq('id', id).maybeSingle(); return data?.id || null; };
+          lk.contact_id = await own('contacts', link.contact_id); lk.company_id = await own('companies', link.company_id);
+          lk.model_id = await own('models', link.model_id); lk.prospect_id = await own('scouting_prospects', link.prospect_id);
+        }
+        const recipients = (list || []).map(r => {
+          const email = r?.emailAddress?.address || r?.address || '';
+          const rec = { email, name: r?.emailAddress?.name || r?.name || '' };
+          if (lk && lk.contact_id && lk.to_email && String(email).toLowerCase() === lk.to_email) { rec.contact_id = lk.contact_id; if (lk.company_id) rec.company_id = lk.company_id; }
+          return rec;
+        });
         const key = 'mail:' + user.id + ':' + Math.floor(Date.now() / 60000) + ':' + String(subject || '').slice(0, 60);
-        await Promise.race([logSent(admin, { orgId: organization.id, user, channel: 'email', recipients, subject, summary: String(text || '').replace(/\s+/g, ' ').trim().slice(0, 400), source: 'mail', dedupeBase: key }), new Promise(r => setTimeout(r, 3500))]);
+        const extra = lk ? { format: lk.template_name || undefined, format_id: lk.template_id || undefined, model_id: lk.model_id || undefined, model_name: lk.model_name || undefined } : undefined;
+        await Promise.race([logSent(admin, { orgId: organization.id, user, channel: 'email', recipients, subject, summary: String(text || '').replace(/\s+/g, ' ').trim().slice(0, 400), extra, source: 'mail', dedupeBase: key }), new Promise(r => setTimeout(r, 3500))]);
+        /* scouted people are not contacts, so their emails are kept on their own record */
+        if (lk && lk.prospect_id) {
+          const { data: pr } = await admin.from('scouting_prospects').select('metadata').eq('organization_id', organization.id).eq('id', lk.prospect_id).maybeSingle();
+          const md = pr?.metadata && typeof pr.metadata === 'object' ? pr.metadata : {};
+          const log = Array.isArray(md.email_log) ? md.email_log : [];
+          log.unshift({ at: new Date().toISOString(), subject: String(subject || '').slice(0, 200), by: user.user_metadata?.full_name || user.email || 'Team', format: lk.template_name || null });
+          await admin.from('scouting_prospects').update({ metadata: { ...md, email_log: log.slice(0, 20) } }).eq('organization_id', organization.id).eq('id', lk.prospect_id);
+        }
       } catch (e) { console.warn('[mail→outreach]', e?.message || e); }
     };
 
@@ -181,11 +204,11 @@ export const handler = async event => {
         const ct = copyTarget(body);
         const r = await sendViaResend({ conn, to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, text: String(body.text ?? body.body ?? '') + sigT, attachments: m.attachments || [], copyInbox: ct === 'inbox' });
         const copy = await saveCopy(G, conn, ct, { to: m.toRecipients, cc: m.ccRecipients, bcc: m.bccRecipients, subject: m.subject, html: m.body.content, attachments: m.attachments });
-        await autoLog(m.toRecipients, m.subject, body.text ?? body.body);
+        await autoLog(m.toRecipients, m.subject, body.text ?? body.body, body.link);
         return json(200, { ok: true, verified: true, sent: true, via: 'resend', copy, id: r?.providerMessageId || null });
       }
       await G('/me/sendMail', { method: 'POST', body: payload });
-      await autoLog(m.toRecipients, m.subject, body.text ?? body.body);
+      await autoLog(m.toRecipients, m.subject, body.text ?? body.body, body.link);
       return json(200, { ok: true, verified: true, sent: true, via: 'microsoft' });
     }
 

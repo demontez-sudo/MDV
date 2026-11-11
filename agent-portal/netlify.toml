@@ -608,6 +608,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/email-formats"
+to = "/.netlify/functions/agent-email-formats"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/tasks/v11"
 to = "/.netlify/functions/agent-task-approval-desk-v11"
 status = 200
