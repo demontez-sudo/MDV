@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 import { sendResendEmail } from './email.mjs';
 import { verifyModelPassword } from './model-auth-verifier.mjs';
 
-const PORTAL_URL = 'https://maisondeveux.com/portal';
+const PORTAL_URL = 'https://maisondeveux.com/portal/';
 const TEMP_DAYS = 7;
 const EMAIL_RX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESET_FLAG = 'cavyre_password_reset_required';

@@ -42,7 +42,7 @@ export async function handler(event){
       credential_verified:true,
       model_id:portal.modelId,
       session:check.session||null,
-      redirect_to:'https://maisondeveux.com/portal'
+      redirect_to:'https://maisondeveux.com/portal/'
     });
   }catch(e){return errorResponse(e)}
 }

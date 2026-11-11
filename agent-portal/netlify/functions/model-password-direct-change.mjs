@@ -21,6 +21,6 @@ export async function handler(event){
   if(!updated?.user?.id||updated.user.id!==user.id){const e=new Error('Password update could not be verified.');e.statusCode=500;throw e;}
   const check=await verifyModelPassword({email:updated.user.email||email,password:newPassword});
   if(check.user_id!==user.id){const e=new Error('New login verification returned a different user.');e.statusCode=409;throw e;}
-  return json(200,{ok:true,credential_verified:true,model_id:portal.modelId,session:check.session||null,redirect_to:'https://maisondeveux.com/portal'});
+  return json(200,{ok:true,credential_verified:true,model_id:portal.modelId,session:check.session||null,redirect_to:'https://maisondeveux.com/portal/'});
  }catch(e){return errorResponse(e)}
 }

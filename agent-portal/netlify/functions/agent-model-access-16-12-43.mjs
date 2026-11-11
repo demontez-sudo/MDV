@@ -12,7 +12,7 @@ const RESET_FLAG='cavyre_password_reset_required';
 const TEMP_EXP='cavyre_temp_password_expires_at';
 const DISABLED='cavyre_portal_disabled';
 const INVITE_AT='cavyre_invited_at',INVITE_N='cavyre_invite_count',INVITE_BY='cavyre_invited_by',INVITE_CH='cavyre_invite_channel';
-const PORTAL_URL='https://maisondeveux.com/portal';
+const PORTAL_URL='https://maisondeveux.com/portal/';
 const INVITE_TTL_MS=7*24*60*60*1000;
 const BULK_MAX=3;
 const low=v=>String(v||'').trim().toLowerCase();

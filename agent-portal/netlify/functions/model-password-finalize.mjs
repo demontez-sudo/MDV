@@ -77,7 +77,7 @@ export async function handler(event){
       model_id:model.id,
       model_name:model.display_name||null,
       email:user.email||updated.user.email||null,
-      redirect_to:'https://maisondeveux.com/portal'
+      redirect_to:'https://maisondeveux.com/portal/'
     });
   }catch(error){
     return errorResponse(error);
