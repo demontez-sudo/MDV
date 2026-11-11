@@ -821,3 +821,7 @@ html body #p-calendar .so-att,html body #p-calendar .so-task,html body #p-calend
 @media(max-width:700px){.pl-card>header .pl-mode{margin-left:0;width:100%}.tl-scroll{max-height:62vh}.tl-grid{margin-left:48px}.tl-h{left:-48px}.tl-h span{width:42px}.tl-now{left:-48px}}
 /* the week grid gets the full width; the side panels move underneath */
 .pl-grid:has(.pl-card.pl-m-week){grid-template-columns:minmax(0,1fr)!important}
+
+/* Model Agenda: one column. Rules of the day/week and Market week moved to DaySilk. */
+.pl-grid{grid-template-columns:minmax(0,1fr)!important}
+.pl-right{display:none!important}

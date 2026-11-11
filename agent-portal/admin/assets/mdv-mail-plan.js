@@ -276,7 +276,7 @@ function rowHtml(i){
     +(ev?'<label>Ends<input type="time" data-k="end" value="'+esc(i.end)+'"'+dis+'></label><label>Until (date)<input type="date" data-k="endDate" value="'+esc(i.endDate)+'"'+dis+'></label>':'')
     +(ev?'<label>Type<select data-k="etype"'+dis+'>'+EV_TYPES.map(function(t){return '<option value="'+t[0]+'"'+(i.etype===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('')+'</select></label>':'')
     +'</div>'
-    +(ev?'<div class="mp-dest"><label class="mp-wh">Where / link<input type="text" data-k="where" maxlength="300" value="'+esc(i.where||'')+'" placeholder="Room, address or meeting link"'+dis+'></label><span class="mp-to">Add to</span><label class="mp-chk"><input type="checkbox" data-k="cal"'+(i.cal?' checked':'')+(i.calDone?' disabled':dis)+'> Agency calendar</label>'+(D.owner?'<label class="mp-chk"><input type="checkbox" data-k="ds"'+(i.ds?' checked':'')+(i.dsDone?' disabled':dis)+'> My DaySilk</label>':'')+'</div>':'')
+    +(ev?'<div class="mp-dest"><label class="mp-wh">Where / link<input type="text" data-k="where" maxlength="300" value="'+esc(i.where||'')+'" placeholder="Room, address or meeting link"'+dis+'></label><span class="mp-to">Add to</span><label class="mp-chk"><input type="checkbox" data-k="cal"'+(i.cal?' checked':'')+(i.calDone?' disabled':dis)+'> Model Agenda</label>'+(D.owner?'<label class="mp-chk"><input type="checkbox" data-k="ds"'+(i.ds?' checked':'')+(i.dsDone?' disabled':dis)+'> My DaySilk</label>':'')+'</div>':'')
     +(i.snippet?'<p class="mp-src">From the email: “'+esc(i.snippet.length>170?i.snippet.slice(0,170)+'…':i.snippet)+'”</p>':'')
     +(done?'<em class="mp-ok">✓ Added to '+(ev?(i.calDone&&i.dsDone?'the calendar and DaySilk':i.dsDone?'DaySilk':'the calendar'):'tasks')+'</em>':i.status==='saving'?'<em class="mp-wait">Adding…</em>':i.error?'<em class="mp-bad">'+esc(i.error)+'</em>':!i.date&&i.kind==='event'?'<em class="mp-bad">Pick a date for an event.</em>':'')
     +'</div>'
@@ -327,7 +327,7 @@ async function saveOne(i){
   if(i.kind==='event'){
     if(!i.date)throw new Error('Pick a date for this event.');
     var toDs=!!(D.owner&&i.ds);
-    if(!i.cal&&!toDs)throw new Error('Choose where to add it: Agency calendar or My DaySilk.');
+    if(!i.cal&&!toDs)throw new Error('Choose where to add it: Model Agenda or My DaySilk.');
     if(i.cal&&!i.calDone){
     var body={action:'create_event',title:i.title.trim(),starts_at:startIso(i),ends_at:endIso(i)||(i.endDate&&i.endDate>i.date?new Date(+i.endDate.slice(0,4),+i.endDate.slice(5,7)-1,+i.endDate.slice(8,10),23,59).toISOString():null),all_day:!i.start,timezone:tz||null,status:'scheduled',event_type:i.etype||'meeting',calendar_event_type:i.etype||'meeting',notes:notesFor(i),model_ids:D.model?[D.model]:[],location:i.where||null};
     var r=await post('/api/agent/calendar/v9',body);if(!r||r.verified!==true)throw new Error('The calendar did not confirm the save.');
