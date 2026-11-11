@@ -2,6 +2,7 @@ import { handler as bootstrapHandler } from './model-portal-bootstrap.mjs';
 import { handler as scheduleHandler } from './model-portal-schedule.mjs';
 import { handler as actionHandler } from './model-portal-action.mjs';
 import { handler as uploadHandler } from './model-portal-upload-url.mjs';
+import { handler as developmentHandler } from './model-development-submissions.mjs';
 import { handler as downloadHandler } from './model-portal-download-url.mjs';
 import { toLegacyEvent, fromLegacyResponse, parseLegacyBody, jsonResponse } from './_lib/modern-legacy-bridge.mjs';
 
@@ -115,7 +116,7 @@ export default async (req)=>{
   }
   if(path==='/api/model/development-submissions'&&method==='POST'){
     const raw=await req.json().catch(()=>({}));
-    if(raw.action==='withdraw')return jsonResponse(409,{error:'Withdrawal requires agency review in the unified portal.'});
+    if(['create','prepare_upload','finalize_upload','withdraw'].includes(raw.action))return fromLegacyResponse(await invoke(developmentHandler,req,raw));
     return fromLegacyResponse(await invoke(actionHandler,req,{...raw,action:'development_submission',message:raw.message||raw.notes||raw.note||'Development submission received.'}));
   }
   if(path==='/api/model/media'&&method==='POST'){
