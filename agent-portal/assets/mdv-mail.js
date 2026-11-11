@@ -119,7 +119,7 @@ window.addEventListener('resize',function(){fit();});
 function paintSide(){
   var el=document.getElementById('mm-side');if(!el)return;
   el.innerHTML='<button class="mm-btn gold mm-compose" data-a="compose">+ New message</button><button class="mm-btn mm-savefiles" data-a="savefiles" title="Choose files you downloaded and save them to a model profile">Save files to a model</button>'
-    +'<button type="button" class="mm-sigbtn" data-a="signature"><span>✎ Signature</span><em>'+(sigActive()?'On':(sigGet()?'Off':'Not set'))+'</em></button>'+'<nav class="mm-folders">'+S.folders.map(function(f){return '<button class="'+(S.folder===f.id?'on':'')+'" data-a="folder" data-id="'+esc(f.id)+'"><span>'+esc(f.name)+'</span>'+(f.unread?'<em>'+f.unread+'</em>':'')+'</button>';}).join('')+'</nav>'
+    +'<button type="button" class="mm-sigbtn" data-a="formats"><span>✦ Formats</span><em>Library</em></button>'+'<button type="button" class="mm-sigbtn" data-a="signature"><span>✎ Signature</span><em>'+(sigActive()?'On':(sigGet()?'Off':'Not set'))+'</em></button>'+'<nav class="mm-folders">'+S.folders.map(function(f){return '<button class="'+(S.folder===f.id?'on':'')+'" data-a="folder" data-id="'+esc(f.id)+'"><span>'+esc(f.name)+'</span>'+(f.unread?'<em>'+f.unread+'</em>':'')+'</button>';}).join('')+'</nav>'
     +'';
   wire(el);
 }
@@ -274,6 +274,7 @@ async function act(a,b){
     if(a==='images-always'){try{localStorage.setItem('mdv-mail-images','1');}catch(e){}S.showImages=true;paintReader();return;}
     if(a==='images-off'){try{localStorage.setItem('mdv-mail-images','0');}catch(e){}S.showImages=false;paintReader();toast('Web images are hidden. Use Show images or Always show to turn them back on.');return;}
     if(a==='signature'){sigEditor();return;}
+    if(a==='formats'){if(window.MDV_FORMATS)MDV_FORMATS.manage();else toast('Formats are still loading. Try again in a moment.');return;}
     if(a==='thread'){setThreadOpen(!threadOpen());paintThread();return;}
     var m=S.detail&&S.detail.m;
     if(a==='disconnect'){if(!window.confirm('Disconnect your email from the portal? Your mailbox itself is not touched.'))return;await call('disconnect');S.status=Object.assign({},S.status,{connected:false});S.folders=[];S.messages=[];S.sel=null;S.detail=null;paint();toast('Email disconnected');return;}
@@ -424,7 +425,7 @@ function compose(o){
     +'<div class="mmx-files" id="mm-files" hidden></div>'
     +'<datalist id="mm-sug">'+sugOptions()+'</datalist></div>'
     +'<p class="mm-err" id="mm-cerr"></p>'
-    +'<footer class="mmx-f"><button type="button" class="mm-btn gold" id="mm-send">Send</button><button type="button" class="mm-btn" data-x>Cancel</button><span class="mmx-tools"><button type="button" class="mmx-attach" id="mm-addfile"><span aria-hidden="true">📎</span> Attach</button><input type="file" id="mm-file" multiple hidden>'+copySelect('mm-copy')+'</span><span class="mmx-hint">Ctrl/⌘ + Enter to send</span></footer>';
+    +'<footer class="mmx-f"><button type="button" class="mm-btn gold" id="mm-send">Send</button><button type="button" class="mm-btn" data-x>Cancel</button><span class="mmx-tools"><button type="button" class="mmx-attach" id="mm-addfile"><span aria-hidden="true">📎</span> Attach</button><input type="file" id="mm-file" multiple hidden><button type="button" class="mmx-attach" id="mm-format"><span aria-hidden="true">✦</span> Format</button>'+copySelect('mm-copy')+'</span><span class="mmx-hint">Ctrl/⌘ + Enter to send</span></footer>';
   var files=[],sentVia=null,$=function(q){return back.querySelector(q);};
   var BAD=function(a){return !EMAIL_RE.test(a);};
 
@@ -461,6 +462,17 @@ function compose(o){
   if(o.bcc){F.bcc.add(o.bcc);reveal('bcc');}
   if(o.subject)$('#mm-subject').value=o.subject;
   if(o.text)$('#mm-text').value=o.text;
+  var link=o.link||null;
+  /* Email formats: fill the subject and message from a saved format (and remember who it was for, so Outreach can link the email to them) */
+  $('#mm-format').onclick=function(){
+    if(!window.MDV_FORMATS){toast('Formats are still loading. Try again in a moment.');return;}
+    if(($('#mm-text').value.trim()||$('#mm-subject').value.trim())&&!window.confirm('Replace what you have written with a format?'))return;
+    MDV_FORMATS.pick({apply:function(r){
+      if(r.to&&!F.to.has())F.to.add(r.to);
+      $('#mm-subject').value=r.subject||'';$('#mm-text').value=r.body||'';link=r.link||null;$('#mm-text').focus();
+      if(r.missing&&r.missing.length)toast('Fill in the highlighted blanks before sending: '+r.missing.join(', '),'bad');
+    }});
+  };
 
   function dirty(){return $('#mm-text').value.trim()||F.to.has()||F.cc.has()||F.bcc.has()||$('#mm-subject').value.trim()||files.length;}
   function close(){
@@ -501,9 +513,11 @@ function compose(o){
       if(bad.length)throw new Error('"'+bad[0]+'" is not a valid email address. Remove it or fix it.');
       var tot=files.reduce(function(n,f){return n+f.size;},0);if(tot>3*1048576)throw new Error('Attachments are over 3 MB in total.');
       if(!$('#mm-subject').value.trim()&&!text.trim())throw new Error('Write a subject or a message first.');
+      var blanks=(($('#mm-subject').value+' '+text).match(/\{\{[^}]*\}\}/g)||[]).slice(0,3);
+      if(blanks.length)throw new Error('There are still blanks to fill in: '+blanks.join(', ')+'. Replace them, then send.');
       setCopyPref($('#mm-copy').value);btn.disabled=true;btn.textContent='Sending…';
       var atts=await Promise.all(files.map(readFile));
-      sentVia=await call('send',{to:to.join(', '),cc:cc.join(', '),bcc:bcc.join(', '),subject:$('#mm-subject').value,text:text,attachments:atts,copy_to:$('#mm-copy').value,signature:(sigState.on!==false?sigActive():null)});
+      sentVia=await call('send',{to:to.join(', '),cc:cc.join(', '),bcc:bcc.join(', '),subject:$('#mm-subject').value,text:text,attachments:atts,copy_to:$('#mm-copy').value,signature:(sigState.on!==false?sigActive():null),link:link});
       close();toast(sentToast(sentVia));if(S.folder==='sentitems')loadList(true);
     }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Send';}
   };
@@ -579,11 +593,11 @@ async function emailTo(list,o){
       setTimeout(fallback,900);return false;
     }
   }catch(e){return fallback();}
-  if(!addrs.length){compose({to:'',subject:o.subject||'',text:o.text||''});return true;}
+  if(!addrs.length){compose({to:'',subject:o.subject||'',text:o.text||'',link:o.link||null});return true;}
   if(addrs.length>1&&!o.to_all){
     /* Several people: send to yourself and Bcc everyone so clients never see each other. */
-    compose({to:String(S.status.email||''),bcc:addrs.join(', '),subject:o.subject||'',text:o.text||''});
-  }else compose({to:addrs.join(', '),subject:o.subject||'',text:o.text||''});
+    compose({to:String(S.status.email||''),bcc:addrs.join(', '),subject:o.subject||'',text:o.text||'',link:o.link||null});
+  }else compose({to:addrs.join(', '),subject:o.subject||'',text:o.text||'',link:o.link||null});
   return true;
 }
 (function globalEmailLinks(){
