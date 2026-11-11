@@ -79,6 +79,12 @@ function post(body){return bridge().api('/api/agent/scouting/v9',{method:'POST',
 function msg(e){return (e&&e.message)||String(e||'Something went wrong');}
 function toast(m,bad){var o=document.querySelector('.sr-toast');if(o)o.remove();var d=document.createElement('div');d.className='sr-toast'+(bad?' bad':'');d.textContent=m;document.body.appendChild(d);setTimeout(function(){d.remove();},3600);}
 function nowIso(){return new Date().toISOString();}
+/* Emails sent from the portal to this scouted person (written by Mail when an Email format is used; newest first). */
+function emailLogHtml(p){
+  var l=(p&&p.metadata&&Array.isArray(p.metadata.email_log))?p.metadata.email_log:[];
+  return '<section class="sr-sec"><h3>Emails sent'+(l.length?' <em class="sr-tag">'+l.length+'</em>':'')+'</h3>'
+    +(l.length?l.map(function(x){return '<p class="sr-log"><span>'+fmt(x.at,true)+'</span>'+esc(x.subject||'(no subject)')+' <small>· '+esc(x.by||'Team')+(x.format?' · '+esc(x.format):'')+'</small></p>';}).join(''):'<p class="sr-hint">No emails sent from the portal yet.</p>')+'</section>';
+}
 function fmt(v,time){if(!v)return '';var d=new Date(v);if(isNaN(d))return '';return time?d.toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}):d.toLocaleDateString([],{month:'short',day:'numeric',year:'numeric'});}
 function days(v){if(!v)return null;var d=new Date(v);if(isNaN(d))return null;return Math.floor((Date.now()-d.getTime())/864e5);}
 function localInput(v){if(!v)return '';var d=new Date(v);if(isNaN(d))return '';var p=function(n){return String(n).padStart(2,'0');};return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes());}
@@ -428,6 +434,7 @@ function outreachHtml(p){
     +'<label class="wide"><span>Notes</span><input data-p="outreach.ma.notes" value="'+esc(ma.notes||'')+'" placeholder="Terms, split, conditions…"></label></div>'
     +composerHtml('ma',tma)
     +'<div class="sr-actions">'+(ma.email?'<button type="button" class="sr-btn gold" data-do="email_ma">Email the MA</button>':'<span class="sr-hint">Add the MA email above to send from here.</span>')+(ma.email?'<button type="button" class="sr-btn" data-format-prospect="'+esc(p.id)+'" data-format-label="'+esc(p.display_name||'Scouted person')+'" data-format-audience="mother" data-format-to="'+esc(ma.email)+'">✦ Use a format</button>':'')+'<button type="button" class="sr-btn" data-do="mark_ma">Mark MA as emailed'+(ma.emailed_at?' · '+fmt(ma.emailed_at):'')+'</button></div></section>'
+    +emailLogHtml(p)
     +'<section class="sr-sec"><h3>Contact log</h3><div class="sr-row2"><label class="wide"><span>Add a note</span><input id="sr-lognote" placeholder="e.g. Left voicemail, texted, DM’d on Instagram…"></label><button type="button" class="sr-btn" data-do="add_log">Add</button></div>'
     +(log.map(function(x){return '<p class="sr-log"><span>'+fmt(x.at,true)+'</span>'+esc(x.text)+'</p>';}).join('')||'<p class="sr-hint">Nothing logged yet.</p>')+'</section>';
 }
