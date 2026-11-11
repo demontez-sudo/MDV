@@ -26,3 +26,9 @@
 .mds-ul{list-style:none;margin:0 0 4px;padding:0;display:grid;gap:8px}.mds-ul li{position:relative;padding-left:16px;font-size:13.5px;line-height:1.55;color:#cbbba5}.mds-ul li::before{content:"";position:absolute;left:0;top:.65em;width:6px;height:6px;border-radius:50%;background:var(--g)}
 .mds-ul.fx li{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;border:1px solid var(--l);background:rgba(255,255,255,.02)}.mds-ul.fx li::before{display:none}.mds-ul.fx b{font-weight:500;color:var(--ink)}.mds-ul.fx span{color:var(--mu);font-size:12.5px}
 @media(max-width:1000px){.mds-top{grid-template-columns:1fr}.mds-t2{border:0;padding:0}.mds-cols{grid-template-columns:1fr}.mds-wk{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.mds-ag.task{border-left-style:dotted}
+.mds-ag.unavailable{border-left-color:#d0705f;background:rgba(208,112,95,.07)}
+.mds-ag.booking{border-left-color:#91b18b}
+.mds-ag.casting{border-left-color:#b79ad6}
+.mds-ag.travel,.mds-ag.visa{border-left-color:#7fb0d6}
