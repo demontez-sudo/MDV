@@ -146,6 +146,33 @@ def build():
     task("close-review", "Block A review and Block B launch (next 90 days)", "MDV", "2027-02-05", "10:00", 1,
          ["Scorecard: tests done, visas, arrivals, bookings, sign-ups for CAVYRE", "Publish Block B (Feb 6 to May 6) to all three portals", "Reset weight and money goals"], "")
 
+    # ---- the operating day: outreach timed to when each kind of person reads mail in their own city.
+    # Same rules as the leads engine (netlify/functions/_lib/reach-windows.mjs).
+    # (The weekday outreach windows themselves live in Demontez's DaySilk routine: CO_DAY in daysilk/me/index.html.)
+    task("paris-rhythm", "Paris weeks rhythm (Jan 14 to 28)", "MDV", "2027-01-13", "09:00", 2,
+         ["Castings and go-sees in person 10 AM to 6 PM Paris", "US outreach 3 to 5 PM Paris (9 to 11 AM New York)",
+          "No cold Europe emails: see people at castings and shows instead", "Every new contact goes into Companies the same night"],
+         "The Atlanta outreach blocks pause while you are in Paris.")
+
+    # ---- CAVYRE: from five founding agencies to the Block B wave
+    task("cav-list", "CAVYRE: 40 target agencies in Companies, tiered A, B, C", "CAVYRE", "2026-11-13", "17:00", 1,
+         ["Paris, London, Milan, New York, Lagos", "Type: Model / Talent Agency, city filled in (sets the best time)", "Tier A: could sign this season; B: next season; C: later"],
+         "Feeds the Agency hour and Outreach leads.")
+    task("cav-demos", "CAVYRE: 8 demos booked", "CAVYRE", "2026-11-20", "17:00", 1, ["2 a day from the Agency hour", "15-minute demo, owner or head booker on the call"], "")
+    task("cav-ref", "CAVYRE: ask each founding agency for 2 introductions", "CAVYRE", "2026-12-18", "17:00", 2, ["Ask after onboarding goes well", "Log every intro in Outreach"], "")
+    task("cav-wave2", "CAVYRE: wave 2 list of 15 agencies for Block B (12 live by Jun 30)", "CAVYRE", "2027-01-08", "17:00", 2, ["Invite the warmest to the Jan 22 dinner"], "")
+    task("cav-after", "CAVYRE: follow up every dinner guest within 72 hours", "CAVYRE", "2027-01-25", "12:00", 1, ["Demo date for each prospect", "Founder quote from one founding agency"], "")
+    task("cav-offer", "CAVYRE: wave 2 pricing and offer out", "CAVYRE", "2027-02-02", "17:00", 2, ["Season proof numbers", "Offer valid to Mar 14"], "")
+
+    # ---- Casa de Veux: client pipeline
+    task("cdv-list", "Casa de Veux: 20 client targets in Companies (brands, designers, production)", "CDV", "2026-11-13", "17:00", 1,
+         ["Tier A: 10 who need content this season", "Contact person and city on each (sets the best time)"], "")
+    task("cdv-send", "Casa de Veux: pitch pack to the 10 Tier A brands", "CDV", "2026-11-24", "14:00", 1, ["Tue to Thu, 9 to 11 AM their time", "Follow up after 5 days"], "")
+    task("cdv-nyc", "Casa de Veux: 5 New York coffees while you are there (Nov 30 to Dec 13)", "CDV", "2026-12-01", "12:00", 2, ["Brands and studios", "Bring the MDV faces deck"], "")
+    task("cdv-prop", "Casa de Veux: first client proposal out", "CDV", "2026-12-15", "17:00", 1, ["Scope, dates, MDV talent, price"], "")
+    task("cdv-inv", "Casa de Veux: Paris creator dinner invitations out (dinner Jan 21)", "CDV", "2027-01-08", "12:00", 2, ["Photographers, stylists, directors", "12 seats"], "")
+    task("cdv-after", "Casa de Veux: follow up every Paris contact within 72 hours", "CDV", "2027-01-26", "12:00", 1, ["One next step each"], "")
+
     # ---- the companies
     task("cav-sign", "CAVYRE: sign the five founding agencies", "CAVYRE", "2026-12-04", "17:00", 1,
          ["Five signed agreements", "Data agreement attached", "Onboarding dates set for Dec 7 to 13 in Paris"], "From the existing CAVYRE plan; live by Dec 13.")
@@ -210,6 +237,10 @@ CADENCE = [
     ("Every 2 weeks", "Body check-in against the target line; skin and walk reviews on the dates in the plan", "Demontez, agents"),
     ("Monthly", "Monthly review (last Sunday), finance review with Sophia (third Friday), 4-week body check with photos and waist", "Demontez, Sophia"),
     ("Every day (in each model's DaySilk)", "Snack + water at 10:30 AM and 3:30 PM, walk or pose practice Tue and Thu 6:00 PM, Sunday wellness check-in 5:00 PM with the agent, plus four gameplan habits (skin plan, fueling, practice, sleep). Shown beside the model's own routine and never overwrites it. Runs to Feb 5.", "Models"),
+    ("Every weekday (outreach, ET)", "Mornings are Europe and Lagos (only open before 11:30 AM ET): Mon and Tue 9:00 CAVYRE + agencies (3 PM Paris), Mon 10:00 editors, Tue 10:00 and Thu 10:30 Europe castings and photographers (4 PM Paris), Wed 9:00 interest calls, Thu 9:00 CAVYRE demo day. Afternoons are the Americas: 2:00 PM Casa de Veux clients every day, 3:00 PM scouting, 4:00 PM US castings, CAVYRE US and LA. Fri: huddle, partner notes by 10, pipeline review, no cold outreach", "Demontez"),
+    ("Every weekday (team)", "Emma (NY board): US castings and brands 9:30 to 11 AM New York, walk-ins and go-sees after. Erica (Paris board): castings and photographers 9:30 to 11 AM and 4 to 5:30 PM Paris, model options sent by 8 PM the night before. Troy: travel quotes to agents by 3 PM ET. Sophia: invoices and payments Tuesday and Thursday mornings", "Emma, Erica, Troy, Sophia"),
+    ("Show months (models)", "Keep 10 AM to 6 PM local open Tuesday to Thursday for castings and go-sees. The agent sends the next day's options by 8 PM. Digitals and walk videos are due by noon the day the agent pitches them. Routine, meals and sleep stay in the model's DaySilk around these windows", "Models, agents"),
+    ("Each company (by tier)", "VIP every 14 days, Tier A every 21, B every 45, C every 75. Outreach leads brings each one back when it is due, with the best time in that person's city", "Demontez + team"),
     ("Each test shoot", "T-14 team locked, T-7 concept approved, T-3 call sheet, T-2 model confirms, T+2 selects, T+4 approvals, T+7 finals, T+9 package out", "Agents, models, mother agencies"),
 ]
 

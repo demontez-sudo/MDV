@@ -1,18 +1,23 @@
 import { requireUser, parseBody, json, errorResponse, adminClient } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 import { clean, cleanEmail } from './_lib/outreach-log.mjs';
+import { roleOf, zoneOf, timing, tierDays } from './_lib/reach-windows.mjs';
 
 // Outreach leads: who to contact next, worked out from Companies, Contacts, the Outreach log and Model Scouting.
 //   follow_up    emailed a few days ago and nobody replied
 //   re_engage    a company we have talked to before that has gone quiet
 //   first        an active company we have never contacted
 //   scouting     a scouted person nobody has emailed yet
+// Every lead also gets who they are (casting director, photographer, brand…), where they are, what to pitch and the best
+// moment to reach them in their local time that is also inside Demontez's hours (see _lib/reach-windows.mjs).
+// Quiet companies come back sooner by tier: VIP 14 days, A 21, B 45, C 75, unranked 45.
 // "plan" turns chosen leads into timed tasks on the person's schedule (they show on the DaySilk Day view).
 
 const DAY = 864e5;
 const rows = async q => { const { data, error } = await q; if (error) throw error; return data || []; };
 const optional = async q => { const { data, error } = await q; return error ? [] : (data || []); };
 const bad = (m, code = 400) => { const e = new Error(m); e.statusCode = code; e.publicMessage = m; return e; };
+const TIER_SCORE = t => ({ VIP: 30, A: 22, B: 12, C: 4 })[String(t || '').toUpperCase()] || 0;
 const TYPE_SCORE = t => /brand|casting|client|editorial|magazine|publication|fashion|production/i.test(String(t || '')) ? 2 : /agency|mother/i.test(String(t || '')) ? 1 : 0;
 const days = (a, b) => Math.floor((b - a) / DAY);
 
@@ -53,8 +58,8 @@ export function buildLeads({ companies, contacts, acts, prospects, now = Date.no
   for (const co of companies) {
     if (used.has(co.id)) continue;
     const t = lastByCo.get(co.id); if (!t) continue;
-    const age = days(t, now); if (age < 45 || age > 540) continue;
-    re.push({ kind: 're_engage', score: 60 + TYPE_SCORE(co.company_type) * 8 + Math.min(age / 10, 20), why: `Last in touch ${age} days ago`, contact: person(pick(co)), company: { id: co.id, label: co.name }, audience: /casting/i.test(co.company_type || '') ? 'casting' : 'brand', last_touch: new Date(t).toISOString() });
+    const age = days(t, now), limit = tierDays(co.tier); if (age < limit || age > 540) continue;
+    re.push({ kind: 're_engage', score: 60 + TYPE_SCORE(co.company_type) * 8 + TIER_SCORE(co.tier) + Math.min(age / 10, 20), why: `Last in touch ${age} days ago${co.tier ? ' · Tier ' + co.tier + ' (every ' + limit + ' days)' : ''}`, contact: person(pick(co)), company: { id: co.id, label: co.name }, audience: /casting/i.test(co.company_type || '') ? 'casting' : 'brand', last_touch: new Date(t).toISOString() });
   }
   re.sort((x, y) => y.score - x.score).slice(0, limits.re_engage).forEach(l => { leads.push(l); used.add(l.company.id); });
 
@@ -64,7 +69,7 @@ export function buildLeads({ companies, contacts, acts, prospects, now = Date.no
     if (used.has(co.id) || lastByCo.has(co.id)) continue;
     const ct = pick(co), email = ct ? cleanEmail(ct.email) : cleanEmail(co.email);
     if (!email) continue;
-    first.push({ kind: 'first', score: 40 + TYPE_SCORE(co.company_type) * 10 + (ct ? 5 : 0), why: 'Never contacted' + (co.company_type ? ' · ' + String(co.company_type).replace(/_/g, ' ') : ''), contact: person(ct), company: { id: co.id, label: co.name, email: cleanEmail(co.email) }, audience: /casting/i.test(co.company_type || '') ? 'casting' : 'brand', last_touch: null });
+    first.push({ kind: 'first', score: 40 + TYPE_SCORE(co.company_type) * 10 + TIER_SCORE(co.tier) + (ct ? 5 : 0), why: 'Never contacted' + (co.company_type ? ' · ' + String(co.company_type).replace(/_/g, ' ') : ''), contact: person(ct), company: { id: co.id, label: co.name, email: cleanEmail(co.email) }, audience: /casting/i.test(co.company_type || '') ? 'casting' : 'brand', last_touch: null });
   }
   first.sort((x, y) => y.score - x.score).slice(0, limits.first).forEach(l => leads.push(l));
 
@@ -78,6 +83,18 @@ export function buildLeads({ companies, contacts, acts, prospects, now = Date.no
     sc.push({ kind: 'scouting', score: 30, why: 'Scouted' + (p.city ? ' in ' + p.city : '') + ', not contacted yet', prospect: { id: p.id, label: p.display_name, email: cleanEmail(p.email) }, audience: 'scout', last_touch: null });
   }
   sc.slice(0, limits.scouting).forEach(l => leads.push(l));
+
+  // who they are, where they are, and the best moment to reach them (in rank order, 25 minutes apart)
+  const prById = new Map(prospects.map(p => [p.id, p])), taken = new Set();
+  for (const l of leads) {
+    const co = l.company ? coById.get(l.company.id) : null, ct = l.contact ? ctById.get(l.contact.id) : null, pr = l.prospect ? prById.get(l.prospect.id) : null;
+    const cmd = (ct?.metadata && typeof ct.metadata === 'object') ? ct.metadata : {}, omd = (co?.metadata && typeof co.metadata === 'object') ? co.metadata : {};
+    const addr = (co?.address && typeof co.address === 'object') ? co.address : {};
+    const z = zoneOf({ city: pr?.city || cmd.city || addr.city || omd.city || '', country: cmd.country || addr.country || omd.country || '', metadataTz: cmd.timezone || omd.timezone || '' });
+    const role = roleOf({ contactRole: ct?.role || '', companyType: co?.company_type || '', kind: l.kind });
+    Object.assign(l, timing({ role, tz: z.tz, city: z.city, known: z.known, now, taken }), { tier: co?.tier || null });
+    if (role === 'casting') l.audience = 'casting';
+  }
   return leads;
 }
 
@@ -92,8 +109,8 @@ export const handler = async event => {
     if (event.httpMethod === 'GET') {
       const admin = await requirePermission(user.id, orgId, 'crm.read');
       const [companies, contacts, acts, prospects] = await Promise.all([
-        rows(admin.from('companies').select('id,name,company_type,status,website,email').eq('organization_id', orgId).limit(2000)),
-        rows(admin.from('contacts').select('id,display_name,email,role,company_id').eq('organization_id', orgId).limit(4000)),
+        rows(admin.from('companies').select('id,name,company_type,status,tier,website,email,address,metadata').eq('organization_id', orgId).limit(2000)),
+        rows(admin.from('contacts').select('id,display_name,email,role,company_id,metadata').eq('organization_id', orgId).limit(4000)),
         rows(admin.from('crm_activity').select('id,company_id,contact_id,activity_type,direction,subject,occurred_at,metadata').eq('organization_id', orgId).order('occurred_at', { ascending: false }).limit(4000)),
         optional(admin.from('scouting_prospects').select('id,display_name,email,city,stage,metadata').eq('organization_id', orgId).limit(800))
       ]);
@@ -113,8 +130,9 @@ export const handler = async event => {
       const verb = l.kind === 'follow_up' ? 'Follow up with' : l.kind === 'scouting' ? 'Email scouted person' : l.kind === 're_engage' ? 'Re-engage' : 'Introduce us to';
       const title = `Outreach: ${verb} ${who}${l.company_label && who !== l.company_label ? ' (' + clean(l.company_label).slice(0, 60) + ')' : ''}`;
       const due = slots[i] && !isNaN(new Date(slots[i])) ? new Date(slots[i]).toISOString() : null;
-      const base = { organization_id: orgId, title, description: clean(l.why).slice(0, 400) || null, priority: 'normal', due_at: due, category: 'outreach', status: 'open' };
-      let ins = await admin.from('tasks').insert({ ...base, created_by: user.id, visibility: 'organization', metadata: { outreach_lead: { kind: l.kind || null, contact_id: l.contact_id || null, company_id: l.company_id || null, prospect_id: l.prospect_id || null } } }).select('id,title,due_at').single();
+      const note = [clean(l.why), l.role_label ? clean(l.role_label) + (l.city ? ' in ' + clean(l.city) : '') : '', l.pitch ? 'Pitch: ' + clean(l.pitch) : '', l.best_why ? 'Timing: ' + clean(l.best_why) : ''].filter(Boolean).join('\n');
+      const base = { organization_id: orgId, title, description: note.slice(0, 600) || null, priority: 'normal', due_at: due, category: 'outreach', status: 'open' };
+      let ins = await admin.from('tasks').insert({ ...base, created_by: user.id, visibility: 'organization', metadata: { outreach_lead: { kind: l.kind || null, role: clean(l.role) || null, tz: clean(l.tz) || null, contact_id: l.contact_id || null, company_id: l.company_id || null, prospect_id: l.prospect_id || null } } }).select('id,title,due_at').single();
       if (ins.error) ins = await admin.from('tasks').insert(base).select('id,title,due_at').single();
       if (ins.error) throw ins.error;
       if (member?.id) { try { await admin.from('task_assignments').insert({ organization_id: orgId, task_id: ins.data.id, member_id: member.id, assignment_role: 'assignee', assigned_by: user.id }); } catch (_e) { /* the task still exists */ } }

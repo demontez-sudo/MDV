@@ -116,4 +116,6 @@ html body .ot .ot-filters{display:flex;flex-wrap:wrap;gap:8px}
 .ot-lead-main{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;min-width:0}.ot-lead-main b{font-weight:600;font-size:14px}.ot-lead-main em{font-style:normal;color:var(--mute);font-size:12.5px}.ot-lead-main small{flex-basis:100%;font-size:12px;letter-spacing:0;color:var(--mute)}
 .ot-lead-k{font:600 9px var(--fM,monospace);letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--l2);color:var(--g)}.ot-lead-k.warn{border-color:#e2b04f;color:#e2b04f}
 .ot-lead-done{font-size:12px;color:#91b18b}
+.ot-lead-role{font-size:11.5px;color:var(--g)}.ot-lead-main small.ot-lead-when{color:var(--ink);opacity:.85}.ot-lead-main small.ot-lead-pitch{opacity:.8}
+.ot-lead-mode input[type=radio]{accent-color:var(--g,#d4b077);margin:0}
 @media(max-width:700px){.ot-lead-list li{grid-template-columns:24px 1fr}.ot-lead-act{grid-column:2}}
