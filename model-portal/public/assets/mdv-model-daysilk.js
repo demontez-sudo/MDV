@@ -167,8 +167,12 @@ function syncBookouts(share,quiet){
 /* ---------- what the agency has planned ---------- */
 function agencyItems(date){
   var k=dk(date),rows=[];
-  try{rows=window.VEUX_MODEL_V15&&VEUX_MODEL_V15.calendarRows?VEUX_MODEL_V15.calendarRows():[];}catch(e){rows=[];}
-  return rows.filter(function(r){return r.date&&dk(r.date)===k&&!/declin|cancel/i.test(String(r.status||''));}).map(function(r){return {kind:r.kind,title:r.title,start:new Date(r.date),end:(r.end||r.deadline)?new Date(r.end||r.deadline):null,sub:r.sub||'',status:r.status||'',id:r.id};});
+  var V=window.VEUX_MODEL_V15||{};
+  /* Everything on the model's calendar (bookings, castings, events, travel, time off, tasks), the same list as My Calendar. */
+  try{rows=V.calendarAllRows?V.calendarAllRows():(V.calendarRows?V.calendarRows():[]);}catch(e){rows=[];}
+  /* Book-outs she shares from DaySilk already show as her own blocks, so skip their copies here. */
+  var skipTimeOff=!!(S.ds&&S.ds.bookouts&&S.ds.bookouts.shared);
+  return rows.filter(function(r){return r.date&&dk(r.date)===k&&!/declin|cancel/i.test(String(r.status||''))&&!(skipTimeOff&&r.kind==='unavailable');}).map(function(r){return {kind:r.kind,title:r.title,start:new Date(r.date),end:(r.end||r.deadline)?new Date(r.end||r.deadline):null,sub:r.sub||'',status:r.status||'',id:r.id};});
 }
 function tlabel(d){var h=d.getHours(),m=d.getMinutes();return (h%12||12)+(m?':'+String(m).padStart(2,'0'):'')+(h>=12?'pm':'am');}
 
@@ -184,13 +188,13 @@ function todayTab(){
   var nowM=now.getHours()*60+now.getMinutes(),cur=null,nxt=null;
   timed.forEach(function(x){var e=x.e||x.s+30;if(isT&&x.s<=nowM&&e>nowM&&!cur)cur=x;else if((!isT||x.s>nowM)&&!nxt)nxt=x;});
   function line(l,x){return '<div class="mds-nn"><small>'+l+'</small>'+(x?'<b>'+esc(x.title)+'</b><span>'+esc(tl(U().m2t(x.s)))+(x.sub?' · '+esc(x.sub):'')+'</span>':'<b class="mute">Nothing '+(l==='Now'?'right now':'else planned')+'</b>')+'</div>';}
-  var agencyHtml=ag.length?ag.map(function(x){return '<div class="mds-ag '+esc(x.kind)+'"><time>'+esc(x.start.getHours()===0&&x.start.getMinutes()===0?'All day':tlabel(x.start)+(x.end&&x.end>x.start?' – '+tlabel(x.end):''))+'</time><div><b>'+esc(x.title)+'</b><small>'+esc([x.kind,x.sub,x.status].filter(Boolean).join(' · '))+'</small></div></div>';}).join(''):'<p class="mds-empty">Nothing booked by your agency today.</p>';
+  var agencyHtml=ag.length?ag.map(function(x){return '<div class="mds-ag '+esc(x.kind)+'"><time>'+esc(x.start.getHours()===0&&x.start.getMinutes()===0?'All day':tlabel(x.start)+(x.end&&x.end>x.start?' – '+tlabel(x.end):''))+'</time><div><b>'+esc(x.title)+'</b><small>'+esc([x.kind,x.sub,x.status].filter(Boolean).join(' · '))+'</small></div></div>';}).join(''):'<p class="mds-empty">Nothing on your calendar today.</p>';
   var routine=blocks.map(function(b){var on=dd.done.indexOf('b:'+b.id)>-1;return '<li class="'+esc(b.cat)+(on?' done':'')+'"><button type="button" class="mds-chk'+(on?' on':'')+'" data-mds-block="'+esc(b.id)+'" aria-label="Mark done"></button><time>'+esc(tl(b.start))+'</time><span>'+esc(b.title)+'</span>'+(b.bookout?'<em>Shared as a book-out</em>':'')+'</li>';}).join('');
   var hab=habits.map(function(h){var on=dd.done.indexOf(h.id)>-1;return '<button type="button" class="mds-h'+(on?' on':'')+'" data-mds-habit="'+esc(h.id)+'">'+(on?'✓ ':'')+esc(h.label)+'</button>';}).join('');
   var bigH=big.map(function(b,i){return '<li class="'+(b.done?'done':'')+'"><button type="button" class="mds-chk'+(b.done?' on':'')+'" data-mds-big="'+i+'" aria-label="Mark done"></button><input type="text" maxlength="140" data-mds-bigt="'+i+'" value="'+esc(b.t)+'" placeholder="Big '+(i+1)+': one result that makes today a win"></li>';}).join('');
   var rv=dd.review||{};
-  return '<section class="mds-top"><div class="mds-t1">'+ring(pct)+'<div><small>'+esc(d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'}))+'</small><h2>'+(isT?greet()+(firstName()?', '+esc(firstName()):''):esc(d.toLocaleDateString([],{weekday:'long'})))+'</h2><p>'+doneTasks+' of '+totalTasks+' done'+(ag.length?' · '+ag.length+' from your agency':'')+'</p></div></div><div class="mds-t2">'+(isT?line('Now',cur):'')+line(isT?'Next':'First up',nxt)+'</div><div class="mds-t3"><h4>Big 3</h4><ul class="mds-big">'+bigH+'</ul></div></section>'
-   +'<div class="mds-cols"><div><section class="mds-card"><header><h3>From your agency</h3></header>'+agencyHtml+'</section><section class="mds-card"><header><h3>Your day</h3><span>'+blocks.length+' blocks</span></header><ul class="mds-rt">'+routine+'</ul></section></div>'
+  return '<section class="mds-top"><div class="mds-t1">'+ring(pct)+'<div><small>'+esc(d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'}))+'</small><h2>'+(isT?greet()+(firstName()?', '+esc(firstName()):''):esc(d.toLocaleDateString([],{weekday:'long'})))+'</h2><p>'+doneTasks+' of '+totalTasks+' done'+(ag.length?' · '+ag.length+' on your calendar':'')+'</p></div></div><div class="mds-t2">'+(isT?line('Now',cur):'')+line(isT?'Next':'First up',nxt)+'</div><div class="mds-t3"><h4>Big 3</h4><ul class="mds-big">'+bigH+'</ul></div></section>'
+   +'<div class="mds-cols"><div><section class="mds-card"><header><h3>On your calendar</h3></header>'+agencyHtml+'</section><section class="mds-card"><header><h3>Your day</h3><span>'+blocks.length+' blocks</span></header><ul class="mds-rt">'+routine+'</ul></section></div>'
    +'<div><section class="mds-card"><header><h3>Daily habits</h3><span>'+doneH+' of '+habits.length+'</span></header><div class="mds-hb">'+hab+'</div></section>'
    +'<section class="mds-card"><header><h3>Evening review</h3><span>2 minutes</span></header><label class="mds-f"><span>One win today</span><input type="text" maxlength="300" data-mds-rv="win" value="'+esc(rv.win||'')+'"></label><label class="mds-f"><span>What was hard</span><input type="text" maxlength="300" data-mds-rv="hard" value="'+esc(rv.hard||'')+'"></label><div class="mds-mood"><span>Energy today</span>'+[1,2,3,4,5].map(function(n){return '<button type="button" class="'+(Number(rv.mood)===n?'on':'')+'" data-mds-mood="'+n+'">'+n+'</button>';}).join('')+'</div></section></div></div>';
 }
