@@ -12,8 +12,7 @@
 /api/public/package https://maison-agent.netlify.app/api/public/package 200!
 /api/public/package/feedback https://maison-agent.netlify.app/api/public/package/feedback 200!
 # The set-up and reset pages live on the agent site (it holds the sign-in service); everything else under /portal is the model app.
-# Without the trailing slash the app's stylesheets would load from the wrong folder and the page shows unstyled.
-/portal /portal/ 301!
+# (No /portal -> /portal/ redirect here: Netlify ignores the trailing slash when matching, so it loops forever. The app fixes the address itself.)
 /portal/join https://maison-agent.netlify.app/portal/join 200!
 /portal/join/ https://maison-agent.netlify.app/portal/join 200!
 /portal/reset https://maison-agent.netlify.app/portal/reset 200!
@@ -21,5 +20,6 @@
 /portal/password https://maison-agent.netlify.app/portal/password 200!
 /portal/activate https://maison-agent.netlify.app/portal/activate 200!
 /portal/* https://maison-models.netlify.app/:splat 200!
+/portal https://maison-models.netlify.app/ 200!
 /ma/* https://maison-ma.netlify.app/:splat 200!
 /ma https://maison-ma.netlify.app/ 200!
