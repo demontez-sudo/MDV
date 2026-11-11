@@ -85,6 +85,34 @@ export default async (req)=>{
     const status=String(raw.response||'').toLowerCase()==='approved'?'accepted':'declined';
     return fromLegacyResponse(await invoke(actionHandler,req,{...raw,action:'request_response',status,request_type:'approval'}));
   }
+  if(path==='/api/model/development-submissions'&&method==='GET'){
+    // Read-only list for the Skin & Walks page: this model's own submissions, with signed links to their files.
+    // If the submissions table is not available yet, show an empty list instead of an error.
+    try{
+      const { requireUser } = await import('./_lib/auth.mjs');
+      const { requireModelPortal } = await import('./_lib/portal-bridge.mjs');
+      const { user } = await requireUser(await toLegacyEvent(req));
+      const orgSlug=new URL(req.url).searchParams.get('organization')||'maison-de-veux';
+      const { admin, organization, modelId } = await requireModelPortal({user,organizationSlug:orgSlug});
+      const { data:subs, error:subErr } = await admin.from('model_development_submissions').select('*').eq('organization_id',organization.id).eq('model_id',modelId).order('created_at',{ascending:false}).limit(100);
+      if(subErr){ return jsonResponse(200,{ok:true,submissions:[],note:'Submissions are not available yet.'}); }
+      const ids=(subs||[]).map(x=>x.id);
+      let links=[]; if(ids.length){ const r=await admin.from('document_links').select('document_id,resource_id,relationship').eq('organization_id',organization.id).eq('resource_type','development_submission').in('resource_id',ids); links=r.data||[]; }
+      const docIds=[...new Set(links.map(l=>l.document_id).filter(Boolean))];
+      let docs=[]; if(docIds.length){ const r=await admin.from('documents').select('id,name,mime_type,storage_provider,storage_bucket,storage_path,external_url').in('id',docIds); docs=r.data||[]; }
+      const byDoc=new Map(docs.map(d=>[d.id,d])), files=new Map();
+      for(const l of links){
+        const d=byDoc.get(l.document_id); if(!d) continue;
+        let fileUrl=d.external_url||null;
+        if(!fileUrl&&d.storage_bucket&&d.storage_path){ const sg=await admin.storage.from(d.storage_bucket).createSignedUrl(d.storage_path,3600); fileUrl=sg?.data?.signedUrl||null; }
+        const list=files.get(l.resource_id)||[]; list.push({id:d.id,name:d.name,mime_type:d.mime_type,relationship:l.relationship||null,url:fileUrl}); files.set(l.resource_id,list);
+      }
+      return jsonResponse(200,{ok:true,submissions:(subs||[]).map(x=>({...x,files:files.get(x.id)||[]}))});
+    }catch(error){
+      const code=error?.statusCode||500;
+      return jsonResponse(code,{error:code>=500?'Server error':(error?.message||'Could not load submissions.')});
+    }
+  }
   if(path==='/api/model/development-submissions'&&method==='POST'){
     const raw=await req.json().catch(()=>({}));
     if(raw.action==='withdraw')return jsonResponse(409,{error:'Withdrawal requires agency review in the unified portal.'});
