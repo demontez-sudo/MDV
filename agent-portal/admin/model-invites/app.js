@@ -33,7 +33,7 @@ function visible(){
   return S.rows.filter(function(r){
     if(S.filter==='todo'&&(r.stage==='signed_in'||r.stage==='disabled'))return false;
     if(S.filter!=='todo'&&S.filter!=='all'&&r.stage!==S.filter)return false;
-    return !q||(r.name+' '+(r.contact_email||'')+' '+(r.login_email||'')).toLowerCase().indexOf(q)>=0;
+    return !q||(r.name+' '+(r.contact_email||'')+' '+(r.login_email||'')+' '+(r.deliver_to||'')).toLowerCase().indexOf(q)>=0;
   });
 }
 function paint(){
@@ -43,11 +43,11 @@ function paint(){
   $('tabs').innerHTML=tabs.map(function(t){return '<button type="button" data-tab="'+t[0]+'" class="'+(S.filter===t[0]?'on':'')+'">'+esc(t[1])+'</button>';}).join('');
   var rows=visible();
   $('rows').innerHTML=rows.length?rows.map(function(r){
-    var email=r.login_email||r.contact_email||'',noEmail=!email,canSend=!noEmail&&r.stage!=='disabled',label=r.stage==='invited'||r.invite_count?'Resend':'Send invite';
+    var email=r.deliver_to||'',noEmail=!email,canSend=!noEmail&&r.stage!=='disabled',label=r.stage==='invited'||r.invite_count?'Resend':'Send invite';
     return '<tr><td><input type="checkbox" data-sel="'+esc(r.model_id)+'"'+(S.sel[r.model_id]?' checked':'')+(canSend?'':' disabled')+' aria-label="Select '+esc(r.name)+'"></td>'
       +'<td><b>'+esc(r.name)+'</b>'+(r.phone?'<small>'+esc(r.phone)+'</small>':'')+'</td>'
       +'<td><span class="pill '+esc(r.stage)+'">'+esc((STAGES.filter(function(s){return s[0]===r.stage;})[0]||[0,r.stage])[1])+'</span>'+(r.stage==='signed_in'&&r.last_login?'<small>last in '+esc(ago(r.last_login))+'</small>':'')+'</td>'
-      +'<td class="hide">'+(noEmail?'<span style="color:var(--bad)">No email on the profile</span>':esc(email))+'</td>'
+      +'<td class="hide">'+(noEmail?'<span style="color:var(--bad)">No real email on the profile</span>'+(r.login_placeholder?'<small>The login is an internal address. Add the model\'s email to their profile.</small>':''):esc(email)+(r.login_placeholder?'<small>The login switches to this address when you invite.</small>':(r.login_email&&r.login_email.toLowerCase()!==email?'<small>Login: '+esc(r.login_email)+'</small>':'')))+'</td>'
       +'<td class="hide">'+(r.invited_at?esc(ago(r.invited_at))+'<small>'+r.invite_count+' sent</small>':'<span class="mute">Never</span>')+'</td>'
       +'<td style="white-space:nowrap;text-align:right">'+(r.stage==='signed_in'?'':'<button class="sm" data-send="'+esc(r.model_id)+'"'+(canSend?'':' disabled')+'>'+label+'</button> <button class="sm" data-copy="'+esc(r.model_id)+'"'+(canSend?'':' disabled')+'>Copy message</button>')+'</td></tr>';
   }).join(''):'<tr><td colspan="6" class="mute">Nobody here.</td></tr>';
@@ -108,7 +108,7 @@ async function testMail(){
 document.addEventListener('click',function(e){
   var t=e.target.closest&&e.target.closest('[data-tab],[data-send],[data-copy]');
   if(t){if(t.dataset.tab){S.filter=t.dataset.tab;paint();}else if(t.dataset.send)sendOne(t.dataset.send);else if(t.dataset.copy)copyOne(t.dataset.copy);return;}
-  if(e.target.id==='selNot'){S.sel={};visible().forEach(function(r){if((r.login_email||r.contact_email)&&r.stage!=='signed_in'&&r.stage!=='disabled')S.sel[r.model_id]=true;});paint();}
+  if(e.target.id==='selNot'){S.sel={};visible().forEach(function(r){if(r.deliver_to&&r.stage!=='signed_in'&&r.stage!=='disabled')S.sel[r.model_id]=true;});paint();}
   if(e.target.id==='selNone'){S.sel={};paint();}
   if(e.target.id==='sendSel')sendSelected();
   if(e.target.id==='copyclose')$('copybox').hidden=true;

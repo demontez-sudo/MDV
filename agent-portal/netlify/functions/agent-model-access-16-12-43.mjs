@@ -15,6 +15,9 @@ const INVITE_AT='cavyre_invited_at',INVITE_N='cavyre_invite_count',INVITE_BY='ca
 const PORTAL_URL='https://maisondeveux.com/portal';
 const INVITE_TTL_MS=7*24*60*60*1000;
 const BULK_MAX=3;
+const low=v=>String(v||'').trim().toLowerCase();
+/* Old accounts were made with an internal login (portal-model-name-1234@maisondeveux.com). No model can read mail sent there. */
+const isInternalLogin=e=>/^portal-model-/i.test(low(e))||/@maisondeveux\.com$/i.test(low(e));
 const NOT_ON_ROSTER=/^(archiv|releas|inactive|former)/i;
 
 function tempPassword(){
@@ -28,7 +31,7 @@ function stageOf(ctx){
   if(!ctx.link||!ctx.user)return 'not_linked';
   const m=safeMeta(ctx.user);
   if(m[DISABLED]||ctx.user.banned_until)return 'disabled';
-  if(m.cavyre_password_changed_via==='model_self_service'||(ctx.user.last_sign_in_at&&!m[RESET_FLAG]))return 'signed_in';
+  if(m.cavyre_password_changed_via==='model_self_service'||(ctx.user.last_sign_in_at&&!m[RESET_FLAG]&&!isInternalLogin(ctx.user.email)))return 'signed_in';
   return m[INVITE_AT]?'invited':'ready';
 }
 async function linked(admin,orgId,modelId){
@@ -44,7 +47,7 @@ async function linked(admin,orgId,modelId){
 }
 function view(ctx){
   const u=ctx.user,m=safeMeta(u),expires=m[TEMP_EXP]||null,reset=!!m[RESET_FLAG],disabled=!!m[DISABLED]||!!u?.banned_until;
-  return {model_id:ctx.model.id,model_name:ctx.model.display_name||'Model',linked:!!ctx.link,auth_user_id:u?.id||null,email:u?.email||null,suggested_email:ctx.model.suggested_email||null,status:disabled?'DISABLED':(ctx.link?'ACTIVE':'NOT LINKED'),authentication:ctx.link?'Email + Password':'Not linked',last_login:u?.last_sign_in_at||null,password_status:disabled?'ACCESS DISABLED':reset?'TEMPORARY PASSWORD / RESET REQUIRED':'ACTIVE',reset_required:reset,temp_password_expires_at:expires,portal_disabled:disabled,stage:stageOf(ctx),invited_at:m[INVITE_AT]||null,invite_count:Number(m[INVITE_N])||0,invite_channel:m[INVITE_CH]||null,password_set_by_model:m.cavyre_password_changed_via==='model_self_service'};
+  return {model_id:ctx.model.id,model_name:ctx.model.display_name||'Model',linked:!!ctx.link,auth_user_id:u?.id||null,email:u?.email||null,suggested_email:ctx.model.suggested_email||null,status:disabled?'DISABLED':(ctx.link?'ACTIVE':'NOT LINKED'),authentication:ctx.link?'Email + Password':'Not linked',last_login:u?.last_sign_in_at||null,password_status:disabled?'ACCESS DISABLED':reset?'TEMPORARY PASSWORD / RESET REQUIRED':'ACTIVE',reset_required:reset,temp_password_expires_at:expires,portal_disabled:disabled,stage:stageOf(ctx),deliver_to:(EMAIL_RX.test(low(ctx.model.suggested_email))&&!isInternalLogin(ctx.model.suggested_email))?low(ctx.model.suggested_email):(u?.email&&!isInternalLogin(u.email)?low(u.email):null),placeholder_login:!!u&&isInternalLogin(u.email),invited_at:m[INVITE_AT]||null,invite_count:Number(m[INVITE_N])||0,invite_channel:m[INVITE_CH]||null,password_set_by_model:m.cavyre_password_changed_via==='model_self_service'};
 }
 
 async function findAuthUserByEmail(admin,email){
@@ -112,10 +115,23 @@ async function changeLoginEmail(admin,organization,ctx,email,issuedBy){
   return {user,link,temporary_password,relinked};
 }
 
-async function sendReset(admin,organization,ctx){
-  const email=String(ctx.user?.email||'').trim().toLowerCase();
-  if(!EMAIL_RX.test(email)){const e=new Error('The linked authentication account does not have a valid email.');e.statusCode=409;throw e;}
-  const recoveryToken=issueCompactRecoveryToken({userId:ctx.user.id,modelId:ctx.model.id,email});
+/* Where a link should go. The profile's own email is the real inbox: if the login is still an internal address, switch the login to it first. */
+async function useRealInbox(admin,organization,ctx,issuedBy){
+  const contact=low(ctx.model.suggested_email),contactOk=EMAIL_RX.test(contact)&&!isInternalLogin(contact);
+  let switched=false;
+  if(ctx.user&&isInternalLogin(ctx.user.email)){
+    if(!contactOk){const e=new Error('This model\'s login is an internal address and the profile has no real email. Add the model\'s email to the profile first.');e.statusCode=409;throw e;}
+    const ch=await changeLoginEmail(admin,organization,ctx,contact,issuedBy);
+    ctx={...ctx,link:ch.link,user:ch.user};switched=true;
+  }
+  const loginEmail=low(ctx.user?.email);
+  if(!EMAIL_RX.test(loginEmail)){const e=new Error('The linked authentication account does not have a valid email.');e.statusCode=409;throw e;}
+  return {ctx,loginEmail,deliverTo:contactOk?contact:loginEmail,switched};
+}
+async function sendReset(admin,organization,ctx,issuedBy){
+  const inbox=await useRealInbox(admin,organization,ctx,issuedBy);ctx=inbox.ctx;
+  const email=inbox.deliverTo;
+  const recoveryToken=issueCompactRecoveryToken({userId:ctx.user.id,modelId:ctx.model.id,email:inbox.loginEmail});
   const resetUrl=`${MODEL_PORTAL_URL}?c=${recoveryToken}`;
   const {data:settings}=await admin.from('organization_settings').select('sender_name,sender_email,reply_to_email').eq('organization_id',organization.id).maybeSingle();
   const fromEmail=String(settings?.sender_email||process.env.VEUX_DEFAULT_SENDER_EMAIL||'').trim().toLowerCase();
@@ -123,7 +139,7 @@ async function sendReset(admin,organization,ctx){
   const senderName=settings?.sender_name||organization.name||'Maison de Veux';
   const delivery=await sendResendEmail({from_name:senderName,from_email:fromEmail,reply_to:EMAIL_RX.test(String(settings?.reply_to_email||'').trim())?String(settings.reply_to_email).trim():undefined,to_emails:[email],cc_emails:[],bcc_emails:[],subject:'Reset your Model Portal password',html_body:`<div style="font-family:Arial,Helvetica,sans-serif;max-width:620px;margin:auto;padding:36px;color:#17130f"><div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#7b6a8e;margin-bottom:18px">CAVYRE · MODEL PORTAL</div><h1 style="font-family:Georgia,serif;font-weight:400;font-size:34px;margin:0 0 18px">Create a new password</h1><p style="font-size:15px;line-height:1.7">Your agency has issued a secure Model Portal password reset. Use the button below to create your new password.</p><p style="margin:28px 0"><a href="${resetUrl}" style="display:inline-block;background:#17130f;color:#fff;text-decoration:none;padding:14px 20px;letter-spacing:.08em">CREATE NEW PASSWORD</a></p><p style="font-size:12px;line-height:1.6;color:#777">If you were not expecting this, contact your agency.</p></div>`,text_body:`Create a new Model Portal password:\n\n${resetUrl}`,idempotency_key:`model-recovery:${ctx.user.id}:${Date.now()}`});
   try{await admin.from('email_messages').insert({organization_id:organization.id,template_key:'model_password_recovery',status:'sent',provider:delivery.provider||'resend',provider_message_id:delivery.providerMessageId||null,from_name:senderName,from_email:fromEmail,reply_to:EMAIL_RX.test(String(settings?.reply_to_email||'').trim())?String(settings.reply_to_email).trim():null,to_emails:[email],cc_emails:[],bcc_emails:[],subject:'Reset your Model Portal password',html_body:'[secure recovery link delivered and redacted]',text_body:null,source_type:'model_password_recovery',sent_at:new Date().toISOString(),metadata:{model_id:ctx.model.id,user_id:ctx.user.id,secure_link_redacted:true}});}catch(_e){}
-  return {sent:true,email,provider:delivery.provider||'resend'};
+  return {sent:true,email,login_email:inbox.loginEmail,ctx,provider:delivery.provider||'resend'};
 }
 
 
@@ -150,8 +166,8 @@ async function sendInvite(admin,organization,ctx,{email,channel,issuedBy}){
   }
   const meta0=safeMeta(ctx.user);
   if(meta0[DISABLED]||ctx.user.banned_until){const e=new Error('Portal access is switched off for this model. Switch it on first.');e.statusCode=409;throw e;}
-  const loginEmail=String(ctx.user.email||'').trim().toLowerCase();
-  if(!EMAIL_RX.test(loginEmail)){const e=new Error('This model does not have a valid login email.');e.statusCode=409;throw e;}
+  const inbox=await useRealInbox(admin,organization,ctx,issuedBy);ctx=inbox.ctx;
+  const loginEmail=inbox.loginEmail,deliverTo=inbox.deliverTo;
   const token=issueCompactRecoveryToken({userId:ctx.user.id,modelId:ctx.model.id,email:loginEmail,ttlMs:INVITE_TTL_MS});
   const url=`${JOIN_URL}?c=${token}`;   /* short on purpose: easy to tap, and it fits on one line in a text */
   const agency=organization.name||'Maison de Veux',name=ctx.model.display_name||'';
@@ -159,14 +175,14 @@ async function sendInvite(admin,organization,ctx,{email,channel,issuedBy}){
   let sent=false,provider=null;
   if(channel==='email'){
     const {fromEmail,senderName,replyTo}=await senderFor(admin,organization);
-    const delivery=await sendResendEmail({from_name:senderName,from_email:fromEmail,reply_to:replyTo,to_emails:[loginEmail],cc_emails:[],bcc_emails:[],subject:`Welcome to your ${agency} Model Portal`,html_body:inviteHtml({name,email:loginEmail,url,agency}),text_body:text,idempotency_key:`model-invite:${ctx.user.id}:${Date.now()}`});
+    const delivery=await sendResendEmail({from_name:senderName,from_email:fromEmail,reply_to:replyTo,to_emails:[deliverTo],cc_emails:[],bcc_emails:[],subject:`Welcome to your ${agency} Model Portal`,html_body:inviteHtml({name,email:loginEmail,url,agency}),text_body:text,idempotency_key:`model-invite:${ctx.user.id}:${Date.now()}`});
     sent=true;provider=delivery.provider||'resend';
-    try{await admin.from('email_messages').insert({organization_id:organization.id,template_key:'model_portal_invite',status:'sent',provider,provider_message_id:delivery.providerMessageId||null,from_name:senderName,from_email:fromEmail,reply_to:replyTo||null,to_emails:[loginEmail],cc_emails:[],bcc_emails:[],subject:`Welcome to your ${agency} Model Portal`,html_body:'[secure set-up link delivered and redacted]',text_body:null,source_type:'model_portal_invite',sent_at:new Date().toISOString(),metadata:{model_id:ctx.model.id,user_id:ctx.user.id,secure_link_redacted:true}});}catch(_e){}
+    try{await admin.from('email_messages').insert({organization_id:organization.id,template_key:'model_portal_invite',status:'sent',provider,provider_message_id:delivery.providerMessageId||null,from_name:senderName,from_email:fromEmail,reply_to:replyTo||null,to_emails:[deliverTo],cc_emails:[],bcc_emails:[],subject:`Welcome to your ${agency} Model Portal`,html_body:'[secure set-up link delivered and redacted]',text_body:null,source_type:'model_portal_invite',sent_at:new Date().toISOString(),metadata:{model_id:ctx.model.id,user_id:ctx.user.id,secure_link_redacted:true}});}catch(_e){}
   }
   const {data,error}=await admin.auth.admin.updateUserById(ctx.user.id,{app_metadata:{...safeMeta(ctx.user),[INVITE_AT]:new Date().toISOString(),[INVITE_N]:(Number(meta0[INVITE_N])||0)+1,[INVITE_BY]:issuedBy,[INVITE_CH]:channel}});
   if(error)throw error;
   ctx={...ctx,user:data?.user||ctx.user};
-  return {ctx,sent,provider,email:loginEmail,expires_at,...(channel==='link'?{invite_url:url,message_text:text}:{})};
+  return {ctx,sent,provider,email:deliverTo,login_email:loginEmail,login_switched:inbox.switched,expires_at,...(channel==='link'?{invite_url:url,message_text:text}:{})};
 }
 
 /* Everyone on the roster and how far along they are: for the invites page. */
@@ -187,7 +203,7 @@ async function roster(admin,organization){
   return models.map(x=>{
     const user=users.get(linkBy.get(x.id))||null,pv=priv.get(x.id)||{};
     const ctx={model:x,link:linkBy.get(x.id)?{user_id:linkBy.get(x.id)}:null,user},meta=safeMeta(user);
-    return {model_id:x.id,name:x.display_name||'Model',status:x.status||'',contact_email:pv.email||null,phone:pv.whatsapp||pv.phone||null,login_email:user?.email||null,stage:stageOf(ctx),invited_at:meta[INVITE_AT]||null,invite_count:Number(meta[INVITE_N])||0,last_login:user?.last_sign_in_at||null,password_set_by_model:meta.cavyre_password_changed_via==='model_self_service'};
+    return {model_id:x.id,name:x.display_name||'Model',status:x.status||'',contact_email:pv.email||null,phone:pv.whatsapp||pv.phone||null,login_email:user?.email||null,login_placeholder:!!user&&isInternalLogin(user.email),deliver_to:(EMAIL_RX.test(low(pv.email))&&!isInternalLogin(pv.email))?low(pv.email):(user?.email&&!isInternalLogin(user.email)?low(user.email):null),stage:stageOf(ctx),invited_at:meta[INVITE_AT]||null,invite_count:Number(meta[INVITE_N])||0,last_login:user?.last_sign_in_at||null,password_set_by_model:meta.cavyre_password_changed_via==='model_self_service'};
   }).sort((a,b)=>a.name.localeCompare(b.name));
 }
 
@@ -236,7 +252,7 @@ export const handler=async(event)=>{
             const c=await linked(admin,organization.id,id),stage=stageOf(c);
             if(stage==='disabled'){out.push({model_id:id,name:c.model.display_name,ok:false,skipped:true,reason:'Portal access is switched off'});continue;}
             if(stage==='signed_in'&&!body.include_signed_in){out.push({model_id:id,name:c.model.display_name,ok:false,skipped:true,reason:'Already signed in'});continue;}
-            if(!c.user&&!EMAIL_RX.test(String(c.model.suggested_email||''))){out.push({model_id:id,name:c.model.display_name,ok:false,skipped:true,reason:'No email on the profile'});continue;}
+            if((!c.user||isInternalLogin(c.user.email))&&!(EMAIL_RX.test(low(c.model.suggested_email))&&!isInternalLogin(c.model.suggested_email))){out.push({model_id:id,name:c.model.display_name,ok:false,skipped:true,reason:'No real email on the profile'});continue;}
             const r=await sendInvite(admin,organization,c,{email:null,channel:'email',issuedBy:user.id});
             out.push({model_id:id,name:c.model.display_name,ok:true,sent_to:r.email});
           }catch(e){out.push({model_id:id,ok:false,reason:String(e.publicMessage||e.message||e).slice(0,200)});}
@@ -292,7 +308,7 @@ export const handler=async(event)=>{
       });
     }
     if(action==='send_reset_email'){
-      const out=await sendReset(admin,organization,ctx);return json(200,{ok:true,verified:true,...out,access:view(ctx)});
+      const {ctx:next,...out}=await sendReset(admin,organization,ctx,user.id);return json(200,{ok:true,verified:true,...out,access:view(next)});
     }
     if(action==='disable_portal_access'){
       const {data,error}=await admin.auth.admin.updateUserById(ctx.user.id,{ban_duration:'876000h',app_metadata:{...meta,[DISABLED]:true,cavyre_portal_disabled_at:new Date().toISOString(),cavyre_portal_disabled_by:user.id}});if(error)throw error;ctx={...ctx,user:data.user};
