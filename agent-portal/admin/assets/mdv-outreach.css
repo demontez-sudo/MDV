@@ -106,3 +106,14 @@ html body .ot .vx-select .vx-select-btn:not(#_){width:100%!important;min-height:
 html body .ot .ot-acts .vx-select:not(#_){min-width:0}
 html body .ot .ot-acts .vx-select .vx-select-btn:not(#_){min-height:28px!important;padding:0 12px!important;font-size:12px!important;background:transparent!important;color:var(--mute)!important}
 html body .ot .ot-filters{display:flex;flex-wrap:wrap;gap:8px}
+
+/* Outreach leads */
+.ot-leads{border:1px solid var(--l2);border-radius:16px;background:linear-gradient(160deg,rgba(212,176,119,.08),rgba(255,255,255,.02));padding:16px 18px}
+.ot-leads>header{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:8px}
+.ot-leads small{font-size:10px;letter-spacing:.2em;color:var(--g)}.ot-leads h2{margin:4px 0 4px;font:500 22px var(--fD,Georgia,serif);color:var(--ink)}.ot-leads header p{margin:0;color:var(--mute);font-size:12.5px;max-width:520px}
+.ot-lead-plan{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.ot-lead-plan label{font-size:12px;color:var(--mute);display:flex;gap:6px;align-items:center}.ot-lead-plan input[type=time]{background:var(--field);border:1px solid var(--l2);color:var(--ink);border-radius:8px;padding:5px 8px;font:inherit}
+.ot-lead-list{list-style:none;margin:0;padding:0}.ot-lead-list li{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 0;border-top:1px solid rgba(255,255,255,.06)}.ot-lead-list li.done{opacity:.55}
+.ot-lead-main{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;min-width:0}.ot-lead-main b{font-weight:600;font-size:14px}.ot-lead-main em{font-style:normal;color:var(--mute);font-size:12.5px}.ot-lead-main small{flex-basis:100%;font-size:12px;letter-spacing:0;color:var(--mute)}
+.ot-lead-k{font:600 9px var(--fM,monospace);letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:999px;border:1px solid var(--l2);color:var(--g)}.ot-lead-k.warn{border-color:#e2b04f;color:#e2b04f}
+.ot-lead-done{font-size:12px;color:#91b18b}
+@media(max-width:700px){.ot-lead-list li{grid-template-columns:24px 1fr}.ot-lead-act{grid-column:2}}

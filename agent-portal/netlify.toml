@@ -608,6 +608,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/outreach-leads"
+to = "/.netlify/functions/agent-outreach-leads"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/email-formats"
 to = "/.netlify/functions/agent-email-formats"
 status = 200

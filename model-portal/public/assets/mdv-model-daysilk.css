@@ -60,3 +60,9 @@
 .mds-tli.own b{font-weight:500;color:var(--mu)}
 .mds-tl-now{position:absolute;left:-4px;right:0;border-top:2px solid #e2704f;z-index:2}
 .mds-tl-now i{position:absolute;left:-4px;top:-6px;width:9px;height:9px;border-radius:50%;background:#e2704f}
+
+.mds-tl-card{padding-top:4px}.mds-tl{margin-top:14px;margin-bottom:6px}
+.mds-tl-hh{position:absolute;left:0;right:0;border-top:1px dashed rgba(255,255,255,.035)}
+.mds-tli small:first-of-type{opacity:.85}
+.mds-tl-toggle{display:block;margin:10px 2px 0;background:none;border:0;padding:0;color:var(--g);text-decoration:underline;cursor:pointer;font-size:12px}
+.pm .mds .mds-tl-toggle{min-height:0!important;border:0!important;background:none!important}

@@ -95,12 +95,14 @@ function signals(k){
 }
 function paint(){
   var el=S.host;if(!el)return;
+  if(S.leads===undefined){S.leads=null;loadLeads();}
   var k=S.data?kpis():null,sig=k?signals(k):[];
   var keep=el.querySelector('[data-q]'),had=keep&&document.activeElement===keep,pos=had?keep.selectionStart:0;
   el.innerHTML='<div class="ot">'
    +'<header class="ot-head"><div><small>OUTREACH</small><h1>Every touch, on the clock</h1><p>Emails and model packages are logged automatically. Add calls, texts, DMs and meetings here. Everyone you contact is saved as a contact.</p></div>'
    +'<div class="ot-ha"><button type="button" class="ot-btn" data-a="mail"><i class="ti ti-mail"></i> New email</button><button type="button" class="ot-btn gold" data-a="log"><i class="ti ti-plus"></i> Log outreach</button></div></header>'
    +(S.err?'<p class="ot-err">'+esc(S.err)+' <button type="button" class="ot-link" data-a="refresh">Try again</button></p>':'')
+   +leadsHtml()
    +(k?kpiHtml(k):'<div class="ot-kpis sk"><span></span><span></span><span></span><span></span></div>')
    +(sig.length?'<div class="ot-sig"><b><i class="ti ti-sparkles"></i> Veux</b>'+sig.map(function(x,i){return '<button type="button" data-sig="'+i+'">'+esc(x.t)+'</button>';}).join('')+'</div>':'')
    +'<nav class="ot-tabs">'+[['timeline','Timeline'],['followups','Follow-ups'+(k&&k.fu?' <i>'+k.fu+'</i>':'')],['people','People'],['companies','Companies']].map(function(t){return '<button type="button" data-view="'+t[0]+'" class="'+(S.view===t[0]?'on':'')+'">'+t[1]+'</button>';}).join('')+'</nav>'
@@ -367,6 +369,65 @@ window.renderOutreach=function(el){
   S.host=el;paint();tick();
   return load(true).then(paint);
 };
+
+/* ---------- outreach leads: who to contact next, and putting them on your schedule ---------- */
+var LK={follow_up:['Follow up','warn'],re_engage:['Re-engage',''],first:['First outreach',''],scouting:['Scouting','']};
+function leadName(l){return (l.contact&&l.contact.label)||(l.prospect&&l.prospect.label)||(l.company&&l.company.label)||'Lead';}
+function loadLeads(){
+  bridge().api('/api/agent/outreach-leads?organization='+encodeURIComponent(org())+'&_t='+Date.now(),{method:'GET',headers:{},__fresh:true}).then(function(d){
+    S.leads=Array.isArray(d.leads)?d.leads:[];S.leadSel={};S.leads.slice(0,6).forEach(function(l,i){S.leadSel[i]=true;});S.planned={};S.leadsErr='';paint();
+  },function(e){S.leads=[];S.leadsErr=msg(e);paint();});
+}
+function nextSlotStart(){var d=new Date(),m=d.getHours()*60+d.getMinutes()+10;m=Math.ceil(m/5)*5;if(m<9*60)m=9*60;if(m>=22*60)m=9*60;return ('0'+Math.floor(m/60)).slice(-2)+':'+('0'+(m%60)).slice(-2);}
+function leadsHtml(){
+  if(S.leads===undefined||S.leads===null)return '<section class="ot-leads"><header><div><small>OUTREACH LEADS</small><h2>Who to contact next</h2></div></header><p class="ot-empty">Finding leads…</p></section>';
+  if(S.leadsErr)return '<section class="ot-leads"><header><div><small>OUTREACH LEADS</small><h2>Who to contact next</h2></div></header><p class="ot-err">'+esc(S.leadsErr)+' <button type="button" class="ot-link" data-lead-refresh>Try again</button></p></section>';
+  if(!S.leads.length)return '<section class="ot-leads"><header><div><small>OUTREACH LEADS</small><h2>Who to contact next</h2></div><button type="button" class="ot-btn sm" data-lead-refresh>Refresh</button></header><p class="ot-empty">No leads right now. Everyone you know has been contacted recently.</p></section>';
+  var sel=Object.keys(S.leadSel||{}).filter(function(i){return S.leadSel[i]&&!(S.planned||{})[i];}).length;
+  return '<section class="ot-leads"><header><div><small>OUTREACH LEADS</small><h2>Who to contact next</h2><p>Ranked from your follow-ups, quiet companies, companies never contacted and new scouted people.</p></div>'
+   +'<div class="ot-lead-plan"><label>Start at <input type="time" id="ot-lead-start" value="'+esc(S.leadStart||nextSlotStart())+'"></label><button type="button" class="ot-btn gold sm" data-lead-plan'+(sel?'':' disabled')+'>Plan '+sel+' on my schedule</button><button type="button" class="ot-btn sm" data-lead-refresh>Refresh</button></div></header>'
+   +'<ul class="ot-lead-list">'+S.leads.map(function(l,i){var k=LK[l.kind]||['Lead',''],done=(S.planned||{})[i];
+     return '<li class="'+(done?'done':'')+'"><label class="ot-lead-chk"><input type="checkbox" data-lead-sel="'+i+'"'+((S.leadSel||{})[i]?' checked':'')+(done?' disabled':'')+'></label>'
+       +'<div class="ot-lead-main"><span class="ot-lead-k '+k[1]+'">'+k[0]+'</span><b>'+esc(leadName(l))+'</b>'+(l.company&&l.contact?'<em>'+esc(l.company.label)+'</em>':'')+'<small>'+esc(l.why||'')+'</small></div>'
+       +'<div class="ot-lead-act">'+(done?'<span class="ot-lead-done">On your schedule</span>':'<button type="button" class="ot-btn sm" data-lead-email="'+i+'">✦ Email</button>')+'</div></li>';}).join('')+'</ul></section>';
+}
+function leadEmail(i){
+  var l=(S.leads||[])[i];if(!l)return;
+  if(!window.MDV_FORMATS){toast('Formats are still loading. Try again in a moment.',true);return;}
+  var preset={};
+  if(l.contact)preset.contact={id:l.contact.id,label:l.contact.label,sub:l.contact.role||''};
+  if(l.company)preset.company={id:l.company.id,label:l.company.label,sub:''};
+  if(l.prospect)preset.prospect={id:l.prospect.id,label:l.prospect.label,sub:''};
+  var situation=l.kind==='follow_up'||l.kind==='re_engage'?'follow_up':l.kind==='scouting'?'scouting':'intro';
+  MDV_FORMATS.load().then(function(){
+    var f=(MDV_FORMATS.state.formats||[]).filter(function(x){return x.active&&x.situation===situation&&(x.audience===l.audience||x.audience==='any');})[0];
+    MDV_FORMATS.pick({preset:preset,audience:l.audience,template_id:f?f.id:undefined,to:(!l.contact&&l.company&&l.company.email)?l.company.email:''});
+  });
+}
+function planLeads(btn){
+  var idx=Object.keys(S.leadSel||{}).filter(function(i){return S.leadSel[i]&&!(S.planned||{})[i];}).map(Number).sort(function(a,b){return a-b;});
+  if(!idx.length)return;
+  var t=(document.getElementById('ot-lead-start')||{}).value||nextSlotStart(),hh=Number(t.split(':')[0]),mm=Number(t.split(':')[1]||0);
+  var slots=idx.map(function(_,n){var d=new Date();d.setHours(hh,mm+n*25,0,0);return d.toISOString();});
+  var leads=idx.map(function(i){var l=S.leads[i];return {kind:l.kind,why:l.why,contact_id:l.contact&&l.contact.id,contact_label:l.contact&&l.contact.label,company_id:l.company&&l.company.id,company_label:l.company&&l.company.label,prospect_id:l.prospect&&l.prospect.id,prospect_label:l.prospect&&l.prospect.label};});
+  btn.disabled=true;
+  bridge().api('/api/agent/outreach-leads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organization_slug:org(),action:'plan',leads:leads,slots:slots})}).then(function(r){
+    if(!r||r.verified!==true)throw new Error('The tasks were not confirmed.');
+    idx.forEach(function(i){S.planned[i]=true;});S.leadStart=t;
+    toast(idx.length+' outreach task'+(idx.length===1?'':'s')+' added to your schedule, starting '+t+'. They show on your Day view.');paint();
+  },function(e){toast(msg(e),true);btn.disabled=false;});
+}
+document.addEventListener('click',function(e){
+  var t=e.target&&e.target.closest?e.target.closest('[data-lead-email],[data-lead-plan],[data-lead-refresh]'):null;if(!t)return;
+  if(t.hasAttribute('data-lead-email')){e.preventDefault();leadEmail(Number(t.getAttribute('data-lead-email')));}
+  else if(t.hasAttribute('data-lead-plan')){e.preventDefault();planLeads(t);}
+  else if(t.hasAttribute('data-lead-refresh')){e.preventDefault();S.leads=null;S.leadsErr='';paint();loadLeads();}
+});
+document.addEventListener('change',function(e){
+  var c=e.target&&e.target.matches&&e.target.matches('[data-lead-sel]')?e.target:null;
+  if(c){S.leadSel=S.leadSel||{};S.leadSel[c.getAttribute('data-lead-sel')]=c.checked;var b=document.querySelector('[data-lead-plan]');if(b){var n=Object.keys(S.leadSel).filter(function(i){return S.leadSel[i]&&!(S.planned||{})[i];}).length;b.disabled=!n;b.textContent='Plan '+n+' on my schedule';}}
+  else if(e.target&&e.target.id==='ot-lead-start')S.leadStart=e.target.value;
+});
 window.MDV_OUTREACH={render:window.renderOutreach,log:openLog,state:S};
 (function register(){
   function put(){var m=window.VEUX_V15_ROUTE_RENDERERS;if(m&&typeof m==='object'){m.outreach=function(el){return window.renderOutreach(el);};return true;}return false;}
