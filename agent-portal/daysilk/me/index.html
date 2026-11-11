@@ -1351,6 +1351,37 @@ html.emb .cal .cell .ev{background:rgba(255,255,255,.07);color:#efe3cf;border-le
 .hb-od{display:flex;align-items:center;gap:14px;margin:0 0 14px;padding:12px 16px;border:1px solid rgba(224,138,96,.35);border-radius:12px;background:rgba(224,138,96,.08)}
 .hb-od .badge2o{font:600 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:5px;background:#E08A60;color:#1b1512}
 .hb-od b{font-weight:500;font-size:14px;flex:1}
+
+/* ---- Calendar page: a full day beside a smart side ---- */
+.cx-top{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px 18px;margin:0 0 12px}.cx-ttl{flex:1;min-width:150px}.cx-ttl h2{margin:0}.cx-ttl .eyebrow{margin:0 0 4px}
+.cx-nav{display:flex;gap:6px;align-items:center}.cx-ib,.cx-today{cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;height:34px;min-width:34px;padding:0 14px;font:600 13px var(--sans)}.cx-ib{padding:0;font-size:18px;line-height:1}
+.cx-seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:999px;padding:3px;background:var(--surface)}.cx-seg button{cursor:pointer;border:0;background:none;color:var(--muted);padding:7px 15px;border-radius:999px;font:600 13px var(--sans)}.cx-seg button[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+.cx-quick{margin:0 0 16px}.cx-quick .sa-in{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:6px 8px}.cx-quick .sa-in>svg{flex:none;color:var(--muted)}.cx-quick .txt{flex:1;min-width:0;border:0;background:transparent;box-shadow:none;outline:0}.cx-quick .sa-chips{margin-top:8px}.cx-quick .sa-chips:empty{display:none}
+.cx-grid2{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;align-items:start}.cx-main,.cx-side{min-width:0}@media(max-width:1100px){.cx-grid2{grid-template-columns:minmax(0,1fr)}}
+.cx-card{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:14px 16px;margin:0 0 14px;min-width:0}.cx-card>header,.xpanel.cx-rules>header,.xpanel.cx-move>header{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:0 0 8px;flex-wrap:wrap}.cx-card h4,.xpanel.cx-rules h4,.xpanel.cx-move h4{margin:0;font:500 18px var(--serif)}
+.cx-chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}.cx-chips span{border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12px;color:var(--muted)}.cx-chips b{color:var(--ink);font-weight:700}.cx-chips .bad{border-color:var(--warn);color:var(--warn)}.cx-chips .bad b{color:var(--warn)}
+.cx-day{border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:14px 16px}.cx-dh{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px;margin:0 0 10px}.cx-dh h3{font:500 26px var(--serif);margin:0}.cx-dh span{color:var(--muted);font-size:13px}.cx-now-b{font-style:normal;font:600 11px var(--mono);letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--ink);padding:1px 8px;border-radius:4px}.cx-count{margin-left:auto}
+.cx-allday{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}.cx-allday>small{color:var(--muted);font:600 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-right:4px}
+.cx-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid color-mix(in srgb,var(--kc,var(--k-connect)) 55%,transparent);background:color-mix(in srgb,var(--kc,var(--k-connect)) 12%,transparent);color:var(--ink);border-radius:999px;padding:3px 11px;font-size:12px;cursor:pointer}.cx-chip i{width:8px;height:8px;border-radius:50%;background:var(--kc,var(--k-connect))}
+.k-prime{--kc:var(--k-prime)}.k-focus{--kc:var(--k-focus)}.k-connect{--kc:var(--k-connect)}.k-move{--kc:var(--k-move)}.k-recharge{--kc:var(--k-recharge)}.k-close{--kc:var(--k-close)}.k-travel{--kc:var(--k-travel)}
+.cx-scroll{max-height:min(74vh,760px);overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--bg)}.cx-grid{position:relative;margin-left:64px;min-width:260px}
+.cx-h{position:absolute;left:-64px;right:0;border-top:1px solid var(--line);height:0}.cx-h span{position:absolute;left:0;top:-8px;width:56px;text-align:right;font:500 10.5px var(--mono);color:var(--muted)}
+.cx-lanes{position:absolute;inset:0;display:grid;grid-template-columns:24% minmax(0,1fr);gap:6px;padding-right:8px}.cx-lane-r,.cx-lane-e{position:relative}
+.cx-rt{position:absolute;left:0;right:0;overflow:hidden;border:0;border-left:3px solid var(--kc,var(--k-recharge));background:color-mix(in srgb,var(--kc,var(--k-recharge)) 12%,transparent);color:var(--muted);border-radius:4px;padding:1px 6px;font:500 10.5px var(--sans);text-align:left;cursor:pointer;line-height:1.2}.cx-rt.done{opacity:.45;text-decoration:line-through}.cx-rt b{font-weight:500}
+.cx-ev{position:absolute;overflow:hidden;text-align:left;border:0;border-left:3px solid var(--kc,var(--k-connect));border-radius:6px;background:color-mix(in srgb,var(--kc,var(--k-connect)) 24%,var(--surface));color:var(--ink);padding:3px 8px;font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:1px;line-height:1.25;z-index:2}
+.cx-ev small{font-size:10.5px;color:var(--muted)}.cx-ev b{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cx-ev span{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cx-ev:hover{z-index:3;background:color-mix(in srgb,var(--kc,var(--k-connect)) 36%,var(--surface))}.cx-ev.src-model{border-left-style:dashed}.cx-ev.src-agency{opacity:.82}.cx-ev.onag small::after{content:" · Model Agenda";color:var(--gold)}
+.cx-free{position:absolute;left:0;right:0;border:1px dashed color-mix(in srgb,var(--ok) 45%,transparent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--ok);font-size:11px;pointer-events:none;z-index:1}
+.cx-tk{position:absolute;left:0;right:0;z-index:4;border:0;background:none;display:flex;align-items:center;gap:7px;cursor:pointer;color:var(--ink);font:600 11px var(--sans);padding:0;margin-top:-6px;text-align:left}.cx-tk i{width:9px;height:9px;transform:rotate(45deg);background:var(--gold);flex:none}.cx-tk span{background:var(--surface);padding:1px 6px;border-radius:4px;border:1px solid var(--line);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cx-nowline{position:absolute;left:-64px;right:0;border-top:1.5px solid var(--warn);z-index:6;pointer-events:none}.cx-nowline span{position:absolute;left:0;top:-9px;background:var(--warn);color:#fff;font:600 9.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:1px 6px}
+.cx-tasks ul,.cx-notes ul,.cx-mv{list-style:none;margin:8px 0;padding:0;display:grid;gap:0}.cx-tasks li{display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line)}.cx-tasks li.od .cx-trow small{color:var(--warn)}.cx-none{border-top:0!important}
+.cx-ck{position:relative;flex:none;cursor:pointer}.cx-ck input{position:absolute;opacity:0;inset:0;cursor:pointer}.cx-ck i{display:block;width:18px;height:18px;border:1.5px solid var(--ink);border-radius:5px}.cx-ck input:checked+i{background:var(--ink)}
+.cx-trow{all:unset;cursor:pointer;display:grid;gap:1px;min-width:0;flex:1}.cx-trow b{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cx-trow small{font-size:11.5px;color:var(--muted)}
+.cx-add{display:flex;gap:8px;margin:8px 0 0}.cx-add .txt{flex:1;min-width:0}
+.cx-notes li{padding:9px 0;border-top:1px solid var(--line)}.cx-notes li p{margin:0 0 6px;font-size:13.5px}.cx-nm{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.cx-nm .linkbtn{font-size:12px}
+.cx-rules ol{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:14px}.cx-rules li{display:grid;grid-template-columns:30px minmax(0,1fr);gap:8px}.cx-rules li>b{font:500 17px var(--serif);color:var(--muted)}.cx-rules p{margin:0 0 5px;font-weight:600;font-size:13.5px}.cx-st{display:inline-block;font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;border:1px solid currentColor;padding:1px 6px;border-radius:4px;margin-right:8px}.cx-st.ok{color:var(--ok)}.cx-st.warn{color:var(--warn)}.cx-st.na{color:var(--muted)}.cx-rules small{font-size:12px;color:var(--muted)}.cx-rules .okc{color:var(--ok);font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase}.cx-rules .warnc{color:var(--warn);font:600 11px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.cx-mv li{display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line)}.cx-mv b{font-size:13.5px}.cx-mv small{display:block;font-size:11.5px;color:var(--muted)}.cx-mk{flex:none;align-self:flex-start;font:600 10px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:4px;background:color-mix(in srgb,var(--k-travel) 22%,transparent);color:var(--k-travel)}.cx-mk.stay{background:color-mix(in srgb,var(--k-connect) 22%,transparent);color:var(--k-connect)}
+.cx-mw{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1fr);gap:8px;padding:8px 6px;border-top:1px solid var(--line);font-size:12px}.cx-mw.today{background:color-mix(in srgb,var(--gold) 10%,transparent);border-radius:6px}.cx-mw>b{font:600 12px var(--sans)}.cx-mw>b small{display:block;color:var(--muted);font-weight:500}.cx-mw small{display:block;color:var(--muted);font:600 9.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px}.cx-mw span{display:block}
+.cx-ag{border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:8px;grid-column:1/-1}.cx-agck{display:flex;gap:10px;align-items:flex-start;cursor:pointer}.cx-agck input{margin-top:3px}.cx-agck small{display:block;color:var(--muted);font-weight:400}.cx-agm{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.cx-mchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 10px;font-size:12px}.cx-mchip button{all:unset;cursor:pointer;padding:0 6px;color:var(--muted)}.cx-agpick{max-width:200px}
 </style>
 <script>
 window.REBUILD_CONFIG={allowSignup:false};
@@ -2282,15 +2313,145 @@ function flowHTML(s,sch,d,curI){
 }
 
 /* ================= Schedule ================= */
+/* ================= Calendar: one full day, a smart side, and saving that reaches the Model Agenda ================= */
+let MM=[];
+const CX_STAFF=["emma","erica","troy","sophia","demontez","branda","dalyss","amanda","amber","katie","mike"];
+const cxMins=m=>{m=((m%1440)+1440)%1440;const h=Math.floor(m/60),mi=m%60;return(h%12||12)+(mi?":"+pad(mi):"")+(h>=12?" PM":" AM")};
+/* ---- models named in a line of text ---- */
+function cxDetect(text){
+  const t=" "+String(text||"").toLowerCase().replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ")+" ",out=[],first={};
+  LENSM.forEach(m=>{const f=String(m.name||"").toLowerCase().split(" ")[0];first[f]=(first[f]||0)+1});
+  LENSM.forEach(m=>{const n=String(m.name||"").toLowerCase().replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim();if(!n)return;const f=n.split(" ")[0];
+    if(t.includes(" "+n+" ")||(first[f]===1&&f.length>2&&!CX_STAFF.includes(f)&&t.includes(" "+f+" ")))out.push(m.id)});
+  return[...new Set(out)]}
+function cxAgChips(ids){return ids.map(id=>{const m=LENSM.find(x=>x.id===id);return`<span class="cx-mchip">${esc(m?m.name:"Model")}<button type="button" data-cxrm="${esc(id)}" aria-label="Remove">×</button></span>`}).join("")}
+function cxAgFields(e){
+  if(!EMB||EMB_ALERTS)return"";const ids=(e.agModels||[]).filter(Boolean);
+  return`<div class="full cx-ag"><label class="cx-agck"><input type="checkbox" name="agenda" ${e.agenda||ids.length?"checked":""}><span><b>Also show on the Model Agenda</b><small>The team sees it there, and edits and deletes follow. Repeating events stay here.</small></span></label><input type="hidden" name="agmodels" value="${esc(ids.join(","))}"><div class="cx-agm"><span data-agchips>${cxAgChips(ids)}</span><select class="txt cx-agpick" aria-label="Link a model"><option value="">+ Link a model</option>${LENSM.map(m=>`<option value="${esc(m.id)}">${esc(m.name)}</option>`).join("")}</select></div></div>`}
+function cxAgPaint(f){const w=f.querySelector("[data-agchips]");if(w)w.innerHTML=cxAgChips((f.elements.agmodels.value||"").split(",").filter(Boolean))}
+function cxAgSave(e){
+  if(!EMB||!e)return;
+  if(e.rep){e.agenda=false;toast("Repeating events stay in DaySilk. They are not copied to the Model Agenda.");return}
+  let api;try{api=parent.MDV_DS_EMBED}catch(_){}
+  if(!api||!api.saveAgencyEvent){e.agError=true;markDirty("core");toast("Saved here. The Model Agenda is not connected right now.");return}
+  const names=(e.agModels||[]).map(id=>(LENSM.find(m=>m.id===id)||{}).name).filter(Boolean);
+  api.saveAgencyEvent({id:e.id,agId:e.agId||"",title:e.title,d:e.d,t:e.t,e:e.e,cat:e.cat,where:e.where,notes:e.notes,modelIds:e.agModels||[]}).then(r=>{e.agId=r.id;e.agenda=true;delete e.agError;markDirty("core");toast("Saved to the Model Agenda"+(names.length?" · "+names.join(", "):""));render()}).catch(err=>{e.agError=true;markDirty("core");toast("Saved here, but not to the Model Agenda: "+String((err&&err.message)||"try again").slice(0,90));render()})}
+function cxAgDelete(agId){if(!EMB||!agId)return;try{parent.MDV_DS_EMBED.deleteAgencyEvent(agId).then(()=>toast("Removed from the Model Agenda")).catch(()=>toast("Removed here. It could not be removed from the Model Agenda: delete it there."))}catch(_){}}
+function cxAgAfter(e,wasAgId){if(!EMB)return;if(e.agenda&&!e.rep)cxAgSave(e);else if(wasAgId&&!e.agenda){cxAgDelete(wasAgId);delete e.agId}}
+function cxAgRow(e){if(e.agId)return row("cal","On the Model Agenda"+((e.agModels||[]).length?" · "+esc((e.agModels||[]).map(id=>(LENSM.find(m=>m.id===id)||{}).name).filter(Boolean).join(", ")):"")+". Changes here update it.");
+  if(e.agError)return row("alert",`Not on the Model Agenda yet. <button class="linkbtn" data-act="agretry">Try again</button>`);return""}
+document.addEventListener("input",e=>{const f=e.target.form;if(!f||e.target.name!=="title"||!(f.classList.contains("evedit")||f.id==="addEvent"))return;const hid=f.elements.agmodels;if(!hid||f.dataset.agTouched)return;
+  const ids=cxDetect(e.target.value);hid.value=ids.join(",");const ck=f.elements.agenda;if(ck&&!f.dataset.agCk&&ids.length)ck.checked=true;cxAgPaint(f)});
+document.addEventListener("change",e=>{const t=e.target;if(t.classList&&t.classList.contains("cx-agpick")){const f=t.form,hid=f&&f.elements.agmodels;if(hid&&t.value){const a=(hid.value||"").split(",").filter(Boolean);if(!a.includes(t.value))a.push(t.value);hid.value=a.join(",");f.dataset.agTouched="1";if(f.elements.agenda)f.elements.agenda.checked=true;t.value="";cxAgPaint(f)}}
+  if(t.name==="agenda"&&t.form)t.form.dataset.agCk="1"});
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-cxrm]");if(b){const f=b.closest("form"),hid=f&&f.elements.agmodels;if(hid){hid.value=(hid.value||"").split(",").filter(x=>x&&x!==b.dataset.cxrm).join(",");f.dataset.agTouched="1";cxAgPaint(f)}return}
+  const r=e.target.closest&&e.target.closest('[data-act="agretry"]');if(r&&S.item){const ev=evById(S.item.id);if(ev){ev.agenda=true;cxAgSave(ev)}}});
+
+/* ---- model movement, read from the Model Agenda ---- */
+async function movementSync(force){if(!EMB||EMB_ALERTS||!sbUser||!baseReady)return;try{const l=await parent.MDV_DS_EMBED.modelMovement(!!force);if(Array.isArray(l)&&JSON.stringify(l)!==JSON.stringify(MM)){MM=l;lensRepaint()}}catch(_){}}
+function cxMove(wrap){
+  if(!EMB||EMB_ALERTS)return"";const t=todayIso(),shown=(MM||[]).filter(x=>(x.until||x.d)>=t).slice(0,8);
+  const body=shown.length?`<ul class="cx-mv">${shown.map(x=>`<li><span class="cx-mk ${x.kind==="Stay"?"stay":"mv"}">${esc(x.kind)}</span><div><b>${esc(x.model||x.title)}</b><small>${esc(x.title)}</small><small>${fmtMD(x.d)}${x.until&&x.until!==x.d?" → "+fmtMD(x.until):""}${x.where?" · "+esc(x.where):""}</small></div></li>`).join("")}</ul>`:'<p class="muted small">No model movement in the next ten weeks.</p>';
+  return`<section class="${wrap||"cx-card"} cx-move"><header><h4>Model movement</h4><span class="muted small">From the Model Agenda</span></header>${body}</section>`}
+
+/* ---- the rules, now in DaySilk ---- */
+const CX_RD=[["deep","The first three hours are deep work. Email waits."],["breaks","Two screen-free breaks, mid-morning and mid-afternoon."],["lunch","Lunch is never at the desk."],["train","Train every day."],["late","No business decisions after 9:30 PM."]];
+const CX_RW=[["train","Train every day, with a class on Saturday and recovery on Sunday."],["evening","Keep at least one evening free of work."],["rest","Keep one day clear of work."]];
+const cxBiz=b=>b.cat==="focus"||b.cat==="connect"||/office|meeting|board|scouting|cdv|cavyre|plan|review|outreach|call/i.test(b.title||"");
+const cxMine=e=>e.src!=="model"&&e.src!=="agency";
+const cxWork=e=>e.cat!=="recharge"&&e.cat!=="move"&&e.cat!=="close";
+function cxRulesDay(s){
+  const sp=blockSpans(s),biz=sp.filter(cxBiz),ev=eventsFor(s).filter(e=>e.t&&cxMine(e)&&cxWork(e)),bizMin=biz.reduce((n,b)=>n+(b.en-b.st),0),out=[];
+  if(!biz.length)out.push({k:"deep",s:"na",t:"No work scheduled today."});
+  else{const w0=biz[0].st,w1=w0+180,hit=ev.filter(e=>{const[a,b]=evSpanMin(e);return a<w1&&b>w0});
+    out.push(hit.length?{k:"deep",s:"warn",t:`Window ${cxMins(w0)} to ${cxMins(w1)}. ${hit.length} event${hit.length===1?"":"s"} (${hit.slice(0,2).map(x=>x.title).join(", ")}) cut into it.`}:{k:"deep",s:"ok",t:`Protected ${cxMins(w0)} to ${cxMins(w1)}. Nothing interrupts it.`})}
+  const br=sp.filter(b=>/break|walk|screen|reset/i.test(b.title)).length;
+  out.push(bizMin<240?{k:"breaks",s:"na",t:"Light work day, no breaks needed."}:br>=2?{k:"breaks",s:"ok",t:br+" breaks scheduled."}:{k:"breaks",s:"warn",t:(br?"Only one break":"No breaks")+" scheduled. Add one mid-morning and one mid-afternoon."});
+  const l=sp.find(b=>/lunch/i.test(b.title));
+  if(!l)out.push(bizMin?{k:"lunch",s:"warn",t:"No lunch block on this day."}:{k:"lunch",s:"na",t:"No lunch block, no work day."});
+  else{const over=ev.filter(e=>{const[a,b]=evSpanMin(e);return a<l.en&&b>l.st});out.push(over.length?{k:"lunch",s:"warn",t:`Lunch ${cxMins(l.st)} to ${cxMins(l.en)} is overlapped by ${over[0].title}.`}:{k:"lunch",s:"ok",t:`Lunch ${cxMins(l.st)} to ${cxMins(l.en)} is protected.`})}
+  const tr=sp.some(b=>b.cat==="move"||/train|gym|workout|lift|run|yoga|class/i.test(b.title));
+  out.push(tr?{k:"train",s:"ok",t:"A training block is planned."}:{k:"train",s:locOf(s).type==="travel"?"na":"warn",t:locOf(s).type==="travel"?"Travel day.":"No training planned today."});
+  const lateB=sp.filter(b=>cxBiz(b)&&b.en>1290),lateE=ev.filter(e=>evSpanMin(e)[1]>1290);
+  out.push(lateB.length||lateE.length?{k:"late",s:"warn",t:"Work runs past 9:30 PM ("+(lateE[0]?lateE[0].title:lateB[0].title)+"). Move decisions to the morning."}:{k:"late",s:"ok",t:"Nothing business after 9:30 PM."});
+  return out}
+function cxRulesWeek(){
+  const ws=weekDates(S.date),out=[];
+  const miss=ws.filter(s=>locOf(s).type!=="travel"&&!blockSpans(s).some(b=>b.cat==="move"||/train|gym|workout|lift|run|class|yoga|walk|recovery/i.test(b.title))).map(s=>DOW[parse(s).getDay()].slice(0,3));
+  out.push({k:"train",s:miss.length?"warn":"ok",t:miss.length?"Nothing planned for "+miss.join(", ")+".":"Every day has its session."});
+  const freeEv=ws.filter(s=>!blockSpans(s).some(b=>cxBiz(b)&&b.en>1080)&&!eventsFor(s).some(e=>e.t&&cxMine(e)&&cxWork(e)&&evSpanMin(e)[1]>1080)).map(s=>DOW[parse(s).getDay()].slice(0,3));
+  out.push(freeEv.length?{k:"evening",s:"ok",t:freeEv.join(", ")+(freeEv.length>1?" evenings are":" evening is")+" work-free."}:{k:"evening",s:"warn",t:"Every evening has work in it this week. Clear one."});
+  const rest=ws.filter(s=>!blockSpans(s).some(cxBiz)&&!eventsFor(s).some(e=>cxMine(e)&&cxWork(e))).map(s=>DOW[parse(s).getDay()].slice(0,3));
+  out.push(rest.length?{k:"rest",s:"ok",t:rest.join(", ")+" "+(rest.length>1?"are":"is")+" clear of work."}:{k:"rest",s:"warn",t:"No day this week is clear of work. Protect one."});
+  return out}
+function cxRulesCard(kind,wrap){
+  const wk=kind==="week",list=wk?cxRulesWeek():cxRulesDay(S.date),defs=wk?CX_RW:CX_RD,n=list.filter(x=>x.s!=="na").length,ok=list.filter(x=>x.s==="ok").length;
+  return`<section class="${wrap||"cx-card"} cx-rules"><header><h4>${wk?"Rules of the week":"Rules of the day"}</h4><span class="${ok===n?"okc":"warnc"}">${ok} of ${n} on track</span></header><ol>${list.map((r,i)=>`<li class="${r.s}"><b>${pad(i+1)}</b><div><p>${esc((defs.find(d=>d[0]===r.k)||[0,""])[1])}</p><span class="cx-st ${r.s}">${r.s==="ok"?"On track":r.s==="warn"?"Needs attention":"Not needed"}</span><small>${esc(r.t)}</small></div></li>`).join("")}</ol></section>`}
+function cxMarket(){
+  const ws=weekDates(S.date),t=todayIso();
+  const rows=ws.map(s=>{const dw=parse(s).getDay(),ny=(MARKET_WK.ny||{})[dw]||[],pa=(MARKET_WK.paris||{})[dw]||[];return`<div class="cx-mw ${s===t?"today":""}"><b>${DOW[dw].slice(0,3)}<small>${parse(s).getDate()}</small></b><div><small>New York</small>${ny.slice(0,2).map(x=>`<span>${esc(x)}</span>`).join("")}</div><div><small>Paris</small>${pa.slice(0,2).map(x=>`<span>${esc(x)}</span>`).join("")}</div></div>`}).join("");
+  return`<section class="cx-card cx-market"><header><h4>Market week</h4><span class="muted small">${esc(locOf(S.date).label)}</span></header>${rows}</section>`}
+
+/* ---- tasks and smart notes live beside the calendar ---- */
+function cxTasks(s,wk){
+  const t=todayIso(),ws=wk?weekDates(s):null,tasks=allTasks().filter(x=>!x.done&&x.due&&(wk?(x.due>=ws[0]&&x.due<=ws[6])||(ws.includes(t)&&x.due<t):(x.due===s||(s===t&&x.due<t)))).sort((a,b)=>{const ta=a.due<t?1:0,tb=b.due<t?1:0;if(ta!==tb)return ta-tb;return a.due===b.due?((a.time||"99")<(b.time||"99")?-1:1):(a.due<b.due?-1:1)});   /* what is due now first, then what is overdue */
+  const rows=tasks.slice(0,wk?12:9).map(x=>`<li class="${x.due<t?"od":""}"><label class="cx-ck"><input type="checkbox" data-act="cxtask" data-id="${esc(x.id)}" aria-label="Mark done"><i></i></label><button type="button" class="cx-trow" data-act="item" data-kind="t" data-id="${esc(x.id)}" data-s="${esc(x.due)}"><b>${esc(x.title)}</b><small>${x.due<t?"Overdue · ":wk?fmtShort(x.due)+" · ":""}${x.time?fmtT(x.time)+" · ":""}${esc(x.area||"")}</small></button></li>`).join("");
+  return`<section class="cx-card cx-tasks"><header><h4>Tasks</h4><button class="linkbtn" data-act="view" data-v="tasks">All tasks ${xi("right","xi sm")}</button></header><ul>${rows||'<li class="muted small cx-none">Nothing due. Add one below.</li>'}</ul>${tasks.length>(wk?12:9)?`<p class="small muted">+ ${tasks.length-(wk?12:9)} more in Tasks</p>`:""}<form class="cx-add" data-cx="task" data-s="${esc(s)}"><input class="txt" name="t" placeholder="Add a task for ${s===t?"today":fmtShort(s)}" autocomplete="off" aria-label="New task"><button class="btn sm solid" type="submit">Add</button></form></section>`}
+function cxNoteRow(n,s){const v=parseEvent(n.text),ms=cxDetect(n.text).map(id=>(LENSM.find(m=>m.id===id)||{}).name).filter(Boolean);
+  return`<li><p>${esc(n.text)}</p><div class="cx-nm">${v.t?`<span class="chip">${fmtT(v.t)}${v.e?"–"+fmtT(v.e):""}</span>`:""}${ms.map(x=>`<span class="chip solid">${esc(x)}</span>`).join("")}<button type="button" class="linkbtn" data-act="cxn2e" data-id="${esc(n.id)}" data-s="${esc(s)}">Make event</button><button type="button" class="linkbtn" data-act="cxn2t" data-id="${esc(n.id)}" data-s="${esc(s)}">Make task</button><button type="button" class="linkbtn" data-act="cxndel" data-id="${esc(n.id)}" data-s="${esc(s)}" aria-label="Delete note">×</button></div></li>`}
+function cxNotes(s){const list=day(s).smart||[];
+  return`<section class="cx-card cx-notes"><header><h4>Smart notes</h4><span class="muted small">Jot it down, then turn it into an event or a task.</span></header><form class="cx-add" data-cx="note" data-s="${esc(s)}"><input class="txt" name="q" placeholder="Call Tosin about Dec 10 at 3pm" autocomplete="off" aria-label="New note"><button class="btn sm solid" type="submit">Save</button></form><ul>${list.map(n=>cxNoteRow(n,s)).join("")||'<li class="muted small cx-none">No notes for this day.</li>'}</ul></section>`}
+document.addEventListener("submit",e=>{const f=e.target;if(!f.dataset||!f.dataset.cx)return;e.preventDefault();const s=f.dataset.s||S.date;
+  if(f.dataset.cx==="task"){const t=String(f.elements.t.value||"").trim();if(!t)return;const p=parseCapture(t);core().tasks.push({id:uid(),title:p.title||t,due:p.due||s,time:p.time||"",area:"Daily",prio:2,subs:[],done:false,notes:""});markDirty("core");toast("Task added for "+fmtMD(p.due||s));render();return}
+  if(f.dataset.cx==="note"){const q=String(f.elements.q.value||"").trim();if(!q)return;const d=day(s);d.smart=d.smart||[];d.smart.unshift({id:uid(),text:q,at:Date.now()});markDirty("day",s);render();setTimeout(()=>{const i=document.querySelector('.cx-add[data-cx="note"] input');if(i)i.focus()},30)}});
+document.addEventListener("change",e=>{const t=e.target;if(t.dataset&&t.dataset.act==="cxtask"&&t.checked){toggleTask(t.dataset.id);toast("Task done");render()}});
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;if(!["cxn2e","cxn2t","cxndel"].includes(a))return;e.preventDefault();
+  const s=b.dataset.s,d=day(s),n=(d.smart||[]).find(x=>x.id===b.dataset.id);if(!n)return;
+  if(a==="cxndel"){d.smart=d.smart.filter(x=>x.id!==n.id);markDirty("day",s);render();return}
+  const v=parseEvent(n.text);
+  if(a==="cxn2e"){const ev={id:uid(),title:v.title||n.text,d:s,t:v.t||"",e:v.e||"",cat:v.cat||"connect",rep:"",where:v.where||"",notes:""};const ids=cxDetect(n.text);core().events=core().events||[];core().events.push(ev);if(EMB&&ids.length){ev.agModels=ids;ev.agenda=true}d.smart=d.smart.filter(x=>x.id!==n.id);markDirty("core");markDirty("day",s);toast("Event added for "+fmtMD(s));if(ev.agenda)cxAgSave(ev);else render();return}
+  if(a==="cxn2t"){core().tasks.push({id:uid(),title:v.title||n.text,due:s,time:v.t||"",area:"Daily",prio:2,subs:[],done:false,notes:""});d.smart=d.smart.filter(x=>x.id!==n.id);markDirty("core");markDirty("day",s);toast("Task added");render()}});
+
+/* ---- the full day: every hour, routine on the left, events and timed tasks on the right ---- */
+function cxLanes(list){let out=[],cluster=[],ends=[],cEnd=0;const flush=()=>{const n=ends.length||1;cluster.forEach(c=>{c.n=n});out=out.concat(cluster);cluster=[];ends=[];cEnd=0};
+  list.forEach(c=>{if(cluster.length&&c.a>=cEnd)flush();let lane=0;while(lane<ends.length&&ends[lane]>c.a)lane++;ends[lane]=c.b;c.lane=lane;cluster.push(c);cEnd=Math.max(cEnd,c.b)});flush();return out}
+function cxTimeline(s){
+  const isT=s===todayIso(),PX=52,evs=eventsFor(s),timed=evs.filter(e=>e.t),allDay=evs.filter(e=>!e.t),sp=blockSpans(s),dt=parse(s),L=locOf(s),nm=nowMin();
+  const items=cxLanes(timed.map(e=>{const[a,b]=evSpanMin(e);return{e,a,b:Math.max(b,a+20)}}).sort((x,y)=>x.a-y.a||x.b-y.b));
+  const tks=allTasks().filter(x=>!x.done&&x.due===s&&x.time);
+  const free=freeSlots(s,isT?nm+10:0).map(g=>`<div class="cx-free" style="top:${(g[0]*PX/60).toFixed(1)}px;height:${((g[1]-g[0])*PX/60).toFixed(1)}px"><span>Open · ${g[1]-g[0]>=60?Math.floor((g[1]-g[0])/60)+" h"+((g[1]-g[0])%60?" "+((g[1]-g[0])%60)+" min":""):(g[1]-g[0])+" min"}</span></div>`).join("");
+  const rt=sp.map(b=>`<button type="button" class="cx-rt k-${b.cat}${S.days[s]&&S.days[s].blocks&&S.days[s].blocks["k"+b.i]?" done":""}" style="top:${(b.st*PX/60).toFixed(1)}px;height:${Math.max(18,(b.en-b.st)*PX/60-2).toFixed(1)}px" data-act="item" data-kind="b" data-id="k${b.i}" data-s="${s}" title="${esc(fmtT(b.time)+" "+b.title)}"><b>${esc(b.title)}</b></button>`).join("");
+  const ev=items.map(c=>{const e=c.e,w=100/c.n,who=(e.models||[]).join(", ");return`<button type="button" class="cx-ev k-${e.cat||"connect"} src-${e.src||"me"}${e.agId?" onag":""}" data-act="item" data-kind="e" data-id="${esc(e.id)}" data-s="${s}" title="${esc([e.title,rangeTxt({time:e.t,end:e.e}),who,e.where].filter(Boolean).join(" · "))}" style="top:${(c.a*PX/60).toFixed(1)}px;height:${Math.max(22,(c.b-c.a)*PX/60-2).toFixed(1)}px;left:calc(${(c.lane*w).toFixed(2)}% + 2px);width:calc(${w.toFixed(2)}% - 4px)"><small>${esc(fmtT(e.t))}${e.e?" – "+esc(fmtT(e.e)):""}</small><b>${esc(e.title)}</b>${(c.b-c.a)>=45&&(who||e.where)?`<span>${esc([who,e.where].filter(Boolean).join(" · "))}</span>`:""}</button>`}).join("");
+  const tk=tks.map(x=>`<button type="button" class="cx-tk" style="top:${(hm(x.time)*PX/60).toFixed(1)}px" data-act="item" data-kind="t" data-id="${esc(x.id)}" data-s="${s}" title="Task due ${esc(fmtT(x.time))}"><i></i><span>${esc(fmtT(x.time))} · ${esc(x.title)}</span></button>`).join("");
+  const hrs=Array.from({length:24},(_,i)=>`<div class="cx-h" style="top:${i*PX}px"><span>${cxMins(i*60)}</span></div>`).join("");
+  const focus=isT?Math.max(0,nm-90):(items.length?Math.max(0,items[0].a-60):420);
+  return`<section class="cx-day"><header class="cx-dh"><h3>${DOW[dt.getDay()]}</h3><span>${MON[dt.getMonth()]} ${dt.getDate()}</span>${isT?'<em class="cx-now-b">Today</em>':""}${L.type!=="atl"?`<span class="cx-loc">${esc(L.label)}</span>`:""}<span class="cx-count">${timed.length} event${timed.length===1?"":"s"}${tks.length?" · "+tks.length+" timed task"+(tks.length===1?"":"s"):""}</span></header>`
+   +(allDay.length?`<div class="cx-allday"><small>All day</small>${allDay.map(e=>`<button type="button" class="cx-chip k-${e.cat||"connect"}" data-act="item" data-kind="e" data-id="${esc(e.id)}" data-s="${s}"><i></i>${esc(e.title)}</button>`).join("")}</div>`:"")
+   +`<div class="cx-scroll" data-cx-scroll data-focus="${focus}" data-px="${PX}"><div class="cx-grid" data-cx-add="${s}" style="height:${24*PX}px">${hrs}<div class="cx-lanes"><div class="cx-lane-r">${rt}</div><div class="cx-lane-e">${free}${ev}${tk}</div></div>${isT?`<div class="cx-nowline" style="top:${(nm*PX/60).toFixed(1)}px"><span>Now · ${cxMins(nm)}</span></div>`:""}</div></div></section>`}
+document.addEventListener("click",ev=>{const g=ev.target.closest&&ev.target.closest("[data-cx-add]");if(!g||ev.target.closest("button,a"))return;
+  const r=g.getBoundingClientRect(),PX=Number((g.closest("[data-cx-scroll]")||{dataset:{}}).dataset.px)||52,m=Math.max(0,Math.min(1380,Math.floor((ev.clientY-r.top)/PX*60/30)*30));
+  openItem({kind:"new",pre:{d:g.dataset.cxAdd,t:mh(m),e:mh(Math.min(1439,m+60))}})});
+
+/* ---- the Calendar page ---- */
+function cxGlance(s){
+  const t=todayIso(),nm=nowMin(),tasks=allTasks().filter(x=>!x.done),over=tasks.filter(x=>x.due&&x.due<t).length,dueN=tasks.filter(x=>x.due===s).length,cl=dayClashes(s).length,sl=freeSlots(s,s===t?nm+10:0)[0];
+  const toPlan=tasks.filter(x=>(x.due&&x.due<t||x.due===t&&!x.time)&&!(core().events||[]).some(e=>e.taskId===x.id&&e.d===t)).length;
+  return`<section class="cx-card cx-glance"><div class="cx-chips"><span class="${over?"bad":""}"><b>${over}</b> overdue</span><span><b>${dueN}</b> due</span><span class="${cl?"bad":""}"><b>${cl}</b> clash${cl===1?"":"es"}</span>${sl?`<span><b>${cxMins(sl[0])}</b> next free</span>`:""}</div>${s===t&&toPlan?`<button class="btn sm solid" type="button" data-plan-day>Plan my day · ${Math.min(4,toPlan)} task${Math.min(4,toPlan)===1?"":"s"}</button>`:""}${EMB?`<p class="small muted">${PE.length} of yours from the Model Agenda · ${modelEvs().length} model item${modelEvs().length===1?"":"s"}${agencyOn()?` · ${agencyEvs().length} agency-wide`:""}</p>`:""}</section>`}
+function cxHead(t,s){
+  const nav=t==="day"?`<div class="cx-nav"><button type="button" class="cx-ib" data-act="day" data-n="-1" aria-label="Previous day">‹</button><button type="button" class="cx-today" data-act="day" data-n="0">Today</button><button type="button" class="cx-ib" data-act="day" data-n="1" aria-label="Next day">›</button></div>`:"";
+  const seg=[["day","Day"],["week","Week"],["month","Month"],["templates","Templates"],["plan","90-day"]].map(([k,l])=>`<button type="button" role="tab" aria-selected="${t===k}" data-act="tab" data-view="schedule" data-k="${k}">${l}</button>`).join("");
+  return`<header class="cx-top"><div class="cx-ttl">${head("","Calendar","")}</div>${nav}<div class="cx-seg" role="tablist">${seg}</div></header><form class="cx-quick" id="smartAdd" autocomplete="off"><div class="sa-in">${xi("plus","xi sm")}<input class="txt" id="saIn" name="q" placeholder="Add an event: Lunch with Erica fri 1-2pm at Nobu" aria-label="Type an event in plain words"><button class="btn sm solid" type="submit">Add</button><button class="btn sm" type="button" data-act="newev" data-d="${s}">New event…</button></div><div class="sa-chips" id="saChips"></div></form>`}
+function cxAfter(prev){const el=document.querySelector("#main [data-cx-scroll]");if(!el)return;const PX=Number(el.dataset.px)||52;el.scrollTop=prev!=null&&S._cxDate===S.date?prev:Number(el.dataset.focus||0)/60*PX;S._cxDate=S.date}
 function vSchedule(){
- if(PERSONA)return head("","Calendar","Your routine, goal hours and events"+(S.boss?", plus "+esc((S.boss.owner||"Demontez").split(" ")[0])+"&#39;s calendar and trips (read-only)":"")+". Tap a day to add something.")+schedMonth();
- if(!["week","templates","month","plan"].includes(S.tabs.schedule))S.tabs.schedule="week";const t=S.tabs.schedule;let h=head("Command","Calendar","Your week and month, with today marked. Tap a day to open it, a time to add something. Day templates hold your routine.");
- h+=smartBar();
- if(t==="week"||t==="month")h+=dayBrief();
- h+=tabs("schedule",[["week","Week"],["month","Month"],["templates","Day templates"],["plan","90-day plan"]]);
- if(t==="week")h+=schedWeek();else if(t==="month")h+=schedMonth();else if(t==="plan")h+=schedPlan();else h+=schedTemplates();
- return h;
-}
+  if(PERSONA)return head("","Calendar","Your routine, goal hours and events"+(S.boss?", plus "+esc((S.boss.owner||"Demontez").split(" ")[0])+"&#39;s calendar and trips (read-only)":"")+". Tap a day to add something.")+schedMonth();
+  if(!["day","week","month","templates","plan"].includes(S.tabs.schedule))S.tabs.schedule="day";
+  const t=S.tabs.schedule,s=S.date;let h=cxHead(t,s);
+  if(t==="day")h+=`<div class="cx-grid2"><div class="cx-main">${lensBar()}${cxTimeline(s)}</div><aside class="cx-side">${cxGlance(s)}${cxTasks(s)}${cxNotes(s)}${cxMove()}${cxMarket()}</aside></div>`;
+  else if(t==="week")h+=`<div class="cx-grid2"><div class="cx-main">${schedWeek()}</div><aside class="cx-side">${cxRulesCard("week")}${cxTasks(s,true)}${cxMove()}</aside></div>`;
+  else if(t==="month")h+=`<div class="cx-grid2"><div class="cx-main">${schedMonth()}</div><aside class="cx-side">${cxGlance(s)}${cxTasks(s)}${cxMove()}</aside></div>`;
+  else if(t==="plan")h+=schedPlan();else h+=schedTemplates();
+  return h}
+
 function blockSpans(s){const sch=scheduleFor(s),fill={"Flight":"09:00","Arrival":"14:00","Evening":"19:00"};const bl=sch.blocks.map(b=>({...b,time:b.time||fill[b.title]||"12:00"}));return bl.map((b,i)=>{const st=tMin(b.time);let en=i<bl.length-1?tMin(bl[i+1].time):Math.min(1440,st+60);if(/sleep|early night/i.test(b.title))en=Math.min(1440,st+30);if(b.title==="Flight")en=st+300;return{...b,st,en:Math.max(en,st+15),i}})}
 function schedWeek(){
  const ws=weekDates(S.date),t0=todayIso(),PX=760/1140,d0=300;
@@ -3241,7 +3402,7 @@ function dayBrief(){
  const over=tasks.filter(x=>x.due&&x.due<t).sort((a,b)=>a.due<b.due?-1:1),dueT=tasks.filter(x=>x.due===t).sort((a,b)=>(a.time||"99")<(b.time||"99")?-1:1);
  const cl=dayClashes(t).concat(dayClashes(tm).map(x=>x.concat(["tm"]))),slots=freeSlots(t,nm+10),sl=slots[0];
  const planned=(core().events||[]).filter(e=>e.taskId&&e.d===t).length,toPlan=tasks.filter(x=>(x.due&&x.due<t||x.due===t&&!x.time)&&!(core().events||[]).some(e=>e.taskId===x.id&&e.d===t)).length;
- const src=EMB?`${PE.length} of yours from the agency calendar · ${modelEvs().length} model item${modelEvs().length===1?"":"s"}${agencyOn()?` · ${agencyEvs().length} agency-wide`:""}`:"Open DaySilk inside the portal to connect the agency calendar";
+ const src=EMB?`${PE.length} of yours from the Model Agenda · ${modelEvs().length} model item${modelEvs().length===1?"":"s"}${agencyOn()?` · ${agencyEvs().length} agency-wide`:""}`:"Open DaySilk inside the portal to connect the Model Agenda";
  const cell=(k,v,bad,txt)=>`<div class="bf"><small>${k}</small><b class="${bad?"late":""}">${v}</b><span>${txt}</span></div>`;
  return `<section class="brief"><div class="brief-h"><div><b>Your day, connected</b><span class="muted small">${esc(src)}</span></div>${toPlan?`<button class="btn sm solid" type="button" data-plan-day>Plan my day · ${Math.min(4,toPlan)} task${Math.min(4,toPlan)===1?"":"s"}</button>`:planned?`<span class="muted small">${planned} task${planned===1?"":"s"} planned today</span>`:""}</div><div class="brief-g">`
   +cell("Overdue",over.length,over.length,over.length?esc(over.slice(0,2).map(x=>x.title).join(" · "))+(over.length>2?" +"+(over.length-2):""):"Nothing overdue")
@@ -3265,7 +3426,7 @@ function eventsFor(s){return(core().events||[]).concat(msEvents(),icsEvents(),po
 function evDone(e,s){const d=S.days[s];return!!(d&&d.ev&&d.ev[e.id])}
 function evLine(e){return(e.t?fmtT(e.t)+(e.e?" to "+fmtT(e.e):"")+" · ":"All day · ")+e.title}
 function evForm(date){
- return`<form class="addrow" id="addEvent" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))"><label style="grid-column:1/-1">What<input class="txt" name="title" required placeholder="Call with Erica, casting at Ford, dinner with a designer"></label><label>Date<input class="txt" type="date" name="d" value="${esc(date)}" required></label><label>Starts<input class="txt" type="time" name="t"></label><label>Ends<input class="txt" type="time" name="e"></label><label>Type<select class="txt" name="cat">${EV_CATS.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join("")}</select></label><label>Repeats<select class="txt" name="rep">${EV_REP.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join("")}</select></label><label>Where<input class="txt" name="where" placeholder="Zoom, studio, address"></label><label style="grid-column:1/-1">Notes<input class="txt" name="notes" placeholder="Agenda, who's coming, links"></label><button class="btn solid" type="submit">Add to calendar</button></form>`}
+ return`<form class="addrow" id="addEvent" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))"><label style="grid-column:1/-1">What<input class="txt" name="title" required placeholder="Call with Erica, casting at Ford, dinner with a designer"></label><label>Date<input class="txt" type="date" name="d" value="${esc(date)}" required></label><label>Starts<input class="txt" type="time" name="t"></label><label>Ends<input class="txt" type="time" name="e"></label><label>Type<select class="txt" name="cat">${EV_CATS.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join("")}</select></label><label>Repeats<select class="txt" name="rep">${EV_REP.map(c=>`<option value="${c[0]}">${c[1]}</option>`).join("")}</select></label><label>Where<input class="txt" name="where" placeholder="Zoom, studio, address"></label><label style="grid-column:1/-1">Notes<input class="txt" name="notes" placeholder="Agenda, who's coming, links"></label>${cxAgFields({})}<button class="btn solid" type="submit">Add to calendar</button></form>`}
 function evEditor(){
  const c=core(),t=todayIso(),list=(c.events||[]).map((e,i)=>({e,i})).filter(x=>x.e.rep||x.e.d>=addDays(t,-7)).sort((a,b)=>a.e.d<b.e.d?-1:1);
  let h=`<div class="block" style="margin-top:30px"><h3>Add to your calendar</h3>${evForm(S.date)}</div>`;
@@ -3292,7 +3453,7 @@ function modelEditor(m){const ms=mState(m.id),f=ms.f||{},base=m.custom?(core().c
 function addModelForm(){return`<details class="block soft" style="margin-bottom:30px"><summary><h3 style="display:inline">Add a model</h3></summary><form class="addrow" id="addModel" style="grid-template-columns:repeat(auto-fill,minmax(170px,1fr));margin-top:12px"><label>Name<input class="txt" name="n" required></label><label>Base<input class="txt" name="base" placeholder="City, country"></label><label>Board<select class="txt" name="board"><option value="main">Women: mainboard</option><option value="nf">Women: new face</option><option value="men">Men</option></select></label><label>MDV markets<select class="txt" name="loc"><option value="NY">New York</option><option value="Paris">Paris</option><option value="NY,Paris">Both</option></select></label><label>Status<select class="txt" name="st">${Object.keys(MSTAT).map(k=>`<option value="${k}">${MSTAT[k][0]}</option>`).join("")}</select></label><label>Mother agency<input class="txt" name="mother"></label><label>Category<input class="txt" name="cat" placeholder="Runway, editorial"></label><label style="grid-column:1/-1">Goal<input class="txt" name="goal" placeholder="What we're building for them"></label><button class="btn solid" type="submit">Add to the roster</button></form></details>`}
 
 document.addEventListener("submit",e=>{const f=e.target;
- if(f.id==="addEvent"){e.preventDefault();const fd=new FormData(f),title=String(fd.get("title")||"").trim(),d=String(fd.get("d")||"");if(!title||!d)return;const c=core();c.events=c.events||[];c.events.push({id:uid(),title,d,t:String(fd.get("t")||""),e:String(fd.get("e")||""),cat:String(fd.get("cat")||"connect"),rep:String(fd.get("rep")||""),where:String(fd.get("where")||"").trim(),notes:String(fd.get("notes")||"").trim()});markDirty("core");render();toast("Added to your calendar");return}
+ if(f.id==="addEvent"){e.preventDefault();const fd=new FormData(f),title=String(fd.get("title")||"").trim(),d=String(fd.get("d")||"");if(!title||!d)return;const c=core();c.events=c.events||[];const ne={id:uid(),title,d,t:String(fd.get("t")||""),e:String(fd.get("e")||""),cat:String(fd.get("cat")||"connect"),rep:String(fd.get("rep")||""),where:String(fd.get("where")||"").trim(),notes:String(fd.get("notes")||"").trim(),agenda:!!fd.get("agenda"),agModels:String(fd.get("agmodels")||"").split(",").filter(Boolean)};c.events.push(ne);cxAgAfter(ne,"");markDirty("core");render();toast("Added to your calendar");return}
  if(f.id==="addModel"){e.preventDefault();const fd=new FormData(f),n=String(fd.get("n")||"").trim();if(!n)return;const c=core();c.cmodels=c.cmodels||[];const g=k=>String(fd.get(k)||"").trim();c.cmodels.push({id:"c"+uid(),custom:true,n,base:g("base"),board:g("board"),loc:g("loc").split(","),mother:g("mother"),st:g("st"),cat:g("cat"),visa:"",goal:g("goal"),tl:[],mv:[]});markDirty("core");render();toast(n+" added");return}
  if(f.dataset.addstep){e.preventDefault();const fd=new FormData(f),t=String(fd.get("t")||"").trim(),d=String(fd.get("d")||"");if(!t||!d)return;const ms=mState(f.dataset.addstep);ms.x=ms.x||[];ms.x.push({d,t,tm:String(fd.get("tm")||"")});markDirty("core");render();return}
  if(f.dataset.addmove){e.preventDefault();const fd=new FormData(f),fr=String(fd.get("f")||""),to=String(fd.get("to")||"");if(!fr||!to||to<fr){toast("Add an arrival and a later departure.");return}const ms=mState(f.dataset.addmove);ms.mvx=ms.mvx||[];ms.mvx.push([String(fd.get("c")),fr,to,String(fd.get("w")||"").trim()]);markDirty("core");render();return}
@@ -3446,7 +3607,7 @@ function vToday(){
  const lp=lifePct(),br=briefing(s),rng=S.upRange||7,up=upcoming(rng);
  h+=`<div class="xmain"><div>${schedPanel(s)}</div><div class="xright">`;
  h+=`<div class="xpanel"><div class="xpanel-h"><h3>Life Essentials</h3><button class="linkbtn" data-act="view" data-v="life">View all ${xi("right","xi sm")}</button></div><div class="xlife">${LIFE.map(([k,n,sub,ic])=>`<button class="xlc lc-${k}" data-act="life" data-k="${k}">${xi(ic,"xi lg")}<b>${n}</b><small>${sub}</small>${xring(lp[k],"sm",n)}</button>`).join("")}</div></div>`;
- h+=`<div class="xpanel"><div class="xpanel-h"><h3>Today's Briefing</h3><button class="linkbtn" data-act="view" data-v="tasks">View all ${xi("right","xi sm")}</button></div><div class="xbrief">${br.map(x=>`<div class="xbr"><span class="cm cm-${x.k||"me"}">${x.k?COMARK[x.k]:xi("user","xi sm")}</span><b class="nm">${x.n}</b><p>${esc(x.t)}${x.sub?`<small>${esc(x.sub)}</small>`:""}</p><span class="cnt">${x.c} task${x.c===1?"":"s"}</span>${x.k?`<a class="ib" href="${esc(coUrl(x.k))}" target="_blank" rel="noopener" aria-label="Open ${x.n}">${xi("right")}</a>`:`<button class="ib" data-act="tarea" data-k="${x.area}" aria-label="Open personal tasks">${xi("right")}</button>`}</div>`).join("")}</div></div>`;
+ h+=cxRulesCard("day","xpanel")+cxMove("xpanel");h+=`<div class="xpanel"><div class="xpanel-h"><h3>Today's Briefing</h3><button class="linkbtn" data-act="view" data-v="tasks">View all ${xi("right","xi sm")}</button></div><div class="xbrief">${br.map(x=>`<div class="xbr"><span class="cm cm-${x.k||"me"}">${x.k?COMARK[x.k]:xi("user","xi sm")}</span><b class="nm">${x.n}</b><p>${esc(x.t)}${x.sub?`<small>${esc(x.sub)}</small>`:""}</p><span class="cnt">${x.c} task${x.c===1?"":"s"}</span>${x.k?`<a class="ib" href="${esc(coUrl(x.k))}" target="_blank" rel="noopener" aria-label="Open ${x.n}">${xi("right")}</a>`:`<button class="ib" data-act="tarea" data-k="${x.area}" aria-label="Open personal tasks">${xi("right")}</button>`}</div>`).join("")}</div></div>`;
  h+=mailPanel();
  h+=`<div class="xduo"><div class="xpanel"><div class="xpanel-h"><h3>Upcoming</h3><select class="txt sm" data-act="uprange" aria-label="Range">${[[7,"This week"],[30,"Next 30 days"],[90,"Next 90 days"]].map(o=>`<option value="${o[0]}" ${rng===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select></div><div class="paper xup">${up.length?up.slice(0,6).map(u=>`<div class="xu"><span class="dt">${fmtMD(u.d)}</span>${xi(u.i,"xi sm")}<span><b>${esc(u.t)}</b><small>${esc(u.s)}</small></span></div>`).join(""):'<p class="empty" style="padding:12px">Nothing in this range.</p>'}${up.length>6?`<p class="small muted" style="padding:6px 10px">+${up.length-6} more</p>`:""}</div></div>
  <div class="xpanel"><div class="xpanel-h"><h3>Quick Actions</h3></div><div class="xqa">${Object.keys(CO).map(k=>`<a class="qa qo" href="${esc(coUrl(k))}" target="_blank" rel="noopener">Open ${CO[k].tag} ${xi("arrow","xi sm")}</a>`).join("")}<button class="qa" data-act="qa" data-k="task">${xi("check")}New Task</button><button class="qa" data-act="qa" data-k="event">${xi("cal")}Add Event</button><button class="qa" data-act="qa" data-k="notes">${xi("note")}Notes</button><button class="qa" data-act="life" data-k="fuel">${xi("fork")}Meal Log</button><button class="qa" data-act="life" data-k="body">${xi("gym")}Workout Log</button><button class="qa" data-act="life" data-k="travel">${xi("plane")}Travel Plan</button></div></div></div>`;
@@ -3514,7 +3675,7 @@ function applyResched(f,v){return rsApply(f.dataset.rs,f.dataset.s,f.dataset.id,
 function rsApply(kind,s,id,v){const c=core();
  if(kind==="b"){const d=day(s);d.bmove=d.bmove||{};d.bmove[id]={t:v.t,e:v.e};markDirty("day",s);toast("Moved for "+fmtMD(s));render();return}
  const i=(c.events||[]).findIndex(x=>x.id===id);if(i<0)return;const e=c.events[i];
- const fol=S.item&&S.item.kind==="e"&&S.item.id===id;if(!e.rep){Object.assign(e,{d:v.d,t:v.t,e:v.e});if(fol)S.item.s=v.d}
+ const fol=S.item&&S.item.kind==="e"&&S.item.id===id;if(!e.rep){Object.assign(e,{d:v.d,t:v.t,e:v.e});if(e.agId)cxAgSave(e);if(fol)S.item.s=v.d}
  else if(v.scope==="fwd"){if(v.d<=e.d&&s===e.d){Object.assign(e,{d:v.d,t:v.t,e:v.e});if(fol)S.item.s=v.d}else{const n={...e,id:uid(),d:v.d,t:v.t,e:v.e};delete n.skip;e.until=addDays(s,-1);c.events.push(n);if(fol)S.item={...S.item,id:n.id,s:v.d}}}
  else{e.skip=(e.skip||[]).concat(s);const n={...e,id:uid(),d:v.d,t:v.t,e:v.e,rep:"",from:e.id};delete n.skip;delete n.until;c.events.push(n);if(fol)S.item={...S.item,id:n.id,s:v.d}}
  markDirty("core");warnClash(v.d,v.t,v.e,null);toast(v.d!==s?"Moved to "+fmtMD(v.d):"New time saved");render()}
@@ -3527,7 +3688,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(
   if(q[0]==="d"){if(D)D.value=addDays(D.value||s,+q.slice(1))}
   else{const n=+q,st=hm(T.value),en=hm(E.value);if(st!=null)T.value=mh(st+n);if(en!=null)E.value=mh(en+n)}
   f.requestSubmit();return}
- if(a==="rsdel"){const ev=(c.events||[]).find(x=>x.id===id);if(!ev)return;if(ev.rep){ev.skip=(ev.skip||[]).concat(s);toast("Skipped for "+fmtMD(s))}else{if(!confirm("Delete this event?"))return;c.events=c.events.filter(x=>x.id!==id);toast("Event deleted")}markDirty("core");if(S.item)closeItem();render();return}
+ if(a==="rsdel"){const ev=(c.events||[]).find(x=>x.id===id);if(!ev)return;if(ev.rep){ev.skip=(ev.skip||[]).concat(s);toast("Skipped for "+fmtMD(s))}else{if(!confirm("Delete this event?"))return;if(ev.agId)cxAgDelete(ev.agId);c.events=c.events.filter(x=>x.id!==id);toast("Event deleted")}markDirty("core");if(S.item)closeItem();render();return}
  if(a==="rsskip"){const d=day(s);d.bmove=d.bmove||{};d.bmove[id]={x:1};markDirty("day",s);render();toast("Skipped for today");return}
  if(a==="rsreset"){const d=day(s);if(d.bmove)delete d.bmove[id];markDirty("day",s);render();toast("Back to the usual time");return}
 });
@@ -3598,7 +3759,7 @@ function itemHTML(it){
   const px=e.src==="portal"||e.src==="model"||e.src==="agency",vn={zoom:"Zoom",meet:"Google Meet",teams:"Microsoft Teams"};
   h+=`<div class="sheet-act">${e.video?`<a class="btn sm solid" href="${esc(e.video.url)}" target="_blank" rel="noopener noreferrer">Join ${esc(vn[e.video.provider]||"video meeting")}</a>`:""}<button class="btn sm ${done?"":"solid"}" data-act="itdone">${done?"Mark not done":"Mark done"}</button>${px?"":`<button class="btn sm" data-act="itedit">Edit</button><button class="btn sm" data-act="itdup">Duplicate</button>`}<button class="btn sm" data-act="itday">Open day</button>${e.web?`<a class="btn sm" href="${esc(e.web)}" target="_blank" rel="noopener">Open in Outlook ${xi("arrow","xi sm")}</a>`:""}</div>`;
   if(cl.length)h+=`<div class="sheet-warn">${xi("alert","xi sm")}<span>Overlaps with ${cl.map(x=>`<b>${esc(x.title)}</b> (${rangeTxt({time:x.t,end:x.e})})`).join(", ")}</span></div>`;
-  h+=`<div class="sheet-info">${row("cal",e.src==="agency"?"On the agency calendar"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" · "+esc(e.kind||"event")+" (change it there)":e.src==="model"?"On "+esc((e.models||[]).join(", "))+"'s calendar · "+esc(e.kind||"event")+" (change it in the agency calendar)":e.src==="portal"?"From the agency calendar"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" (change it there)":e.src==="ics"?"From "+esc(e.calName||"a linked calendar")+" (read-only)":e.src==="outlook"?"From your Outlook calendar"+(e.calName?" · "+esc(e.calName):"")+(e.org?" · organised by "+esc(e.org):""):esc(catName(e.cat))+(e.rep?" · "+esc(repTxt(e)):""))}${row("pin",esc(e.where||""))}${e.notes?`<div class="sheet-notes">${esc(e.notes)}</div>`:""}${row("check",done?"Done for this day":s<todayIso()||(s===todayIso()&&e.t&&hm(e.e||e.t)<nowMin())?"<b class='late'>Not marked done</b>":"")}</div>`;
+  h+=`<div class="sheet-info">${row("cal",e.src==="agency"?"On the Model Agenda"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" · "+esc(e.kind||"event")+" (change it there)":e.src==="model"?"On "+esc((e.models||[]).join(", "))+"'s calendar · "+esc(e.kind||"event")+" (change it in the Model Agenda)":e.src==="portal"?"From the Model Agenda"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" (change it there)":e.src==="ics"?"From "+esc(e.calName||"a linked calendar")+" (read-only)":e.src==="outlook"?"From your Outlook calendar"+(e.calName?" · "+esc(e.calName):"")+(e.org?" · organised by "+esc(e.org):""):esc(catName(e.cat))+(e.rep?" · "+esc(repTxt(e)):""))}${cxAgRow(e)}${row("pin",esc(e.where||""))}${e.notes?`<div class="sheet-notes">${esc(e.notes)}</div>`:""}${row("check",done?"Done for this day":s<todayIso()||(s===todayIso()&&e.t&&hm(e.e||e.t)<nowMin())?"<b class='late'>Not marked done</b>":"")}</div>`;
   if(!px)h+=reschedForm(s,{kind:"e",ev:e,time:e.t,end:e.e});
   if(!px)h+=`<div class="sheet-danger">${e.rep?`<button class="linkbtn" data-act="itskip">Remove just ${fmtMD(s)}</button><button class="linkbtn" data-act="itdel">Delete the whole series</button>`:`<button class="linkbtn" data-act="itdel">Delete event</button>`}</div>`;
   return h+`</div>`}
@@ -3624,17 +3785,17 @@ function evFields(e){e=e||{};return`<div class="rs-f wide"><label class="full">W
  <label>Date<input class="txt" type="date" name="d" required value="${esc(e.d||S.date)}"></label><label>Starts<input class="txt" type="time" name="t" value="${esc(e.t||"")}"></label><label>Ends<input class="txt" type="time" name="e" value="${esc(e.e||"")}"></label>
  <label>Type<select class="txt" name="cat">${EV_CATS.map(c=>`<option value="${c[0]}" ${(e.cat||"connect")===c[0]?"selected":""}>${c[1]}</option>`).join("")}</select></label>
  <label>Repeats<select class="txt" name="rep">${EV_REP.map(c=>`<option value="${c[0]}" ${(e.rep||"")===c[0]?"selected":""}>${c[1]}</option>`).join("")}</select></label><label>Repeat until<input class="txt" type="date" name="until" value="${esc(e.until||"")}"></label>
- <label class="full">Where<input class="txt" name="where" value="${esc(e.where||"")}" placeholder="Zoom, studio, address"></label><label class="full">Notes<textarea class="txt" name="notes" placeholder="Agenda, who's coming, links">${esc(e.notes||"")}</textarea></label></div>`}
+ <label class="full">Where<input class="txt" name="where" value="${esc(e.where||"")}" placeholder="Zoom, studio, address"></label><label class="full">Notes<textarea class="txt" name="notes" placeholder="Agenda, who's coming, links">${esc(e.notes||"")}</textarea></label>${cxAgFields(e)}</div>`}
 function editHTML(e,s){return`<form class="evedit" data-id="${e.id}" data-s="${s}"><h4 class="sheet-sub">Edit event</h4>${e.src==="outlook"?`<p class="small muted">Saves straight to Outlook. Notes, guests and repeats are edited in Outlook itself.</p>`:""}${e.rep&&e.src!=="outlook"?`<p class="small muted">This event repeats. Edits here change every day in the series. To change one day only, use Reschedule.</p>`:""}${evFields(e)}<div class="rs-a"><button class="btn sm solid" type="submit">Save changes</button><button class="btn sm" type="button" data-act="itedit">Cancel</button></div></form>`}
 function newHTML(it){const p=it.pre||{};let h=sheetHead("New","New event",p.d?longDate(p.d):"");
  return h+`<div class="sheet-body"><form class="evedit" data-new="1">${msState==="on"?`<label class="dest">Save to<select class="txt" name="dest"><option value="outlook">Outlook calendar</option><option value="rebuild">DaySilk only</option></select></label>`:""}${evFields({d:p.d||S.date,t:p.t||"",e:p.e||"",cat:p.cat,title:p.title,where:p.where,notes:p.notes,rep:p.rep})}<div class="rs-a"><button class="btn sm solid" type="submit">Add to calendar</button><button class="btn sm" type="button" data-act="closeitem">Cancel</button></div></form></div>`}
 
-function readEv(f){const g=n=>f.elements[n]?String(f.elements[n].value||"").trim():"";return{title:g("title"),d:g("d"),t:g("t"),e:g("e"),cat:g("cat")||"connect",rep:g("rep"),until:g("until"),where:g("where"),notes:g("notes")}}
+function readEv(f){const g=n=>f.elements[n]?String(f.elements[n].value||"").trim():"";return{title:g("title"),d:g("d"),t:g("t"),e:g("e"),cat:g("cat")||"connect",rep:g("rep"),until:g("until"),where:g("where"),notes:g("notes"),agenda:!!(f.elements.agenda&&f.elements.agenda.checked),agModels:f.elements.agmodels?String(f.elements.agmodels.value||"").split(",").filter(Boolean):[]}}
 document.addEventListener("submit",ev=>{const f=ev.target;if(!f.classList.contains("evedit"))return;ev.preventDefault();
  const v=readEv(f);if(!v.title||!v.d){toast("Add a title and a date.");return}if(v.t&&v.e&&v.e<=v.t){toast("The end time needs to be after the start.");return}
  const c=core();c.events=c.events||[];
- if(f.dataset.new){const e={id:uid(),...v};if(!e.until)delete e.until;c.events.push(e);markDirty("core");warnClash(v.d,v.t,v.e,e.id);toast("Added to "+fmtMD(v.d));S.item={kind:"e",id:e.id,s:v.d};S.itemEdit=false;render();return}
- const e=evById(f.dataset.id);if(!e)return;Object.assign(e,v);if(!v.until)delete e.until;markDirty("core");warnClash(v.d,v.t,v.e,e.id);toast("Saved");
+ if(f.dataset.new){const e={id:uid(),...v};if(!e.until)delete e.until;c.events.push(e);cxAgAfter(e,"");markDirty("core");warnClash(v.d,v.t,v.e,e.id);toast("Added to "+fmtMD(v.d));S.item={kind:"e",id:e.id,s:v.d};S.itemEdit=false;render();return}
+ const e=evById(f.dataset.id);if(!e)return;const wasAg=e.agId||"";Object.assign(e,v);if(!v.until)delete e.until;cxAgAfter(e,wasAg);markDirty("core");warnClash(v.d,v.t,v.e,e.id);toast("Saved");
  S.itemEdit=false;S.item.s=evOccurs(e,f.dataset.s)?f.dataset.s:v.d;render()});
 
 /* Any calendar click opens the sheet */
@@ -3653,7 +3814,7 @@ document.addEventListener("click",ev=>{const b=ev.target.closest("[data-act]");
  if(a==="itcopy"){openItem({kind:"new",pre:{d:it.s,title:it.title,notes:it.sub||""}});return}
  if((a==="itskip"||a==="itdel")&&String(it.id).startsWith("o:"))return;
  if(a==="itskip"){const e=evById(it.id);if(!e)return;e.skip=(e.skip||[]).concat(it.s);markDirty("core");closeItem();render();toast("Removed for "+fmtMD(it.s));return}
- if(a==="itdel"){const e=evById(it.id);if(!e)return;if(!confirm(e.rep?"Delete every day of this repeating event?":"Delete this event?"))return;core().events=core().events.filter(x=>x.id!==it.id);markDirty("core");closeItem();render();toast("Event deleted");return}
+ if(a==="itdel"){const e=evById(it.id);if(!e)return;if(!confirm(e.rep?"Delete every day of this repeating event?":"Delete this event?"))return;if(e.agId)cxAgDelete(e.agId);core().events=core().events.filter(x=>x.id!==it.id);markDirty("core");closeItem();render();toast("Event deleted");return}
 },true);
 /* Week grid: tap an empty slot to add an event at that time */
 document.addEventListener("click",ev=>{const col=ev.target.closest(".wcol[data-d]");if(!col||ev.target.closest("[data-act]"))return;
@@ -3682,13 +3843,13 @@ function parseEvent(str){
  const l=p.title.toLowerCase();cat=/flight|fly|train to|airport/.test(l)?"travel":/gym|workout|run|class|training|yoga/.test(l)?"move":/lunch|dinner|breakfast|brunch|coffee|rest|spa/.test(l)?"recharge":/focus|deep work|write|plan/.test(l)?"focus":/call|meet|meeting|casting|zoom|interview|go-see/.test(l)?"connect":"close";
  if(p.time&&!en)en=mh(hm(p.time)+60);
  return{title:p.title,d:p.due||S.date,t:p.time,e:p.time?en:"",rep,where,cat}}
-function smartChips(v){if(!v.title)return`<span class="muted small">Try: Lunch with Erica fri 1-2pm at Nobu · Board call every mon 9am for 30m · Fitting oct 20 3pm</span>`;
- return`<span class="chip solid">${esc(v.title)}</span><span class="chip">${fmtMD(v.d)}</span><span class="chip">${v.t?rangeTxt({time:v.t,end:v.e}):"All day"}</span>${v.where?`<span class="chip">@ ${esc(v.where)}</span>`:""}${v.rep?`<span class="chip">${esc(EV_REP.find(r=>r[0]===v.rep)[1])}</span>`:""}<span class="chip">${esc(catName(v.cat))}</span>${clashes(v.d,v.t,v.e).length?`<span class="chip warn">Overlaps ${esc(clashes(v.d,v.t,v.e)[0].title)}</span>`:""}`}
+function smartChips(v){if(!v.title)return"";
+ return`<span class="chip solid">${esc(v.title)}</span><span class="chip">${fmtMD(v.d)}</span><span class="chip">${v.t?rangeTxt({time:v.t,end:v.e}):"All day"}</span>${v.where?`<span class="chip">@ ${esc(v.where)}</span>`:""}${v.rep?`<span class="chip">${esc(EV_REP.find(r=>r[0]===v.rep)[1])}</span>`:""}<span class="chip">${esc(catName(v.cat))}</span>${EMB&&!v.rep&&cxDetect(v.title).length?`<span class="chip solid">Also on the Model Agenda · ${esc(cxDetect(v.title).map(id=>(LENSM.find(m=>m.id===id)||{}).name).filter(Boolean).join(", "))}</span>`:""}${clashes(v.d,v.t,v.e).length?`<span class="chip warn">Overlaps ${esc(clashes(v.d,v.t,v.e)[0].title)}</span>`:""}`}
 function smartBar(){return`<form class="smartadd" id="smartAdd" autocomplete="off"><div class="sa-top"><div><b>Add an event</b><span>Pick how you want to add it.</span></div><button class="btn solid" type="button" data-act="newev" data-d="${S.date}">${xi("plus","xi sm")} New event</button></div><div class="sa-or">Or type it in plain words and press <b>Add typed event</b>:</div><div class="sa-in">${xi("plus","xi sm")}<input class="txt" id="saIn" name="q" placeholder="Lunch with Erica fri 1-2pm at Nobu" aria-label="Type an event in plain words"><button class="btn sm solid" type="submit">Add typed event</button></div><div class="sa-chips" id="saChips">${smartChips({})}</div><p class="sa-help small muted"><b>New event</b> opens the full form: date, start and end time, repeat, where and notes.</p></form>`}
 document.addEventListener("input",e=>{if(e.target.id!=="saIn")return;const v=parseEvent(e.target.value);document.getElementById("saChips").innerHTML=e.target.value.trim()?smartChips(v):smartChips({})});
 document.addEventListener("submit",e=>{if(e.target.id!=="smartAdd")return;e.preventDefault();const q=e.target.elements.q.value.trim();if(!q)return;const v=parseEvent(q);if(!v.title)return;
  if(msState==="on"&&!v.rep){msCreate({title:v.title,d:v.d,t:v.t,e:v.e,where:v.where}).then(()=>{e.target.reset&&e.target.reset();render()});return}
- const c=core();c.events=c.events||[];const n={id:uid(),title:v.title,d:v.d,t:v.t,e:v.e,cat:v.cat,rep:v.rep,where:v.where,notes:""};c.events.push(n);markDirty("core");warnClash(v.d,v.t,v.e,n.id);toast("Added: "+v.title+", "+fmtMD(v.d)+(v.t?" "+fmtT(v.t):""));render();setTimeout(()=>{const i=document.getElementById("saIn");if(i)i.focus()},30)});
+ const c=core();c.events=c.events||[];const n={id:uid(),title:v.title,d:v.d,t:v.t,e:v.e,cat:v.cat,rep:v.rep,where:v.where,notes:""};const ids=EMB&&!v.rep?cxDetect(v.title):[];if(ids.length){n.agModels=ids;n.agenda=true}c.events.push(n);markDirty("core");warnClash(v.d,v.t,v.e,n.id);toast("Added: "+v.title+", "+fmtMD(v.d)+(v.t?" "+fmtT(v.t):""));if(n.agenda)cxAgSave(n);else render();setTimeout(()=>{const i=document.getElementById("saIn");if(i)i.focus()},30)});
 
 /* ---------- Reminders while the site is open ---------- */
 const reminded=new Set();
@@ -4529,10 +4690,10 @@ function render(){
  _qCache=null;xnav();document.body.dataset.view=S.view;document.body.dataset.desk=deskOf(S.view).k;
  document.body.classList.toggle("nav-open",!!S.navOpen);
  const open=[...document.querySelectorAll("#main details[open][data-tid]")].map(f=>f.dataset.tid);
- const y=window.scrollY;document.getElementById("main").innerHTML=PG_FN[S.view]();
+ const y=window.scrollY,cxEl=document.querySelector("#main [data-cx-scroll]"),cxTop=cxEl?cxEl.scrollTop:null;document.getElementById("main").innerHTML=PG_FN[S.view]();
  open.forEach(id=>{document.querySelectorAll(`#main details[data-tid="${id}"]`).forEach(d=>d.open=true)});
  window.scrollTo(0,y);
- phoneDress();
+ cxAfter(cxTop);phoneDress();
  if(S.pal)renderPal();
  if(S.vera){S.vera.props=S.vera.mode==="critical"?[]:(S.vera.props||[]);renderVera()}
 }
@@ -4562,8 +4723,8 @@ async function portalSync(){
  psBusy=false
 }
 async function portalEventsSync(){if(!EMB||!sbUser||!baseReady)return;try{const l=await parent.MDV_DS_EMBED.portalEvents(true);if(Array.isArray(l)&&JSON.stringify(l)!==JSON.stringify(PE)){PE=l;const typing=document.activeElement&&document.activeElement.matches&&document.activeElement.matches("input,textarea,select");if(!EMB_ALERTS&&!typing&&["calendar","schedule","today","command","work"].includes(S.view))render()}}catch(_){}}
-window.__dsRefreshEvents=function(){portalEventsSync();modelLensSync(true);agencySync(true)};
-if(EMB){setTimeout(portalEventsSync,3500);setTimeout(portalEventsSync,16000);setTimeout(lensModels,3000);setTimeout(()=>modelLensSync(true),4500);setTimeout(()=>agencySync(true),5500);setInterval(()=>{if(!document.hidden){portalEventsSync();modelLensSync();agencySync()}},120000);document.addEventListener("visibilitychange",()=>{if(!document.hidden){portalEventsSync();modelLensSync();agencySync()}})}
+window.__dsRefreshEvents=function(){portalEventsSync();modelLensSync(true);agencySync(true);movementSync(true)};
+if(EMB){setTimeout(portalEventsSync,3500);setTimeout(portalEventsSync,16000);setTimeout(lensModels,3000);setTimeout(()=>modelLensSync(true),4500);setTimeout(()=>agencySync(true),5500);setTimeout(()=>movementSync(true),6500);setInterval(()=>{if(!document.hidden){portalEventsSync();modelLensSync();agencySync();movementSync()}},120000);document.addEventListener("visibilitychange",()=>{if(!document.hidden){portalEventsSync();modelLensSync();agencySync();movementSync()}})}
 if(EMB&&!EMB_ALERTS){setInterval(portalSync,90000);setTimeout(portalSync,4000);setTimeout(portalSync,15000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)portalSync()})}
 
 /* ================= Inside the portal ================= */
