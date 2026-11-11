@@ -103,3 +103,13 @@ body{background:var(--v15-espresso)!important}.topbar{background:rgba(18,14,11,.
 
 /* Video meeting Join button on a calendar item */
 .v16m-join{margin:12px 0 4px}.v16m-join .v15m-btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 22px;text-decoration:none}
+
+/* One model calendar: filter chips and the extra item kinds */
+.v17m-cal-filters{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.v17m-cal-filters button{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border-radius:999px;border:1px solid var(--v15-line);background:transparent;color:var(--v15-ivory);font:600 12px/1 inherit;font-family:inherit;cursor:pointer}
+.v17m-cal-filters button i{width:9px;height:9px;border-radius:50%;background:var(--v15-gold)}
+.v17m-cal-filters button.booking i{background:#91b18b}.v17m-cal-filters button.casting i{background:#b79ad6}.v17m-cal-filters button.travel i{background:#7fb0d6}.v17m-cal-filters button.unavailable i{background:#d0705f}.v17m-cal-filters button.task i{background:#c9a66b}
+.v17m-cal-filters button small{color:var(--v15-muted);font-weight:500}
+.v17m-cal-filters button.off{opacity:.45}.v17m-cal-filters button.off i{background:transparent;border:1px solid var(--v15-muted)}
+.v17m-cal-chip.task{border-left-color:#c9a66b;border-style:dotted}
+.v17m-cal-chip.unavailable{border-left-color:#d0705f;background:rgba(208,112,95,.08)}
