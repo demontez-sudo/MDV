@@ -179,6 +179,40 @@ function tlabel(d){var h=d.getHours(),m=d.getMinutes();return (h%12||12)+(m?':'+
 /* ---------- painting ---------- */
 function ring(p){var tone=p>=80?'ok':p>=40?'warn':'bad';return '<div class="mds-ring '+tone+'" style="--p:'+p+'"><b>'+p+'</b><small>%</small></div>';}
 function greet(){var h=new Date().getHours();return h<12?'Good morning':h<17?'Good afternoon':'Good evening';}
+
+/* ---------- the day, hour by hour: agency items, tasks and time off beside her own routine ---------- */
+function dayTimeline(d,ag,blocks,isT){
+  var PX=44,items=[],allDay=[];
+  ag.forEach(function(x){
+    var s=x.start.getHours()*60+x.start.getMinutes();
+    if(s===0){allDay.push(x);return;}
+    var e=(x.end&&x.end>x.start&&dk(x.end)===dk(x.start))?x.end.getHours()*60+x.end.getMinutes():s+60;
+    items.push({s:s,e:Math.max(e,s+30),title:x.title,sub:[x.kind,x.sub].filter(Boolean).join(' · '),cls:x.kind,own:false});
+  });
+  blocks.forEach(function(b){
+    if(b.cat==='rest')return;
+    var s=U().tMin(b.start),e=U().tMin(b.end);if(!(e>s))e=s+30;
+    items.push({s:s,e:Math.max(e,s+20),title:b.title,sub:'Your plan',cls:b.cat||'own',own:true});
+  });
+  var lo=6,hi=22;
+  items.forEach(function(x){lo=Math.min(lo,Math.floor(x.s/60));hi=Math.max(hi,Math.ceil(x.e/60));});
+  lo=Math.max(0,lo);hi=Math.min(24,hi);
+  items.sort(function(a,b){return a.s-b.s||a.e-b.e;});
+  var cluster=[],clusterEnd=-1;
+  function flush(){var lanes=[];cluster.forEach(function(it){var ln=0;while(lanes[ln]!==undefined&&lanes[ln]>it.s)ln++;lanes[ln]=it.e;it.lane=ln;});cluster.forEach(function(it){it.cols=lanes.length;});cluster=[];}
+  items.forEach(function(it){if(cluster.length&&it.s>=clusterEnd){flush();clusterEnd=-1;}cluster.push(it);clusterEnd=Math.max(clusterEnd,it.e);});
+  flush();
+  var hours='',i;
+  for(i=lo;i<=hi;i++)hours+='<div class="mds-tl-h" style="top:'+((i-lo)*PX)+'px"><span>'+(i===0||i===24?'12am':i===12?'12pm':i>12?(i-12)+'pm':i+'am')+'</span></div>';
+  var body=items.map(function(it){
+    var top=(it.s/60-lo)*PX,h=Math.max(24,(it.e-it.s)/60*PX-2),w=100/it.cols;
+    return '<div class="mds-tli '+esc(it.cls)+(it.own?' own':'')+'" style="top:'+top.toFixed(1)+'px;height:'+h.toFixed(1)+'px;left:calc('+(it.lane*w)+'% + 2px);width:calc('+w+'% - 4px)"><b>'+esc(it.title)+'</b><small>'+esc(tl(U().m2t(it.s))+' – '+tl(U().m2t(it.e)))+(it.sub?' · '+esc(it.sub):'')+'</small></div>';
+  }).join('');
+  var now='';
+  if(isT){var n=new Date(),nm=n.getHours()*60+n.getMinutes();if(nm>=lo*60&&nm<=hi*60)now='<div class="mds-tl-now" style="top:'+((nm/60-lo)*PX).toFixed(1)+'px"><i></i></div>';}
+  var strip=allDay.length?'<div class="mds-tl-all">'+allDay.map(function(x){return '<span class="'+esc(x.kind)+'"><b>All day</b> '+esc(x.title)+'</span>';}).join('')+'</div>':'';
+  return '<section class="mds-card mds-tl-card"><header><h3>Today, hour by hour</h3><span>'+ag.length+' on your calendar</span></header>'+strip+'<div class="mds-tl" style="height:'+((hi-lo)*PX)+'px">'+hours+body+now+'</div></section>';
+}
 function todayTab(){
   var d=S.day,plan=S.ds.plan,dd=dayData(d),isT=dk(d)===dk(new Date()),blocks=blocksOn(plan,d),ag=agencyItems(d),now=new Date();
   var habits=arr(plan.habits),doneH=dd.done.filter(function(x){return habits.some(function(h){return h.id===x;});}).length;
@@ -194,7 +228,7 @@ function todayTab(){
   var bigH=big.map(function(b,i){return '<li class="'+(b.done?'done':'')+'"><button type="button" class="mds-chk'+(b.done?' on':'')+'" data-mds-big="'+i+'" aria-label="Mark done"></button><input type="text" maxlength="140" data-mds-bigt="'+i+'" value="'+esc(b.t)+'" placeholder="Big '+(i+1)+': one result that makes today a win"></li>';}).join('');
   var rv=dd.review||{};
   return '<section class="mds-top"><div class="mds-t1">'+ring(pct)+'<div><small>'+esc(d.toLocaleDateString([],{weekday:'long',month:'long',day:'numeric'}))+'</small><h2>'+(isT?greet()+(firstName()?', '+esc(firstName()):''):esc(d.toLocaleDateString([],{weekday:'long'})))+'</h2><p>'+doneTasks+' of '+totalTasks+' done'+(ag.length?' · '+ag.length+' on your calendar':'')+'</p></div></div><div class="mds-t2">'+(isT?line('Now',cur):'')+line(isT?'Next':'First up',nxt)+'</div><div class="mds-t3"><h4>Big 3</h4><ul class="mds-big">'+bigH+'</ul></div></section>'
-   +'<div class="mds-cols"><div><section class="mds-card"><header><h3>On your calendar</h3></header>'+agencyHtml+'</section><section class="mds-card"><header><h3>Your day</h3><span>'+blocks.length+' blocks</span></header><ul class="mds-rt">'+routine+'</ul></section></div>'
+   +'<div class="mds-cols"><div>'+dayTimeline(d,ag,blocks,isT)+'<section class="mds-card"><header><h3>Your day</h3><span>'+blocks.length+' blocks</span></header><ul class="mds-rt">'+routine+'</ul></section></div>'
    +'<div><section class="mds-card"><header><h3>Daily habits</h3><span>'+doneH+' of '+habits.length+'</span></header><div class="mds-hb">'+hab+'</div></section>'
    +'<section class="mds-card"><header><h3>Evening review</h3><span>2 minutes</span></header><label class="mds-f"><span>One win today</span><input type="text" maxlength="300" data-mds-rv="win" value="'+esc(rv.win||'')+'"></label><label class="mds-f"><span>What was hard</span><input type="text" maxlength="300" data-mds-rv="hard" value="'+esc(rv.hard||'')+'"></label><div class="mds-mood"><span>Energy today</span>'+[1,2,3,4,5].map(function(n){return '<button type="button" class="'+(Number(rv.mood)===n?'on':'')+'" data-mds-mood="'+n+'">'+n+'</button>';}).join('')+'</div></section></div></div>';
 }
