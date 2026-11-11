@@ -207,6 +207,30 @@ async function roster(admin,organization){
   }).sort((a,b)=>a.name.localeCompare(b.name));
 }
 
+
+/* Models whose login is still an internal address, and what can be done about each. Nothing is changed here. */
+async function internalScan(admin,organization){
+  const rows=(await roster(admin,organization)).filter(r=>r.login_placeholder);
+  if(!rows.length)return [];
+  const [pv,lk]=await Promise.all([
+    admin.from('model_private_profiles').select('model_id,email').eq('organization_id',organization.id).limit(2000),
+    admin.from('model_user_links').select('model_id,user_id').eq('organization_id',organization.id).limit(2000)]);
+  const used=new Map();for(const x of (pv.data||[])){const e=low(x.email);if(e)used.set(e,(used.get(e)||0)+1);}
+  const modelOf=new Map((lk.data||[]).map(x=>[x.user_id,x.model_id]));
+  const byEmail=new Map();
+  for(let page=1;page<=40;page++){
+    const {data,error}=await admin.auth.admin.listUsers({page,perPage:100});if(error)throw error;
+    const users=data?.users||[];users.forEach(u=>byEmail.set(low(u.email),u));if(users.length<100)break;
+  }
+  return rows.map(r=>{
+    const to=r.deliver_to;let state='ready',why='';
+    if(!to){state='needs_email';why='No real email on the profile';}
+    else if((used.get(to)||0)>1){state='shared';why='The same email is on more than one model';}
+    else{const u=byEmail.get(to);if(u&&modelOf.get(u.id)&&modelOf.get(u.id)!==r.model_id){state='taken';why='That email already belongs to another model\'s login';}}
+    return {model_id:r.model_id,name:r.name,login_email:r.login_email,to:to||null,state,why};
+  });
+}
+
 export const handler=async(event)=>{
   if(!['GET','POST'].includes(event.httpMethod))return json(405,{error:'Method not allowed'},{Allow:'GET, POST'});
   try{
@@ -216,6 +240,28 @@ export const handler=async(event)=>{
     const modelId=String(body.model_id||event.queryStringParameters?.model_id||'').trim();
     if(!modelId){
       const {organization}=await requireStaffOrganization({user,client,organizationSlug:slug});
+      if(event.httpMethod==='GET'&&event.queryStringParameters?.internal_scan==='1'){
+        const admin=await requirePermission(user.id,organization.id,'models.read');
+        const list=await internalScan(admin,organization);
+        return json(200,{ok:true,models:list,counts:{total:list.length,ready:list.filter(x=>x.state==='ready').length,needs_email:list.filter(x=>x.state==='needs_email').length,shared:list.filter(x=>x.state==='shared').length,taken:list.filter(x=>x.state==='taken').length}});
+      }
+      if(event.httpMethod==='POST'&&String(body.action||'')==='fix_internal_logins'){
+        const admin=await requirePermission(user.id,organization.id,'models.write');
+        const want=new Set((Array.isArray(body.model_ids)?body.model_ids:[]).map(String));
+        const mine=(await internalScan(admin,organization)).filter(x=>want.has(x.model_id));
+        const scan=mine.filter(x=>x.state==='ready').slice(0,6).concat(mine.filter(x=>x.state!=='ready'));   /* a few switches per call keep it inside the time limit; the ones that cannot be switched are only reported */
+        const out=[];
+        for(const x of scan){
+          if(x.state!=='ready'){out.push({model_id:x.model_id,name:x.name,ok:false,skipped:true,reason:x.why});continue;}
+          try{
+            const c=await linked(admin,organization.id,x.model_id);
+            if(!c.user||!isInternalLogin(c.user.email)){out.push({model_id:x.model_id,name:x.name,ok:true,already:true});continue;}
+            const ch=await changeLoginEmail(admin,organization,c,x.to,user.id);
+            out.push({model_id:x.model_id,name:x.name,ok:true,from:x.login_email,to:low(ch.user?.email||x.to),relinked:!!ch.relinked});
+          }catch(e){out.push({model_id:x.model_id,name:x.name,ok:false,reason:String(e.publicMessage||e.message||e).slice(0,160)});}
+        }
+        return json(200,{ok:true,verified:true,results:out,switched:out.filter(x=>x.ok&&!x.already).length});
+      }
       if(event.httpMethod==='GET'&&event.queryStringParameters?.email_check==='1'){
         const admin=await requirePermission(user.id,organization.id,'models.read');
         const st=emailDeliveryStatus();

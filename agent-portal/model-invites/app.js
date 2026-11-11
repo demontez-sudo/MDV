@@ -91,6 +91,31 @@ async function sendSelected(){
   msg(sent+' invitation'+(sent===1?'':'s')+' sent.'+(skipped.length?' Skipped: '+skipped.join(', ')+'.':'')+(failed.length?' Failed: '+failed.join(' · ')+'.':''),failed.length?'bad':'ok');
   await load(true);
 }
+async function scanInternal(){
+  try{
+    var r=await call('GET',null,'internal_scan=1&organization=maison-de-veux'),c=r.counts||{};S.internal=r.models||[];
+    $('fixcard').hidden=!c.total;if(!c.total)return;
+    var left=c.total-c.ready;
+    $('fixsum').innerHTML='<b>'+c.total+'</b> model'+(c.total===1?' still has':'s still have')+' a login that email cannot reach. <span style="color:var(--ok)">'+c.ready+' can be switched now</span>'+(left?' · <span style="color:var(--bad)">'+left+' need attention</span>':'')+'.';
+    $('fixbtn').hidden=!c.ready;$('fixbtn').textContent='Switch '+c.ready+' to their profile emails';
+    var rest=S.internal.filter(function(x){return x.state!=='ready';});
+    $('fixdet').innerHTML=rest.length?'<p>These need a hand:</p><table><tbody>'+rest.map(function(x){return '<tr><td>'+esc(x.name)+'</td><td>'+esc(x.why)+'</td><td>'+esc(x.to||'')+'</td></tr>';}).join('')+'</tbody></table>':'';
+  }catch(e){$('fixcard').hidden=false;$('fixsum').textContent='Could not scan: '+(e.message||e);}
+}
+async function fixInternal(){
+  var ids=(S.internal||[]).filter(function(x){return x.state==='ready';}).map(function(x){return x.model_id;});if(!ids.length)return;
+  if(!confirm('Switch the sign-in email of '+ids.length+' model'+(ids.length===1?'':'s')+' to the email on their profile? Nothing is sent. You can invite them afterwards.'))return;
+  $('fixbtn').disabled=true;var done=0,ok=0,skipped=[],failed=[];
+  for(var i=0;i<ids.length;i+=6){
+    $('fixsum').textContent='Switching… '+done+' of '+ids.length;
+    try{var out=await call('POST',{action:'fix_internal_logins',model_ids:ids.slice(i,i+6)});
+      (out.results||[]).forEach(function(x){done++;if(x.ok)ok++;else if(x.skipped)skipped.push(x.name+' ('+x.reason+')');else failed.push(x.name+': '+x.reason);});
+    }catch(e){failed.push('A batch did not go: '+(e.message||e));done+=6;}
+  }
+  $('fixbtn').disabled=false;
+  msg(ok+' login'+(ok===1?'':'s')+' switched to the profile email.'+(skipped.length?' Skipped: '+skipped.join(', ')+'.':'')+(failed.length?' Failed: '+failed.join(' · ')+'.':''),failed.length?'bad':'ok');
+  await load(true);await scanInternal();
+}
 async function checkMail(){
   $('mailsum').textContent='Checking…';
   try{
@@ -113,10 +138,11 @@ document.addEventListener('click',function(e){
   if(e.target.id==='sendSel')sendSelected();
   if(e.target.id==='copyclose')$('copybox').hidden=true;
   if(e.target.id==='mailbtn')checkMail();
+  if(e.target.id==='fixbtn')fixInternal();
   if(e.target.id==='mailtest')testMail();
   if(e.target.id==='copybtn'){var ta=$('copytext');ta.select();(navigator.clipboard?navigator.clipboard.writeText(ta.value):Promise.reject()).then(function(){e.target.textContent='Copied ✓';setTimeout(function(){e.target.textContent='Copy message';},1800);},function(){document.execCommand&&document.execCommand('copy');});}
 });
 document.addEventListener('change',function(e){if(e.target.dataset&&e.target.dataset.sel){S.sel[e.target.dataset.sel]=e.target.checked;paint();}});
 $('q').addEventListener('input',function(){S.q=this.value;paint();});
-load();checkMail();
+load();checkMail();scanInternal();
 })();
