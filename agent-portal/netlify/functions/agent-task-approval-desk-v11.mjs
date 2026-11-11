@@ -132,6 +132,17 @@ export const handler=async(event)=>{
     const profileUserIds=members.map(m=>m.user_id).filter(Boolean);
     const profiles=profileUserIds.length?await rows(admin.from('profiles').select('user_id,display_name,avatar_url').in('user_id',profileUserIds)):[];
     const profileMap=new Map(profiles.map(x=>[x.user_id,x]));const memberMap=new Map(members.map(x=>[x.id,{...x,profile:profileMap.get(x.user_id)||null}]));
-    const canWrite=await assertPermission(admin,user.id,organization.id,'tasks.write');const canManage=await assertPermission(admin,user.id,organization.id,'tasks.manage');return json(200,{environment:'veux-saas-v10',organization,tasks:tasks.map(t=>({...t,assignments:assignments.filter(a=>a.task_id===t.id).map(a=>({...a,member:a.member_id?memberMap.get(a.member_id)||null:null})),comments:comments.filter(c=>c.task_id===t.id),dependencies:dependencies.filter(d=>d.task_id===t.id),history:taskHistory.filter(h=>h.task_id===t.id)})),approvals:approvals.map(a=>({...a,assigned_member:a.assigned_member_id?memberMap.get(a.assigned_member_id)||null:null,history:approvalHistory.filter(h=>h.approval_request_id===a.id)})),members:[...memberMap.values()],models,access:{write:canWrite,manage:canManage}});
+    const canWrite=await assertPermission(admin,user.id,organization.id,'tasks.write');const canManage=await assertPermission(admin,user.id,organization.id,'tasks.manage');
+    // Group once by task id (a single pass) instead of re-scanning every list for every task.
+    const group=(list,key)=>{const m=new Map();for(const x of list){const k=x[key];if(k==null)continue;const a=m.get(k);if(a)a.push(x);else m.set(k,[x]);}return m;};
+    const assignBy=group(assignments,'task_id'),commentBy=group(comments,'task_id'),depBy=group(dependencies,'task_id'),histBy=group(taskHistory,'task_id'),apprHistBy=group(approvalHistory,'approval_request_id');
+    const build=(histLimit)=>({environment:'veux-saas-v10',organization,
+      tasks:tasks.map(t=>({...t,assignments:(assignBy.get(t.id)||[]).map(a=>({...a,member:a.member_id?memberMap.get(a.member_id)||null:null})),comments:commentBy.get(t.id)||[],dependencies:depBy.get(t.id)||[],history:(histBy.get(t.id)||[]).slice(0,histLimit)})),
+      approvals:approvals.map(a=>({...a,assigned_member:a.assigned_member_id?memberMap.get(a.assigned_member_id)||null:null,history:(apprHistBy.get(a.id)||[]).slice(0,histLimit)})),
+      members:[...memberMap.values()],models,access:{write:canWrite,manage:canManage}});
+    // Netlify answers 502 when a function reply is over about 6 MB, so trim the history if the list is that large.
+    let out=build(50);
+    if(JSON.stringify(out).length>5200000)out=build(3);
+    return json(200,out);
   }catch(error){return errorResponse(error);}
 };
