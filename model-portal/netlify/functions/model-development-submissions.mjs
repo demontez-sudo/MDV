@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireModelPortal } from './_lib/portal-bridge.mjs';
+import { alertAgencyOfSubmission } from './_lib/staff-alerts.mjs';
 
 // Skin & Walks: a model creates a submission, uploads photos (skin) or videos (walks), and can withdraw it.
 // Files go straight to private storage with a signed upload link; the agency reviews them in the agent portal.
@@ -94,13 +95,21 @@ async function finalizeUpload({ admin, organization, modelId, user, body }) {
   // Attach the document to the submission so the agency sees it on the review page.
   const { data: existing, error: linkReadError } = await admin.from('document_links').select('id').eq('organization_id', organization.id).eq('document_id', docId).eq('resource_type', 'development_submission').eq('resource_id', sub.id).maybeSingle();
   if (linkReadError) throw linkReadError;
+  let newLink = false;
   if (!existing) {
     const row = { organization_id: organization.id, document_id: docId, resource_type: 'development_submission', resource_id: sub.id, relationship: role };
     let r = await admin.from('document_links').insert({ ...row, created_by: user.id });
     if (r.error) r = await admin.from('document_links').insert(row);
     if (r.error) throw r.error;
+    newLink = true;
   }
-  if (sub.status === 'changes_requested') await admin.from(TABLE).update({ status: 'pending', updated_at: new Date().toISOString() }).eq('id', sub.id);
+  const resubmitted = sub.status === 'changes_requested';
+  if (resubmitted) await admin.from(TABLE).update({ status: 'pending', updated_at: new Date().toISOString() }).eq('id', sub.id);
+  // Alert the agency once per submission (on its first file), or when a model sends files back after "changes requested".
+  if (newLink) {
+    const { count, error: countError } = await admin.from('document_links').select('id', { count: 'exact', head: true }).eq('organization_id', organization.id).eq('resource_type', 'development_submission').eq('resource_id', sub.id);
+    if (resubmitted || (!countError && count === 1)) await alertAgencyOfSubmission(admin, { organization, modelId, submission: sub, resubmitted });
+  }
   return json(200, { ok: true, verified: true, document_id: docId, file_role: role, persisted_at: new Date().toISOString() });
 }
 
