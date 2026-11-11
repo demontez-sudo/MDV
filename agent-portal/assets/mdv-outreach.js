@@ -384,11 +384,13 @@ function leadsHtml(){
   if(S.leadsErr)return '<section class="ot-leads"><header><div><small>OUTREACH LEADS</small><h2>Who to contact next</h2></div></header><p class="ot-err">'+esc(S.leadsErr)+' <button type="button" class="ot-link" data-lead-refresh>Try again</button></p></section>';
   if(!S.leads.length)return '<section class="ot-leads"><header><div><small>OUTREACH LEADS</small><h2>Who to contact next</h2></div><button type="button" class="ot-btn sm" data-lead-refresh>Refresh</button></header><p class="ot-empty">No leads right now. Everyone you know has been contacted recently.</p></section>';
   var sel=Object.keys(S.leadSel||{}).filter(function(i){return S.leadSel[i]&&!(S.planned||{})[i];}).length;
-  return '<section class="ot-leads"><header><div><small>OUTREACH LEADS</small><h2>Who to contact next</h2><p>Ranked from your follow-ups, quiet companies, companies never contacted and new scouted people.</p></div>'
-   +'<div class="ot-lead-plan"><label>Start at <input type="time" id="ot-lead-start" value="'+esc(S.leadStart||nextSlotStart())+'"></label><button type="button" class="ot-btn gold sm" data-lead-plan'+(sel?'':' disabled')+'>Plan '+sel+' on my schedule</button><button type="button" class="ot-btn sm" data-lead-refresh>Refresh</button></div></header>'
+  return '<section class="ot-leads"><header><div><small>OUTREACH LEADS</small><h2>Who to contact next</h2><p>Ranked from your follow-ups, quiet companies (sooner for Tier A and VIP), companies never contacted and new scouted people. Each one shows the best time to reach them in their own city.</p></div>'
+   +'<div class="ot-lead-plan"><label class="ot-lead-mode"><input type="radio" name="ot-lead-mode" value="best"'+(S.leadMode!=='start'?' checked':'')+'> Best time for each</label><label class="ot-lead-mode"><input type="radio" name="ot-lead-mode" value="start"'+(S.leadMode==='start'?' checked':'')+'> Start at <input type="time" id="ot-lead-start" value="'+esc(S.leadStart||nextSlotStart())+'"></label><button type="button" class="ot-btn gold sm" data-lead-plan'+(sel?'':' disabled')+'>Plan '+sel+' on my schedule</button><button type="button" class="ot-btn sm" data-lead-refresh>Refresh</button></div></header>'
    +'<ul class="ot-lead-list">'+S.leads.map(function(l,i){var k=LK[l.kind]||['Lead',''],done=(S.planned||{})[i];
      return '<li class="'+(done?'done':'')+'"><label class="ot-lead-chk"><input type="checkbox" data-lead-sel="'+i+'"'+((S.leadSel||{})[i]?' checked':'')+(done?' disabled':'')+'></label>'
-       +'<div class="ot-lead-main"><span class="ot-lead-k '+k[1]+'">'+k[0]+'</span><b>'+esc(leadName(l))+'</b>'+(l.company&&l.contact?'<em>'+esc(l.company.label)+'</em>':'')+'<small>'+esc(l.why||'')+'</small></div>'
+       +'<div class="ot-lead-main"><span class="ot-lead-k '+k[1]+'">'+k[0]+'</span><b>'+esc(leadName(l))+'</b>'+(l.company&&l.contact?'<em>'+esc(l.company.label)+'</em>':'')+(l.role_label?'<span class="ot-lead-role">'+esc(l.role_label)+(l.city?' · '+esc(l.city):'')+(l.tier?' · Tier '+esc(l.tier):'')+'</span>':'')+'<small>'+esc(l.why||'')+'</small>'
+       +(l.best_label?'<small class="ot-lead-when" title="'+esc(l.best_why||'')+'">Best time: '+esc(l.best_label)+'</small>':'')
+       +(l.pitch?'<small class="ot-lead-pitch">Pitch: '+esc(l.pitch)+'</small>':'')+'</div>'
        +'<div class="ot-lead-act">'+(done?'<span class="ot-lead-done">On your schedule</span>':'<button type="button" class="ot-btn sm" data-lead-email="'+i+'">✦ Email</button>')+'</div></li>';}).join('')+'</ul></section>';
 }
 function leadEmail(i){
@@ -408,13 +410,14 @@ function planLeads(btn){
   var idx=Object.keys(S.leadSel||{}).filter(function(i){return S.leadSel[i]&&!(S.planned||{})[i];}).map(Number).sort(function(a,b){return a-b;});
   if(!idx.length)return;
   var t=(document.getElementById('ot-lead-start')||{}).value||nextSlotStart(),hh=Number(t.split(':')[0]),mm=Number(t.split(':')[1]||0);
-  var slots=idx.map(function(_,n){var d=new Date();d.setHours(hh,mm+n*25,0,0);return d.toISOString();});
-  var leads=idx.map(function(i){var l=S.leads[i];return {kind:l.kind,why:l.why,contact_id:l.contact&&l.contact.id,contact_label:l.contact&&l.contact.label,company_id:l.company&&l.company.id,company_label:l.company&&l.company.label,prospect_id:l.prospect&&l.prospect.id,prospect_label:l.prospect&&l.prospect.label};});
+  var best=S.leadMode!=='start';
+  var slots=idx.map(function(i,n){var l=S.leads[i];if(best&&l.best_at)return l.best_at;var d=new Date();d.setHours(hh,mm+n*25,0,0);return d.toISOString();});
+  var leads=idx.map(function(i){var l=S.leads[i];return {kind:l.kind,why:l.why,role:l.role,role_label:l.role_label,city:l.city,tz:l.tz,pitch:l.pitch,best_why:l.best_why,contact_id:l.contact&&l.contact.id,contact_label:l.contact&&l.contact.label,company_id:l.company&&l.company.id,company_label:l.company&&l.company.label,prospect_id:l.prospect&&l.prospect.id,prospect_label:l.prospect&&l.prospect.label};});
   btn.disabled=true;
   bridge().api('/api/agent/outreach-leads',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organization_slug:org(),action:'plan',leads:leads,slots:slots})}).then(function(r){
     if(!r||r.verified!==true)throw new Error('The tasks were not confirmed.');
     idx.forEach(function(i){S.planned[i]=true;});S.leadStart=t;
-    toast(idx.length+' outreach task'+(idx.length===1?'':'s')+' added to your schedule, starting '+t+'. They show on your Day view.');paint();
+    toast(idx.length+' outreach task'+(idx.length===1?'':'s')+' added to your schedule'+(best?', each at the best time for that person':', starting '+t)+'. They show on your Day view.');paint();
   },function(e){toast(msg(e),true);btn.disabled=false;});
 }
 document.addEventListener('click',function(e){
@@ -426,7 +429,8 @@ document.addEventListener('click',function(e){
 document.addEventListener('change',function(e){
   var c=e.target&&e.target.matches&&e.target.matches('[data-lead-sel]')?e.target:null;
   if(c){S.leadSel=S.leadSel||{};S.leadSel[c.getAttribute('data-lead-sel')]=c.checked;var b=document.querySelector('[data-lead-plan]');if(b){var n=Object.keys(S.leadSel).filter(function(i){return S.leadSel[i]&&!(S.planned||{})[i];}).length;b.disabled=!n;b.textContent='Plan '+n+' on my schedule';}}
-  else if(e.target&&e.target.id==='ot-lead-start')S.leadStart=e.target.value;
+  else if(e.target&&e.target.id==='ot-lead-start'){S.leadStart=e.target.value;S.leadMode='start';var r=document.querySelector('input[name="ot-lead-mode"][value="start"]');if(r)r.checked=true;}
+  else if(e.target&&e.target.name==='ot-lead-mode')S.leadMode=e.target.value;
 });
 window.MDV_OUTREACH={render:window.renderOutreach,log:openLog,state:S};
 (function register(){
