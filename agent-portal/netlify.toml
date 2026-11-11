@@ -243,6 +243,18 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/portal/join"
+to = "/portal-reset.html"
+status = 200
+force = true
+
+[[redirects]]
+from = "/portal/join/"
+to = "/portal-reset.html"
+status = 200
+force = true
+
+[[redirects]]
 from = "/model-reset"
 to = "/portal-reset.html"
 status = 200

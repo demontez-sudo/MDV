@@ -143,6 +143,20 @@
   status = 200
   force = true
 
+# Set-up and reset pages are served by the agent site (it holds the sign-in service). Without these, a link like /portal/join?c=... would fall into
+# the model app's login page below.
+[[redirects]]
+  from = "/join"
+  to = "https://maison-agent.netlify.app/portal/join"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/reset"
+  to = "https://maison-agent.netlify.app/portal/reset"
+  status = 200
+  force = true
+
 # SPA fallback MUST remain last.
 [[redirects]]
   from = "/*"

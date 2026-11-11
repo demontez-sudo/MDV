@@ -1,5 +1,6 @@
 import { adminClient, parseBody, json, errorResponse } from './_lib/auth.mjs';
-import { verifyModelRecoveryToken } from './_lib/model-recovery-token.mjs';
+import crypto from 'node:crypto';
+import { verifyModelRecoveryToken, emailHash } from './_lib/model-recovery-token.mjs';
 import { verifyModelPassword } from './_lib/model-auth-verifier.mjs';
 
 const ORG_SLUG='maison-de-veux';
@@ -25,7 +26,7 @@ export async function handler(event){
     if(orgError)throw orgError;
     if(!org?.id)return json(503,{error:'Maison de Veux is temporarily unavailable.'});
 
-    if(String(claim.oid)!==String(org.id)){return json(403,{error:'This recovery link is not valid for this agency.'});}
+    if(claim.oid&&String(claim.oid)!==String(org.id)){return json(403,{error:'This recovery link is not valid for this agency.'});}
     const {data:modelLink,error:linkError}=await admin.from('model_user_links')
       .select('id,model_id,user_id').eq('organization_id',org.id).eq('user_id',claim.uid).eq('model_id',claim.mid).maybeSingle();
     if(linkError)throw linkError;
@@ -34,6 +35,7 @@ export async function handler(event){
     if(authError||!authData?.user?.id)return json(403,{error:'The Model Portal authentication account is unavailable.'});
     const user=authData.user;
     if(claim.email&&String(user.email||'').toLowerCase()!==String(claim.email).toLowerCase())return json(403,{error:'The login email changed after this reset was issued. Request a new link.'});
+    if(claim.email_hash&&!crypto.timingSafeEqual(Buffer.from(claim.email_hash),emailHash(user.email||'')))return json(403,{error:'The login email changed after this link was issued. Ask your agency to send a new one.'});
 
     const {data:model,error:modelError}=await admin.from('models')
       .select('id,display_name,status,active').eq('organization_id',org.id).eq('id',modelLink.model_id).maybeSingle();

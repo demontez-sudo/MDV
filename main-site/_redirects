@@ -11,6 +11,13 @@
 /sign https://maison-agent.netlify.app/sign 200!
 /api/public/package https://maison-agent.netlify.app/api/public/package 200!
 /api/public/package/feedback https://maison-agent.netlify.app/api/public/package/feedback 200!
+# The set-up and reset pages live on the agent site (it holds the sign-in service); everything else under /portal is the model app.
+/portal/join https://maison-agent.netlify.app/portal/join 200!
+/portal/join/ https://maison-agent.netlify.app/portal/join 200!
+/portal/reset https://maison-agent.netlify.app/portal/reset 200!
+/portal/reset/ https://maison-agent.netlify.app/portal/reset 200!
+/portal/password https://maison-agent.netlify.app/portal/password 200!
+/portal/activate https://maison-agent.netlify.app/portal/activate 200!
 /portal/* https://maison-models.netlify.app/:splat 200!
 /portal https://maison-models.netlify.app/ 200!
 /ma/* https://maison-ma.netlify.app/:splat 200!

@@ -2,10 +2,11 @@ import crypto from 'node:crypto';
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 import { sendResendEmail } from './_lib/email.mjs';
-import { issueModelRecoveryToken } from './_lib/model-recovery-token.mjs';
+import { issueCompactRecoveryToken } from './_lib/model-recovery-token.mjs';
 import { verifyModelPassword } from './_lib/model-auth-verifier.mjs';
 
 const MODEL_PORTAL_URL='https://maisondeveux.com/portal/reset';
+const JOIN_URL='https://maisondeveux.com/portal/join';
 const EMAIL_RX=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const RESET_FLAG='cavyre_password_reset_required';
 const TEMP_EXP='cavyre_temp_password_expires_at';
@@ -113,8 +114,8 @@ async function changeLoginEmail(admin,organization,ctx,email,issuedBy){
 async function sendReset(admin,organization,ctx){
   const email=String(ctx.user?.email||'').trim().toLowerCase();
   if(!EMAIL_RX.test(email)){const e=new Error('The linked authentication account does not have a valid email.');e.statusCode=409;throw e;}
-  const recoveryToken=issueModelRecoveryToken({userId:ctx.user.id,modelId:ctx.model.id,organizationId:organization.id,email});
-  const resetUrl=`${MODEL_PORTAL_URL}?recovery_token=${encodeURIComponent(recoveryToken)}`;
+  const recoveryToken=issueCompactRecoveryToken({userId:ctx.user.id,modelId:ctx.model.id,email});
+  const resetUrl=`${MODEL_PORTAL_URL}?c=${recoveryToken}`;
   const {data:settings}=await admin.from('organization_settings').select('sender_name,sender_email,reply_to_email').eq('organization_id',organization.id).maybeSingle();
   const fromEmail=String(settings?.sender_email||process.env.VEUX_DEFAULT_SENDER_EMAIL||'').trim().toLowerCase();
   if(!EMAIL_RX.test(fromEmail)){const e=new Error('Agency sender email is not configured.');e.statusCode=503;throw e;}
@@ -127,11 +128,11 @@ async function sendReset(admin,organization,ctx){
 
 function firstName(n){return String(n||'').trim().split(/\s+/)[0]||'there';}
 function inviteText({name,email,url,agency}){
-  return `Hi ${firstName(name)}, welcome to the ${agency} Model Portal: your schedule, bookings, castings, travel and documents in one place.\n\nSet up your account (one minute):\n${url}\n\nYour login email: ${email}\nThis link is just for you and works for 7 days. After you choose a password you are signed in, and you can come back any time at ${PORTAL_URL}\n\nTip: open the portal on your phone, tap Share, then Add to Home Screen, and it sits next to your other apps.\n\nIf anything does not work, reply to this message and we will sort it out right away.\n${agency}`;
+  return `Hi ${firstName(name)}, welcome to the ${agency} Model Portal: your schedule, bookings, castings, travel and documents in one place.\n\nTap this link to set up your account (one minute):\n\n${url}\n\nYour login email: ${email}\nThe link is just for you and works for 7 days. After you choose a password you are signed in, and you can come back any time at ${PORTAL_URL}\n\nTip: open the portal on your phone, tap Share, then Add to Home Screen, and it sits next to your other apps.\n\nIf anything does not work, reply to this message and we will sort it out right away.\n${agency}`;
 }
 function inviteHtml({name,email,url,agency}){
   const step=(n,t)=>`<tr><td style="width:34px;vertical-align:top"><div style="width:24px;height:24px;border:1px solid #17130f;border-radius:50%;text-align:center;line-height:24px;font-size:12px">${n}</div></td><td style="font-size:15px;line-height:1.6;padding-bottom:14px">${t}</td></tr>`;
-  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:620px;margin:auto;padding:36px;color:#17130f"><div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#7b6a8e;margin-bottom:18px">${agency} · MODEL PORTAL</div><h1 style="font-family:Georgia,serif;font-weight:400;font-size:34px;margin:0 0 18px">Welcome, ${firstName(name)}.</h1><p style="font-size:15px;line-height:1.7">Your Model Portal is ready: your schedule, bookings, castings, travel and documents in one place. It takes a minute to set up.</p><table role="presentation" style="margin:22px 0 8px;border-collapse:collapse">${step(1,'Tap the button below and choose a password (at least 10 characters).')}${step(2,'You are signed in straight away.')}${step(3,`Next time, sign in at <a href="${PORTAL_URL}" style="color:#17130f">${PORTAL_URL.replace('https://','')}</a> with <b>${email}</b> and your password.`)}</table><p style="margin:26px 0"><a href="${url}" style="display:inline-block;background:#17130f;color:#fff;text-decoration:none;padding:14px 22px;letter-spacing:.08em">SET UP MY ACCOUNT</a></p><p style="font-size:13px;line-height:1.7;color:#555">Your login email is <b>${email}</b>. This link is just for you and works for 7 days.<br>On your phone: open the portal, tap Share, then Add to Home Screen, and it sits next to your other apps.</p><p style="font-size:12px;line-height:1.6;color:#777;margin-top:26px">Something not working? Reply to this email and we will sort it out right away.</p></div>`;
+  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:620px;margin:auto;padding:36px;color:#17130f"><div style="font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#7b6a8e;margin-bottom:18px">${agency} · MODEL PORTAL</div><h1 style="font-family:Georgia,serif;font-weight:400;font-size:34px;margin:0 0 18px">Welcome, ${firstName(name)}.</h1><p style="font-size:15px;line-height:1.7">Your Model Portal is ready: your schedule, bookings, castings, travel and documents in one place. It takes a minute to set up.</p><table role="presentation" style="margin:22px 0 8px;border-collapse:collapse">${step(1,'Tap the button below and choose a password (at least 10 characters).')}${step(2,'You are signed in straight away.')}${step(3,`Next time, sign in at <a href="${PORTAL_URL}" style="color:#17130f">${PORTAL_URL.replace('https://','')}</a> with <b>${email}</b> and your password.`)}</table><p style="margin:26px 0 10px"><a href="${url}" style="display:inline-block;background:#17130f;color:#fff;text-decoration:none;padding:14px 22px;letter-spacing:.08em">SET UP MY ACCOUNT</a></p><p style="font-size:12px;line-height:1.6;color:#555;margin:0 0 6px">Button not working? Tap or copy this link:</p><p style="font-size:12px;line-height:1.6;margin:0 0 20px;word-break:break-all"><a href="${url}" style="color:#17130f;text-decoration:underline">${url}</a></p><p style="font-size:13px;line-height:1.7;color:#555">Your login email is <b>${email}</b>. This link is just for you and works for 7 days.<br>On your phone: open the portal, tap Share, then Add to Home Screen, and it sits next to your other apps.</p><p style="font-size:12px;line-height:1.6;color:#777;margin-top:26px">Something not working? Reply to this email and we will sort it out right away.</p></div>`;
 }
 async function senderFor(admin,organization){
   const {data:settings}=await admin.from('organization_settings').select('sender_name,sender_email,reply_to_email').eq('organization_id',organization.id).maybeSingle();
@@ -150,8 +151,8 @@ async function sendInvite(admin,organization,ctx,{email,channel,issuedBy}){
   if(meta0[DISABLED]||ctx.user.banned_until){const e=new Error('Portal access is switched off for this model. Switch it on first.');e.statusCode=409;throw e;}
   const loginEmail=String(ctx.user.email||'').trim().toLowerCase();
   if(!EMAIL_RX.test(loginEmail)){const e=new Error('This model does not have a valid login email.');e.statusCode=409;throw e;}
-  const token=issueModelRecoveryToken({userId:ctx.user.id,modelId:ctx.model.id,organizationId:organization.id,email:loginEmail,ttlMs:INVITE_TTL_MS});
-  const url=`${MODEL_PORTAL_URL}?recovery_token=${encodeURIComponent(token)}&invite=1`;
+  const token=issueCompactRecoveryToken({userId:ctx.user.id,modelId:ctx.model.id,email:loginEmail,ttlMs:INVITE_TTL_MS});
+  const url=`${JOIN_URL}?c=${token}`;   /* short on purpose: easy to tap, and it fits on one line in a text */
   const agency=organization.name||'Maison de Veux',name=ctx.model.display_name||'';
   const text=inviteText({name,email:loginEmail,url,agency}),expires_at=new Date(Date.now()+INVITE_TTL_MS).toISOString();
   let sent=false,provider=null;

@@ -1,6 +1,6 @@
 import { adminClient, parseBody, json } from './_lib/auth.mjs';
 import { sendResendEmail } from './_lib/email.mjs';
-import { issueModelRecoveryToken } from './_lib/model-recovery-token.mjs';
+import { issueCompactRecoveryToken } from './_lib/model-recovery-token.mjs';
 
 const ORG_SLUG='maison-de-veux';
 const RECOVERY_PAGE='https://maisondeveux.com/portal/reset';
@@ -57,8 +57,8 @@ export async function handler(event){
       return generic();
     }
 
-    const recoveryToken=issueModelRecoveryToken({userId:authUser.id,modelId:model.id,organizationId:org.id,email});
-    const resetUrl=`${RECOVERY_PAGE}?recovery_token=${encodeURIComponent(recoveryToken)}`;
+    const recoveryToken=issueCompactRecoveryToken({userId:authUser.id,modelId:model.id,email});
+    const resetUrl=`${RECOVERY_PAGE}?c=${recoveryToken}`;
     const senderName=settings?.sender_name||org.name||'Maison de Veux';
     const modelName=model.display_name||'Model';
 

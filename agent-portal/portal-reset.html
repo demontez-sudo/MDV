@@ -46,10 +46,10 @@ button{height:50px;border:1px solid #a44a42;background:linear-gradient(180deg,#d
 var PROJECT='mogyngdhmzbjmcdqeoxu';
 var STORAGE_KEY='sb-'+PROJECT+'-auth-token';
 var qs=new URLSearchParams(location.search);
-var token=qs.get('recovery_token')||qs.get('token')||'';
+var token=qs.get('c')||qs.get('recovery_token')||qs.get('token')||'';
 var btn=document.getElementById('activate'),err=document.getElementById('error'),ok=document.getElementById('ok');
 /* an invitation (not a forgotten-password reset) says welcome */
-if(qs.get('invite')==='1'){
+if(qs.get('invite')==='1'||/\/portal\/join\/?$/.test(location.pathname)){
   try{
     document.querySelector('.brand h1').textContent='Welcome to your Model Portal.';
     document.querySelector('.brand p').textContent='Your schedule, bookings, castings, travel and documents in one place. Choose a password and you are signed in.';
