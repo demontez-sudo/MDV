@@ -130,8 +130,8 @@ function portalEvents(force){
     var list=[];
     arr(cal.events).forEach(function(e){
       if(!e||String(e.owner_member_id||'')!==String(mid)||!e.starts_at)return;
-      var md=e.metadata||{};if(md.plan==='g90'||/^(cancelled|canceled)$/i.test(String(e.status||'')))return;
-      list.push(dsShape(e,{id:'pe-'+e.id,src:'portal',calName:'Agency calendar',models:arr(e.event_models).map(function(m){var q=m.models||{};return q.display_name||'';}).filter(Boolean)}));
+      var md=e.metadata||{};if(md.plan==='g90'||/^daysilk:/.test(String(md.category||''))||/^(cancelled|canceled)$/i.test(String(e.status||'')))return;
+      list.push(dsShape(e,{id:'pe-'+e.id,src:'portal',calName:'Model Agenda',models:arr(e.event_models).map(function(m){var q=m.models||{};return q.display_name||'';}).filter(Boolean)}));
     });
     PE.list=list;PE.at=Date.now();return list;
   }).catch(function(){return null;}).then(function(x){PE.busy=null;return x;});
@@ -155,10 +155,10 @@ function agencyEvents(force){
     var out=[],first=function(n){return String(n||'').split(' ')[0];};
     function add(kind,row,links){
       if(!row||!row.starts_at||/^(cancelled|canceled|declined)$/i.test(String(row.status||'')))return;
-      var md=row.metadata||{};if(md.plan==='g90')return;
+      var md=row.metadata||{};if(md.plan==='g90'||/^daysilk:/.test(String(md.category||'')))return;
       if(kind==='event'&&mid&&String(row.owner_member_id||'')===String(mid))return;   /* already shown as mine */
       var names=arr(links).map(function(l){var q=l.models||{};return q.display_name||'';}).filter(function(x,i,a){return x&&a.indexOf(x)===i;});
-      out.push(dsShape(row,{id:'pa-'+kind+'-'+row.id,ref:kind+'-'+row.id,src:'agency',kind:kind,models:names,calName:'Agency calendar',title:(names.length?names.slice(0,2).map(first).join(', ')+(names.length>2?' +'+(names.length-2):'')+': ':'')+String(row.title||kind)}));
+      out.push(dsShape(row,{id:'pa-'+kind+'-'+row.id,ref:kind+'-'+row.id,src:'agency',kind:kind,models:names,calName:'Model Agenda',title:(names.length?names.slice(0,2).map(first).join(', ')+(names.length>2?' +'+(names.length-2):'')+': ':'')+String(row.title||kind)}));
     }
     arr(cal.events).forEach(function(e){add('event',e,e.event_models);});
     arr(cal.bookings).forEach(function(e){add('booking',e,e.booking_models);});
@@ -174,6 +174,7 @@ function modelEvents(ids,force){
     var out=[];
     function add(kind,row,links){
       if(!row||!row.starts_at||/^(cancelled|canceled|declined)$/i.test(String(row.status||'')))return;
+      if(row.metadata&&/^daysilk:/.test(String(row.metadata.category||'')))return;
       var mine=arr(links).map(function(l){return String(l.model_id);}).filter(function(id,i,a){return ids.indexOf(id)>=0&&a.indexOf(id)===i;});
       if(!mine.length)return;
       var names=mine.map(function(id){return nm[id]||'Model';}),who=names.length===1?names[0].split(' ')[0]:names.length+' models';
@@ -316,7 +317,50 @@ function addEvents(list){
     });
   });
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
+
+/* ---- Saving to the Model Agenda from DaySilk, and model movement ---- */
+function post(p,b){return bridge().api(p,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(b)});}
+var ME={id:null};
+function meMember(){
+  if(ME.id)return Promise.resolve(ME.id);
+  return get('/api/agent/daysilk?me=1&organization='+encodeURIComponent(org())+'&_t='+Date.now()).then(function(r){ME.id=(r&&r.me&&r.me.member_id)||null;return ME.id;}).catch(function(){return null;});
+}
+var EV_TYPE={connect:'meeting',focus:'meeting',move:'personal',recharge:'personal',travel:'travel',close:'personal'};
+function agBody(v){
+  var start=new Date(v.d+'T'+(v.t||'00:00')+':00'),allDay=!v.t;
+  var end=allDay?new Date(v.d+'T23:59:00'):(v.e&&v.e>v.t?new Date(v.d+'T'+v.e+':00'):new Date(start.getTime()+36e5));
+  var tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){}
+  return {organization_slug:org(),title:String(v.title||'').trim(),starts_at:start.toISOString(),ends_at:end.toISOString(),all_day:allDay,timezone:tz||null,
+    event_type:EV_TYPE[v.cat]||'meeting',status:'scheduled',location:v.where||null,notes:v.notes||null,model_ids:arr(v.modelIds),
+    share_with_models:false,visibility:'organization',category:'daysilk:'+String(v.id||''),owner_member_id:ME.id||null};
+}
+/* creates the event on the Model Agenda (or updates it when agId is given) and tells every open view */
+function saveAgencyEvent(v){
+  return meMember().then(function(){var b=agBody(v);if(v.agId){b.action='update_event';b.event_id=v.agId;}else b.action='create_event';return post('/api/agent/calendar/v9',b);}).then(function(r){
+    if(!r||!r.event||!r.event.id)throw new Error('The Model Agenda did not confirm the save.');
+    calendarChanged();return {id:r.event.id};
+  });
+}
+function deleteAgencyEvent(id){return post('/api/agent/calendar/v9',{organization_slug:org(),action:'delete_event',event_id:id}).then(function(r){calendarChanged();return r;});}
+/* Model movement: stays, flights and movement windows of the models, from today (a few days back) to about ten weeks ahead */
+function modelMovement(force){
+  return calSnap(force).then(function(cal){
+    if(!cal)return null;
+    var out=[],now=Date.now(),lo=now-2*864e5,hi=now+75*864e5;
+    arr(cal.events).forEach(function(e){
+      if(!e||!e.starts_at||/^(cancelled|canceled)$/i.test(String(e.status||'')))return;
+      var md=e.metadata||{},links=arr(e.event_models);if(!links.length||/^daysilk:/.test(String(md.category||'')))return;
+      var txt=(String(e.event_type||'')+' '+String(e.title||'')+' '+String(md.calendar_event_type||'')).toLowerCase();
+      var kind=/housing|stay|hotel/.test(txt)?'Stay':/travel|flight|✈|arrival|departure|fly|movement/.test(txt)?'Movement':'';if(!kind)return;
+      var s=new Date(e.starts_at),en=e.ends_at?new Date(e.ends_at):s;if(+en<lo||+s>hi)return;
+      var names=links.map(function(m){var q=m.models||{};return q.display_name||'';}).filter(Boolean);
+      out.push({id:e.id,model:names.join(', '),models:names,title:String(e.title||''),d:dayKey(s),until:(en-s>=864e5?dayKey(new Date(en.getTime()-1)):''),where:e.location||'',kind:kind,status:String(e.status||''),agent:md.owner_name||''});
+    });
+    out.sort(function(a,b){return a.d<b.d?-1:a.d>b.d?1:String(a.model).localeCompare(String(b.model));});
+    return out.slice(0,120);
+  });
+}
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,saveAgencyEvent:saveAgencyEvent,deleteAgencyEvent:deleteAgencyEvent,modelMovement:modelMovement,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */
