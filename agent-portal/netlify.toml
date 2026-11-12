@@ -614,6 +614,12 @@ status = 200
 force = true
 
 [[redirects]]
+from = "/api/agent/roster-export"
+to = "/.netlify/functions/agent-roster-export"
+status = 200
+force = true
+
+[[redirects]]
 from = "/api/agent/email-formats"
 to = "/.netlify/functions/agent-email-formats"
 status = 200
