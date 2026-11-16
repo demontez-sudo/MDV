@@ -170,13 +170,16 @@ export const handler = async event => {
       const id = safeId(body.id), enc = encodeURIComponent(id), wantInline = body.inline !== false;
       const m = await G(`/me/messages/${enc}?$select=${SUMMARY_SELECT},ccRecipients,bccRecipients,replyTo,body,webLink`, { headers: { Prefer: 'outlook.body-content-type="html"' } });
       /* marking it read and listing the attachments do not depend on each other: run them together so opening stays quick */
+      const dbg = { listed: 0, pics: 0, small: 0, fetched: 0, errors: [], timeout: false };
+      const why = e => String((e && (e.publicMessage || e.message)) || e || 'error').replace(/\s+/g, ' ').slice(0, 140);
       const [, list] = await Promise.all([
         m.isRead ? null : G(`/me/messages/${enc}`, { method: 'PATCH', body: { isRead: true } }).then(() => { m.isRead = true; }).catch(() => { /* non-fatal */ }),
         /* Always ask: Graph sets hasAttachments to false when a message only has inline pictures (a pasted photo, a signature logo), which
            is exactly the case where the body points at cid:… pictures. Trusting that flag meant those pictures were never fetched. */
-        G(`/me/messages/${enc}/attachments?$select=id,name,size,contentType,isInline`).catch(() => null)
+        G(`/me/messages/${enc}/attachments?$select=id,name,size,contentType,isInline`).catch(e => { dbg.errors.push('list: ' + why(e)); return null; })
       ]);
       const all = list?.value || [];
+      dbg.listed = all.length;
       const html = String(m.body?.content || '');
       const hasCid = /cid:/i.test(html);
       /* The attachment list is worked out after the pictures are fetched (see below): Gmail on a phone flags an attached photo as inline
@@ -192,19 +195,21 @@ export const handler = async event => {
         const pics = all.filter(x => (x.isInline || /^image\//i.test(x.contentType || '')) && Number(x.size || 0) <= MAX_ATT).slice(0, 12);
         const small = pics.filter(x => Number(x.size || 0) <= 1200000).slice(0, 8);
         const big = pics.filter(x => Number(x.size || 0) > 1200000);
+        dbg.pics = pics.length; dbg.small = small.length;
         const typeOf = x => /^image\//i.test(x.contentType || '') ? x.contentType : ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', svg: 'image/svg+xml' }[String(x.name || '').split('.').pop().toLowerCase()] || 'image/jpeg');
         if (small.length) {
           const fetched = Promise.all(small.map(async x => {
             try {
               const f = await G(`/me/messages/${enc}/attachments/${encodeURIComponent(x.id)}`);
-              if (!f?.contentBytes) return null;
+              if (!f?.contentBytes) { dbg.errors.push('no picture data (' + String(f?.['@odata.type'] || 'unknown type') + ')'); return null; }
               /* Gmail on a phone often leaves contentId blank or in another form than the body's cid:…; keep the picture anyway and let the page pair it by position */
               return { id: x.id, name: x.name, cid: String(f.contentId || '').replace(/^<|>$/g, ''), content_type: typeOf(x), data: f.contentBytes };
-            } catch (_e) { return null; }
+            } catch (e) { dbg.errors.push('fetch: ' + why(e)); return null; }
           }));
-          const got = await Promise.race([fetched, new Promise(r => setTimeout(() => r([]), 6000))]);
+          const got = await Promise.race([fetched, new Promise(r => setTimeout(() => { dbg.timeout = true; r([]); }, 6000))]);
           let budget = 3000000;
           inline_images = (got || []).filter(Boolean).filter(x => { budget -= x.data.length; return budget >= 0; });
+          dbg.fetched = inline_images.length;
         }
         inline_pending = big.slice(0, 4).map(x => ({ id: x.id, size: x.size }));
       }
@@ -212,7 +217,10 @@ export const handler = async event => {
       const refs = new Set((html.match(/cid:[^"'\s)>]+/gi) || []).map(c => { c = c.slice(4); try { c = decodeURIComponent(c); } catch (_e) { /* keep as is */ } return c.toLowerCase(); }));
       const matched = new Set(inline_images.filter(x => x.cid && refs.has(x.cid.toLowerCase())).map(x => x.id));
       const attachments = all.filter(x => !x.isInline || !matched.has(x.id)).map(x => ({ id: x.id, name: x.name, size: x.size, content_type: x.contentType }));
-      return json(200, { ok: true, message: mapMessage(m), attachments, inline_images: inline_images.map(({ id, ...rest }) => rest), inline_pending, extra_pending });
+      /* when the body points at pictures and none could be loaded, say what the server saw (shown in the page's note; also in the function log) */
+      const inline_debug = hasCid && !inline_images.length && !inline_pending.length ? dbg : null;
+      if (inline_debug) console.error('[mail] body pictures not loaded for message', id.slice(-12), JSON.stringify(inline_debug));
+      return json(200, { ok: true, message: mapMessage(m), attachments, inline_images: inline_images.map(({ id, ...rest }) => rest), inline_pending, extra_pending, inline_debug });
     }
 
     /* Every message in the same conversation (received and sent), oldest first, so a reply can be read
