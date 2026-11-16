@@ -1370,6 +1370,7 @@ html.emb .cal .cell .ev{background:rgba(255,255,255,.07);color:#efe3cf;border-le
 .cx-rt{position:absolute;left:0;right:0;overflow:hidden;border:0;border-left:3px solid var(--kc,var(--k-recharge));background:color-mix(in srgb,var(--kc,var(--k-recharge)) 12%,transparent);color:var(--muted);border-radius:4px;padding:3px 7px;font:500 11px var(--sans);text-align:left;cursor:pointer;line-height:1.25;display:flex;flex-direction:column;gap:1px}.cx-rt small{font-size:9.5px;opacity:.75;letter-spacing:.02em}.cx-rt.done{opacity:.45;text-decoration:line-through}.cx-rt b{font-weight:500}
 .cx-ev{position:absolute;overflow:hidden;text-align:left;border:0;border-left:3px solid var(--kc,var(--k-connect));border-radius:6px;background:color-mix(in srgb,var(--kc,var(--k-connect)) 24%,var(--surface));color:var(--ink);padding:3px 8px;font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:1px;line-height:1.25;z-index:2}
 .cx-agshare[hidden]{display:none!important}
+.calmode{display:inline-flex;border:1px solid var(--line,rgba(255,255,255,.18));margin-right:6px}.calmode button{background:none;border:0;color:var(--muted);padding:7px 14px;font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}.calmode button.on{background:var(--gold,#d4b077);color:#15110c;font-weight:600}.calmode button+button{border-left:1px solid var(--line,rgba(255,255,255,.18))}
 .cx-ev small{font-size:10.5px;color:var(--muted)}.cx-ev b{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cx-ev span{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cx-ev:hover{z-index:3;background:color-mix(in srgb,var(--kc,var(--k-connect)) 36%,var(--surface))}.cx-ev.src-model{border-left-style:dashed}.cx-ev.src-agency{opacity:.82}.cx-ev.onag small::after{content:" · Model Agenda";color:var(--gold)}
 .cx-free{position:absolute;left:0;right:0;border:1px dashed color-mix(in srgb,var(--ok) 45%,transparent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--ok);font-size:11px;pointer-events:none;z-index:1}
 .cx-tk{position:absolute;left:0;right:0;z-index:4;border:0;background:none;display:flex;align-items:center;gap:7px;cursor:pointer;color:var(--ink);font:600 11px var(--sans);padding:0;margin-top:-6px;text-align:left}.cx-tk i{width:9px;height:9px;transform:rotate(45deg);background:var(--gold);flex:none}.cx-tk span{background:var(--surface);padding:1px 6px;border-radius:4px;border:1px solid var(--line);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3388,15 +3389,19 @@ function evOccurs(e,s){if(!e.d)return false;if(s<e.d)return false;if(e.until&&s>
 var PE=[];
 var LME=[],LENSM=[];
 function lensIds(){const l=(core().lens)||{};return Array.isArray(l.ids)?l.ids:[]}
-function modelEvs(){return lensIds().length?LME:[]}
+/* Two calendars: "mine" (my schedule plus anything I linked to a model) and "models" (every model's items: bookings, castings, events, movement) */
+function modeModels(){return ((core().lens)||{}).mode==="models"}
+function modelEvs(){return modeModels()&&lensIds().length?LME:[]}
 function meFind(id){return LME.find(x=>x.id===id)}
 /* Model calendars beside mine: pick models and their events, bookings and castings join the week in their own lane (and the smart alerts). */
+function calModeSwitch(){return `<div class="calmode" role="tablist" aria-label="Calendar"><button type="button" role="tab" data-cal-mode="mine" class="${modeModels()?"":"on"}" aria-selected="${modeModels()?"false":"true"}">My calendar</button><button type="button" role="tab" data-cal-mode="models" class="${modeModels()?"on":""}" aria-selected="${modeModels()?"true":"false"}">Models calendar</button></div>`}
 function lensBar(){
  if(!EMB||EMB_ALERTS)return"";
+ if(!modeModels())return `<div class="lensbar">${calModeSwitch()}<span class="muted small">Your schedule and anything you linked to a model.</span></div>`;
  const ids=lensIds(),nm=(core().lens&&core().lens.names)||{};
  const chips=ids.map(id=>`<span class="lens-chip">${esc(nm[id]||"Model")}<button type="button" data-lens-rm="${esc(id)}" aria-label="Remove ${esc(nm[id]||"model")}">×</button></span>`).join("");
  const opts=LENSM.filter(m=>!ids.includes(m.id)).map(m=>`<option value="${esc(m.id)}">${esc(m.name)}${m.market?" · "+esc(m.market):""}</option>`).join("");
- return `<div class="lensbar"><span class="lens-l">Model calendars</span>${chips}${LENSM.length?`<select class="lens-add" data-lens-add aria-label="Add a model calendar"><option value="">+ Add a model</option>${opts}</select>`:`${LENS_TRIES>=6?`<a class="muted small" href="#" data-lens-retry>Could not load models. Tap to retry</a>`:`<span class="muted small">Loading models…</span>`}`}<label class="lens-ag"><input type="checkbox" data-lens-agency ${agencyOn()?"checked":""}> Whole agency</label>${ids.length?`<span class="lens-key"><i></i>Model items sit in the right lane</span>`:`<span class="muted small">Follow a model to see their calendar next to yours.</span>`}</div>`
+ return `<div class="lensbar">${calModeSwitch()}<span class="lens-l">Models</span>${chips}${LENSM.length?`<select class="lens-add" data-lens-add aria-label="Add a model calendar"><option value="">+ Add a model</option>${opts}</select>`:`${LENS_TRIES>=6?`<a class="muted small" href="#" data-lens-retry>Could not load models. Tap to retry</a>`:`<span class="muted small">Loading models…</span>`}`}<label class="lens-ag"><input type="checkbox" data-lens-agency ${agencyOn()?"checked":""}> Whole agency</label>${ids.length?`<span class="lens-key"><i></i>Model items sit in the right lane</span>`:`<span class="muted small">${agencyOn()?"Showing the whole agency. Add a model to narrow it down.":"Add a model, or tick Whole agency, to see model items."}</span>`}</div>`
 }
 function lensRepaint(){const typing=document.activeElement&&document.activeElement.matches&&document.activeElement.matches("input,textarea,select");if(!EMB_ALERTS&&!typing&&["calendar","schedule","today","command","work"].includes(S.view))render()}
 async function modelLensSync(force){
@@ -3417,7 +3422,7 @@ document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest
 document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest("[data-lens-rm]");if(r)lensRemove(r.dataset.lensRm)});
 /* ---------- Everything in one view: the whole agency, tasks on the week, and a day brief that plans for you ---------- */
 var AG=[];
-function agencyOn(){return !!((core().lens||{}).agency)}
+function agencyOn(){if(!modeModels())return false;const l=core().lens||{};return l.agency!==undefined?!!l.agency:lensIds().length===0}
 function lensOn(){return lensIds().length>0||agencyOn()}
 function agencyEvs(){if(!agencyOn()||EMB_ALERTS)return[];const m=new Set(modelEvs().map(x=>x.ref).filter(Boolean));return AG.filter(e=>!m.has(e.ref))}
 function agFind(id){return AG.find(x=>x.id===id)}
@@ -3431,6 +3436,7 @@ async function agencySync(force){
 }
 function agencyToggle(on){const c=core();c.lens=c.lens||{ids:[],names:{}};c.lens.agency=!!on;markDirty("core");if(!on)AG=[];render();agencySync(true)}
 document.addEventListener("change",e=>{const a=e.target.closest&&e.target.closest("[data-lens-agency]");if(a)agencyToggle(a.checked)});
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-cal-mode]");if(!b)return;const want=b.dataset.calMode==="models"?"models":"mine",c=core();c.lens=c.lens||{ids:[],names:{}};if((c.lens.mode||"mine")===want)return;c.lens.mode=want;markDirty("core");render();if(want==="models"){lensModels();modelLensSync(true);agencySync(true)}else{AG=[]}});
 const mm2t=m=>pad(Math.floor(m/60))+":"+pad(m%60);
 function evSpanMin(e){const a=hm(e.t);let b=e.e?hm(e.e):a+60;if(b<=a)b=a+30;return[a,b]}
 function dayTimed(s){return eventsFor(s).filter(e=>e.t&&!evDone(e,s))}
@@ -3466,7 +3472,10 @@ function planDay(){
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest("[data-plan-day]"))planDay()});
 function portalEvs(){return PE||[]}
 function peFind(id){return portalEvs().find(x=>x.id===id)}
-function eventsFor(s){return(core().events||[]).concat(msEvents(),icsEvents(),portalEvs(),modelEvs(),agencyEvs(),bossEvents()).filter(e=>evOccurs(e,s)).sort((a,b)=>(a.t||"99")<(b.t||"99")?-1:1)}
+function eventsFor(s){
+ /* Models calendar: model items plus what I linked to a model. My calendar: my own schedule (including what I linked to a model). */
+ const base=modeModels()?(core().events||[]).filter(e=>(e.agModels||[]).length).concat(modelEvs(),agencyEvs()):(core().events||[]).concat(msEvents(),icsEvents(),portalEvs(),bossEvents());
+ return base.filter(e=>evOccurs(e,s)).sort((a,b)=>(a.t||"99")<(b.t||"99")?-1:1)}
 function evDone(e,s){const d=S.days[s];return!!(d&&d.ev&&d.ev[e.id])}
 function evLine(e){return(e.t?fmtT(e.t)+(e.e?" to "+fmtT(e.e):"")+" · ":"All day · ")+e.title}
 function evForm(date){
