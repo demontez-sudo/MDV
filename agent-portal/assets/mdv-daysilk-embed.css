@@ -12,7 +12,9 @@
 
 /* blend: the DaySilk page is the portal's own page, no frame or heading of its own */
 .dse{gap:10px;padding:0}.dse-chips{padding:0 4px}.dse-chips:empty{display:none}
-.dse-f{border:0!important;border-radius:0!important;background:transparent!important;height:calc(100vh - 150px);min-height:620px}
+.dse-f{border:0!important;border-radius:0!important;height:calc(100vh - 150px);min-height:620px}
+/* the portal's illustrated backdrop showed straight through the page, so text was hard to read: a dark frosted pane sits behind DaySilk */
+.dse-f{background:rgba(12,9,7,.82)!important;-webkit-backdrop-filter:blur(16px) saturate(.8);backdrop-filter:blur(16px) saturate(.8)}
 @media(max-width:820px){.dse-f{height:calc(100vh - 190px)}}
 .dse-f{color-scheme:dark}
 
