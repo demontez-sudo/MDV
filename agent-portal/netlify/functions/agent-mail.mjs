@@ -127,7 +127,9 @@ export const handler = async event => {
       /* marking it read and listing the attachments do not depend on each other: run them together so opening stays quick */
       const [, list] = await Promise.all([
         m.isRead ? null : G(`/me/messages/${enc}`, { method: 'PATCH', body: { isRead: true } }).then(() => { m.isRead = true; }).catch(() => { /* non-fatal */ }),
-        m.hasAttachments ? G(`/me/messages/${enc}/attachments?$select=id,name,size,contentType,isInline`).catch(() => null) : null
+        /* Always ask: Graph sets hasAttachments to false when a message only has inline pictures (a pasted photo, a signature logo), which
+           is exactly the case where the body points at cid:… pictures. Trusting that flag meant those pictures were never fetched. */
+        G(`/me/messages/${enc}/attachments?$select=id,name,size,contentType,isInline`).catch(() => null)
       ]);
       const all = list?.value || [];
       const html = String(m.body?.content || '');
