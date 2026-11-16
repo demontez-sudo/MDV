@@ -152,11 +152,18 @@ function paintList(){
 /* pictures load by default; a person can switch them off (Hide web images) and that choice is remembered */
 function imagesAlways(){try{return localStorage.getItem('mdv-mail-images')!=='0';}catch(e){return true;}}
 /* big embedded photos (phone pictures) come one at a time after the message opens, then the body redraws with them in place */
-function cidsLeft(m){
-  if(!m||m.body_type!=='html')return [];
-  var have={};arr(m.inline).forEach(function(x){if(x&&x.cid&&x.data)have[String(x.cid).toLowerCase()]=1;});
-  return (String(m.body).match(/cid:[^"'\s)>]+/gi)||[]).map(function(c){c=c.slice(4);try{c=decodeURIComponent(c);}catch(e){}return c.toLowerCase();}).filter(function(c){return !have[c];});
+function cidKey(c){c=String(c||'').replace(/^cid:/i,'');try{c=decodeURIComponent(c);}catch(e){}return c.toLowerCase();}
+function cidRefs(m){var seen={},out=[];(String(m.body).match(/cid:[^"'\s)>]+/gi)||[]).forEach(function(c){var k=cidKey(c);if(k&&!seen[k]){seen[k]=1;out.push(k);}});return out;}
+/* Gmail on a phone often leaves the picture's id blank or in another form, so a body picture with no matching id is paired, in order,
+   with an attached picture whose id the body never mentions. */
+function cidPlan(m){
+  var refs=cidRefs(m),have={};arr(m.inline).forEach(function(x){if(x&&x.data&&x.cid)have[cidKey(x.cid)]=1;});
+  var spare=arr(m.inline).filter(function(x){return x&&x.data&&refs.indexOf(cidKey(x.cid))<0;});
+  var missing=refs.filter(function(k){return !have[k];}),pair={};
+  missing.forEach(function(k,i){if(spare[i])pair[k]=spare[i];});
+  return {pair:pair,left:missing.filter(function(k){return !pair[k];})};
 }
+function cidsLeft(m){return !m||m.body_type!=='html'?[]:cidPlan(m).left;}
 function fillPending(m,repaint){
   if(!m||m._pend||m._pendDone)return;
   var q=[];
@@ -172,8 +179,7 @@ function fillPending(m,repaint){
       if(!f||!f.content_base64)return;
       var type=/^image\//i.test(f.content_type||'')?f.content_type:'image/jpeg';
       if(it.x)m.extra=arr(m.extra).concat([{name:f.name||it.p.name||'',content_type:type,data:f.content_base64}]);
-      else if(f.content_id)m.inline=arr(m.inline).concat([{cid:f.content_id,content_type:type,data:f.content_base64}]);
-      else return;
+      else m.inline=arr(m.inline).concat([{cid:f.content_id||'',content_type:type,data:f.content_base64}]);
       repaint();
     }).catch(function(){}).then(next);
   })();
@@ -184,8 +190,11 @@ function bodyDoc(m,showImages){
   var csp="default-src 'none'; img-src data: cid:"+(showImages?' https: http:':'')+"; style-src 'unsafe-inline'; font-src data:";
   var inner=m.body_type==='html'?m.body:'<pre style="white-space:pre-wrap;font:inherit">'+esc(m.body)+'</pre>';
   if(m.body_type==='html'){
-    var pics={};arr(m.inline).forEach(function(x){if(x&&x.cid&&x.data)pics[String(x.cid).toLowerCase()]='data:'+(x.content_type||'image/png')+';base64,'+x.data;});
-    inner=inner.replace(/cid:([^"'\s)>]+)/gi,function(all,id){var k=id;try{k=decodeURIComponent(id);}catch(e){}return pics[k.toLowerCase()]||pics[id.toLowerCase()]||all;})
+    var pics={},plan=cidPlan(m);
+    function du(x){return 'data:'+(x.content_type||'image/png')+';base64,'+x.data;}
+    arr(m.inline).forEach(function(x){if(x&&x.cid&&x.data)pics[cidKey(x.cid)]=du(x);});
+    Object.keys(plan.pair).forEach(function(k){pics[k]=du(plan.pair[k]);});
+    inner=inner.replace(/cid:([^"'\s)>]+)/gi,function(all,id){return pics[cidKey(id)]||all;})
       .replace(/(<img[^>]+src=["'])\/\//gi,'$1https://');
     if(unresolved(m))inner=inner.replace(/<img\b[^>]*\bsrc=["']cid:[^"']*["'][^>]*>/gi,'<span style="font:12px sans-serif;color:#8a7a5c">[A picture in this email could not be loaded. Download it from the attachments above or open the email in Outlook.]</span>');
   }

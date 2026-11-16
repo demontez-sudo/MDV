@@ -132,10 +132,8 @@ export const handler = async event => {
       const all = list?.value || [];
       const html = String(m.body?.content || '');
       const hasCid = /cid:/i.test(html);
-      /* Pictures flagged "inline" used to be hidden from the attachment list. Gmail on a phone flags a photo that was attached to the
-         message as inline even when the body never shows it, so it was invisible and impossible to download. Keep an inline picture
-         in the list when the body does not use it, or when it is a big phone photo (those are also downloadable on their own). */
-      const attachments = all.filter(x => !x.isInline || !hasCid || Number(x.size || 0) > 1200000).map(x => ({ id: x.id, name: x.name, size: x.size, content_type: x.contentType }));
+      /* The attachment list is worked out after the pictures are fetched (see below): Gmail on a phone flags an attached photo as inline
+         even when the body never shows it, so inline pictures that are not matched to the body must stay downloadable. */
       /* Pictures embedded in the body (signature logos, pasted photos) are referenced as cid:… and never load on their own.
          Only fetch them when the body really points at one, keep it small, and never let it slow the message down much. */
       let inline_images = [], inline_pending = [], extra_pending = [];
@@ -152,8 +150,9 @@ export const handler = async event => {
           const fetched = Promise.all(small.map(async x => {
             try {
               const f = await G(`/me/messages/${enc}/attachments/${encodeURIComponent(x.id)}`);
-              if (!f?.contentBytes || !f.contentId) return null;
-              return { cid: String(f.contentId).replace(/^<|>$/g, ''), content_type: typeOf(x), data: f.contentBytes };
+              if (!f?.contentBytes) return null;
+              /* Gmail on a phone often leaves contentId blank or in another form than the body's cid:…; keep the picture anyway and let the page pair it by position */
+              return { id: x.id, name: x.name, cid: String(f.contentId || '').replace(/^<|>$/g, ''), content_type: typeOf(x), data: f.contentBytes };
             } catch (_e) { return null; }
           }));
           const got = await Promise.race([fetched, new Promise(r => setTimeout(() => r([]), 6000))]);
@@ -162,7 +161,11 @@ export const handler = async event => {
         }
         inline_pending = big.slice(0, 4).map(x => ({ id: x.id, size: x.size }));
       }
-      return json(200, { ok: true, message: mapMessage(m), attachments, inline_images, inline_pending, extra_pending });
+      /* An inline picture shows in the list unless its id was matched to the body, so a photo that cannot be placed is still downloadable. */
+      const refs = new Set((html.match(/cid:[^"'\s)>]+/gi) || []).map(c => { c = c.slice(4); try { c = decodeURIComponent(c); } catch (_e) { /* keep as is */ } return c.toLowerCase(); }));
+      const matched = new Set(inline_images.filter(x => x.cid && refs.has(x.cid.toLowerCase())).map(x => x.id));
+      const attachments = all.filter(x => !x.isInline || !matched.has(x.id)).map(x => ({ id: x.id, name: x.name, size: x.size, content_type: x.contentType }));
+      return json(200, { ok: true, message: mapMessage(m), attachments, inline_images: inline_images.map(({ id, ...rest }) => rest), inline_pending, extra_pending });
     }
 
     /* Every message in the same conversation (received and sent), oldest first, so a reply can be read
