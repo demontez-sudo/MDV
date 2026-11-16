@@ -4,7 +4,7 @@ import { newTask as newTaskCopy } from './_lib/push-copy.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 
 // PostgREST returns at most 1000 rows per request, so page through with range() until exhausted.
-async function allRows(build,max=10000){const out=[];for(let from=0;from<max;from+=1000){const {data,error}=await build().range(from,from+999);if(error)throw error;const page=data||[];out.push(...page);if(page.length<1000)break;}return out;}
+async function allRows(build,max=10000){const out=[],width=4;for(let from=0;from<max;from+=1000*width){const pages=await Promise.all(Array.from({length:width},(_,i)=>build().range(from+i*1000,from+i*1000+999)));let done=false;for(const {data,error} of pages){if(error)throw error;const page=data||[];out.push(...page);if(page.length<1000)done=true;}if(done)break;}return out;}
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 
 export const handler=async(event)=>{
@@ -118,6 +118,25 @@ export const handler=async(event)=>{
       return json(400,{error:'Unsupported task/approval action'});
     }
     const admin=await requirePermission(user.id,organization.id,'tasks.read');
+    /* DaySilk only needs open tasks, who they are assigned to and the team: no comments, history or approvals. The full desk downloads
+       every task with every column plus all of that, which can run past the function's time and 6 MB reply limits on a big list. */
+    if((event.queryStringParameters||{}).view==='open'){
+      const DONE=/^(completed|done|complete|cancelled|canceled)$/i;
+      /* skip finished tasks in the database when the status column allows it; fall back to filtering here if it does not */
+      let tasks;
+      try{tasks=await allRows(()=>admin.from('tasks').select('*').eq('organization_id',organization.id).not('status','in','(completed,done,complete,cancelled,canceled)').order('due_at',{ascending:true,nullsFirst:false}).order('id'),8000);}
+      catch(_e){tasks=await allRows(()=>admin.from('tasks').select('*').eq('organization_id',organization.id).order('due_at',{ascending:true,nullsFirst:false}).order('id'),8000);}
+      tasks=tasks.filter(t=>!DONE.test(String(t.status||'open')));
+      const [assignments,members,models]=await Promise.all([
+        allRows(()=>admin.from('task_assignments').select('task_id,member_id').eq('organization_id',organization.id).order('id'),20000),
+        rows(admin.from('organization_members').select('id,user_id,job_title,status').eq('organization_id',organization.id).eq('member_type','staff')),
+        rows(admin.from('models').select('id,display_name,public_slug').eq('organization_id',organization.id).eq('active',true).order('display_name'))
+      ]);
+      const open=new Set(tasks.map(t=>t.id)),by=new Map();
+      for(const a of assignments){if(!open.has(a.task_id))continue;const l=by.get(a.task_id);if(l)l.push(a);else by.set(a.task_id,[a]);}
+      const out={environment:'veux-saas-v10',view:'open',organization,tasks:tasks.map(t=>({...t,assignments:by.get(t.id)||[]})),members,models};
+      return json(200,out);
+    }
     const [tasks,assignments,comments,dependencies,taskHistory,approvals,approvalHistory,members,models]=await Promise.all([
       allRows(()=>admin.from('tasks').select('*').eq('organization_id',organization.id).order('due_at',{ascending:true,nullsFirst:false}).order('id'),8000),
       allRows(()=>admin.from('task_assignments').select('*').eq('organization_id',organization.id).order('id'),20000),
@@ -136,13 +155,18 @@ export const handler=async(event)=>{
     // Group once by task id (a single pass) instead of re-scanning every list for every task.
     const group=(list,key)=>{const m=new Map();for(const x of list){const k=x[key];if(k==null)continue;const a=m.get(k);if(a)a.push(x);else m.set(k,[x]);}return m;};
     const assignBy=group(assignments,'task_id'),commentBy=group(comments,'task_id'),depBy=group(dependencies,'task_id'),histBy=group(taskHistory,'task_id'),apprHistBy=group(approvalHistory,'approval_request_id');
-    const build=(histLimit)=>({environment:'veux-saas-v10',organization,
-      tasks:tasks.map(t=>({...t,assignments:(assignBy.get(t.id)||[]).map(a=>({...a,member:a.member_id?memberMap.get(a.member_id)||null:null})),comments:commentBy.get(t.id)||[],dependencies:depBy.get(t.id)||[],history:(histBy.get(t.id)||[]).slice(0,histLimit)})),
+    const build=(histLimit,commentLimit=Infinity,keep=null)=>({environment:'veux-saas-v10',organization,
+      tasks:(keep?tasks.filter(keep):tasks).map(t=>({...t,assignments:(assignBy.get(t.id)||[]).map(a=>({...a,member:a.member_id?memberMap.get(a.member_id)||null:null})),comments:(commentBy.get(t.id)||[]).slice(0,commentLimit),dependencies:depBy.get(t.id)||[],history:(histBy.get(t.id)||[]).slice(0,histLimit)})),
       approvals:approvals.map(a=>({...a,assigned_member:a.assigned_member_id?memberMap.get(a.assigned_member_id)||null:null,history:(apprHistBy.get(a.id)||[]).slice(0,histLimit)})),
       members:[...memberMap.values()],models,access:{write:canWrite,manage:canManage}});
     // Netlify answers 502 when a function reply is over about 6 MB, so trim the history if the list is that large.
-    let out=build(50);
-    if(JSON.stringify(out).length>5200000)out=build(3);
+    const LIMIT=5200000,DONE=/^(completed|done|complete|cancelled|canceled)$/i,cutoff=Date.now()-45*864e5;
+    let out=build(50),size=JSON.stringify(out).length,stage='full';
+    if(size>LIMIT){out=build(3);size=JSON.stringify(out).length;stage='history trimmed';}
+    if(size>LIMIT){out=build(0,2);size=JSON.stringify(out).length;stage='history dropped, comments trimmed';}
+    /* still too big: leave out finished tasks that were last touched more than 45 days ago */
+    if(size>LIMIT){out=build(0,2,t=>!DONE.test(String(t.status||'open'))||new Date(t.updated_at||t.due_at||0).getTime()>cutoff);size=JSON.stringify(out).length;stage='old finished tasks left out';}
+    console.log('[tasks v11] '+stage+': '+tasks.length+' tasks, '+Math.round(size/1024)+' KB');
     return json(200,out);
   }catch(error){return errorResponse(error);}
 };

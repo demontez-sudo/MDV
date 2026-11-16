@@ -28,7 +28,7 @@ function dayKey(d){d=new Date(d);return d.getFullYear()+'-'+String(d.getMonth()+
 async function signals(){
   var b=bridge();if(!b)return [];
   var o=encodeURIComponent(org()),t=Date.now(),out=[];
-  var res=await Promise.all([get('/api/agent/tasks/v11?organization='+o+'&_t='+t).catch(function(){return null;}),get('/api/agent/mobility?organization='+o+'&_t='+t).catch(function(){return null;}),get('/api/agent/daysilk?organization='+o+'&_t='+t).catch(function(){return null;})]);
+  var res=await Promise.all([get('/api/agent/tasks/v11?view=open&organization='+o+'&_t='+t).catch(function(){return null;}),get('/api/agent/mobility?organization='+o+'&_t='+t).catch(function(){return null;}),get('/api/agent/daysilk?organization='+o+'&_t='+t).catch(function(){return null;})]);
   var tasks=res[0],mob=res[1],ds=res[2],today=dayKey(new Date()),now=new Date();
   if(tasks){
     var me=myId(),mem=arr(tasks.members).filter(function(m){return m.user_id&&m.user_id===me;})[0],ids=mem?arr(tasks.assignments||[]).filter(function(a){return a.member_id===mem.id;}).map(function(a){return a.task_id;}):null;
@@ -71,7 +71,7 @@ function portalTasks(force){
   if(!force&&PT.list&&Date.now()-PT.at<60000)return Promise.resolve(PT.list);
   if(PT.busy)return PT.busy;
   if(!bridge())return Promise.resolve(null);
-  PT.busy=get('/api/agent/tasks/v11?organization='+encodeURIComponent(org())+'&_t='+Date.now()).then(function(t){
+  PT.busy=get('/api/agent/tasks/v11?view=open&organization='+encodeURIComponent(org())+'&_t='+Date.now()).then(function(t){
     var me=myId(),mem=arr(t.members).filter(function(m){return m.user_id&&m.user_id===me;})[0];
     if(!mem)return null;
     var ids={};arr(t.assignments).forEach(function(a){if(a.member_id===mem.id)ids[a.task_id]=1;});
