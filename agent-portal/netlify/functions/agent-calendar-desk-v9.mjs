@@ -146,6 +146,7 @@ export const handler=async(event)=>{
           ...(prior?.metadata||{}),
           ...(hasVideo?{video}:{}),
           ...(shareFlag===null?{}:{share_with_models:shareFlag}),
+          ...(typeof body.notes_internal==='boolean'?{notes_internal:body.notes_internal}:{}),
           ...(shareFlag===true&&ids.length&&!prior?.metadata?.event_kind?{event_kind:'model meeting'}:{}),
           category:body.category||null,
           calendar_event_type:body.calendar_event_type||body.event_type||prior?.metadata?.calendar_event_type||null,
