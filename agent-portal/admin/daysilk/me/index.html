@@ -1430,6 +1430,45 @@ html.emb .cal .cell .ev{background:rgba(255,255,255,.07);color:#efe3cf;border-le
 .so-row.sel{border-left-color:var(--gold)}
 .so-key i{width:10px;height:10px;border-radius:50%;background:var(--cc);display:inline-block}.so-key em{font-style:normal;color:var(--muted)}
 .lens-err{display:flex;align-items:center;gap:12px;flex-wrap:wrap;flex-basis:100%;margin-top:2px;padding:8px 12px;border:1px solid var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent);font-size:12.5px}.lens-err button{background:none;border:1px solid var(--warn);color:var(--ink);padding:4px 12px;font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+/* Models calendar: Model Agenda and Season Matrix (moved from the old agent calendar) */
+.mg-wrap{--mxl:var(--line);display:grid;gap:14px;min-width:0}
+.mg-head{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted)}.mg-sum b{color:var(--ink)}
+.mg-vx2{border:1px solid var(--warn);padding:5px 12px;font-size:12px;letter-spacing:.04em}.mg-vx2 b{color:var(--ink);font-weight:500}
+.mg-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.mg-day{display:flex;gap:7px;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--surface);color:var(--muted);padding:11px 6px;font:inherit;cursor:pointer}.mg-day small{font-size:10px;letter-spacing:.12em}.mg-day b{font:600 17px var(--serif,Georgia,serif);color:var(--ink)}.mg-day i{width:6px;height:6px;border-radius:50%;background:var(--warn)}
+.mg-day.today{border-color:var(--gold)}.mg-day.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.mg-day.on b{color:var(--accent-ink)}.mg-day.on i{background:var(--accent-ink)}
+.mg-dayhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}.mg-dayhead h3{margin:0;font:500 28px var(--serif,Georgia,serif)}.mg-dayhead h3 small{font:13px system-ui;color:var(--muted);margin-left:6px}.mg-today{font-style:normal;font-size:10px;letter-spacing:.14em;border:1px solid var(--gold);color:var(--gold);padding:2px 7px;vertical-align:middle}
+.mg-seg{display:inline-flex;margin-left:auto;border:1px solid var(--line)}.mg-seg button{background:none;border:0;color:var(--muted);padding:7px 14px;font:inherit;font-size:12px;cursor:pointer}.mg-seg button.on{background:var(--accent);color:var(--accent-ink)}.mg-seg-top{margin:0 0 10px}
+.mg-banner{border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);background:color-mix(in srgb,var(--accent) 8%,transparent);padding:10px 14px;font-size:13px}.mg-vx{color:var(--accent);font-size:10px;letter-spacing:.16em;margin-right:8px}.mg-banner em{font-style:normal;color:var(--warn)}
+.mg-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}@media(max-width:900px){.mg-cols{grid-template-columns:1fr}.mg-strip{gap:3px}}
+.mg-col,.mg-plans,.mg-side{border:1px solid var(--line);background:var(--surface);padding:14px 16px;min-width:0}
+.mg-col h4,.mg-plans h4,.mg-side h4{margin:0 0 10px;font:600 10px system-ui;letter-spacing:.14em;color:var(--muted)}.mg-col h4 em,.mg-plans h4 em,.mg-side h4 em{font-style:normal;opacity:.7;margin-left:6px}
+.mg-grp{margin:0 0 10px}.mg-grp>b{display:block;margin:0 0 4px;color:var(--accent);font-size:13px}
+.mg-row{display:grid;grid-template-columns:78px minmax(0,1fr);gap:12px;width:100%;text-align:left;border:0;border-top:1px solid color-mix(in srgb,var(--ink) 7%,transparent);border-left:3px solid var(--c,var(--line));background:none;color:inherit;padding:9px 6px 9px 10px;font:inherit;cursor:pointer}.mg-row:hover{background:color-mix(in srgb,var(--ink) 4%,transparent)}
+.mg-row.c-move{--c:#4f86d4}.mg-row.c-visa{--c:#9b7be0}.mg-row.c-casting{--c:#d9b341}.mg-row.c-fitting{--c:#3fae9f}.mg-row.c-booking{--c:#4aa56a}.mg-row.c-other{--c:#9a9288}.mg-row.risk{--c:var(--warn);background:color-mix(in srgb,var(--warn) 8%,transparent)}
+.mg-time b{display:block;font:500 13px var(--mono,monospace)}.mg-time small{font-size:11px;color:var(--muted)}.mg-what b{display:block;font-weight:500;font-size:14px}.mg-what small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.mg-plans header{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 6px}.mg-plans h3{margin:0;font:500 20px var(--serif,Georgia,serif)}
+.mg-mv{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;text-align:left;border:1px solid var(--line);background:none;color:inherit;padding:9px 12px;margin:0 0 6px;font:inherit;cursor:pointer}.mg-mv>span:first-child small{display:block;font-size:10px;letter-spacing:.1em;color:var(--muted)}.mg-mv>span:first-child b{font:600 18px var(--serif,Georgia,serif)}
+.mg-tag{font-style:normal;font-size:11px;padding:3px 9px;border:1px solid var(--c);color:var(--c)}
+.mg-intel{display:flex;flex-wrap:wrap;gap:12px 26px;align-items:center;justify-content:space-between;border:1px solid var(--line);background:var(--surface);padding:14px 18px}.mg-ititle small{font-size:10px;letter-spacing:.16em;color:var(--gold)}.mg-ititle h3{margin:4px 0 0;font:500 26px var(--serif,Georgia,serif)}.mg-ititle em{color:var(--accent)}
+.mg-stats{display:flex;flex-wrap:wrap;gap:10px}.mg-stats span{display:grid;gap:2px;min-width:104px;padding:8px 14px;border:1px solid var(--line);font-size:12px;color:var(--muted)}.mg-stats b{font:600 20px var(--serif,Georgia,serif);color:var(--ink)}.mg-stats .bad{border-color:var(--warn)}.mg-stats .bad b{color:var(--warn)}
+.mg-show{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.mg-show small{font-size:10px;letter-spacing:.16em;color:var(--muted);margin-right:4px}
+.mg-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:none;color:var(--muted);padding:6px 13px;font:inherit;font-size:12px;cursor:pointer;border-radius:999px;opacity:.55}.mg-chip i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--c)}.mg-chip b{font-weight:600;color:var(--ink)}.mg-chip.on{opacity:1;color:var(--ink);border-color:var(--c)}
+.mg-reset{margin-left:auto;background:none;border:0;color:var(--muted);text-decoration:underline;font:inherit;font-size:12px;cursor:pointer}
+.mg-cards{display:flex;flex-wrap:wrap;gap:10px}.mg-cards>div{flex:1 1 200px;border:1px solid var(--line);border-left:3px solid var(--gold);padding:10px 14px;display:grid;gap:4px}.mg-cards small{font-size:12px;color:var(--muted)}.mg-cards b{font:600 24px var(--serif,Georgia,serif)}
+.mg-mhead{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.mg-mhead h3{margin:0 auto 0 0;font:500 26px var(--serif,Georgia,serif)}
+.mg-month{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}@media(max-width:1100px){.mg-month{grid-template-columns:1fr}}
+.mg-grid7{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.mg-dow{font-size:11px;letter-spacing:.14em;color:var(--muted);padding:4px 2px}
+.mg-cell{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-height:104px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:9px 8px 8px;font:inherit;text-align:left;cursor:pointer;overflow:hidden}
+.mg-cell:hover{border-color:var(--gold)}.mg-cell.out{opacity:.45}.mg-cell.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.mg-dn{font:500 17px var(--serif,Georgia,serif)}.mg-cell.today .mg-dn{display:inline-grid;place-items:center;min-width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--accent-ink);font:600 13px system-ui}
+.mg-dots{display:flex;flex-wrap:wrap;gap:3px 9px}.mg-dot{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink)}.mg-dot i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--c)}
+.mg-cell small{font-size:11px;color:var(--muted)}.mg-rib{position:absolute;left:0;right:0;top:0;display:flex;height:3px}.mg-rib i{flex:1}
+.mg-more{margin-top:auto;border:1px solid var(--accent);color:var(--accent);padding:3px 10px;font-size:11px;border-radius:999px}
+.mg-side header small{font-size:10px;letter-spacing:.16em;color:var(--gold)}.mg-side header h3{margin:4px 0 10px;font:500 22px var(--serif,Georgia,serif)}
+.mg-trio{display:grid;grid-template-columns:repeat(3,1fr);margin:0 0 12px;border:1px solid var(--line)}.mg-trio span{display:grid;gap:2px;padding:8px 10px;font-size:11px;color:var(--muted);border-right:1px solid var(--line)}.mg-trio span:last-child{border:0}.mg-trio b{font:600 20px var(--serif,Georgia,serif);color:var(--ink)}
+.mg-side section{margin:0 0 14px}.mg-side .mg-row{grid-template-columns:62px minmax(0,1fr)}
+.mg-review{width:100%;border:1px solid var(--line);background:none;color:var(--ink);padding:10px;font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
 .orbbar{margin:0 0 12px}.cx-orbwrap{min-width:0}.cx-intel .so-sigs{margin:0 0 8px}.cx-intel .so-att{margin:0 0 6px}
 .calmode{display:inline-flex;border:1px solid var(--line,rgba(255,255,255,.18));margin-right:6px}.calmode button{background:none;border:0;color:var(--muted);padding:7px 14px;font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}.calmode button.on{background:var(--gold,#d4b077);color:#15110c;font-weight:600}.calmode button+button{border-left:1px solid var(--line,rgba(255,255,255,.18))}
 .cx-ev small{font-size:10.5px;color:var(--muted)}.cx-ev b{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cx-ev span{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cx-ev:hover{z-index:3;background:color-mix(in srgb,var(--kc,var(--k-connect)) 36%,var(--surface))}.cx-ev.src-model{border-left-style:dashed}.cx-ev.src-agency{opacity:.82}.cx-ev.onag small::after{content:" · Model Agenda";color:var(--gold)}
@@ -2622,6 +2661,57 @@ document.addEventListener("click",e=>{const m=e.target.closest&&e.target.closest
 document.addEventListener("mouseover",e=>{const t=e.target.closest&&e.target.closest("[data-orb-n]");document.querySelectorAll(".so-wrap .hl").forEach(x=>x.classList.remove("hl"));if(!t)return;document.querySelectorAll('.so-wrap [data-orb-n="'+t.dataset.orbN+'"]').forEach(x=>x.classList.add("hl"))});
 /* the dial keeps up with the clock on today */
 setInterval(()=>{if(document.querySelector('.so-dial[data-orb-live="1"]'))lensRepaint()},60000);
+/* ================= Models calendar: its own design (Model Agenda and the Season Matrix), moved from the old agent calendar ================= */
+const MG_CATS=[["move","Travel / Movement","#4f86d4"],["visa","Visa / Immigration","#9b7be0"],["casting","Casting","#d9b341"],["fitting","Fitting","#3fae9f"],["booking","Booking","#4aa56a"],["other","Training / Other","#9a9288"]];
+const mgColor=k=>(MG_CATS.find(c=>c[0]===k)||[0,0,"#9a9288"])[2];
+function mCat(e){const c=orbCat(e);if(c==="travel"||c==="stay")return"move";if(c==="visa")return"visa";const s=String(e.kind||"")+" "+String(e.title||"");if(e.kind==="casting"||/casting|go.?see|callback|option/i.test(s))return"casting";if(/fitting/i.test(s))return"fitting";if(e.kind==="booking"||/booking|job|shoot|show/i.test(s))return"booking";return"other"}
+function mHide(){return S.mgHide||(S.mgHide={})}
+function mItems(s){return eventsFor(s).map(e=>{const ab=e.t?evSpanMin(e):[0,0];return{e,id:String(e.id),title:e.title||"Untitled",a:ab[0],b:ab[1],models:(e.models||[]).filter(Boolean),mc:mCat(e),status:String(e.status||""),where:e.where||"",span:e.rep==="d"&&!!e.until&&e.until>e.d,first:e.d===s}})}
+const mgShown=s=>mItems(s).filter(r=>!mHide()[r.mc]&&(!r.span||r.first));
+const mgOpen=(r,s)=>`data-act="item" data-kind="e" data-id="${esc(r.id)}" data-s="${s}"`;
+function mgRow(r,s,risk){return`<button type="button" class="mg-row c-${r.mc}${risk?" risk":""}" ${mgOpen(r,s)}><span class="mg-time">${r.e.t?`<b>${esc(fmtT(r.e.t))}</b>${r.e.e&&!r.span?`<small>${esc(fmtT(r.e.e))}</small>`:""}`:`<b>All day</b>`}</span><span class="mg-what"><b>${esc(r.title)}</b><small>${esc([r.models.length>1?r.models.join(", "):"",r.where,r.status].filter(Boolean).join(" · "))}</small></span></button>`}
+function mgStrip(s){const ws=weekDates(s),t0=todayIso();return`<div class="mg-strip">${ws.map(d=>{const n=mgShown(d).length;return`<button type="button" class="mg-day${d===s?" on":""}${d===t0?" today":""}" data-mg-day="${d}"><small>${DOW[parse(d).getDay()].slice(0,3).toUpperCase()}</small><b>${parse(d).getDate()}</b>${n?`<i title="${n} item${n===1?"":"s"}"></i>`:""}</button>`}).join("")}</div>`}
+/* Model Agenda: the week at a glance, then the chosen day split into the team and each model */
+function modelsAgenda(s){
+ const ws=weekDates(s);let n=0,hrs=0,conf=0;const ms=new Set();
+ ws.forEach(d=>{const it=mgShown(d);n+=it.length;it.forEach(r=>{if(r.e.t&&!r.span)hrs+=(r.b-r.a)/60;r.models.forEach(m=>ms.add(m))});conf+=orbConflicts(orbRows(d)).length});
+ const items=mgShown(s).sort((x,y)=>(x.e.t?x.a:-1)-(y.e.t?y.a:-1)||x.title.localeCompare(y.title)),cf=new Set(orbConflicts(orbRows(s)).map(r=>r.id)),team=items.filter(r=>!r.models.length),mod=items.filter(r=>r.models.length),groups={};
+ mod.forEach(r=>{(groups[r.models[0]]=groups[r.models[0]]||[]).push(r)});
+ const first=mod.find(r=>r.e.t),over=mod.filter(r=>cf.has(r.id)).length;
+ const banner=mod.length?`<div class="mg-banner"><span class="mg-vx">✦ VEUX</span><b>${mod.length} model item${mod.length===1?"":"s"}</b>${first?` · first at ${esc(fmtT(first.e.t))}`:""}${over?` · <em>${over} overlap${over===1?"":"s"} on this day</em>`:""}</div>`:"";
+ const teamCol=`<section class="mg-col"><h4>TEAM &amp; AGENCY <em>${team.length}</em></h4>${team.length?team.map(r=>mgRow(r,s,cf.has(r.id))).join(""):`<p class="so-none">Nothing for the team on this day.</p>`}</section>`;
+ const modCol=`<section class="mg-col"><h4>MODELS <em>${mod.length}</em></h4>${mod.length?Object.keys(groups).sort().map(g=>`<div class="mg-grp"><b>${esc(g)}</b>${groups[g].map(r=>mgRow(r,s,cf.has(r.id))).join("")}</div>`).join(""):`<p class="so-none">No model items on this day.${agencyOn()||lensIds().length?"":" Add a model or tick Whole agency."}</p>`}</section>`;
+ const mv=[];ws.forEach(d=>mItems(d).filter(r=>(r.mc==="move"||r.mc==="visa")&&!mHide()[r.mc]&&(!r.span||r.first)).forEach(r=>mv.push({d,r})));
+ const movement=`<section class="mg-plans"><header><h3>Model plans &amp; movement</h3><span class="muted small">This week</span></header>${mv.length?`<h4>MOVEMENT <em>${mv.length}</em></h4>`+mv.slice(0,12).map(({d,r})=>`<button type="button" class="mg-mv c-${r.mc}" ${mgOpen(r,d)}><span><small>${DOW[parse(d).getDay()].slice(0,3).toUpperCase()}</small><b>${parse(d).getDate()}</b></span><span class="mg-what"><b>${esc(r.title)}</b><small>${esc([r.models.join(", "),r.e.t?fmtT(r.e.t):""].filter(Boolean).join(" · "))}</small></span><i class="mg-tag" style="--c:${mgColor(r.mc)}">${r.mc==="visa"?"Visa":"Travel"}</i></button>`).join(""):`<p class="so-none">No model movement this week.</p>`}</section>`;
+ return`<div class="mg-wrap"><div class="mg-head"><div class="mg-sum"><b>${n}</b> item${n===1?"":"s"} this week · <b>${hrs.toFixed(1)}h</b> scheduled · <b>${ms.size}</b> model${ms.size===1?"":"s"}</div>${conf?`<div class="mg-vx2">✦ VEUX <b>${conf} overlapping commitment${conf===1?"":"s"}</b></div>`:""}</div>${mgStrip(s)}<div class="mg-dayhead"><h3>${DOW[parse(s).getDay()]} <small>${MON[parse(s).getMonth()]} ${parse(s).getDate()}</small>${s===todayIso()?' <em class="mg-today">TODAY</em>':""}</h3><span class="muted small">${items.length} item${items.length===1?"":"s"}</span><div class="mg-seg"><button type="button" class="${S.mgGrid?"":"on"}" data-mg-grid="0">Day list</button><button type="button" class="${S.mgGrid?"on":""}" data-mg-grid="1">Week grid</button></div></div>${banner}<div class="mg-cols">${teamCol}${modCol}</div>${movement}</div>`}
+/* Season Matrix: the month as a dial of counts, with Veux Model Intelligence for the chosen day */
+function mgPanel(sel){
+ const its=mgShown(sel),mv=its.filter(r=>r.mc==="move"),visa=its.filter(r=>r.mc==="visa"),ev=its.filter(r=>r.mc!=="move"&&r.mc!=="visa"),cf=orbConflicts(orbRows(sel)),cfs=new Set(cf.map(r=>r.id));
+ const list=(a,empty)=>a.length?a.map(r=>mgRow(r,sel,cfs.has(r.id))).join(""):`<p class="so-none">${empty}</p>`;
+ return`<aside class="mg-side"><header><small>VEUX · MODEL INTELLIGENCE</small><h3>${esc(longDate(sel))}</h3></header><div class="mg-trio"><span><b>${mv.length}</b>Movements</span><span><b>${ev.length}</b>Events</span><span><b>${cf.length}</b>Risks</span></div>`
+  +`<section><h4>Movements <em>${mv.length}</em></h4>${list(mv,"No model movement scheduled.")}</section><section><h4>Visa &amp; Immigration <em>${visa.length}</em></h4>${list(visa,"No visa items.")}</section><section><h4>Projects &amp; Events <em>${ev.length}</em></h4>${list(ev,"No projects or events.")}</section>`
+  +`<section><h4>Veux Watch <em>${cf.length} item${cf.length===1?"":"s"}</em></h4>${cf.length?cf.map(r=>mgRow(mItems(sel).find(x=>x.id===r.id)||{e:r.e,id:r.id,title:r.title,models:r.models,mc:r.cat,status:r.status,where:r.where},sel,true)).join(""):`<p class="so-none">✓ This day is clear. No immediate schedule risk detected.</p>`}</section><button type="button" class="mg-review" data-mg-open="${sel}">Review day items</button></aside>`}
+function modelsMonth(){
+ const [Y,M]=S.calMonth.split("-").map(Number),first=new Date(Y,M-1,1),t=todayIso(),start=mondayOf(iso(first)),days=[];
+ for(let i=0;i<42;i++){const s=addDays(start,i),dd=parse(s);if(i===35&&dd.getMonth()!==M-1)break;days.push(s)}
+ const sel=S.mgSel&&days.includes(S.mgSel)?S.mgSel:(t.slice(0,7)===S.calMonth?t:iso(first)),cnt={},trav=new Set();let movements=0,events=0,risks=0,castings=0,confirmed=0;
+ const byDay={};days.forEach(s=>{const inM=parse(s).getMonth()===M-1,all=mItems(s).filter(r=>!r.span||r.first||r.mc==="move"&&r.first);byDay[s]=mItems(s);
+  if(!inM)return;mItems(s).filter(r=>!r.span||r.first).forEach(r=>{cnt[r.mc]=(cnt[r.mc]||0)+1;if(mHide()[r.mc])return;if(r.mc==="move"){movements++;r.models.forEach(m=>trav.add(m))}else events++;if(r.mc==="casting")castings++;if(r.mc==="booking"&&/confirm|book|job|scheduled/i.test(r.status))confirmed++});
+  risks+=orbConflicts(orbRows(s)).length});
+ const chip=c=>`<button type="button" class="mg-chip${mHide()[c[0]]?"":" on"}" data-mg-cat="${c[0]}" style="--c:${c[2]}"><i></i>${esc(c[1])} <b>${cnt[c[0]]||0}</b></button>`;
+ const cells=days.map(s=>{const dd=parse(s),its=byDay[s].filter(r=>!mHide()[r.mc]),dots=MG_CATS.map(c=>{const k=its.filter(r=>r.mc===c[0]&&(!r.span||r.first)).length;return k?`<span class="mg-dot" style="--c:${c[2]}"><i></i>${k}</span>`:""}).join(""),
+   rib=[...new Set(its.filter(r=>r.span&&!r.first).map(r=>r.mc))].slice(0,3).map(k=>`<i style="background:${mgColor(k)}"></i>`).join(""),mv=its.filter(r=>r.mc==="move"&&(!r.span||r.first)).length;
+  return`<button type="button" class="mg-cell${dd.getMonth()!==M-1?" out":""}${s===sel?" sel":""}${s===t?" today":""}" data-mg-day="${s}" aria-label="${esc(longDate(s))}">${rib?`<span class="mg-rib">${rib}</span>`:""}<span class="mg-dn">${dd.getDate()}</span><span class="mg-dots">${dots}</span>${mv?`<small>${mv} movement${mv===1?"":"s"}</small>`:""}${s===sel?`<span class="mg-more" data-mg-open="${s}">View more →</span>`:""}</button>`}).join("");
+ return`<div class="mg-wrap"><div class="mg-intel"><div class="mg-ititle"><small>MONTH · MODEL INTELLIGENCE</small><h3>Season Matrix <em>${MON[M-1]} ${Y}</em></h3></div><div class="mg-stats"><span><b>${movements}</b>Movements</span><span><b>${events}</b>Events</span><span><b>${trav.size}</b>Models travelling</span><span class="${risks?"bad":""}"><b>${risks}</b>Risks</span></div></div>`
+  +`<div class="mg-show"><small>SHOW</small>${MG_CATS.map(chip).join("")}<button type="button" class="mg-reset" data-mg-cat="__reset">Reset</button></div>`
+  +`<div class="mg-cards"><div><small>Casting / Go See</small><b>${castings}</b></div><div><small>Confirmed / On Job</small><b>${confirmed}</b></div></div>`
+  +`<div class="mg-mhead"><h3>${MON[M-1]} ${Y}</h3><button class="btn sm ghost" data-act="mon" data-n="-1">Previous</button><button class="btn sm ghost" data-act="mon" data-n="0">This month</button><button class="btn sm ghost" data-act="mon" data-n="1">Next</button></div>`
+  +`<div class="mg-month"><div class="mg-grid7">${["MON","TUE","WED","THU","FRI","SAT","SUN"].map(x=>`<div class="mg-dow">${x}</div>`).join("")}${cells}</div>${mgPanel(sel)}</div>${evEditor()}</div>`}
+document.addEventListener("click",e=>{const T=e.target.closest?e.target:null;if(!T)return;
+ const o=T.closest("[data-mg-open]");if(o){e.preventDefault();e.stopPropagation();S.tabs.schedule="day";S.date=o.dataset.mgOpen;S.orbSel=null;render();return}
+ const d=T.closest("[data-mg-day]");if(d){e.preventDefault();if(d.classList.contains("mg-cell"))S.mgSel=d.dataset.mgDay;else S.date=d.dataset.mgDay;render();return}
+ const c=T.closest("[data-mg-cat]");if(c){e.preventDefault();const k=c.dataset.mgCat;if(k==="__reset")S.mgHide={};else{S.mgHide=Object.assign({},mHide());if(S.mgHide[k])delete S.mgHide[k];else S.mgHide[k]=true}render();return}
+ const g=T.closest("[data-mg-grid]");if(g){e.preventDefault();S.mgGrid=g.dataset.mgGrid==="1";render()}});
 function cxHead(t,s){
   const nav=t==="day"?`<div class="cx-nav"><button type="button" class="cx-ib" data-act="day" data-n="-1" aria-label="Previous day">‹</button><button type="button" class="cx-today" data-act="day" data-n="0">Today</button><button type="button" class="cx-ib" data-act="day" data-n="1" aria-label="Next day">›</button></div>`:"";
   const seg=[["day","Day"],["week","Week"],["month","Month"],["templates","Templates"],["plan","90-day"]].map(([k,l])=>`<button type="button" role="tab" aria-selected="${t===k}" data-act="tab" data-view="schedule" data-k="${k}">${l}</button>`).join("");
@@ -2631,9 +2721,9 @@ function vSchedule(){
   if(PERSONA)return head("","Calendar","Your routine, goal hours and events"+(S.boss?", plus "+esc((S.boss.owner||"Demontez").split(" ")[0])+"&#39;s calendar and trips (read-only)":"")+". Tap a day to add something.")+schedMonth();
   if(!["day","week","month","templates","plan"].includes(S.tabs.schedule))S.tabs.schedule="day";
   const t=S.tabs.schedule,s=S.date;let h=cxHead(t,s);
-  if(t==="day")h+=orbMode()?`<div class="cx-orbwrap">${lensBar()}<div class="orbbar">${orbSwitch()}</div>${dsOrbit(s)}</div>`:`<div class="cx-grid2"><div class="cx-main">${lensBar()}<div class="orbbar">${orbSwitch()}</div>${cxTimeline(s)}</div><aside class="cx-side">${modeModels()?cxIntel(s)+cxMove():cxGlance(s)+cxIntel(s)+cxTasks(s)+cxNotes(s)+cxMove()+cxMarket()}</aside></div>`;
-  else if(t==="week")h+=`<div class="cx-grid2"><div class="cx-main">${schedWeek()}</div><aside class="cx-side">${modeModels()?cxMove():cxRulesCard("week")+cxTasks(s,true)+cxMove()}</aside></div>`;
-  else if(t==="month")h+=`<div class="cx-grid2"><div class="cx-main">${schedMonth()}</div><aside class="cx-side">${modeModels()?cxMove():cxGlance(s)+cxTasks(s)+cxMove()}</aside></div>`;
+  if(t==="day")h+=orbMode()?`<div class="cx-orbwrap">${lensBar()}<div class="orbbar">${orbSwitch()}</div>${dsOrbit(s)}</div>`:modeModels()?`<div class="cx-orbwrap">${lensBar()}<div class="orbbar">${orbSwitch()}</div>${modelsAgenda(s)}</div>`:`<div class="cx-grid2"><div class="cx-main">${lensBar()}<div class="orbbar">${orbSwitch()}</div>${cxTimeline(s)}</div><aside class="cx-side">${modeModels()?cxIntel(s)+cxMove():cxGlance(s)+cxIntel(s)+cxTasks(s)+cxNotes(s)+cxMove()+cxMarket()}</aside></div>`;
+  else if(t==="week")h+=modeModels()&&!S.mgGrid?`<div class="cx-orbwrap">${lensBar()}${modelsAgenda(s)}</div>`:`<div class="cx-grid2"><div class="cx-main">${modeModels()?`<div class="mg-seg mg-seg-top"><button type="button" data-mg-grid="0">Day list</button><button type="button" class="on" data-mg-grid="1">Week grid</button></div>`:""}${schedWeek()}</div><aside class="cx-side">${modeModels()?cxMove():cxRulesCard("week")+cxTasks(s,true)+cxMove()}</aside></div>`;
+  else if(t==="month")h+=modeModels()?`<div class="cx-orbwrap">${lensBar()}${modelsMonth()}</div>`:`<div class="cx-grid2"><div class="cx-main">${schedMonth()}</div><aside class="cx-side">${modeModels()?cxMove():cxGlance(s)+cxTasks(s)+cxMove()}</aside></div>`;
   else if(t==="plan")h+=schedPlan();else h+=schedTemplates();
   return h}
 
@@ -3534,7 +3624,7 @@ function lensIds(){const l=(core().lens)||{};return Array.isArray(l.ids)?l.ids:[
 function modeModels(){return ((core().lens)||{}).mode==="models"}
 function modelEvs(){return modeModels()&&lensIds().length?LME:[]}
 const LENS_KINDS=[["event","Events"],["booking","Bookings"],["casting","Castings"],["time off","Time off"],["task","Tasks"]];
-function kindHide(){return((core().lens||{}).hide)||{}}
+function kindHide(){const h=(core().lens||{}).hide;return h||{task:true}}
 function kindOf(e){return e.kind||"event"}
 function kindBar(){const h=kindHide();return `<div class="lens-kinds" role="group" aria-label="Show">${LENS_KINDS.map(k=>`<button type="button" data-lens-kind="${esc(k[0])}" class="${h[k[0]]?"off":"on"}" aria-pressed="${h[k[0]]?"false":"true"}">${esc(k[1])}</button>`).join("")}</div>`}
 function meFind(id){return LME.find(x=>x.id===id)}
@@ -3584,7 +3674,7 @@ async function agencySync(force){
 }
 function agencyToggle(on){const c=core();c.lens=c.lens||{ids:[],names:{}};c.lens.agency=!!on;markDirty("core");if(!on)AG=[];render();agencySync(true)}
 document.addEventListener("change",e=>{const a=e.target.closest&&e.target.closest("[data-lens-agency]");if(a)agencyToggle(a.checked)});
-document.addEventListener("click",e=>{const k=e.target.closest&&e.target.closest("[data-lens-kind]");if(!k)return;const c=core();c.lens=c.lens||{ids:[],names:{}};c.lens.hide=Object.assign({},c.lens.hide||{});if(c.lens.hide[k.dataset.lensKind])delete c.lens.hide[k.dataset.lensKind];else c.lens.hide[k.dataset.lensKind]=true;markDirty("core");render()});
+document.addEventListener("click",e=>{const k=e.target.closest&&e.target.closest("[data-lens-kind]");if(!k)return;const c=core();c.lens=c.lens||{ids:[],names:{}};c.lens.hide=Object.assign({},kindHide());if(c.lens.hide[k.dataset.lensKind])delete c.lens.hide[k.dataset.lensKind];else c.lens.hide[k.dataset.lensKind]=true;markDirty("core");render()});
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest("[data-cal-mode]");if(!b)return;const want=b.dataset.calMode==="models"?"models":"mine",c=core();c.lens=c.lens||{ids:[],names:{}};if((c.lens.mode||"mine")===want)return;c.lens.mode=want;markDirty("core");render();if(want==="models"){lensModels();modelLensSync(true);agencySync(true)}else{AG=[]}});
 const mm2t=m=>pad(Math.floor(m/60))+":"+pad(m%60);
 function evSpanMin(e){const a=hm(e.t);let b=e.e?hm(e.e):a+60;if(b<=a)b=a+30;return[a,b]}

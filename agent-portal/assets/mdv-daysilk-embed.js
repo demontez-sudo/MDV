@@ -114,7 +114,7 @@ function dsShape(e,extra){
     video:md.video&&/^https:\/\//i.test(String(md.video.url||''))?md.video:null};
   /* An all-day event, or any event running a full day or more (a stay, a trip), shows on every day it covers. An overnight one (under 24 hours) keeps its times. */
   if(e.all_day||(en&&dayKey(en)>d&&en-s>=864e5)){ev.d=d;ev.t='';ev.e='';if(en&&dayKey(en)>d){ev.rep='d';ev.until=dayKey(new Date(en.getTime()-1));}}
-  else{ev.d=d;ev.t=hm(s);ev.e=en&&dayKey(en)===d?hm(en):'23:59';}
+  else{ev.d=d;ev.t=hm(s);ev.e=en?(dayKey(en)===d?hm(en):'23:59'):hm(new Date(Math.min(s.getTime()+45*6e4,new Date(s.getFullYear(),s.getMonth(),s.getDate(),23,59).getTime())));}
   return Object.assign(ev,extra||{});
 }
 /* Agency calendar events that are mine (I am the owner), read-only. The Calendar's New Event form sets the owner, so a meeting made
@@ -166,7 +166,7 @@ function moveRows(cal,wantIds,pre,src){
     if(n>=150||!t||!t.due_at||/^(completed|done|complete|cancelled|canceled)$/i.test(String(t.status||'')))return;
     if(t.metadata&&t.metadata.source==='calendar_event')return;   /* the companion task of a meeting is the meeting itself */
     var m=model(t);if(!mine(m.id))return;var d0=+new Date(t.due_at);if(isNaN(d0)||d0<lo||d0>hi)return;n++;
-    out.push(dsShape({starts_at:t.due_at,title:(m.name?first(m.name)+': ':'')+String(t.title||'Task')},{id:pre+'task-'+t.id,ref:'task-'+t.id,src:src,kind:'task',cat:'focus',modelIds:[m.id],models:m.name?[m.name]:[],calName:m.name||'Model'}));
+    out.push(dsShape({starts_at:t.due_at,all_day:!(new Date(t.due_at).getHours()||new Date(t.due_at).getMinutes()),title:(m.name?first(m.name)+': ':'')+String(t.title||'Task')},{id:pre+'task-'+t.id,ref:'task-'+t.id,src:src,kind:'task',cat:'focus',modelIds:[m.id],models:m.name?[m.name]:[],calName:m.name||'Model'}));
   });
   return out;
 }
