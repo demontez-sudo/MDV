@@ -231,6 +231,35 @@ export const handler=async(event)=>{
     const spanning=table=>rows(admin.from(table).select('*').eq('organization_id',organization.id).lt('starts_at',start).gte('ends_at',start).order('starts_at').limit(1000)).catch(()=>[]);
     const windowed=async table=>{const [a,b,c]=await Promise.all([inWindow(table),repeating(table),spanning(table)]);const m=new Map();for(const x of [...a,...b,...c])m.set(x.id,x);return [...m.values()];};
 
+    /* DaySilk's light view: only events, bookings, castings, time off, tasks and the models they point at. The full reply also carries every contact,
+       company and staff profile, each booking's rates and invoices, and a whole model record (with its evaluation text) on every link, which made
+       a long window too big or too slow to come back, so the model calendar stayed empty. */
+    if(p.view==='lite'){
+      const t0=Date.now();
+      const [allEvents,allBookings,allCastings,blocks,tasks,models]=await Promise.all([
+        windowed('events'),windowed('bookings'),windowed('castings'),
+        rows(admin.from('availability_blocks').select('id,model_id,block_type,reason,status,starts_at,ends_at').eq('organization_id',organization.id).gte('ends_at',start).lte('starts_at',end).in('status',['approved','pending']).order('starts_at').limit(3000)),
+        rows(admin.from('tasks').select('id,title,status,priority,due_at,model_id,metadata').eq('organization_id',organization.id).gte('due_at',start).lte('due_at',end).neq('status','completed').not('model_id','is',null).order('due_at').limit(2000)),
+        rows(admin.from('models').select('id,display_name,primary_market_label,status,active').eq('organization_id',organization.id).limit(1500))
+      ]);
+      const events=allEvents.filter(x=>visibleToUser(x,user.id)&&(inRange(x.starts_at,start,end)||hasRepeat(x)||runsInto(x,start)));
+      const bookings=allBookings.filter(x=>inRange(x.starts_at,start,end)||hasRepeat(x)||runsInto(x,start));
+      const castings=allCastings.filter(x=>inRange(x.starts_at,start,end)||hasRepeat(x)||runsInto(x,start));
+      const links=(table,col,ids)=>ids.length?rows(admin.from(table).select('id,'+col+',model_id,attendance_status').eq('organization_id',organization.id).in(col,ids)).catch(()=>[]):Promise.resolve([]);
+      const [eventModels,bookingModels,castingModels]=await Promise.all([links('event_models','event_id',events.map(x=>x.id)),links('booking_models','booking_id',bookings.map(x=>x.id)),links('casting_models','casting_id',castings.map(x=>x.id))]);
+      const mm=new Map(models.map(x=>[x.id,{id:x.id,display_name:x.display_name}]));
+      const em=group(eventModels,'event_id'),bm=group(bookingModels,'booking_id'),castm=group(castingModels,'casting_id');
+      const out={environment:'veux-desk-lite',organization,range:{start,end},
+        lookups:{models:models.map(x=>({id:x.id,display_name:x.display_name,primary_market_label:x.primary_market_label,status:x.status,active:x.active}))},
+        events:events.map(x=>({...x,event_models:(em.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),
+        bookings:bookings.map(x=>({...x,booking_models:(bm.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),
+        castings:castings.map(x=>({...x,casting_models:(castm.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),
+        availability_blocks:blocks.map(x=>({...x,models:mm.get(x.model_id)||null})),
+        tasks:tasks.map(x=>({...x,models:mm.get(x.model_id)||null}))};
+      console.log('[calendar lite] '+events.length+' events, '+bookings.length+' bookings, '+castings.length+' castings, '+blocks.length+' time off, '+tasks.length+' tasks, '+Math.round(JSON.stringify(out).length/1024)+' KB in '+(Date.now()-t0)+' ms');
+      return json(200,out);
+    }
+
     const [allEvents,allBookings,allCastings,blocks,tasks,models,modelPrimaryMedia,companies,contacts,markets,members,profiles]=await Promise.all([
       windowed('events'),
       windowed('bookings'),
