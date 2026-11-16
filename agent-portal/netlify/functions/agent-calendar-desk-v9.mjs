@@ -236,7 +236,7 @@ export const handler=async(event)=>{
       windowed('bookings'),
       windowed('castings'),
       rows(admin.from('availability_blocks').select('*').eq('organization_id',organization.id).gte('ends_at',start).lte('starts_at',end).in('status',['approved','pending']).order('starts_at')),
-      rows(admin.from('tasks').select('id,title,status,priority,due_at,model_id').eq('organization_id',organization.id).gte('due_at',start).lte('due_at',end).neq('status','completed').order('due_at')),
+      rows(admin.from('tasks').select('id,title,status,priority,due_at,model_id,metadata').eq('organization_id',organization.id).gte('due_at',start).lte('due_at',end).neq('status','completed').order('due_at')),
       rows(admin.from('models').select('id,display_name,public_slug,primary_market_label,status,active').eq('organization_id',organization.id).limit(1500)),
       rows(admin.from('model_media').select('model_id,url,is_primary,media_type').eq('organization_id',organization.id).eq('is_primary',true).eq('media_type','image').limit(1500)),
       rows(admin.from('companies').select('id,name,company_type,status').eq('organization_id',organization.id).order('name').limit(1500)),
