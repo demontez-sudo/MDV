@@ -102,8 +102,8 @@ function calSnap(force){
   if(CS.busy)return CS.busy;
   if(!bridge())return Promise.resolve(null);
   var from=new Date(Date.now()-3*864e5),to=new Date(Date.now()+75*864e5),o=encodeURIComponent(org());
-  CS.busy=get('/api/agent/calendar/v9?organization='+o+'&start='+encodeURIComponent(from.toISOString())+'&end='+encodeURIComponent(to.toISOString())+'&_t='+Date.now())
-    .then(function(d){CS.data=d;CS.at=Date.now();return d;}).catch(function(){return null;}).then(function(x){CS.busy=null;return x;});
+  CS.busy=get('/api/agent/calendar/v9?organization='+o+'&view=lite&start='+encodeURIComponent(from.toISOString())+'&end='+encodeURIComponent(to.toISOString())+'&_t='+Date.now())
+    .then(function(d){CS.data=d;CS.at=Date.now();CS.err='';return d;}).catch(function(err){CS.err=String((err&&err.message)||err||'The calendar did not answer');return null;}).then(function(x){CS.busy=null;return x;});
   return CS.busy;
 }
 /* a calendar row in DaySilk's own event shape */
@@ -384,7 +384,7 @@ function modelMovement(force){
     return out.slice(0,120);
   });
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,saveAgencyEvent:saveAgencyEvent,deleteAgencyEvent:deleteAgencyEvent,modelMovement:modelMovement,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,calendarStatus:function(){return {err:CS.err||'',at:CS.at||0};},saveAgencyEvent:saveAgencyEvent,deleteAgencyEvent:deleteAgencyEvent,modelMovement:modelMovement,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */
