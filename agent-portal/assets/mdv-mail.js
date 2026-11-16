@@ -70,7 +70,7 @@ async function openMessage(id){
   if(had){var rd=document.getElementById('mm-reader');if(rd)rd.classList.add('mm-busy');}else paintReader();
   try{
     var d=await call('message',{id:id});if(S.sel!==id)return;
-    d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);S.detail={m:d.message,att:arr(d.attachments)};
+    d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);d.message.extra_pending=arr(d.extra_pending);d.message.extra=[];S.detail={m:d.message,att:arr(d.attachments)};
     var row=S.messages.filter(function(x){return x.id===id;})[0];
     if(row&&!row.is_read){row.is_read=true;var f=S.folders.filter(function(x){return x.id===S.folder;})[0];if(f&&f.unread>0)f.unread--;}
   }catch(e){S.detail={error:msg(e)};}
@@ -158,17 +158,28 @@ function cidsLeft(m){
   return (String(m.body).match(/cid:[^"'\s)>]+/gi)||[]).map(function(c){c=c.slice(4);try{c=decodeURIComponent(c);}catch(e){}return c.toLowerCase();}).filter(function(c){return !have[c];});
 }
 function fillPending(m,repaint){
-  if(!m||m._pend||!arr(m.pending).length||!cidsLeft(m).length)return;
+  if(!m||m._pend||m._pendDone)return;
+  var q=[];
+  if(arr(m.pending).length&&cidsLeft(m).length)arr(m.pending).forEach(function(p){q.push({p:p,x:0});});
+  arr(m.extra_pending).forEach(function(p){q.push({p:p,x:1});});
+  if(!q.length)return;
   m._pend=true;
-  var q=m.pending.slice();
   (function next(){
-    if(!q.length||!cidsLeft(m).length){m._pend=false;return;}
-    var p=q.shift();
-    call('attachment',{id:m.id,attachment_id:p.id}).then(function(f){
-      if(f&&f.content_id&&f.content_base64){m.inline=arr(m.inline).concat([{cid:f.content_id,content_type:/^image\//i.test(f.content_type||'')?f.content_type:'image/jpeg',data:f.content_base64}]);repaint();}
+    if(!q.length){m._pend=false;m._pendDone=true;repaint();return;}
+    var it=q.shift();
+    if(!it.x&&!cidsLeft(m).length){next();return;}
+    call('attachment',{id:m.id,attachment_id:it.p.id}).then(function(f){
+      if(!f||!f.content_base64)return;
+      var type=/^image\//i.test(f.content_type||'')?f.content_type:'image/jpeg';
+      if(it.x)m.extra=arr(m.extra).concat([{name:f.name||it.p.name||'',content_type:type,data:f.content_base64}]);
+      else if(f.content_id)m.inline=arr(m.inline).concat([{cid:f.content_id,content_type:type,data:f.content_base64}]);
+      else return;
+      repaint();
     }).catch(function(){}).then(next);
   })();
 }
+/* a picture the body points at that never arrived: say so instead of leaving a broken-image icon */
+function unresolved(m){return !!m&&m.body_type==='html'&&cidsLeft(m).length>0&&(m._pendDone||!arr(m.pending).length);}
 function bodyDoc(m,showImages){
   var csp="default-src 'none'; img-src data: cid:"+(showImages?' https: http:':'')+"; style-src 'unsafe-inline'; font-src data:";
   var inner=m.body_type==='html'?m.body:'<pre style="white-space:pre-wrap;font:inherit">'+esc(m.body)+'</pre>';
@@ -176,7 +187,9 @@ function bodyDoc(m,showImages){
     var pics={};arr(m.inline).forEach(function(x){if(x&&x.cid&&x.data)pics[String(x.cid).toLowerCase()]='data:'+(x.content_type||'image/png')+';base64,'+x.data;});
     inner=inner.replace(/cid:([^"'\s)>]+)/gi,function(all,id){var k=id;try{k=decodeURIComponent(id);}catch(e){}return pics[k.toLowerCase()]||pics[id.toLowerCase()]||all;})
       .replace(/(<img[^>]+src=["'])\/\//gi,'$1https://');
+    if(unresolved(m))inner=inner.replace(/<img\b[^>]*\bsrc=["']cid:[^"']*["'][^>]*>/gi,'<span style="font:12px sans-serif;color:#8a7a5c">[A picture in this email could not be loaded. Download it from the attachments above or open the email in Outlook.]</span>');
   }
+  inner+=arr(m.extra).map(function(x){return '<figure style="margin:18px 0 0"><img alt="'+esc(x.name||'')+'" src="data:'+esc(x.content_type||'image/jpeg')+';base64,'+x.data+'" style="max-width:100%;height:auto;display:block"><figcaption style="font:11px sans-serif;color:#8a7a5c;margin-top:4px">'+esc(x.name||'')+'</figcaption></figure>';}).join('');
   return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="'+csp+'"><base target="_blank"><style>body{margin:0;padding:18px 22px;font:14px/1.55 -apple-system,Segoe UI,Calibri,Arial,sans-serif;color:#1b1814;background:#fff;word-wrap:break-word}img{max-width:100%;height:auto}a{color:#8c6a2f}blockquote{margin:8px 0;padding-left:12px;border-left:3px solid #ddd;color:#555}table{max-width:100%}</style></head><body>'+inner+'</body></html>';
 }
 function paintReader(){
@@ -215,7 +228,7 @@ function tBody(id){
   var T=S.thread,m=S.detail&&S.detail.m;
   if(m&&m.id===id)return Promise.resolve(m);
   if(T.bodies[id])return Promise.resolve(T.bodies[id]);
-  return call('message',{id:id}).then(function(d){d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);T.bodies[id]=d.message;return d.message;});
+  return call('message',{id:id}).then(function(d){d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);d.message.extra_pending=arr(d.extra_pending);d.message.extra=[];T.bodies[id]=d.message;return d.message;});
 }
 function paintThread(){
   var btn=document.getElementById('mm-thr'),box=document.getElementById('mm-thread'),fr=document.querySelector('#mm-reader .mm-body'),T=S.thread;

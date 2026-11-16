@@ -130,11 +130,17 @@ export const handler = async event => {
         m.hasAttachments ? G(`/me/messages/${enc}/attachments?$select=id,name,size,contentType,isInline`).catch(() => null) : null
       ]);
       const all = list?.value || [];
-      const attachments = all.filter(x => !x.isInline).map(x => ({ id: x.id, name: x.name, size: x.size, content_type: x.contentType }));
+      const html = String(m.body?.content || '');
+      const hasCid = /cid:/i.test(html);
+      /* Pictures flagged "inline" used to be hidden from the attachment list. Gmail on a phone flags a photo that was attached to the
+         message as inline even when the body never shows it, so it was invisible and impossible to download. Keep an inline picture
+         in the list when the body does not use it, or when it is a big phone photo (those are also downloadable on their own). */
+      const attachments = all.filter(x => !x.isInline || !hasCid || Number(x.size || 0) > 1200000).map(x => ({ id: x.id, name: x.name, size: x.size, content_type: x.contentType }));
       /* Pictures embedded in the body (signature logos, pasted photos) are referenced as cid:… and never load on their own.
          Only fetch them when the body really points at one, keep it small, and never let it slow the message down much. */
-      let inline_images = [], inline_pending = [];
-      const html = String(m.body?.content || '');
+      let inline_images = [], inline_pending = [], extra_pending = [];
+      /* Attached pictures the body never points at are shown under the message (a few, one at a time, like the big inline ones). */
+      if (!hasCid) extra_pending = all.filter(x => /^image\//i.test(x.contentType || '') && Number(x.size || 0) <= 4.2 * 1048576).slice(0, 4).map(x => ({ id: x.id, size: x.size, name: x.name }));
       if (wantInline && /cid:/i.test(html)) {
         /* Any picture on the message can be the one the body points at: Outlook does not always flag them as inline.
            Small ones come back with the message; bigger phone photos are handed over one at a time (inline_pending). */
@@ -156,7 +162,7 @@ export const handler = async event => {
         }
         inline_pending = big.slice(0, 4).map(x => ({ id: x.id, size: x.size }));
       }
-      return json(200, { ok: true, message: mapMessage(m), attachments, inline_images, inline_pending });
+      return json(200, { ok: true, message: mapMessage(m), attachments, inline_images, inline_pending, extra_pending });
     }
 
     /* Every message in the same conversation (received and sent), oldest first, so a reply can be read
