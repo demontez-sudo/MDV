@@ -32,7 +32,15 @@ function shareLinks(m){
   if(!n)return '';
   return '<div class="mm-links"><small>Shared files in this email</small><button class="mm-btn" data-a="savelinks">Save to a model profile</button></div>';
 }
-async function attFile(m,id,name){var f=await call('attachment',{id:m.id,attachment_id:id}),bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);return new File([u8],f.name||name||'attachment',{type:f.content_type||'application/octet-stream'});}
+/* big files come in 3 MB pieces (one reply cannot carry more); join them back into one */
+async function getAtt(mid,aid){
+  var f=await call('attachment',{id:mid,attachment_id:aid});
+  if(!f||!f.chunked)return f;
+  var parts=[f.content_base64],end=f.end;
+  while(end<f.total){var g=await call('attachment',{id:mid,attachment_id:aid,offset:end});if(!g||!g.chunked||!(g.end>end))throw new Error('The file stopped loading. Try again.');parts.push(g.content_base64);end=g.end;}
+  f.content_base64=parts.join('');f.chunked=false;return f;
+}
+async function attFile(m,id,name){var f=await getAtt(m.id,id),bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);return new File([u8],f.name||name||'attachment',{type:f.content_type||'application/octet-stream'});}
 function who(a){return a?(a.name&&a.name!==a.address?a.name:a.address)||'Unknown':'Unknown';}
 function size(n){n=Number(n)||0;return n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';}
 function initials(n){return String(n||'?').replace(/[^A-Za-z0-9 ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(function(x){return x[0];}).join('').toUpperCase()||'?';}
@@ -175,7 +183,7 @@ function fillPending(m,repaint){
     if(!q.length){m._pend=false;m._pendDone=true;repaint();return;}
     var it=q.shift();
     if(!it.x&&!cidsLeft(m).length){next();return;}
-    call('attachment',{id:m.id,attachment_id:it.p.id}).then(function(f){
+    getAtt(m.id,it.p.id).then(function(f){
       if(!f||!f.content_base64)return;
       var type=/^image\//i.test(f.content_type||'')?f.content_type:'image/jpeg';
       if(it.x)m.extra=arr(m.extra).concat([{name:f.name||it.p.name||'',content_type:type,data:f.content_base64}]);
@@ -305,7 +313,7 @@ async function act(a,b){
     if(a==='plan'){if(!m)return;if(!window.MDV_MAILPLAN){toast('Still loading. Try again in a moment.');return;}MDV_MAILPLAN.open({subject:m.subject||'',from:(m.from&&m.from.address)||'',fromName:who(m.from),received:m.received,body:m.body,body_type:m.body_type,id:m.id});return;}
     if(a==='savelinks'){if(!m||!window.MDV_SAVE)return;MDV_SAVE.open({files:[],context:saveCtx(m)});return;}
     if(a==='savefiles'){if(window.MDV_SAVE)MDV_SAVE.pick(m?saveCtx(m):null);return;}
-    if(a==='download'){if(!m)return;b.disabled=true;var f=await call('attachment',{id:m.id,attachment_id:b.dataset.id});b.disabled=false;var bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:f.content_type||'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=f.name||b.dataset.name||'attachment';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);if(window.MDV_SAVE){try{MDV_SAVE.open({files:[new File([u8],f.name||b.dataset.name||'attachment',{type:f.content_type||'application/octet-stream'})],context:saveCtx(m)});}catch(_s){}}return;}
+    if(a==='download'){if(!m)return;b.disabled=true;var f=await getAtt(m.id,b.dataset.id);b.disabled=false;var bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:f.content_type||'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=f.name||b.dataset.name||'attachment';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);if(window.MDV_SAVE){try{MDV_SAVE.open({files:[new File([u8],f.name||b.dataset.name||'attachment',{type:f.content_type||'application/octet-stream'})],context:saveCtx(m)});}catch(_s){}}return;}
     if(!m)return;
     if(a==='reply'||a==='replyAll'||a==='forward'){openReply(a,m);return;}
     if(a==='unread'){await call('mark_read',{id:m.id,read:false});var r=S.messages.filter(function(x){return x.id===m.id;})[0];if(r)r.is_read=false;var fo=S.folders.filter(function(x){return x.id===S.folder;})[0];if(fo)fo.unread++;paintList();paintSide();toast('Marked unread');return;}

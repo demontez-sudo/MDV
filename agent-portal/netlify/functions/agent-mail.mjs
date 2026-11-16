@@ -30,6 +30,13 @@ async function hiddenFolders(G, conn) {
   return ids;
 }
 
+/* Pictures and files up to 10 MB can be read here. A function reply tops out near 6 MB, so anything over 3 MB goes out in 3 MB pieces
+   (a multiple of 3 so the pieces join as one valid base64 string) that the page joins again. The last download is kept for a minute so
+   the pieces of one file do not each fetch it from Microsoft again. */
+const MAX_ATT = 10 * 1048576, ONE_SHOT = 3 * 1048576, CHUNK = 3 * 1048576, VIEW_BUDGET = 16 * 1048576;
+let lastAtt = null;
+const within = (list, budget) => { let used = 0; return list.filter(x => { const n = Number(x.size || 0); if (used + n > budget) return false; used += n; return true; }); };
+
 export const handler = async event => {
   if (!['GET', 'POST'].includes(event.httpMethod)) return json(405, { error: 'Method not allowed' });
   try {
@@ -140,11 +147,11 @@ export const handler = async event => {
          Only fetch them when the body really points at one, keep it small, and never let it slow the message down much. */
       let inline_images = [], inline_pending = [], extra_pending = [];
       /* Attached pictures the body never points at are shown under the message (a few, one at a time, like the big inline ones). */
-      if (!hasCid) extra_pending = all.filter(x => /^image\//i.test(x.contentType || '') && Number(x.size || 0) <= 4.2 * 1048576).slice(0, 4).map(x => ({ id: x.id, size: x.size, name: x.name }));
+      if (!hasCid) extra_pending = within(all.filter(x => /^image\//i.test(x.contentType || '') && Number(x.size || 0) <= MAX_ATT).slice(0, 4), VIEW_BUDGET).map(x => ({ id: x.id, size: x.size, name: x.name }));
       if (wantInline && /cid:/i.test(html)) {
         /* Any picture on the message can be the one the body points at: Outlook does not always flag them as inline.
            Small ones come back with the message; bigger phone photos are handed over one at a time (inline_pending). */
-        const pics = all.filter(x => (x.isInline || /^image\//i.test(x.contentType || '')) && Number(x.size || 0) <= 4.2 * 1048576).slice(0, 12);
+        const pics = all.filter(x => (x.isInline || /^image\//i.test(x.contentType || '')) && Number(x.size || 0) <= MAX_ATT).slice(0, 12);
         const small = pics.filter(x => Number(x.size || 0) <= 1200000).slice(0, 8);
         const big = pics.filter(x => Number(x.size || 0) > 1200000);
         const typeOf = x => /^image\//i.test(x.contentType || '') ? x.contentType : ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', svg: 'image/svg+xml' }[String(x.name || '').split('.').pop().toLowerCase()] || 'image/jpeg');
@@ -191,11 +198,18 @@ export const handler = async event => {
     }
 
     if (action === 'attachment') {
-      const id = safeId(body.id), aid = safeId(body.attachment_id);
-      const a = await G(`/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(aid)}`); /* no $select: contentBytes only exists on fileAttachment, so selecting it on the base type fails */
-      if (!a?.contentBytes) throw appError(409, 'That attachment cannot be downloaded here. Open it in Outlook.', 'MAIL_ATTACHMENT_UNSUPPORTED');
-      if ((a.size || 0) > 4.2 * 1048576) throw appError(413, 'That attachment is too large to download here. Open it in Outlook.', 'MAIL_ATTACHMENT_TOO_BIG');
-      return json(200, { ok: true, name: a.name, content_type: a.contentType, content_id: String(a.contentId || '').replace(/^<|>$/g, ''), content_base64: a.contentBytes });
+      const id = safeId(body.id), aid = safeId(body.attachment_id), key = id + '|' + aid;
+      let hit = lastAtt && lastAtt.key === key && Date.now() - lastAtt.at < 60000 ? lastAtt : null;
+      if (!hit) {
+        const a = await G(`/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(aid)}`); /* no $select: contentBytes only exists on fileAttachment, so selecting it on the base type fails */
+        if (!a?.contentBytes) throw appError(409, 'That attachment cannot be downloaded here. Open it in Outlook.', 'MAIL_ATTACHMENT_UNSUPPORTED');
+        if ((a.size || 0) > MAX_ATT) throw appError(413, 'That attachment is over 10 MB. Open it in Outlook.', 'MAIL_ATTACHMENT_TOO_BIG');
+        hit = lastAtt = { key, at: Date.now(), name: a.name, type: a.contentType, cid: String(a.contentId || '').replace(/^<|>$/g, ''), buf: Buffer.from(a.contentBytes, 'base64') };
+      }
+      const total = hit.buf.length, meta = { ok: true, name: hit.name, content_type: hit.type, content_id: hit.cid, total };
+      if (body.offset == null && total <= ONE_SHOT) return json(200, { ...meta, content_base64: hit.buf.toString('base64') });
+      const off = Math.min(total, Math.max(0, Number(body.offset) || 0)), end = Math.min(total, off + CHUNK);
+      return json(200, { ...meta, chunked: true, offset: off, end, content_base64: hit.buf.subarray(off, end).toString('base64') });
     }
 
     if (action === 'signature_save') {
