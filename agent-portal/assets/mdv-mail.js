@@ -25,6 +25,30 @@ function whenFull(v){var d=v?new Date(v):null;return d&&!isNaN(d)?d.toLocaleStri
 
 /* ---- save to a model profile (see mdv-save-to-model.js) ---- */
 function plain(html){return String(html||'').replace(/<style[\s\S]*?<\/style>/gi,' ').replace(/<[^>]+>/g,' ').replace(/&nbsp;/g,' ').replace(/\s+/g,' ').slice(0,6000);}
+/* Photos in the email (pasted, attached or sent by a model or scout): one bar to push them to a model profile or into scouting */
+function picBar(m){
+  var n=arr(m&&m.pictures).length;if(!n||!window.MDV_SAVE)return '';
+  return '<div class="mm-pics"><span><b>'+n+' photo'+(n===1?'':'s')+'</b> in this email</span>'
+   +'<button class="mm-btn" data-a="savepics" data-dest="model">Save to a model profile</button>'
+   +'<button class="mm-btn gold" data-a="savepics" data-dest="scout_new">Start new scouting</button>'
+   +'<button class="mm-btn" data-a="savepics" data-dest="scout_old">Add to a scouting record</button></div>';
+}
+/* loads the photos (big ones arrive in pieces) and opens the save window on the chosen destination; stops at about 60 MB so the page stays quick */
+async function savePics(m,dest,btn){
+  var pics=arr(m.pictures),files=[],skipped=0,used=0,BUDGET=60*1048576;
+  var bar=btn&&btn.closest('.mm-pics'),all=bar?bar.querySelectorAll('button'):[];
+  all.forEach(function(x){x.disabled=true;});var label=btn?btn.textContent:'';
+  try{
+    for(var i=0;i<pics.length;i++){
+      if(used+Number(pics[i].size||0)>BUDGET){skipped++;continue;}
+      if(btn)btn.textContent='Loading photos '+(i+1)+' of '+pics.length+'…';
+      try{files.push(await attFile(m,pics[i].id,pics[i].name));used+=Number(pics[i].size||0);}catch(e){skipped++;}
+    }
+  }finally{all.forEach(function(x){x.disabled=false;});if(btn)btn.textContent=label;}
+  if(!files.length){toast('The photos could not be loaded. Try again, or download them and use Save files to a model.');return;}
+  if(skipped)toast(skipped+' photo'+(skipped===1?'':'s')+' left out (too big to load together). Save the rest first, then the others one at a time.');
+  MDV_SAVE.open({files:files,context:saveCtx(m),dest:dest});
+}
 function saveCtx(m){return {fromName:who(m.from),from:(m.from&&m.from.address)||'',subject:m.subject||'',text:plain(m.body),body:String(m.body||'')};}
 function shareLinks(m){
   var found=(String(m.body||'').match(/https:\/\/(?:drive\.google\.com|docs\.google\.com|www\.dropbox\.com|dropbox\.com)\/[^\s"'<>)\]]+/gi)||[]);
@@ -78,7 +102,7 @@ async function openMessage(id){
   if(had){var rd=document.getElementById('mm-reader');if(rd)rd.classList.add('mm-busy');}else paintReader();
   try{
     var d=await call('message',{id:id});if(S.sel!==id)return;
-    d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);d.message.extra_pending=arr(d.extra_pending);d.message.extra=[];d.message.inline_debug=d.inline_debug||null;S.detail={m:d.message,att:arr(d.attachments)};
+    d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);d.message.extra_pending=arr(d.extra_pending);d.message.extra=[];d.message.inline_debug=d.inline_debug||null;d.message.pictures=arr(d.pictures);S.detail={m:d.message,att:arr(d.attachments)};
     var row=S.messages.filter(function(x){return x.id===id;})[0];
     if(row&&!row.is_read){row.is_read=true;var f=S.folders.filter(function(x){return x.id===S.folder;})[0];if(f&&f.unread>0)f.unread--;}
   }catch(e){S.detail={error:msg(e)};}
@@ -234,7 +258,7 @@ function paintReader(){
   el.innerHTML='<header class="mm-rh"><button class="mm-back mm-only-mobile" data-a="close">← Back</button><h2>'+esc(m.subject)+'</h2>'
     +'<div class="mm-from"><span class="mm-av big">'+esc(initials(who(m.from)))+'</span><div><b>'+esc(who(m.from))+'</b> <span>&lt;'+esc(m.from?m.from.address:'')+'&gt;</span><small>To: '+esc(m.to.map(who).join(', ')||'—')+(m.cc.length?' · Cc: '+esc(m.cc.map(who).join(', ')):'')+' · '+esc(whenFull(m.received))+'</small></div></div>'
     +'<div class="mm-actions"><button class="mm-btn mm-thr" id="mm-thr" data-a="thread" hidden></button><button class="mm-btn" data-a="reply">Reply</button><button class="mm-btn" data-a="replyAll">Reply all</button><button class="mm-btn" data-a="forward">Forward</button><button class="mm-btn mm-plan" data-a="plan" title="Find dates and to-dos in this email and add them to the calendar or tasks">Add to calendar / tasks</button><button class="mm-btn" data-a="newcontact" title="Add someone from this email to Contacts, with their company">New contact</button><span class="mm-sp"></span><button class="mm-btn" data-a="unread">Mark unread</button><button class="mm-btn" data-a="archive">Archive</button><button class="mm-btn danger" data-a="delete">Delete</button>'+(m.web_link?'<a class="mm-btn" href="'+esc(m.web_link)+'" target="_blank" rel="noopener noreferrer">Open in Outlook</a>':'')+'</div>'
-    +(att.length?'<div class="mm-atts">'+att.map(function(a){return '<span class="mm-attw"><button class="mm-att" data-a="download" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'" title="Download, then choose a model profile to save it to"><i>'+esc((a.name.split('.').pop()||'file').slice(0,4).toUpperCase())+'</i><span>'+esc(a.name)+'</span><em>'+esc(size(a.size))+'</em></button><button class="mm-attsave" data-a="savemodel" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'" title="Save straight to a model profile">Save to model</button></span>';}).join('')+(att.length>1?'<button class="mm-btn" data-a="saveall">Save all to a model</button>':'')+'</div>':'')+shareLinks(m)
+    +(att.length?'<div class="mm-atts">'+att.map(function(a){return '<span class="mm-attw"><button class="mm-att" data-a="download" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'" title="Download, then choose a model profile to save it to"><i>'+esc((a.name.split('.').pop()||'file').slice(0,4).toUpperCase())+'</i><span>'+esc(a.name)+'</span><em>'+esc(size(a.size))+'</em></button><button class="mm-attsave" data-a="savemodel" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'" title="Save straight to a model profile">Save to model</button></span>';}).join('')+(att.length>1?'<button class="mm-btn" data-a="saveall">Save all to a model</button>':'')+'</div>':'')+shareLinks(m)+picBar(m)
     +(hasRemote&&!S.showImages?'<div class="mm-imgs">Pictures from the web are hidden. <button class="mm-link" data-a="images">Show images</button> · <button class="mm-link" data-a="images-always">Always show</button></div>':'')+(hasRemote&&S.showImages?'<div class="mm-imgs mm-imgs-on"><button class="mm-link" data-a="images-off">Hide web images</button></div>':'')+'</header>'
     +'<div class="mm-newc" id="mm-newc" hidden></div>'
     +'<iframe class="mm-body" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Message body"></iframe>'
@@ -261,7 +285,7 @@ function tBody(id){
   var T=S.thread,m=S.detail&&S.detail.m;
   if(m&&m.id===id)return Promise.resolve(m);
   if(T.bodies[id])return Promise.resolve(T.bodies[id]);
-  return call('message',{id:id}).then(function(d){d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);d.message.extra_pending=arr(d.extra_pending);d.message.extra=[];d.message.inline_debug=d.inline_debug||null;T.bodies[id]=d.message;return d.message;});
+  return call('message',{id:id}).then(function(d){d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);d.message.extra_pending=arr(d.extra_pending);d.message.extra=[];d.message.inline_debug=d.inline_debug||null;d.message.pictures=arr(d.pictures);T.bodies[id]=d.message;return d.message;});
 }
 function paintThread(){
   var btn=document.getElementById('mm-thr'),box=document.getElementById('mm-thread'),fr=document.querySelector('#mm-reader .mm-body'),T=S.thread;
@@ -325,6 +349,7 @@ async function act(a,b){
     var m=S.detail&&S.detail.m;
     if(a==='disconnect'){if(!window.confirm('Disconnect your email from the portal? Your mailbox itself is not touched.'))return;await call('disconnect');S.status=Object.assign({},S.status,{connected:false});S.folders=[];S.messages=[];S.sel=null;S.detail=null;paint();toast('Email disconnected');return;}
     if(a==='newcontact'){if(m)newContact(m);return;}
+    if(a==='savepics'){if(!m||!window.MDV_SAVE)return;await savePics(m,b.dataset.dest||'model',b);return;}
     if(a==='savemodel'){if(!m||!window.MDV_SAVE)return;b.disabled=true;try{var sf=await attFile(m,b.dataset.id,b.dataset.name);MDV_SAVE.open({files:[sf],context:saveCtx(m)});}catch(e){toast((e&&e.message)||'That attachment cannot be saved here. Download it from Outlook and drop it into the Save to model window.');MDV_SAVE.open({files:[],context:saveCtx(m)});}b.disabled=false;return;}
     if(a==='saveall'){if(!m||!window.MDV_SAVE)return;b.disabled=true;var got=[],failed=0;for(var ai=0;ai<S.detail.att.length;ai++){try{got.push(await attFile(m,S.detail.att[ai].id,S.detail.att[ai].name));}catch(e){failed++;}}b.disabled=false;if(failed)toast(failed+' attachment'+(failed===1?'':'s')+' could not be fetched here (too large?). Download '+(failed===1?'it':'them')+' and drop '+(failed===1?'it':'them')+' into the window.');MDV_SAVE.open({files:got,context:saveCtx(m)});return;}
     if(a==='plan'){if(!m)return;if(!window.MDV_MAILPLAN){toast('Still loading. Try again in a moment.');return;}MDV_MAILPLAN.open({subject:m.subject||'',from:(m.from&&m.from.address)||'',fromName:who(m.from),received:m.received,body:m.body,body_type:m.body_type,id:m.id});return;}

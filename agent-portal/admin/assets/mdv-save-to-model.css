@@ -35,3 +35,13 @@
 .mm-links{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:12px}.mm-links small{color:var(--mute,#93816d);letter-spacing:.1em;text-transform:uppercase;font-size:10px}
 @media(max-width:780px){.sv-cols{grid-template-columns:1fr;overflow:auto}.sv-right{border-left:0;border-top:1px solid rgba(255,255,255,.08)}.sv-left,.sv-right{overflow:visible}.sv-card{max-height:calc(100vh - 20px)}.sv-card>header,.sv-card>footer,.sv-left,.sv-right{padding-left:16px;padding-right:16px}.sv-act{width:100%}.sv-act .sv-btn{flex:1}}
 .mm-savefiles{width:100%;justify-content:center;margin-top:8px}
+
+/* destinations: model profile, new scouting, existing scouting */
+.sv-dest{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}
+.sv-tab{background:none;border:1px solid var(--mdv-line-2,rgba(255,255,255,.18));color:var(--mdv-mute,#a89f92);padding:7px 13px;font:inherit;font-size:12px;letter-spacing:.04em;cursor:pointer}
+.sv-tab.on{background:var(--mdv-gold,#d4b077);border-color:var(--mdv-gold,#d4b077);color:#15110c;font-weight:600}
+.sv-note{margin:0 0 12px;font-size:12.5px;line-height:1.5;color:var(--mdv-mute,#a89f92)}
+.sv-sn{display:grid;gap:10px}.sv-sn label{display:grid;gap:5px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mdv-mute,#a89f92)}.sv-sn label i{color:var(--mdv-gold,#d4b077);font-style:normal}
+.sv-sn input,.sv-sn textarea,.sv-sq{width:100%;box-sizing:border-box;background:var(--mdv-field,#0b0a08);color:var(--mdv-ink,#f3efe8);border:1px solid var(--mdv-line-2,rgba(255,255,255,.14));padding:9px 11px;font:inherit;font-size:13px;text-transform:none;letter-spacing:0}
+.sv-sn textarea{resize:vertical;min-height:84px;line-height:1.45}.sv-sn input:focus,.sv-sn textarea:focus,.sv-sq:focus{outline:none;border-color:var(--mdv-gold,#d4b077)}
+.sv-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.sv-sq{margin:0 0 8px}

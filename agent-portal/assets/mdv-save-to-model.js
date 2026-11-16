@@ -14,6 +14,7 @@ var EXT={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',webp:'image/webp',gi
 var MAX_DOC=50*1048576,MAX_IMG=150*1048576;
 
 var D=null;      /* the open dialog's state */
+var SCOUTS={list:null,at:0,loading:null};
 var MODELS={list:null,at:0,loading:null};
 var uid=0;
 
@@ -59,6 +60,100 @@ function loadModels(){
 }
 function isPast(m){return /^(archiv|releas|inactive|former)/i.test(String(m.status||''));}
 
+/* ---------- scouting: the same photos can start a new scouting record or join one ---------- */
+function loadScouts(){
+  if(SCOUTS.list&&Date.now()-SCOUTS.at<300000)return Promise.resolve(SCOUTS.list);
+  if(SCOUTS.loading)return SCOUTS.loading;
+  SCOUTS.loading=bridge().api('/api/agent/scouting/v9?organization='+encodeURIComponent(org())+'&_t='+Date.now(),{method:'GET',headers:{},__fresh:true}).then(function(r){SCOUTS.list=arr(r&&r.prospects).filter(function(p){return String(p.status||'active')!=='declined';});SCOUTS.at=Date.now();SCOUTS.loading=null;return SCOUTS.list;}).catch(function(e){SCOUTS.loading=null;if(D)D.scoutErr=(e&&e.message)||'Could not load the scouting list.';return [];});
+  return SCOUTS.loading;
+}
+function handleOf(text){var m=String(text||'').match(/(?:instagram\.com\/|(?:^|[\s(])@)([A-Za-z0-9._]{3,30})\b/);return m?'@'+m[1].replace(/\.$/,''):'';}
+var COUNTRIES=['South Africa','United States','United Kingdom','Nigeria','Ghana','Kenya','Uganda','Tanzania','Senegal','Cameroon','Ethiopia','Ivory Coast','USA','UK','France','Italy','Germany','Spain','Canada','Brazil','Jamaica','Trinidad'];
+function cityOf(text){
+  var m=String(text||'').match(/\b(?:from|in|based in|lives in)\s+([A-Z][A-Za-z]+(?:[ -][A-Z][A-Za-z]+)?)(?:,\s*([A-Z][A-Za-z ]+))?/);if(!m)return {city:'',country:''};
+  var city=m[1],country=(m[2]||'').trim();
+  /* "Lagos Nigeria" is a city and a country run together */
+  COUNTRIES.forEach(function(c){if(!country&&city.length>c.length&&city.slice(-c.length)===c&&/[ -]$/.test(city.slice(0,city.length-c.length))){country=c;city=city.slice(0,city.length-c.length).replace(/[ -]+$/,'');}else if(!country&&city===c){country=c;city='';}});
+  return {city:city,country:country};
+}
+function scoutDefaults(){
+  var c=D.ctx||{},name=/@/.test(String(c.fromName||''))?'':String(c.fromName||'').trim(),txt=String(c.text||'');
+  var geo=cityOf(txt),ig=handleOf(txt);
+  return {name:name,email:/@/.test(String(c.from||''))?String(c.from).toLowerCase():'',instagram:ig,city:geo.city,country:geo.country,notes:(c.subject?c.subject+'\n\n':'')+txt.replace(/\s+/g,' ').slice(0,600)};
+}
+/* an existing scouted person who already has this sender's email, or is named in the email */
+function scoutSuggest(){
+  var c=D.ctx||{},list=arr(SCOUTS.list),em=String(c.from||'').toLowerCase(),out=[];
+  if(em)list.forEach(function(p){if(String(p.email||'').toLowerCase()===em)out.push({p:p,why:'same email address as the sender'});});
+  var hay=' '+norm([c.subject,c.text,c.fromName].join(' '))+' ';
+  list.forEach(function(p){var n=norm(p.display_name);if(n.length>=5&&hay.indexOf(' '+n+' ')>-1&&!out.some(function(o){return o.p.id===p.id;}))out.push({p:p,why:'named in the email'});});
+  return out.slice(0,4);
+}
+function destTabs(){
+  var t=function(k,l){return '<button type="button" class="sv-tab'+(D.dest===k?' on':'')+'" data-d="'+k+'">'+l+'</button>';};
+  return '<div class="sv-dest" role="tablist" aria-label="Where do these go?">'+t('model','Model profile')+t('scout_new','New scouting')+t('scout_old','Add to a scouting record')+'</div>';
+}
+function scoutNewPane(){
+  var n=D.sn||(D.sn=scoutDefaults());
+  var f=function(k,label,ph,req){return '<label><span>'+label+(req?' <i>*</i>':'')+'</span><input data-sn="'+k+'" value="'+esc(n[k]||'')+'" placeholder="'+esc(ph||'')+'" maxlength="160"></label>';};
+  return '<h4>Start a new scouting record</h4><p class="sv-note">These photos become the first photos on a new record in Scouted (stage: new lead). Details are filled in from the sender and the email. If someone is sending her on her behalf, change the name to hers.</p>'
+   +'<div class="sv-sn">'+f('name','Name','Her full name',true)+f('email','Email','name@example.com')+f('instagram','Instagram','@handle')+'<div class="sv-two">'+f('city','City','')+f('country','Country','')+'</div>'
+   +'<label>Notes<textarea data-sn="notes" rows="4" maxlength="2000">'+esc(n.notes||'')+'</textarea></label></div>';
+}
+function scoutOldPane(){
+  var list=arr(SCOUTS.list),q=norm(D.sq),sg=scoutSuggest(),sel=D.sp;
+  var shown=list.filter(function(p){return !q||norm([p.display_name,p.email,p.instagram,p.city].join(' ')).indexOf(q)>-1;}).slice(0,60);
+  var sug=sg.length&&!q?'<div class="sv-sug"><small>Suggested from the email</small>'+sg.map(function(x){return '<button type="button" class="sv-chip'+(sel&&sel.id===x.p.id?' on':'')+'" data-sp="'+esc(x.p.id)+'" title="'+esc(x.why)+'">'+esc(x.p.display_name)+'</button>';}).join('')+'</div>':'';
+  var rows=shown.map(function(p){return '<button type="button" class="sv-m'+(sel&&sel.id===p.id?' on':'')+'" data-sp="'+esc(p.id)+'"><b>'+esc(p.display_name)+'</b><small>'+esc([String(p.stage||'').replace(/_/g,' '),p.city,p.email].filter(Boolean).join(' · '))+'</small></button>';}).join('');
+  return '<h4>Which scouting record?</h4>'+sug+'<input class="sv-sq" data-sq type="search" placeholder="Search scouted people" value="'+esc(D.sq)+'" aria-label="Search scouted people">'
+   +'<div class="sv-ml">'+(list.length?(rows||'<p class="sv-none">No one matches “'+esc(D.sq)+'”.</p>'):'<p class="sv-none">'+esc(D.scoutErr||'Loading the scouting list…')+'</p>')+'</div>';
+}
+function rightPane(){return destTabs()+(D.dest==='scout_new'?scoutNewPane():D.dest==='scout_old'?scoutOldPane():modelPane());}
+function scoutPhotos(){return D.items.filter(function(i){return i.status==='ready'&&!i.error&&i.kind==='photo';});}
+function destLabel(ready){
+  if(D.dest==='scout_new'){var n=scoutPhotos().length,nm=D.sn&&String(D.sn.name||'').trim();return !n?'Add at least one photo':!nm?'Add her name':'Start scouting with '+n+' photo'+(n===1?'':'s');}
+  if(D.dest==='scout_old'){var k=scoutPhotos().length;return !D.sp?'Choose a scouting record':!k?'Add at least one photo':'Add '+k+' photo'+(k===1?'':'s')+' to '+D.sp.display_name;}
+  return D.model&&ready.length?'Save '+ready.length+' file'+(ready.length===1?'':'s')+' to '+D.model.name:'Choose a model to save';
+}
+function destReady(ready){
+  if(D.dest==='scout_new')return scoutPhotos().length>0&&!!(D.sn&&String(D.sn.name||'').trim());
+  if(D.dest==='scout_old')return !!D.sp&&scoutPhotos().length>0;
+  return !!D.model&&ready.length>0;
+}
+/* uploads one photo to a scouting record: the same secure steps the Scouted page uses */
+async function scoutUpload(prospectId,it){
+  var file=it.file,mime=it.mime;
+  var start=await post('/api/storage/upload-url',{organization_id:orgId(),name:it.name,mime_type:mime,size_bytes:file.size,category:'scouting',visibility:'staff',resource_type:'scouting',resource_id:prospectId});
+  if(!start||!start.signed_url)throw new Error('A secure upload link was not returned.');
+  var up=await fetch(start.signed_url,{method:'PUT',headers:{'Content-Type':mime},body:file});
+  if(!up.ok)throw new Error('The upload failed ('+up.status+').');
+  var fin=await post('/api/storage/finalize',{upload_session_id:start.upload_session_id,relationship:'scouting_image',metadata:{source:'email_attachment'}});
+  if(!fin||!fin.document||!fin.document.id)throw new Error('The upload could not be confirmed.');
+  await post('/api/agent/scouting/v9',{action:'add_media_document',prospect_id:prospectId,document_id:fin.document.id,caption:it.name,sort_order:0});
+}
+async function saveScout(){
+  if(D.busy)return;var todo=scoutPhotos();if(!todo.length)return;
+  var rec=D.sp,created=false;D.busy=true;D.scoutErr='';paint();
+  try{
+    if(D.dest==='scout_new'){
+      var n=D.sn||{},name=String(n.name||'').trim();if(!name)throw new Error('Add her name first.');
+      var r=await post('/api/agent/scouting/v9',{action:'create',display_name:name,email:String(n.email||'').trim()||null,instagram:String(n.instagram||'').trim()||null,city:String(n.city||'').trim()||null,country:String(n.country||'').trim()||null,source:'Email',stage:'new_lead',notes:String(n.notes||'').trim()||null});
+      rec=r&&r.prospect;if(!rec||!rec.id)throw new Error('The scouting record was not confirmed. Nothing was uploaded.');created=true;
+    }
+    var ok=0,bad=0;
+    for(var k=0;k<todo.length;k++){
+      todo[k].status='saving';todo[k].error='';paint();
+      try{await scoutUpload(rec.id,todo[k]);todo[k].status='done';ok++;}catch(e){todo[k].status='ready';todo[k].error=(e&&e.message)||'Could not save this photo.';bad++;}
+      paint();
+    }
+    SCOUTS.at=0;try{if(bridge().clearApiCache)bridge().clearApiCache();}catch(e){}
+    if(ok||created){D.finished={kind:'scout',rec:rec,created:created,n:ok,failed:bad};}
+    else toast('None of the photos could be saved. Check the messages next to each photo.');
+  }catch(e){D.scoutErr=(e&&e.message)||'Could not save to scouting.';toast(D.scoutErr);}
+  D.busy=false;paint();
+}
+function openScout(id){try{if(typeof window.navTo==='function')window.navTo('scouting');setTimeout(function(){try{if(window.VEUX_V1686&&VEUX_V1686.scoutDetail)VEUX_V1686.scoutDetail(id);}catch(e){}},700);}catch(e){}}
+
 /* ---------- dialog ---------- */
 function root(){var r=document.getElementById('mdv-sv');if(!r){r=document.createElement('div');r.id='mdv-sv';r.className='sv-back';r.addEventListener('click',function(e){if(e.target===r&&D&&!D.busy)close();});
     var hasFiles=function(e){return e.dataTransfer&&Array.from(e.dataTransfer.types||[]).indexOf('Files')>-1;};
@@ -74,7 +169,8 @@ function fileRow(i){
   var t=i.kind==='video'?'<span>VIDEO</span>':i.kind==='photo'&&i.as==='photo'?(i.thumb?'<img src="'+esc(i.thumb)+'" alt="">':'<span>IMG</span>'):'<span>'+esc((i.name.split('.').pop()||'file').slice(0,4).toUpperCase())+'</span>';
   var opts=i.as==='photo'?(i.kind==='video'?VIDEO_CATS:PHOTO_CATS).map(function(c){return '<option'+(i.cat===c?' selected':'')+'>'+c+'</option>';}).join(''):DOC_CATS.map(function(c){return '<option value="'+c[0]+'"'+(i.cat===c[0]?' selected':'')+'>'+c[1]+'</option>';}).join('');
   var st=i.status==='done'?'<em class="ok">✓ Saved</em>':i.status==='saving'?'<em>Saving…</em>':i.error?'<em class="bad">'+esc(i.error)+'</em>':'';
-  var canEdit=i.status==='ready'&&!i.error&&!D.busy;
+  var canEdit=i.status==='ready'&&!i.error&&!D.busy&&D.dest==='model';
+  if(!st&&D.dest!=='model'&&i.kind!=='photo'&&i.status==='ready')st='<em class="bad">Scouting takes photos only. This one is skipped.</em>';
   return '<li class="sv-file '+(i.error?'err ':'')+i.status+'" data-id="'+i.id+'"><div class="sv-thumb">'+t+'</div><div class="sv-fi"><b title="'+esc(i.name)+'">'+esc(i.name)+'</b><small>'+esc(size(i.size))+(i.source?' · '+esc(i.source):'')+'</small>'+st
    +(canEdit?'<div class="sv-sel">'+(i.kind==='photo'?'<select data-k="as" aria-label="Save as"><option value="photo"'+(i.as==='photo'?' selected':'')+'>Photo</option><option value="doc"'+(i.as==='doc'?' selected':'')+'>Document</option></select>':'')+'<select data-k="cat" aria-label="Category">'+opts+'</select></div>':'')+'</div>'
    +(i.status!=='done'&&!D.busy?'<button type="button" class="sv-x" data-rm="'+i.id+'" aria-label="Remove">×</button>':'')+'</li>';
@@ -91,21 +187,33 @@ function paint(){
   if(!D)return;var r=root(),ctx=D.ctx||{};
   var ready=D.items.filter(function(i){return i.status==='ready'&&!i.error;}),done=D.items.filter(function(i){return i.status==='done';});
   var photos=ready.filter(function(i){return i.as==='photo';}).length,docs=ready.length-photos;
+  if(D.finished&&D.finished.kind==='scout'){
+    var fr=D.finished,fn=(fr.rec&&fr.rec.display_name)||'her';
+    r.innerHTML='<div class="sv-card sv-fin" role="dialog" aria-label="Saved"><div class="sv-tick">✓</div><h3>'+(fr.created?'Scouting started for ':'Added to ')+esc(fn)+'</h3><p>'+fr.n+' photo'+(fr.n===1?'':'s')+' added'+(fr.failed?', '+fr.failed+' could not be saved':'')+'.'+(fr.created?' She is on the Scouted board as a new lead.':'')+'</p><div class="sv-act"><button type="button" class="sv-btn" data-a="done">Done</button><button type="button" class="sv-btn gold" data-a="openscout">Open the scouting record</button></div></div>';
+    wire(r);return;
+  }
   if(D.finished){
     r.innerHTML='<div class="sv-card sv-fin" role="dialog" aria-label="Saved"><div class="sv-tick">✓</div><h3>Saved to '+esc(D.finished.model.name)+'</h3><p>'+D.finished.n+' file'+(D.finished.n===1?'':'s')+' added to the profile'+(D.finished.failed?', '+D.finished.failed+' could not be saved':'')+'.</p><div class="sv-act"><button type="button" class="sv-btn" data-a="done">Done</button>'+(D.items.some(function(i){return i.status==='ready'&&!i.error;})?'<button type="button" class="sv-btn" data-a="another">Save the rest to another model</button>':'')+'<button type="button" class="sv-btn gold" data-a="open">Open '+esc(D.finished.model.name.split(' ')[0])+'’s Model 360</button></div></div>';
     wire(r);return;
   }
-  var label=D.model&&ready.length?'Save '+ready.length+' file'+(ready.length===1?'':'s')+' to '+D.model.name:'Choose a model to save';
-  r.innerHTML='<div class="sv-card" role="dialog" aria-label="Save to a model profile"><header><div><h3>Save to a model profile</h3><p>'+(ctx.subject||ctx.fromName?'From '+esc(ctx.fromName||'the email')+(ctx.subject?' · “'+esc(ctx.subject)+'”':''):'Choose the profile these files belong to.')+'</p></div><button type="button" class="sv-x big" data-a="close" aria-label="Close">×</button></header>'
+  var label=destLabel(ready);
+  r.innerHTML='<div class="sv-card" role="dialog" aria-label="Save these files"><header><div><h3>'+(D.dest==='scout_new'?'Start a new scouting record':D.dest==='scout_old'?'Add to a scouting record':'Save to a model profile')+'</h3><p>'+(ctx.subject||ctx.fromName?'From '+esc(ctx.fromName||'the email')+(ctx.subject?' · “'+esc(ctx.subject)+'”':''):'Choose the profile these files belong to.')+'</p></div><button type="button" class="sv-x big" data-a="close" aria-label="Close">×</button></header>'
    +'<div class="sv-cols"><section class="sv-left"><h4>Files <span>'+D.items.length+'</span></h4><ul class="sv-files">'+(D.items.length?D.items.map(fileRow).join(''):'')+'</ul>'
    +(D.items.length?'':'<p class="sv-none">No files yet.</p>')
    +'<div class="sv-drop" id="sv-drop"><input type="file" id="sv-file" multiple hidden accept=".jpg,.jpeg,.png,.webp,.gif,.mp4,.mov,.webm,.pdf,.doc,.docx,.txt,image/*,video/*,application/pdf"><span>Drop files here or</span> <button type="button" class="sv-link" data-a="choose">choose files</button></div>'
    +(arr(D.links).length?'<div class="sv-links"><small>Shared links in the email</small>'+D.links.map(function(l,ix){return '<div class="sv-lk"><span title="'+esc(l.url)+'">'+esc(l.label)+'</span>'+(l.folder?'<a class="sv-link" href="'+esc(l.url)+'" target="_blank" rel="noopener">Open folder</a>':'<button type="button" class="sv-link" data-lk="'+ix+'"'+(l.busy?' disabled':'')+'>'+(l.busy?'Fetching…':'Fetch file')+'</button>')+(l.err?'<em class="bad">'+esc(l.err)+'</em>':'')+'</div>';}).join('')+'<p class="sv-hint">Folders cannot be fetched. Open the folder, download the photos, then drop them above.</p></div>':'')
-   +'</section><section class="sv-right">'+modelPane()+'</section></div>'
-   +'<footer>'+(photos?'<label class="sv-pub"><input type="checkbox" id="sv-pub"'+(D.pub?' checked':'')+'> Show photos and videos on the website</label>':'<span></span>')+'<div class="sv-act"><button type="button" class="sv-btn" data-a="close"'+(D.busy?' disabled':'')+'>Cancel</button><button type="button" class="sv-btn gold" data-a="save"'+(D.model&&ready.length&&!D.busy?'':' disabled')+'>'+(D.busy?'Saving…':esc(label))+'</button></div></footer></div>';
+   +'</section><section class="sv-right">'+rightPane()+'</section></div>'
+   +'<footer>'+(photos&&D.dest==='model'?'<label class="sv-pub"><input type="checkbox" id="sv-pub"'+(D.pub?' checked':'')+'> Show photos and videos on the website</label>':'<span></span>')+'<div class="sv-act"><button type="button" class="sv-btn" data-a="close"'+(D.busy?' disabled':'')+'>Cancel</button><button type="button" class="sv-btn gold" data-a="save"'+(destReady(ready)&&!D.busy?'':' disabled')+'>'+(D.busy?'Saving…':esc(label))+'</button></div></footer></div>';
   wire(r);
 }
+function scoutWire(r){
+  r.querySelectorAll('[data-d]').forEach(function(b){b.onclick=function(){if(D.busy)return;D.dest=b.getAttribute('data-d');if(D.dest!=='model')loadScouts().then(function(){if(D)paint();});paint();};});
+  r.querySelectorAll('[data-sp]').forEach(function(b){b.onclick=function(){var p=arr(SCOUTS.list).find(function(x){return String(x.id)===b.getAttribute('data-sp');});if(p){D.sp=p;paint();}};});
+  r.querySelectorAll('[data-sn]').forEach(function(f){f.oninput=function(){D.sn=D.sn||{};D.sn[f.getAttribute('data-sn')]=f.value;var btn=r.querySelector('[data-a="save"]');if(btn){var ready=D.items.filter(function(i){return i.status==='ready'&&!i.error;});btn.textContent=D.busy?'Saving…':destLabel(ready);btn.disabled=!(destReady(ready)&&!D.busy);}};});
+  var q=r.querySelector('[data-sq]');if(q)q.oninput=function(){D.sq=q.value;var pane=r.querySelector('.sv-right');pane.innerHTML=rightPane();scoutWire(r);var n=pane.querySelector('[data-sq]');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){}}};
+}
 function wire(r){
+  scoutWire(r);
   var keep=r.querySelector('.sv-search');
   r.querySelectorAll('[data-a]').forEach(function(b){b.onclick=function(){act(b.getAttribute('data-a'));};});
   r.querySelectorAll('[data-m]').forEach(function(b){b.onclick=function(){var m=arr(MODELS.list).find(function(x){return String(x.id)===b.getAttribute('data-m');});if(m){D.model=m;paint();}};});
@@ -113,13 +221,13 @@ function wire(r){
   r.querySelectorAll('.sv-file select').forEach(function(s){s.onchange=function(){var id=+s.closest('.sv-file').getAttribute('data-id'),it=D.items.find(function(x){return x.id===id;});if(!it)return;if(s.getAttribute('data-k')==='as'){it.as=s.value;it.cat=it.as==='photo'?guessPhoto(it.name):guessDoc(it.name);}else it.cat=s.value;paint();};});
   r.querySelectorAll('[data-lk]').forEach(function(b){b.onclick=function(){fetchLink(+b.getAttribute('data-lk'));};});
   var pub=r.querySelector('#sv-pub');if(pub)pub.onchange=function(){D.pub=pub.checked;};
-  if(keep){keep.oninput=function(){D.q=keep.value;var pane=r.querySelector('.sv-right');pane.innerHTML=modelPane();rewirePane(r);var s=pane.querySelector('.sv-search');if(s){s.focus();try{s.setSelectionRange(s.value.length,s.value.length);}catch(e){}}};}
+  if(keep){keep.oninput=function(){D.q=keep.value;var pane=r.querySelector('.sv-right');pane.innerHTML=rightPane();scoutWire(r);rewirePane(r);var s=pane.querySelector('.sv-search');if(s){s.focus();try{s.setSelectionRange(s.value.length,s.value.length);}catch(e){}}};}
   var inp=r.querySelector('#sv-file');
   if(inp)inp.onchange=function(){addFiles(Array.from(inp.files||[]));inp.value='';};
 }
 function rewirePane(r){
   r.querySelectorAll('.sv-right [data-m]').forEach(function(b){b.onclick=function(){var m=arr(MODELS.list).find(function(x){return String(x.id)===b.getAttribute('data-m');});if(m){D.model=m;paint();}};});
-  var s=r.querySelector('.sv-right .sv-search');if(s)s.oninput=function(){D.q=s.value;var pane=r.querySelector('.sv-right');pane.innerHTML=modelPane();rewirePane(r);var n=pane.querySelector('.sv-search');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){}}};
+  var s=r.querySelector('.sv-right .sv-search');if(s)s.oninput=function(){D.q=s.value;var pane=r.querySelector('.sv-right');pane.innerHTML=rightPane();scoutWire(r);rewirePane(r);var n=pane.querySelector('.sv-search');if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length);}catch(e){}}};
 }
 function addFiles(files){files.forEach(function(f){D.items.push(makeItem(f));});paint();}
 
@@ -129,7 +237,8 @@ function act(a){
   if(a==='choose'){var i=document.getElementById('sv-file');if(i)i.click();return;}
   if(a==='another'){D.finished=null;D.model=null;D.items=D.items.filter(function(i){return i.status!=='done';});paint();return;}
   if(a==='open'){var m=D.finished&&D.finished.model;close();if(m)openModel(m.id);return;}
-  if(a==='save')save();
+  if(a==='openscout'){var rc=D.finished&&D.finished.rec;close();if(rc)openScout(rc.id);return;}
+  if(a==='save'){if(D.dest==='model')save();else saveScout();}
 }
 function openModel(id){try{window._veuxV10ModelId=id;window._openModelId=id;if(window.VEUX_V156_STATE)window.VEUX_V156_STATE.modelTab='materials';if(typeof window.navTo==='function')window.navTo('modelpage');}catch(e){}}
 
@@ -185,9 +294,10 @@ function linksFrom(text){
 }
 function open(opts){
   opts=opts||{};if(D)close();
-  D={items:[],model:null,q:'',pub:false,busy:false,finished:null,ctx:opts.context||{},links:linksFrom(opts.context&&opts.context.body),modelErr:''};
+  D={items:[],model:null,q:'',pub:false,busy:false,finished:null,ctx:opts.context||{},links:linksFrom(opts.context&&opts.context.body),modelErr:'',dest:(opts.dest==='scout_new'||opts.dest==='scout_old')?opts.dest:'model',sq:'',sp:null,sn:null,scoutErr:''};
   arr(opts.files).forEach(function(f){D.items.push(makeItem(f));});
   document.addEventListener('keydown',onKey);paint();
+  loadScouts().then(function(){if(D&&D.dest!=='model')paint();});
   loadModels().then(function(){if(!D)return;var sg=suggest();var full=sg.filter(function(s){return /full name/.test(s.why);});if(!D.model&&full.length===1)D.model=full[0].m;paint();});
 }
 function pick(ctx){var i=document.createElement('input');i.type='file';i.multiple=true;i.accept='.jpg,.jpeg,.png,.webp,.gif,.mp4,.mov,.webm,.pdf,.doc,.docx,.txt,image/*,video/*,application/pdf';i.onchange=function(){open({files:Array.from(i.files||[]),context:ctx});};i.click();}
