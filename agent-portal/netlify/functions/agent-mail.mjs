@@ -1,11 +1,11 @@
 import { requireUser, adminClient, parseBody, json, errorResponse } from './_lib/auth.mjs';
-import { requireStaffOrganization } from './_lib/agent-bridge.mjs';
+import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 import {
   mailConfig, appError, signState, newNonce, authorizeUrl, getConnection, deleteConnection, graph, safeId,
   buildSendPayload, parseAddresses, textToHtml, mapSummary, mapMessage, FOLDERS, SUMMARY_SELECT, GRAPH, LIMITS
 } from './_lib/mail-graph.mjs';
 import { cleanSignature, signatureHtml, signatureText } from './_lib/mail-signature.mjs';
-import { logSent } from './_lib/outreach-log.mjs';
+import { logSent, findContact, companyFromDomain, ensureContact, ensureCompany, isTalentOrInternal, cleanEmail as contactEmail, nameFromEmail } from './_lib/outreach-log.mjs';
 import { resendReady, shouldUseResend, sendViaResend, quoteHtml, copyTarget, saveCopy } from './_lib/mail-resend.mjs';
 
 /* Team-member mailbox (Microsoft 365). Every call is scoped to the signed-in staff member's OWN
@@ -29,6 +29,13 @@ async function hiddenFolders(G, conn) {
   hiddenCache.set(conn.id, { at: Date.now(), ids });
   return ids;
 }
+
+/* Pictures and files up to 10 MB can be read here. A function reply tops out near 6 MB, so anything over 3 MB goes out in 3 MB pieces
+   (a multiple of 3 so the pieces join as one valid base64 string) that the page joins again. The last download is kept for a minute so
+   the pieces of one file do not each fetch it from Microsoft again. */
+const MAX_ATT = 10 * 1048576, ONE_SHOT = 3 * 1048576, CHUNK = 3 * 1048576, VIEW_BUDGET = 16 * 1048576;
+let lastAtt = null;
+const within = (list, budget) => { let used = 0; return list.filter(x => { const n = Number(x.size || 0); if (used + n > budget) return false; used += n; return true; }); };
 
 export const handler = async event => {
   if (!['GET', 'POST'].includes(event.httpMethod)) return json(405, { error: 'Method not allowed' });
@@ -77,6 +84,44 @@ export const handler = async event => {
     }
 
     const action = clean(body.action);
+
+    /* ---- people in an email who are not in Contacts yet (these two do not need the mailbox, only the CRM) ---- */
+    if (action === 'contact_check') {
+      await requirePermission(user.id, organization.id, 'crm.read');
+      const me = contactEmail(user.email), seen = new Set(), unknown = [];
+      for (const p of (Array.isArray(body.people) ? body.people : []).slice(0, 12)) {
+        const email = contactEmail(p?.email);
+        if (!email || email === me || seen.has(email)) continue;
+        seen.add(email);
+        if (await isTalentOrInternal(admin, organization.id, email)) continue;
+        if (await findContact(admin, organization.id, email)) continue;
+        const co = await companyFromDomain(admin, organization.id, email), given = clean(p?.name);
+        unknown.push({ email, name: given && given.toLowerCase() !== email ? given : nameFromEmail(email), company: co ? { id: co.id, name: co.name } : null });
+      }
+      return json(200, { ok: true, unknown });
+    }
+    if (action === 'contact_create') {
+      const crmAdmin = await requirePermission(user.id, organization.id, 'crm.write');
+      const email = contactEmail(body.email);
+      if (!email) throw appError(400, 'Enter a valid email address.', 'CONTACT_EMAIL');
+      const name = clean(body.name) || nameFromEmail(email);
+      const isId = v => typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v);
+      let company = null, company_created = false;
+      if (isId(body.company_id)) {
+        const { data, error } = await crmAdmin.from('companies').select('id,name').eq('organization_id', organization.id).eq('id', body.company_id).maybeSingle();
+        if (error) throw error;
+        if (!data) throw appError(404, 'That company was not found.', 'COMPANY_NOT_FOUND');
+        company = data;
+      } else if (clean(body.company_name)) {
+        const TYPES = ['brand', 'casting', 'editorial', 'client', 'agency', 'other'], type = TYPES.includes(clean(body.company_type)) ? clean(body.company_type) : 'other';
+        const r = await ensureCompany(crmAdmin, organization.id, { name: clean(body.company_name).slice(0, 160), company_type: type, website: clean(body.website).slice(0, 200) });
+        company = r.company; company_created = r.created;
+      }
+      const r = await ensureContact(crmAdmin, organization.id, { display_name: name.slice(0, 160), email, role: clean(body.role).slice(0, 120), phone: clean(body.phone).slice(0, 60), company_id: company?.id || null });
+      if (!r.contact) throw appError(400, 'A name or a valid email is needed.', 'CONTACT_NAME');
+      return json(200, { ok: true, contact: r.contact, contact_created: r.created, company, company_created });
+    }
+
     if (!cfg.configured) throw appError(503, `Email is not set up yet. An admin needs to add: ${cfg.missing.join(', ')}.`, 'MAIL_NOT_CONFIGURED');
 
     /* ---- start the Microsoft sign-in ---- */
@@ -127,7 +172,9 @@ export const handler = async event => {
       /* marking it read and listing the attachments do not depend on each other: run them together so opening stays quick */
       const [, list] = await Promise.all([
         m.isRead ? null : G(`/me/messages/${enc}`, { method: 'PATCH', body: { isRead: true } }).then(() => { m.isRead = true; }).catch(() => { /* non-fatal */ }),
-        m.hasAttachments ? G(`/me/messages/${enc}/attachments?$select=id,name,size,contentType,isInline`).catch(() => null) : null
+        /* Always ask: Graph sets hasAttachments to false when a message only has inline pictures (a pasted photo, a signature logo), which
+           is exactly the case where the body points at cid:… pictures. Trusting that flag meant those pictures were never fetched. */
+        G(`/me/messages/${enc}/attachments?$select=id,name,size,contentType,isInline`).catch(() => null)
       ]);
       const all = list?.value || [];
       const html = String(m.body?.content || '');
@@ -138,11 +185,11 @@ export const handler = async event => {
          Only fetch them when the body really points at one, keep it small, and never let it slow the message down much. */
       let inline_images = [], inline_pending = [], extra_pending = [];
       /* Attached pictures the body never points at are shown under the message (a few, one at a time, like the big inline ones). */
-      if (!hasCid) extra_pending = all.filter(x => /^image\//i.test(x.contentType || '') && Number(x.size || 0) <= 4.2 * 1048576).slice(0, 4).map(x => ({ id: x.id, size: x.size, name: x.name }));
+      if (!hasCid) extra_pending = within(all.filter(x => /^image\//i.test(x.contentType || '') && Number(x.size || 0) <= MAX_ATT).slice(0, 4), VIEW_BUDGET).map(x => ({ id: x.id, size: x.size, name: x.name }));
       if (wantInline && /cid:/i.test(html)) {
         /* Any picture on the message can be the one the body points at: Outlook does not always flag them as inline.
            Small ones come back with the message; bigger phone photos are handed over one at a time (inline_pending). */
-        const pics = all.filter(x => (x.isInline || /^image\//i.test(x.contentType || '')) && Number(x.size || 0) <= 4.2 * 1048576).slice(0, 12);
+        const pics = all.filter(x => (x.isInline || /^image\//i.test(x.contentType || '')) && Number(x.size || 0) <= MAX_ATT).slice(0, 12);
         const small = pics.filter(x => Number(x.size || 0) <= 1200000).slice(0, 8);
         const big = pics.filter(x => Number(x.size || 0) > 1200000);
         const typeOf = x => /^image\//i.test(x.contentType || '') ? x.contentType : ({ png: 'image/png', gif: 'image/gif', webp: 'image/webp', heic: 'image/heic', svg: 'image/svg+xml' }[String(x.name || '').split('.').pop().toLowerCase()] || 'image/jpeg');
@@ -189,11 +236,18 @@ export const handler = async event => {
     }
 
     if (action === 'attachment') {
-      const id = safeId(body.id), aid = safeId(body.attachment_id);
-      const a = await G(`/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(aid)}`); /* no $select: contentBytes only exists on fileAttachment, so selecting it on the base type fails */
-      if (!a?.contentBytes) throw appError(409, 'That attachment cannot be downloaded here. Open it in Outlook.', 'MAIL_ATTACHMENT_UNSUPPORTED');
-      if ((a.size || 0) > 4.2 * 1048576) throw appError(413, 'That attachment is too large to download here. Open it in Outlook.', 'MAIL_ATTACHMENT_TOO_BIG');
-      return json(200, { ok: true, name: a.name, content_type: a.contentType, content_id: String(a.contentId || '').replace(/^<|>$/g, ''), content_base64: a.contentBytes });
+      const id = safeId(body.id), aid = safeId(body.attachment_id), key = id + '|' + aid;
+      let hit = lastAtt && lastAtt.key === key && Date.now() - lastAtt.at < 60000 ? lastAtt : null;
+      if (!hit) {
+        const a = await G(`/me/messages/${encodeURIComponent(id)}/attachments/${encodeURIComponent(aid)}`); /* no $select: contentBytes only exists on fileAttachment, so selecting it on the base type fails */
+        if (!a?.contentBytes) throw appError(409, 'That attachment cannot be downloaded here. Open it in Outlook.', 'MAIL_ATTACHMENT_UNSUPPORTED');
+        if ((a.size || 0) > MAX_ATT) throw appError(413, 'That attachment is over 10 MB. Open it in Outlook.', 'MAIL_ATTACHMENT_TOO_BIG');
+        hit = lastAtt = { key, at: Date.now(), name: a.name, type: a.contentType, cid: String(a.contentId || '').replace(/^<|>$/g, ''), buf: Buffer.from(a.contentBytes, 'base64') };
+      }
+      const total = hit.buf.length, meta = { ok: true, name: hit.name, content_type: hit.type, content_id: hit.cid, total };
+      if (body.offset == null && total <= ONE_SHOT) return json(200, { ...meta, content_base64: hit.buf.toString('base64') });
+      const off = Math.min(total, Math.max(0, Number(body.offset) || 0)), end = Math.min(total, off + CHUNK);
+      return json(200, { ...meta, chunked: true, offset: off, end, content_base64: hit.buf.subarray(off, end).toString('base64') });
     }
 
     if (action === 'signature_save') {

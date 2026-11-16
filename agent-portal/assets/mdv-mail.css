@@ -211,3 +211,17 @@ html body .mm .mm-chk,html body .mmx .mm-copy,html body .mm-reply .mm-copy{lette
 .mm-form .mm-sigon input[type=checkbox]{width:16px!important;height:16px!important;min-width:16px;padding:0!important;margin:0;flex:none;appearance:auto;-webkit-appearance:checkbox}
 
 .mm-imgs.mm-imgs-on{padding:2px 14px 6px;background:none;border:0;text-align:right}.mm-imgs.mm-imgs-on .mm-link{font-size:11px;color:var(--mute);text-decoration:none}.mm-imgs.mm-imgs-on .mm-link:hover{color:var(--g)}
+
+/* New contact: banner under the message header and the add-contact form */
+.mm-newc{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 8px;padding:9px 14px;border:1px solid var(--mdv-line,rgba(217,184,102,.3));background:rgba(217,184,102,.07);font-size:12.5px;line-height:1.4}
+.mm-newc[hidden]{display:none}
+.mm-newc b{font-weight:600}
+.mm-form select{width:100%;box-sizing:border-box;background:var(--mdv-field,#0b0a08);color:var(--mdv-ink,#f3efe8);border:1px solid var(--mdv-line-2,rgba(255,255,255,.14));padding:10px 12px;font:inherit;font-size:13px;text-transform:none;letter-spacing:0}
+.mm-form select:focus{outline:none;border-color:var(--mdv-gold,#d4b077)}
+.mm-form select[hidden],.mm-form [hidden]{display:none!important}
+.mm-ncco{display:grid;gap:10px;margin:0;padding:12px 14px;border:1px solid var(--mdv-line-2,rgba(255,255,255,.14))}
+.mm-ncco legend{padding:0 6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mdv-mute,#a89f92)}
+.mm-form .mm-nco{display:flex;align-items:center;gap:8px;font-size:13px;letter-spacing:0;text-transform:none;color:var(--mdv-ink,#f3efe8);cursor:pointer}
+.mm-form .mm-nco input[type=radio]{width:16px!important;height:16px!important;min-width:16px;padding:0!important;margin:0;flex:none;appearance:auto;-webkit-appearance:radio}
+.mm-ncm>header{position:sticky;top:0;z-index:2;background:var(--mdv-panel,#15130f)}
+.mm-ncm>footer{position:sticky;bottom:0;z-index:2;background:var(--mdv-panel,#15130f);border-top:1px solid var(--mdv-line-2,rgba(255,255,255,.14))}

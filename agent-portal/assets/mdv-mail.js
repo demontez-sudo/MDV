@@ -32,7 +32,15 @@ function shareLinks(m){
   if(!n)return '';
   return '<div class="mm-links"><small>Shared files in this email</small><button class="mm-btn" data-a="savelinks">Save to a model profile</button></div>';
 }
-async function attFile(m,id,name){var f=await call('attachment',{id:m.id,attachment_id:id}),bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);return new File([u8],f.name||name||'attachment',{type:f.content_type||'application/octet-stream'});}
+/* big files come in 3 MB pieces (one reply cannot carry more); join them back into one */
+async function getAtt(mid,aid){
+  var f=await call('attachment',{id:mid,attachment_id:aid});
+  if(!f||!f.chunked)return f;
+  var parts=[f.content_base64],end=f.end;
+  while(end<f.total){var g=await call('attachment',{id:mid,attachment_id:aid,offset:end});if(!g||!g.chunked||!(g.end>end))throw new Error('The file stopped loading. Try again.');parts.push(g.content_base64);end=g.end;}
+  f.content_base64=parts.join('');f.chunked=false;return f;
+}
+async function attFile(m,id,name){var f=await getAtt(m.id,id),bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);return new File([u8],f.name||name||'attachment',{type:f.content_type||'application/octet-stream'});}
 function who(a){return a?(a.name&&a.name!==a.address?a.name:a.address)||'Unknown':'Unknown';}
 function size(n){n=Number(n)||0;return n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';}
 function initials(n){return String(n||'?').replace(/[^A-Za-z0-9 ]/g,'').split(/\s+/).filter(Boolean).slice(0,2).map(function(x){return x[0];}).join('').toUpperCase()||'?';}
@@ -175,7 +183,7 @@ function fillPending(m,repaint){
     if(!q.length){m._pend=false;m._pendDone=true;repaint();return;}
     var it=q.shift();
     if(!it.x&&!cidsLeft(m).length){next();return;}
-    call('attachment',{id:m.id,attachment_id:it.p.id}).then(function(f){
+    getAtt(m.id,it.p.id).then(function(f){
       if(!f||!f.content_base64)return;
       var type=/^image\//i.test(f.content_type||'')?f.content_type:'image/jpeg';
       if(it.x)m.extra=arr(m.extra).concat([{name:f.name||it.p.name||'',content_type:type,data:f.content_base64}]);
@@ -211,12 +219,14 @@ function paintReader(){
   var hasRemote=m.body_type==='html'&&/<img[^>]+src=["']?(https?:)?\/\//i.test(m.body)||/url\(\s*["']?https?:/i.test(m.body);
   el.innerHTML='<header class="mm-rh"><button class="mm-back mm-only-mobile" data-a="close">← Back</button><h2>'+esc(m.subject)+'</h2>'
     +'<div class="mm-from"><span class="mm-av big">'+esc(initials(who(m.from)))+'</span><div><b>'+esc(who(m.from))+'</b> <span>&lt;'+esc(m.from?m.from.address:'')+'&gt;</span><small>To: '+esc(m.to.map(who).join(', ')||'—')+(m.cc.length?' · Cc: '+esc(m.cc.map(who).join(', ')):'')+' · '+esc(whenFull(m.received))+'</small></div></div>'
-    +'<div class="mm-actions"><button class="mm-btn mm-thr" id="mm-thr" data-a="thread" hidden></button><button class="mm-btn" data-a="reply">Reply</button><button class="mm-btn" data-a="replyAll">Reply all</button><button class="mm-btn" data-a="forward">Forward</button><button class="mm-btn mm-plan" data-a="plan" title="Find dates and to-dos in this email and add them to the calendar or tasks">Add to calendar / tasks</button><span class="mm-sp"></span><button class="mm-btn" data-a="unread">Mark unread</button><button class="mm-btn" data-a="archive">Archive</button><button class="mm-btn danger" data-a="delete">Delete</button>'+(m.web_link?'<a class="mm-btn" href="'+esc(m.web_link)+'" target="_blank" rel="noopener noreferrer">Open in Outlook</a>':'')+'</div>'
+    +'<div class="mm-actions"><button class="mm-btn mm-thr" id="mm-thr" data-a="thread" hidden></button><button class="mm-btn" data-a="reply">Reply</button><button class="mm-btn" data-a="replyAll">Reply all</button><button class="mm-btn" data-a="forward">Forward</button><button class="mm-btn mm-plan" data-a="plan" title="Find dates and to-dos in this email and add them to the calendar or tasks">Add to calendar / tasks</button><button class="mm-btn" data-a="newcontact" title="Add someone from this email to Contacts, with their company">New contact</button><span class="mm-sp"></span><button class="mm-btn" data-a="unread">Mark unread</button><button class="mm-btn" data-a="archive">Archive</button><button class="mm-btn danger" data-a="delete">Delete</button>'+(m.web_link?'<a class="mm-btn" href="'+esc(m.web_link)+'" target="_blank" rel="noopener noreferrer">Open in Outlook</a>':'')+'</div>'
     +(att.length?'<div class="mm-atts">'+att.map(function(a){return '<span class="mm-attw"><button class="mm-att" data-a="download" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'" title="Download, then choose a model profile to save it to"><i>'+esc((a.name.split('.').pop()||'file').slice(0,4).toUpperCase())+'</i><span>'+esc(a.name)+'</span><em>'+esc(size(a.size))+'</em></button><button class="mm-attsave" data-a="savemodel" data-id="'+esc(a.id)+'" data-name="'+esc(a.name)+'" title="Save straight to a model profile">Save to model</button></span>';}).join('')+(att.length>1?'<button class="mm-btn" data-a="saveall">Save all to a model</button>':'')+'</div>':'')+shareLinks(m)
     +(hasRemote&&!S.showImages?'<div class="mm-imgs">Pictures from the web are hidden. <button class="mm-link" data-a="images">Show images</button> · <button class="mm-link" data-a="images-always">Always show</button></div>':'')+(hasRemote&&S.showImages?'<div class="mm-imgs mm-imgs-on"><button class="mm-link" data-a="images-off">Hide web images</button></div>':'')+'</header>'
+    +'<div class="mm-newc" id="mm-newc" hidden></div>'
     +'<iframe class="mm-body" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer" title="Message body"></iframe>'
     +'<div class="mm-thread" id="mm-thread" hidden></div>';
   el.querySelector('iframe').srcdoc=bodyDoc(m,S.showImages);
+  contactCheck(m);
   fillPending(m,function(){if(S.sel!==m.id)return;var fr=document.querySelector('#mm-reader .mm-body');if(fr)fr.srcdoc=bodyDoc(m,S.showImages);});
   wire(el);paintReply();loadThread(m.id);
 }
@@ -300,12 +310,13 @@ async function act(a,b){
     if(a==='thread'){setThreadOpen(!threadOpen());paintThread();return;}
     var m=S.detail&&S.detail.m;
     if(a==='disconnect'){if(!window.confirm('Disconnect your email from the portal? Your mailbox itself is not touched.'))return;await call('disconnect');S.status=Object.assign({},S.status,{connected:false});S.folders=[];S.messages=[];S.sel=null;S.detail=null;paint();toast('Email disconnected');return;}
+    if(a==='newcontact'){if(m)newContact(m);return;}
     if(a==='savemodel'){if(!m||!window.MDV_SAVE)return;b.disabled=true;try{var sf=await attFile(m,b.dataset.id,b.dataset.name);MDV_SAVE.open({files:[sf],context:saveCtx(m)});}catch(e){toast((e&&e.message)||'That attachment cannot be saved here. Download it from Outlook and drop it into the Save to model window.');MDV_SAVE.open({files:[],context:saveCtx(m)});}b.disabled=false;return;}
     if(a==='saveall'){if(!m||!window.MDV_SAVE)return;b.disabled=true;var got=[],failed=0;for(var ai=0;ai<S.detail.att.length;ai++){try{got.push(await attFile(m,S.detail.att[ai].id,S.detail.att[ai].name));}catch(e){failed++;}}b.disabled=false;if(failed)toast(failed+' attachment'+(failed===1?'':'s')+' could not be fetched here (too large?). Download '+(failed===1?'it':'them')+' and drop '+(failed===1?'it':'them')+' into the window.');MDV_SAVE.open({files:got,context:saveCtx(m)});return;}
     if(a==='plan'){if(!m)return;if(!window.MDV_MAILPLAN){toast('Still loading. Try again in a moment.');return;}MDV_MAILPLAN.open({subject:m.subject||'',from:(m.from&&m.from.address)||'',fromName:who(m.from),received:m.received,body:m.body,body_type:m.body_type,id:m.id});return;}
     if(a==='savelinks'){if(!m||!window.MDV_SAVE)return;MDV_SAVE.open({files:[],context:saveCtx(m)});return;}
     if(a==='savefiles'){if(window.MDV_SAVE)MDV_SAVE.pick(m?saveCtx(m):null);return;}
-    if(a==='download'){if(!m)return;b.disabled=true;var f=await call('attachment',{id:m.id,attachment_id:b.dataset.id});b.disabled=false;var bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:f.content_type||'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=f.name||b.dataset.name||'attachment';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);if(window.MDV_SAVE){try{MDV_SAVE.open({files:[new File([u8],f.name||b.dataset.name||'attachment',{type:f.content_type||'application/octet-stream'})],context:saveCtx(m)});}catch(_s){}}return;}
+    if(a==='download'){if(!m)return;b.disabled=true;var f=await getAtt(m.id,b.dataset.id);b.disabled=false;var bin=atob(f.content_base64),u8=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);var url=URL.createObjectURL(new Blob([u8],{type:f.content_type||'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=f.name||b.dataset.name||'attachment';document.body.appendChild(link);link.click();link.remove();setTimeout(function(){URL.revokeObjectURL(url);},4000);if(window.MDV_SAVE){try{MDV_SAVE.open({files:[new File([u8],f.name||b.dataset.name||'attachment',{type:f.content_type||'application/octet-stream'})],context:saveCtx(m)});}catch(_s){}}return;}
     if(!m)return;
     if(a==='reply'||a==='replyAll'||a==='forward'){openReply(a,m);return;}
     if(a==='unread'){await call('mark_read',{id:m.id,read:false});var r=S.messages.filter(function(x){return x.id===m.id;})[0];if(r)r.is_read=false;var fo=S.folders.filter(function(x){return x.id===S.folder;})[0];if(fo)fo.unread++;paintList();paintSide();toast('Marked unread');return;}
@@ -386,6 +397,80 @@ function sigWire(box,st){
 function sigPaintAll(){
   [[document.getElementById('mm-sig'),S.compose&&S.compose.sig],[document.getElementById('mm-rsig'),S.reply&&S.reply.sig]].forEach(function(x){if(x[0]&&x[1]){x[0].innerHTML=sigStrip(x[1]);sigWire(x[0],x[1]);}});
   var b=document.querySelector('.mm-sigbtn em');if(b)b.textContent=sigActive()?'On':(sigGet()?'Off':'Not set');
+}
+
+/* ---------- New contact: add someone from an email who is not in Contacts yet ---------- */
+var FREE_DOMAINS={'gmail.com':1,'googlemail.com':1,'outlook.com':1,'hotmail.com':1,'live.com':1,'msn.com':1,'yahoo.com':1,'ymail.com':1,'icloud.com':1,'me.com':1,'mac.com':1,'aol.com':1,'proton.me':1,'protonmail.com':1,'gmx.com':1,'mail.com':1,'qq.com':1};
+var CO_TYPES=[['brand','Brand'],['casting','Casting'],['editorial','Editorial / magazine'],['client','Client'],['agency','Agency'],['other','Other']];
+function mailPeople(m){var out=[];if(m.from)out.push(m.from);arr(m.to).forEach(function(x){out.push(x);});arr(m.cc).forEach(function(x){out.push(x);});return out.filter(function(x){return x&&x.address;}).map(function(x){return {email:x.address,name:x.name&&x.name!==x.address?x.name:''};});}
+function contactCheck(m,done){
+  S.cc=S.cc||{};
+  if(S.cc[m.id]){paintNewc(m);if(done)done(S.cc[m.id]);return;}
+  call('contact_check',{people:mailPeople(m)}).then(function(d){S.cc[m.id]=arr(d&&d.unknown);if(S.sel===m.id)paintNewc(m);if(done)done(S.cc[m.id]);}).catch(function(){S.cc[m.id]=[];if(done)done([]);});
+}
+function paintNewc(m){
+  var el=document.getElementById('mm-newc');if(!el)return;var u=arr(S.cc&&S.cc[m.id]);
+  if(!u.length){el.hidden=true;el.innerHTML='';return;}
+  el.hidden=false;
+  el.innerHTML='<span>'+(u.length===1?'<b>'+esc(u[0].name)+'</b> &lt;'+esc(u[0].email)+'&gt; is not in your contacts.':'<b>'+u.length+' people</b> in this email are not in your contacts.')+'</span><button type="button" class="mm-btn gold" data-a="newcontact">New contact</button>';
+}
+function companyGuess(email){var d=String(email||'').split('@')[1]||'';d=d.toLowerCase();if(!d||FREE_DOMAINS[d])return null;var label=d.split('.')[0].replace(/[-_]+/g,' ').replace(/\b\w/g,function(c){return c.toUpperCase();});return {name:label,site:'https://'+d};}
+function newContact(m){
+  contactCheck(m,function(u){
+    if(!u.length){toast('Everyone in this email is already in your contacts.');return;}
+    crm().catch(function(){return {};}).then(function(d){openNewContact(m,u,arr(d&&d.companies));});
+  });
+}
+function openNewContact(m,people,companies){
+  var o=document.createElement('div');o.className='mm-modal-back';
+  var cos=companies.filter(function(c){return c&&c.id&&c.name;}).sort(function(a,b){return String(a.name).localeCompare(String(b.name));});
+  function f(id,label,ph){return '<label>'+label+'<input id="nc-'+id+'" maxlength="160" placeholder="'+esc(ph||'')+'"></label>';}
+  o.innerHTML='<form class="mm-modal mm-ncm" role="dialog" aria-modal="true" aria-label="New contact"><header><div><small>CONTACTS</small><h2>New contact</h2></div><button type="button" data-x aria-label="Close">×</button></header>'
+    +'<div class="mm-form">'
+    +(people.length>1?'<label>Person<select id="nc-who">'+people.map(function(p,i){return '<option value="'+i+'">'+esc((p.name||p.email)+' — '+p.email)+'</option>';}).join('')+'</select></label>':'')
+    +'<div class="mm-ccrow">'+f('name','Name','Full name')+f('email','Email','name@company.com')+'</div>'
+    +'<div class="mm-ccrow">'+f('role','Role / title','e.g. Casting director')+f('phone','Phone','+1 …')+'</div>'
+    +'<fieldset class="mm-ncco"><legend>Company</legend>'
+    +'<label class="mm-nco"><input type="radio" name="nc-mode" value="none"> No company</label>'
+    +'<label class="mm-nco"><input type="radio" name="nc-mode" value="existing"> Existing company</label>'
+    +'<select id="nc-co"><option value="">Choose a company…</option>'+cos.map(function(c){return '<option value="'+esc(c.id)+'">'+esc(c.name)+'</option>';}).join('')+'</select>'
+    +'<label class="mm-nco"><input type="radio" name="nc-mode" value="new"> New company</label>'
+    +'<div class="mm-ccrow" id="nc-newrow">'+f('coname','Company name','')+'<label>Type<select id="nc-cotype">'+CO_TYPES.map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('')+'</select></label></div>'
+    +'<div id="nc-siterow">'+f('site','Website','https://')+'</div></fieldset></div>'
+    +'<footer class="mm-sigf"><span class="mm-err" id="nc-err"></span><button type="button" class="mm-btn" data-x>Cancel</button><button type="submit" class="mm-btn gold">Add contact</button></footer></form>';
+  document.body.appendChild(o);var form=o.querySelector('form');
+  function q(id){return form.querySelector('#nc-'+id);}
+  function mode(){var r=form.querySelector('input[name=nc-mode]:checked');return r?r.value:'none';}
+  function setMode(v){Array.prototype.forEach.call(form.querySelectorAll('input[name=nc-mode]'),function(r){r.checked=r.value===v;});show();}
+  function show(){var v=mode();q('co').hidden=v!=='existing';form.querySelector('#nc-newrow').hidden=v!=='new';form.querySelector('#nc-siterow').hidden=v!=='new';}
+  function fill(i){
+    var p=people[i]||people[0];q('name').value=p.name||'';q('email').value=p.email||'';q('role').value='';q('phone').value='';
+    var g=companyGuess(p.email);q('coname').value=g?g.name:'';q('site').value=g?g.site:'';q('cotype').value='other';q('co').value='';
+    if(p.company&&p.company.id&&cos.some(function(c){return c.id===p.company.id;})){q('co').value=p.company.id;setMode('existing');}
+    else if(g)setMode('new');else setMode('none');
+  }
+  fill(0);
+  var who=q('who');if(who)who.addEventListener('change',function(){fill(Number(who.value)||0);});
+  form.addEventListener('change',function(e){if(e.target&&e.target.name==='nc-mode')show();});
+  setTimeout(function(){q('role').focus();},30);
+  function close(){o.remove();}
+  o.addEventListener('click',function(e){if(e.target===o||e.target.closest('[data-x]'))close();});
+  o.addEventListener('keydown',function(e){if(e.key==='Escape')close();});
+  form.onsubmit=function(e){
+    e.preventDefault();var err=q('err'),btn=form.querySelector('[type=submit]');err.textContent='';
+    var email=q('email').value.trim(),name=q('name').value.trim(),v=mode();
+    if(!EMAIL_RE.test(email)){err.textContent='That email address does not look right.';return;}
+    if(!name){err.textContent='Add a name.';return;}
+    var body={email:email,name:name,role:q('role').value.trim(),phone:q('phone').value.trim()};
+    if(v==='existing'){if(!q('co').value){err.textContent='Choose a company, or pick No company.';return;}body.company_id=q('co').value;}
+    if(v==='new'){var cn=q('coname').value.trim();if(!cn){err.textContent='Add the company name, or pick No company.';return;}body.company_name=cn;body.company_type=q('cotype').value;body.website=q('site').value.trim();}
+    btn.disabled=true;
+    call('contact_create',body).then(function(r){
+      toast(r.contact_created?('Added '+name+' to Contacts'+(r.company?(r.company_created?' and created '+r.company.name:' at '+r.company.name):'')):(name+' was already in Contacts'));
+      S.cc[m.id]=arr(S.cc[m.id]).filter(function(x){return String(x.email).toLowerCase()!==email.toLowerCase();});
+      DIR.map[email.toLowerCase()]=name;W_crm.at=0;paintNewc(m);close();
+    }).catch(function(e2){btn.disabled=false;err.textContent=msg(e2);});
+  };
 }
 function sigEditor(){
   var cur=Object.assign(sigDefaults(),sigGet()||{}),o=document.createElement('div');o.className='mm-modal-back';
