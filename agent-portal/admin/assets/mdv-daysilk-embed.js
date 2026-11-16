@@ -327,12 +327,14 @@ function meMember(){
 }
 var EV_TYPE={connect:'meeting',focus:'meeting',move:'personal',recharge:'personal',travel:'travel',close:'personal'};
 function agBody(v){
+  var share=!!v.share&&arr(v.modelIds).length>0;
   var start=new Date(v.d+'T'+(v.t||'00:00')+':00'),allDay=!v.t;
   var end=allDay?new Date(v.d+'T23:59:00'):(v.e&&v.e>v.t?new Date(v.d+'T'+v.e+':00'):new Date(start.getTime()+36e5));
   var tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){}
   return {organization_slug:org(),title:String(v.title||'').trim(),starts_at:start.toISOString(),ends_at:end.toISOString(),all_day:allDay,timezone:tz||null,
     event_type:EV_TYPE[v.cat]||'meeting',status:'scheduled',location:v.where||null,notes:v.notes||null,model_ids:arr(v.modelIds),
-    share_with_models:false,visibility:'organization',category:'daysilk:'+String(v.id||''),owner_member_id:ME.id||null};
+    /* shared: the linked models see it on their DaySilk (title, time, place); the agent's notes stay private to the team */
+    share_with_models:share,notes_internal:share,visibility:share?'model_shared':'organization',category:'daysilk:'+String(v.id||''),owner_member_id:ME.id||null};
 }
 /* creates the event on the Model Agenda (or updates it when agId is given) and tells every open view */
 function saveAgencyEvent(v){
