@@ -1374,6 +1374,62 @@ html.emb .cal .cell .ev{background:rgba(255,255,255,.07);color:#efe3cf;border-le
 .cx-ev{position:absolute;overflow:hidden;text-align:left;border:0;border-left:3px solid var(--kc,var(--k-connect));border-radius:6px;background:color-mix(in srgb,var(--kc,var(--k-connect)) 24%,var(--surface));color:var(--ink);padding:3px 8px;font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:1px;line-height:1.25;z-index:2}
 .cx-agshare[hidden]{display:none!important}
 .lens-kinds{display:flex;flex-wrap:wrap;gap:6px;flex-basis:100%;margin-top:2px}.lens-kinds button{background:none;border:1px solid var(--line,rgba(255,255,255,.18));color:var(--muted);padding:4px 11px;font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;border-radius:14px}.lens-kinds button.on{background:var(--gold,#d4b077);border-color:var(--gold,#d4b077);color:#15110c;font-weight:600}
+/* Orbit: the day as a dial, moved here from the old agent calendar */
+/* ===== Orbit: the day as a smart dial ===== */
+.so-wrap{--serif:Georgia,serif;--ok:#4aa56a;--pend:#c9a23d;--risk:#e0523f;--trav:#4f86d4;display:grid;gap:14px;color:var(--ink)}
+.so-head{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;justify-content:space-between}.so-head small{display:block;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}.so-head b{font:500 30px/1.1 var(--serif,Georgia,serif)}.so-head b em{font:500 13px Inter,system-ui,sans-serif;font-style:normal;color:var(--muted);margin-left:8px}
+.so-sigs{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;color:var(--muted)}.so-sigs i{color:var(--gold);font-style:normal}.so-sigs>b{font:600 11px Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.so-chip{min-height:0!important;height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--ink);font:500 12px Inter,sans-serif;letter-spacing:0!important;text-transform:none!important;cursor:pointer;box-shadow:none!important}
+.so-chip.risk{border-color:var(--risk);color:#f0b4aa}.so-chip.pending,.so-chip.warn{border-color:var(--pend);color:#e6cf8e}.so-chip.ok{border-color:var(--ok);color:#9ad8b0}
+.so-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(300px,.95fr);gap:22px;align-items:start}
+.so-dial{container-type:inline-size;position:relative;width:100%;max-width:640px;margin:0 auto;aspect-ratio:1;position:sticky;top:12px}
+.so-svg{width:100%;height:100%;display:block;overflow:visible}
+.so-track{fill:none;stroke:color-mix(in srgb,var(--ink) 5%,transparent)}
+.so-free{fill:none;stroke:var(--ok);stroke-width:4;stroke-linecap:round;opacity:.55}
+.so-tick{stroke:color-mix(in srgb,var(--ink) 18%,transparent);stroke-width:1}.so-tick.maj{stroke:color-mix(in srgb,var(--ink) 40%,transparent);stroke-width:1.5}
+.so-hr{fill:var(--muted);font:500 11px Inter,system-ui,sans-serif;text-anchor:middle}
+.so-arc{fill:none;stroke-linecap:round;cursor:pointer;stroke:var(--pend);opacity:.95;transition:opacity .15s,filter .15s}
+.so-arc.ok{stroke:var(--ok)}.so-arc.risk{stroke:var(--risk)}.so-arc.travel{stroke:var(--trav)}.so-arc.pending{stroke:var(--pend);stroke-dasharray:1 0}
+.so-arc.past{opacity:.28}.so-arc.cur{filter:drop-shadow(0 0 7px currentColor);animation:so-pulse 2.2s ease-in-out infinite}.so-arc.hl,.so-arc.sel{opacity:1;filter:drop-shadow(0 0 6px color-mix(in srgb,var(--ink) 75%,transparent))}
+@keyframes so-pulse{0%,100%{opacity:.8}50%{opacity:1}}
+.so-badge{cursor:pointer}.so-badge circle{fill:var(--surface);stroke:var(--pend);stroke-width:2}.so-badge.ok circle{stroke:var(--ok)}.so-badge.risk circle{stroke:var(--risk)}.so-badge.travel circle{stroke:var(--trav)}
+.so-badge text{fill:var(--ink);font:600 10.5px Inter,sans-serif;text-anchor:middle;pointer-events:none}.so-badge.past{opacity:.45}.so-badge.hl circle,.so-badge.sel circle{fill:var(--ink)}.so-badge.hl text,.so-badge.sel text{fill:#15110c}
+.so-hand line{stroke:var(--gold);stroke-width:2;stroke-linecap:round;opacity:.9}.so-hand circle{fill:var(--gold)}
+.so-hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:36%;text-align:center;display:grid;gap:2px;pointer-events:none}
+.so-hub small{font-size:clamp(9px,2.1cqw,12px);letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}.so-hub b{font:500 clamp(14px,4.2cqw,24px)/1.15 var(--serif,Georgia,serif);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}.so-hub span{font-size:clamp(10px,2.4cqw,14px);color:var(--muted)}
+.so-panel{display:grid;gap:12px;min-width:0}
+.so-card{border:1px solid var(--line);background:var(--surface);border-radius:14px;padding:13px 15px;min-width:0}
+.so-card h3{margin:2px 0 4px;font:500 20px/1.2 var(--serif,Georgia,serif)}.so-card h4{margin:0 0 8px;font:600 10px Inter,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}.so-card h4 em{font-style:normal;opacity:.7;margin-left:4px}.so-card p{margin:3px 0;font-size:13px;color:var(--muted)}.so-card small{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.so-now .so-next b,.so-ppl{color:var(--ink)}
+.so-selcard{border-color:var(--gold);background:linear-gradient(180deg,rgba(212,176,119,.09),var(--surface))}.so-selcard header{display:flex;justify-content:space-between;align-items:center}
+.so-x{min-height:0!important;width:30px;height:30px;padding:0;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;font-size:18px;line-height:1;box-shadow:none!important}
+.so-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.so-open,.so-join{min-height:40px!important;display:inline-flex;align-items:center;padding:0 16px;border-radius:999px;font:600 13px Inter,sans-serif;letter-spacing:0!important;text-transform:none!important;text-decoration:none;cursor:pointer;box-shadow:none!important}
+.so-open{border:1px solid var(--line);background:none;color:var(--ink)}.so-join{background:var(--gold);color:#15110c!important;border:0}
+.so-att,.so-task,.so-row{min-height:0!important;letter-spacing:0!important;text-transform:none!important;box-shadow:none!important}
+.so-att{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;width:100%;text-align:left;border:0;border-left:3px solid var(--pend);background:color-mix(in srgb,var(--ink) 3%,transparent);border-radius:8px;padding:7px 10px;margin:0 0 6px;color:inherit;cursor:pointer}.so-att.risk{border-left-color:var(--risk)}.so-att.warn{border-left-color:#e0a23f}.so-att b{font:600 12px Inter,sans-serif}.so-att span{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.so-wins{display:flex;flex-wrap:wrap;gap:8px}.so-wins span{display:inline-flex;flex-direction:column;padding:7px 12px;border-radius:10px;background:rgba(74,165,106,.12);border:1px solid rgba(74,165,106,.45);font-size:13px}.so-wins small{letter-spacing:0;text-transform:none;color:#9ad8b0;font-size:11px}
+.so-task{display:grid;grid-template-columns:62px 1fr auto auto;gap:8px;align-items:center;width:100%;text-align:left;border:0;background:none;color:inherit;padding:6px 2px;cursor:pointer;border-top:1px solid color-mix(in srgb,var(--ink) 5%,transparent);font-size:13px}.so-task span{color:var(--muted);font-size:12px}.so-task b{font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.so-task small{font-size:11px;letter-spacing:0;text-transform:none}.so-task i{width:7px;height:7px;border-radius:50%;background:var(--risk)}
+.so-none{color:var(--muted)}
+.so-row{display:grid;grid-template-columns:26px 74px minmax(0,1fr) auto;gap:10px;align-items:center;width:100%;text-align:left;border:0;border-top:1px solid color-mix(in srgb,var(--ink) 6%,transparent);background:none;color:inherit;padding:9px 4px;cursor:pointer;border-left:3px solid transparent}
+.so-row .so-n{font-style:normal;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:2px solid var(--pend);font:600 11px Inter,sans-serif}.so-row.ok .so-n{border-color:var(--ok)}.so-row.risk .so-n{border-color:var(--risk)}.so-row.travel .so-n{border-color:var(--trav)}
+.so-time b{display:block;font:500 13px Inter,sans-serif}.so-time small{letter-spacing:0;text-transform:none;font-size:11px}.so-what b{display:block;font:500 14px Inter,sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.so-what small{display:block;letter-spacing:0;text-transform:none;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.so-row.past{opacity:.5}.so-row.hl,.so-row.sel{background:rgba(212,176,119,.1);border-left-color:var(--gold);opacity:1}.so-row.hl .so-n,.so-row.sel .so-n{background:#f3efe8;color:#15110c}.so-vid{font-style:normal}
+.so-legend{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:12px;color:var(--muted)}.so-legend span{display:inline-flex;align-items:center;gap:6px}.so-legend i{width:12px;height:12px;border-radius:50%;border:3px solid color-mix(in srgb,var(--ink) 28%,transparent);opacity:calc(1 - var(--i) * .15)}.so-legend em{font-style:normal;margin-left:auto}
+@media(max-width:900px){.so-grid{grid-template-columns:1fr}.so-dial{position:relative;top:auto;max-width:520px}.so-head b{font-size:24px}.so-legend em{margin-left:0;width:100%}}
+@media(max-width:700px){.so-wrap{padding-bottom:calc(var(--ag-tab,70px) + 90px)}.so-row{grid-template-columns:24px 66px minmax(0,1fr) auto;gap:8px}.so-card{padding:12px}}
+@media(prefers-reduced-motion:reduce){.so-arc.cur{animation:none}}
+
+/* Orbit colour coding by type */
+.so-wrap .c-travel{--cc:#4f86d4}.so-wrap .c-stay{--cc:#3fae9f}.so-wrap .c-visa{--cc:#e0654f}.so-wrap .c-work{--cc:#4aa56a}.so-wrap .c-dev{--cc:#9b7be0}.so-wrap .c-meet{--cc:#d9d2c3}.so-wrap .c-other{--cc:#c9a23d}
+.so-arc[class*="c-"]{stroke:var(--cc)}.so-badge[class*="c-"] circle{stroke:var(--cc)}.so-row[class*="c-"] .so-n{border-color:var(--cc)}
+.so-arc.risk,.so-badge.risk circle,.so-row.risk .so-n{stroke:var(--risk);border-color:var(--risk)}
+.so-row[class*="c-"]{border-left:3px solid var(--cc)}
+.so-legend div{display:flex;flex-wrap:wrap;gap:8px 14px}.so-key{display:inline-flex;align-items:center;gap:6px;font:500 12px Inter,sans-serif;color:var(--ink)}
+
+.so-row.sel{border-left-color:var(--gold)}
+.so-key i{width:10px;height:10px;border-radius:50%;background:var(--cc);display:inline-block}.so-key em{font-style:normal;color:var(--muted)}
+.orbbar{margin:0 0 12px}.cx-orbwrap{min-width:0}.cx-intel .so-sigs{margin:0 0 8px}.cx-intel .so-att{margin:0 0 6px}
 .calmode{display:inline-flex;border:1px solid var(--line,rgba(255,255,255,.18));margin-right:6px}.calmode button{background:none;border:0;color:var(--muted);padding:7px 14px;font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}.calmode button.on{background:var(--gold,#d4b077);color:#15110c;font-weight:600}.calmode button+button{border-left:1px solid var(--line,rgba(255,255,255,.18))}
 .cx-ev small{font-size:10.5px;color:var(--muted)}.cx-ev b{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cx-ev span{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cx-ev:hover{z-index:3;background:color-mix(in srgb,var(--kc,var(--k-connect)) 36%,var(--surface))}.cx-ev.src-model{border-left-style:dashed}.cx-ev.src-agency{opacity:.82}.cx-ev.onag small::after{content:" · Model Agenda";color:var(--gold)}
 .cx-free{position:absolute;left:0;right:0;border:1px dashed color-mix(in srgb,var(--ok) 45%,transparent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--ok);font-size:11px;pointer-events:none;z-index:1}
@@ -2486,6 +2542,85 @@ function cxGlance(s){
   const t=todayIso(),nm=nowMin(),tasks=allTasks().filter(x=>!x.done),over=tasks.filter(x=>x.due&&x.due<t).length,dueN=tasks.filter(x=>x.due===s).length,cl=dayClashes(s).length,sl=freeSlots(s,s===t?nm+10:0)[0];
   const toPlan=tasks.filter(x=>(x.due&&x.due<t||x.due===t&&!x.time)&&!(core().events||[]).some(e=>e.taskId===x.id&&e.d===t)).length;
   return`<section class="cx-card cx-glance"><div class="cx-chips"><span class="${over?"bad":""}"><b>${over}</b> overdue</span><span><b>${dueN}</b> due</span><span class="${cl?"bad":""}"><b>${cl}</b> clash${cl===1?"":"es"}</span>${sl?`<span><b>${cxMins(sl[0])}</b> next free</span>`:""}</div>${s===t&&toPlan?`<button class="btn sm solid" type="button" data-plan-day>Plan my day · ${Math.min(4,toPlan)} task${Math.min(4,toPlan)===1?"":"s"}</button>`:""}${EMB?`<p class="small muted">${PE.length} of yours from the Model Agenda · ${modelEvs().length} model item${modelEvs().length===1?"":"s"}${agencyOn()?` · ${agencyEvs().length} agency-wide`:""}</p>`:""}</section>`}
+/* ================= Orbit and Veux intelligence: moved here from the old agent calendar ================= */
+const ORB_CATS=[["travel","Travel"],["stay","Stay"],["visa","Visa & deadlines"],["work","Bookings & castings"],["dev","Development"],["meet","Meetings"],["other","Other"]];
+function orbCat(e){const s=(String(e.kind||"")+" "+String(e.title||"")+" "+String(e.cat||"")).toLowerCase();
+ if(/housing|stay|hotel|lodging|apartment|accommodation/.test(s))return"stay";
+ if(e.cat==="travel"||/travel|flight|fly|movement|arrival|departure|airport|✈/.test(s))return"travel";
+ if(/visa|immigration|consulate|passport|deadline/.test(s))return"visa";
+ if(e.kind==="booking"||e.kind==="casting"||/casting|go.?see|fitting|booking|job|shoot|show|runway|callback|option/.test(s))return"work";
+ if(e.cat==="move"||e.cat==="recharge"||/test|training|digital|polaroid|development|practice|yoga|fitness|skin|walk/.test(s))return"dev";
+ if(e.cat==="connect"||e.cat==="focus"||/meeting|check-in|call|review|team/.test(s))return"meet";
+ return"other"}
+function orbMode(){return((core().lens)||{}).dayMode==="orbit"}
+/* the day's timed events as numbered rows (long stays and all-day items are the backdrop, not part of the dial) */
+function orbRows(s){return eventsFor(s).filter(e=>e.t).map(e=>{const[a,b]=evSpanMin(e);return{e,id:String(e.id),title:e.title||"Untitled",a:Math.min(a,1438),b:Math.min(Math.max(b,a+20),1440),models:(e.models||[]).filter(Boolean),cat:orbCat(e),status:String(e.status||""),where:e.where||""}}).filter(r=>r.b-r.a<20*60).sort((x,y)=>x.a-y.a||x.b-y.b)}
+const orbPersonal=r=>r.e.src!=="agency"&&r.e.src!=="model";
+function orbOverlap(x,y){if(x===y||!(x.a<y.b&&y.a<x.b))return false;if(x.models.length&&y.models.length)return x.models.some(m=>y.models.includes(m));return!x.models.length&&!y.models.length&&orbPersonal(x)&&orbPersonal(y)}
+function orbConflicts(rows){return rows.filter(x=>rows.some(y=>orbOverlap(x,y)))}
+const ORB_WAIT=/pending|hold|tentative|await|option/i;
+function orbSignals(rows){const cf=orbConflicts(rows),wait=rows.filter(r=>ORB_WAIT.test(r.status)),tr=rows.filter(r=>r.cat==="travel"||r.cat==="stay"),out=[];
+ if(cf.length)out.push({k:"risk",t:cf.length+" conflict"+(cf.length===1?"":"s"),id:cf[0].id});
+ if(wait.length)out.push({k:"pending",t:wait.length+" awaiting response",id:wait[0].id});
+ if(tr.length)out.push({k:"travel",t:tr.length+" travel item"+(tr.length===1?"":"s"),id:tr[0].id});
+ if(!out.length)out.push({k:"ok",t:"Day is clear",id:""});return out}
+function orbAttention(rows){const out=[],seen={};
+ orbConflicts(rows).slice(0,3).forEach(r=>{out.push({k:"risk",t:"Overlap",s:r.title,id:r.id});seen[r.id]=1});
+ rows.forEach(r=>{if(seen[r.id])return;if(r.e.visaBlock)out.push({k:"risk",t:"Visa locked",s:r.title,id:r.id});else if(ORB_WAIT.test(r.status))out.push({k:"pending",t:"Awaiting reply",s:r.title,id:r.id})});
+ return out.slice(0,6)}
+function orbRecommend(rows){const cf=orbConflicts(rows),tr=rows.filter(r=>r.cat==="travel");return cf.length?"Resolve "+cf.length+" overlap"+(cf.length===1?"":"s")+" before confirming anything new.":tr.length?"Protect the travel buffer before accepting adjacent work.":"The day is balanced. Keep the strongest open windows free."}
+/* Veux intelligence card for the Day timeline's side column */
+function cxIntel(s){const rows=orbRows(s);if(!rows.length&&!allTasks().some(x=>!x.done&&x.due===s))return"";const sig=orbSignals(rows),att=orbAttention(rows);
+ return`<section class="cx-card cx-intel"><header><h4>Veux intelligence</h4><span class="muted small">${rows.length} timed</span></header><div class="so-sigs">${sig.map(g=>`<span class="so-chip ${g.k}">${esc(g.t)}</span>`).join("")}</div>${att.length?att.map(a=>`<button type="button" class="so-att ${a.k}" data-act="item" data-kind="e" data-id="${esc(a.id)}" data-s="${s}"><b>${esc(a.t)}</b><span>${esc(a.s)}</span></button>`).join(""):""}<p class="muted small" style="margin:8px 0 0">${esc(orbRecommend(rows))}</p></section>`}
+function orbSwitch(){return`<div class="calmode orbmode" role="tablist" aria-label="Day view"><button type="button" role="tab" data-orb-mode="timeline" class="${orbMode()?"":"on"}" aria-selected="${orbMode()?"false":"true"}">Timeline</button><button type="button" role="tab" data-orb-mode="orbit" class="${orbMode()?"on":""}" aria-selected="${orbMode()?"true":"false"}">Orbit</button></div>`}
+const orbClock=m=>{const h=Math.floor(m/60)%24,mi=m%60;return(h%12||12)+(mi?":"+pad(mi):"")+(h>=12?" PM":" AM")};
+const orbIn=ms=>{const m=Math.max(1,Math.round(ms/60000));return m<60?m+" min":Math.floor(m/60)+" h"+(m%60?" "+(m%60)+" min":"")};
+function orbWindow(rows){let first=9,last=17;rows.forEach(r=>{if(r.a/60<first)first=r.a/60;if(r.b/60>last)last=r.b/60});let h0=Math.max(0,Math.floor(first)-1),h1=Math.min(24,Math.ceil(last)+1);if(h1-h0<10){const p=Math.ceil((10-(h1-h0))/2);h0=Math.max(0,h0-p);h1=Math.min(24,h1+p)}return{h0,h1}}
+const orbPt=(m,r,w)=>{const a=(m-w.h0*60)/((w.h1-w.h0)*60)*Math.PI*2-Math.PI/2;return{x:Math.cos(a)*r,y:Math.sin(a)*r}};
+function orbArc(r,m0,m1,w){const span=(w.h1-w.h0)*60;if(m1-m0>span*.985)m1=m0+span*.985;const p0=orbPt(m0,r,w),p1=orbPt(m1,r,w);return"M"+p0.x.toFixed(1)+" "+p0.y.toFixed(1)+" A"+r+" "+r+" 0 "+((m1-m0)/span>.5?1:0)+" 1 "+p1.x.toFixed(1)+" "+p1.y.toFixed(1)}
+function orbLanes(rows){const cnt={};let me=0;rows.forEach(r=>{if(!r.models.length)me++;else cnt[r.models[0]]=(cnt[r.models[0]]||0)+1});
+ const names=Object.keys(cnt).sort((a,b)=>cnt[b]-cnt[a]||a.localeCompare(b)),lanes=names.slice(0,4).map(n=>({key:n,name:n}));if(names.length>4)lanes.push({key:"__more",name:"Other models"});
+ if(me||!lanes.length)lanes.unshift({key:"__me",name:modeModels()?"Team & agency":"Me"});return lanes}
+const orbLaneOf=(r,lanes)=>{if(!r.models.length)return"__me";return lanes.some(l=>l.key===r.models[0])?r.models[0]:"__more"};
+function dsOrbit(s){
+ const rows=orbRows(s),isT=s===todayIso(),nm=nowMin(),w=orbWindow(rows),lanes=orbLanes(rows),n=lanes.length,R0=262,step=Math.max(26,Math.min(48,Math.floor(170/n))),bw=step-8;
+ const sel=rows.find(r=>r.id===S.orbSel)||null,laneIdx={};lanes.forEach((l,i)=>laneIdx[l.key]=i);
+ const byLane={};rows.forEach((r,i)=>{const k=orbLaneOf(r,lanes);(byLane[k]=byLane[k]||[]).push({r,n:i+1})});
+ Object.keys(byLane).forEach(k=>{const tr=[];byLane[k].forEach(p=>{let t=0;while(tr[t]&&tr[t]>p.r.a)t++;p.t=t;tr[t]=p.r.b});byLane[k].subs=Math.max(1,tr.length)});
+ let track="",arcs="",badges="";lanes.forEach((l,i)=>{track+=`<circle class="so-track" r="${R0-i*step}" style="stroke-width:${bw}px"/>`});
+ const fr=freeSlots(s,isT?nm+10:0).filter(f=>f[1]>w.h0*60&&f[0]<w.h1*60);
+ const free=fr.map(f=>`<path class="so-free" d="${orbArc(R0+bw/2+9,Math.max(f[0],w.h0*60),Math.min(f[1],w.h1*60),w)}"><title>Open ${esc(orbClock(f[0])+" to "+orbClock(f[1]))}</title></path>`).join("");
+ const conf=new Set(orbConflicts(rows).map(r=>r.id));
+ rows.forEach((r,idx)=>{const k=orbLaneOf(r,lanes),i=laneIdx[k],L=byLane[k],p=L.find(q=>q.r===r),subs=L.subs,aw=bw/subs,rad=R0-i*step+((p.t-(subs-1)/2)*aw)*-1;
+  const cls=(conf.has(r.id)?"risk ":"")+"c-"+r.cat,past=isT&&r.b<nm,cur=isT&&r.a<=nm&&nm<r.b,isSel=sel&&sel.id===r.id,pt=orbPt(p.r.a,rad,w);
+  arcs+=`<path class="so-arc ${cls}${past?" past":""}${cur?" cur":""}${isSel?" sel":""}" data-orb-n="${idx+1}" data-orb-sel="${esc(r.id)}" style="stroke-width:${Math.max(6,aw-2).toFixed(1)}px" d="${orbArc(rad,Math.max(r.a,w.h0*60),Math.max(r.b,r.a+14),w)}"><title>${esc(fmtT(r.e.t)+" · "+r.title)}</title></path>`;
+  badges+=`<g class="so-badge ${cls}${past?" past":""}${isSel?" sel":""}" data-orb-n="${idx+1}" data-orb-sel="${esc(r.id)}" transform="translate(${pt.x.toFixed(1)} ${pt.y.toFixed(1)})"><circle r="${Math.max(8,Math.min(12,aw/2+3)).toFixed(1)}"/><text dy=".35em">${idx+1}</text></g>`});
+ const span=w.h1-w.h0,lbl=span>14?3:2;let ticks="",labels="";
+ for(let h=w.h0;h<w.h1;h++){const maj=(h-w.h0)%lbl===0,a=orbPt(h*60,R0+bw/2+4,w),b=orbPt(h*60,R0+bw/2+(maj?18:11),w);ticks+=`<line class="so-tick${maj?" maj":""}" x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}"/>`;
+  if(maj){const t=orbPt(h*60,R0+bw/2+32,w);labels+=`<text class="so-hr" x="${t.x.toFixed(1)}" y="${t.y.toFixed(1)}" dy=".35em">${(h%12)||12}${h<12||h===24?"A":"P"}</text>`}}
+ const rIn=Math.max(84,R0-(n-1)*step-bw/2-8),showNow=isT&&nm>=w.h0*60&&nm<=w.h1*60,np=orbPt(nm,R0+bw/2+6,w),ip=orbPt(nm,rIn,w);
+ const hand=showNow?`<g class="so-hand"><line x1="${ip.x.toFixed(1)}" y1="${ip.y.toFixed(1)}" x2="${np.x.toFixed(1)}" y2="${np.y.toFixed(1)}"/><circle cx="${np.x.toFixed(1)}" cy="${np.y.toFixed(1)}" r="6"/></g>`:"";
+ const cur=isT?rows.find(r=>r.a<=nm&&nm<r.b):null,nxt=rows.find(r=>!isT||r.a>nm);
+ const hub=cur?`<small>Now</small><b>${esc(cur.title)}</b><span>ends in ${orbIn((cur.b-nm)*6e4)}</span>`:nxt?`<small>${isT?"Next":"Starts"}</small><b>${esc(nxt.title)}</b><span>${isT?"in "+orbIn((nxt.a-nm)*6e4):esc(fmtT(nxt.e.t))}</span>`:`<small>${rows.length?"Done":"Open day"}</small><b>${rows.length?"All done":"Nothing booked"}</b><span>${rows.length?"for today":"Add an event to start"}</span>`;
+ const att=orbAttention(rows),sig=orbSignals(rows),legend=lanes.map((l,i)=>`<span><i style="--i:${i}"></i>${esc(l.name)}</span>`).join("");
+ const rowHtml=(r,i)=>{const isSel=sel&&sel.id===r.id,past=isT&&r.b<nm;return`<button type="button" class="so-row ${conf.has(r.id)?"risk ":""}c-${r.cat}${isSel?" sel":""}${past?" past":""}" data-orb-n="${i+1}" data-orb-sel="${esc(r.id)}"><i class="so-n">${i+1}</i><span class="so-time"><b>${esc(fmtT(r.e.t))}</b><small>${esc(fmtT(r.e.e||r.e.t))}</small></span><span class="so-what"><b>${esc(r.title)}</b><small>${esc([r.models.length===1?r.models[0]:r.models.length>1?r.models.length+" models":"",r.where].filter(Boolean).join(" · "))}</small></span></button>`};
+ let selCard;
+ if(sel){const idx=rows.indexOf(sel)+1;selCard=`<section class="so-card so-selcard"><header><small>#${idx} · ${esc((ORB_CATS.find(c=>c[0]===sel.cat)||[0,"Event"])[1])}${sel.status?" · "+esc(sel.status):""}</small><button type="button" class="so-x" data-orb-sel="${esc(sel.id)}" aria-label="Clear selection">×</button></header><h3>${esc(sel.title)}</h3><p>${esc(rangeTxt({time:sel.e.t,end:sel.e.e}))}</p>${sel.models.length?`<p class="so-ppl">${esc(sel.models.join(", "))}</p>`:""}${sel.where?`<p>${esc(sel.where)}</p>`:""}<div class="so-acts"><button type="button" class="so-open" data-act="item" data-kind="e" data-id="${esc(sel.id)}" data-s="${s}">Open event</button></div></section>`}
+ else selCard=`<section class="so-card so-now"><small>${isT?"Right now":esc(DOW[parse(s).getDay()])}</small>${cur?`<h3>${esc(cur.title)}</h3><p>Ends in ${orbIn((cur.b-nm)*6e4)}</p>`:""}${nxt?`<p class="so-next">${cur?"Then ":isT?"Next: ":"First: "}<b>${esc(nxt.title)}</b> ${isT?"in "+orbIn((nxt.a-nm)*6e4):"at "+esc(fmtT(nxt.e.t))}</p>`:(!cur?`<h3>${rows.length?"Nothing left today":"A clear day"}</h3>`:"")}</section>`;
+ const attHtml=`<section class="so-card"><h4>Needs attention <em>${att.length}</em></h4>${att.length?att.map(a=>`<button type="button" class="so-att ${a.k}" data-orb-sel="${esc(a.id)}"><b>${esc(a.t)}</b><span>${esc(a.s)}</span></button>`).join(""):`<p class="so-none">Nothing needs you. The day is clean.</p>`}<p class="so-none" style="margin:8px 0 0">${esc(orbRecommend(rows))}</p></section>`;
+ const frHtml=`<section class="so-card"><h4>Open windows</h4>${fr.length?`<div class="so-wins">${fr.map(f=>`<span>${esc(orbClock(f[0])+" – "+orbClock(f[1]))}<small>${orbIn((f[1]-f[0])*6e4)}</small></span>`).join("")}</div>`:`<p class="so-none">No gap of 45 minutes or more between 9 AM and 5:30 PM.</p>`}</section>`;
+ const tk=allTasks().filter(x=>!x.done&&x.due===s).sort((a,b)=>String(a.time||"99").localeCompare(String(b.time||"99")));
+ const tkHtml=`<section class="so-card"><h4>Tasks due <em>${tk.length}</em></h4>${tk.length?tk.slice(0,5).map(t=>`<button type="button" class="so-task" data-act="item" data-kind="t" data-id="${esc(t.id)}" data-s="${s}"><span>${esc(t.time?fmtT(t.time):"Any time")}</span><b>${esc(t.title)}</b></button>`).join("")+(tk.length>5?`<p class="so-none">+ ${tk.length-5} more in Tasks</p>`:""):`<p class="so-none">Nothing due this day.</p>`}</section>`;
+ const cnt={};rows.forEach(r=>cnt[r.cat]=(cnt[r.cat]||0)+1);const on=ORB_CATS.filter(c=>cnt[c[0]]);
+ const keyHtml=on.length?`<section class="so-card so-legend"><h4>Colours</h4><div>${on.map(c=>`<span class="so-key c-${c[0]}"><i></i>${esc(c[1])} <em>${cnt[c[0]]}</em></span>`).join("")}</div></section>`:"";
+ const sigRow=`<div class="so-head"><div><small>${esc(longDate(s))}${isT?" · today":""}</small><b>Orbit <em>${rows.length} movement${rows.length===1?"":"s"}</em></b></div><div class="so-sigs"><i>✦</i><b>Veux</b>${sig.map(g=>`<button type="button" class="so-chip ${g.k}"${g.id?` data-orb-sel="${esc(g.id)}"`:" disabled"}>${esc(g.t)}</button>`).join("")}</div></div>`;
+ return`<div class="so-wrap">${sigRow}<div class="so-grid"><div class="so-dial" data-orb-live="${isT?1:0}"><svg class="so-svg" viewBox="-310 -310 620 620" role="img" aria-label="The day as a dial">${track}${free}${ticks}${labels}${arcs}${hand}${badges}</svg><div class="so-hub">${hub}</div></div><aside class="so-panel">${selCard}${attHtml}${frHtml}${tkHtml}${keyHtml}<section class="so-card so-list"><h4>Timeline</h4>${rows.length?rows.map(rowHtml).join(""):`<p class="so-none">No timed events on this day.</p>`}</section></aside></div><div class="so-legend">${legend}<em>Ring per person · arc = duration · numbers match the timeline</em></div></div>`}
+document.addEventListener("click",e=>{const m=e.target.closest&&e.target.closest("[data-orb-mode]");if(m){const c=core();c.lens=c.lens||{ids:[],names:{}};const want=m.dataset.orbMode==="orbit"?"orbit":"timeline";if((c.lens.dayMode||"timeline")!==want){c.lens.dayMode=want;S.orbSel=null;markDirty("core");render()}return}
+ const o=e.target.closest&&e.target.closest("[data-orb-sel]");if(o){e.preventDefault();const id=o.dataset.orbSel;S.orbSel=S.orbSel===id&&o.classList.contains("so-x")?null:id;if(o.classList.contains("so-x"))S.orbSel=null;render()}});
+/* hovering a number or a row lights the other */
+document.addEventListener("mouseover",e=>{const t=e.target.closest&&e.target.closest("[data-orb-n]");document.querySelectorAll(".so-wrap .hl").forEach(x=>x.classList.remove("hl"));if(!t)return;document.querySelectorAll('.so-wrap [data-orb-n="'+t.dataset.orbN+'"]').forEach(x=>x.classList.add("hl"))});
+/* the dial keeps up with the clock on today */
+setInterval(()=>{if(document.querySelector('.so-dial[data-orb-live="1"]'))lensRepaint()},60000);
 function cxHead(t,s){
   const nav=t==="day"?`<div class="cx-nav"><button type="button" class="cx-ib" data-act="day" data-n="-1" aria-label="Previous day">‹</button><button type="button" class="cx-today" data-act="day" data-n="0">Today</button><button type="button" class="cx-ib" data-act="day" data-n="1" aria-label="Next day">›</button></div>`:"";
   const seg=[["day","Day"],["week","Week"],["month","Month"],["templates","Templates"],["plan","90-day"]].map(([k,l])=>`<button type="button" role="tab" aria-selected="${t===k}" data-act="tab" data-view="schedule" data-k="${k}">${l}</button>`).join("");
@@ -2495,7 +2630,7 @@ function vSchedule(){
   if(PERSONA)return head("","Calendar","Your routine, goal hours and events"+(S.boss?", plus "+esc((S.boss.owner||"Demontez").split(" ")[0])+"&#39;s calendar and trips (read-only)":"")+". Tap a day to add something.")+schedMonth();
   if(!["day","week","month","templates","plan"].includes(S.tabs.schedule))S.tabs.schedule="day";
   const t=S.tabs.schedule,s=S.date;let h=cxHead(t,s);
-  if(t==="day")h+=`<div class="cx-grid2"><div class="cx-main">${lensBar()}${cxTimeline(s)}</div><aside class="cx-side">${cxGlance(s)}${cxTasks(s)}${cxNotes(s)}${cxMove()}${cxMarket()}</aside></div>`;
+  if(t==="day")h+=orbMode()?`<div class="cx-orbwrap">${lensBar()}<div class="orbbar">${orbSwitch()}</div>${dsOrbit(s)}</div>`:`<div class="cx-grid2"><div class="cx-main">${lensBar()}<div class="orbbar">${orbSwitch()}</div>${cxTimeline(s)}</div><aside class="cx-side">${cxGlance(s)}${cxIntel(s)}${cxTasks(s)}${cxNotes(s)}${cxMove()}${cxMarket()}</aside></div>`;
   else if(t==="week")h+=`<div class="cx-grid2"><div class="cx-main">${schedWeek()}</div><aside class="cx-side">${cxRulesCard("week")}${cxTasks(s,true)}${cxMove()}</aside></div>`;
   else if(t==="month")h+=`<div class="cx-grid2"><div class="cx-main">${schedMonth()}</div><aside class="cx-side">${cxGlance(s)}${cxTasks(s)}${cxMove()}</aside></div>`;
   else if(t==="plan")h+=schedPlan();else h+=schedTemplates();

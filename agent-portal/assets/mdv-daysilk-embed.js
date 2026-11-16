@@ -180,7 +180,7 @@ function agencyEvents(force){
       var md=row.metadata||{};if(md.plan==='g90'||/^daysilk:/.test(String(md.category||'')))return;
       if(kind==='event'&&mid&&String(row.owner_member_id||'')===String(mid))return;   /* already shown as mine */
       var names=arr(links).map(function(l){var q=l.models||{};return q.display_name||'';}).filter(function(x,i,a){return x&&a.indexOf(x)===i;});
-      out.push(dsShape(row,{id:'pa-'+kind+'-'+row.id,ref:kind+'-'+row.id,src:'agency',kind:kind,models:names,calName:'Model Agenda',title:(names.length?names.slice(0,2).map(first).join(', ')+(names.length>2?' +'+(names.length-2):'')+': ':'')+String(row.title||kind)}));
+      out.push(dsShape(row,{id:'pa-'+kind+'-'+row.id,ref:kind+'-'+row.id,src:'agency',kind:kind,models:names,status:String(row.status||''),visaBlock:!!md.visa_blocking,calName:'Model Agenda',title:(names.length?names.slice(0,2).map(first).join(', ')+(names.length>2?' +'+(names.length-2):'')+': ':'')+String(row.title||kind)}));
     }
     arr(cal.events).forEach(function(e){add('event',e,e.event_models);});
     arr(cal.bookings).forEach(function(e){add('booking',e,e.booking_models);});
@@ -200,7 +200,7 @@ function modelEvents(ids,force){
       var mine=arr(links).map(function(l){return String(l.model_id);}).filter(function(id,i,a){return ids.indexOf(id)>=0&&a.indexOf(id)===i;});
       if(!mine.length)return;
       var names=mine.map(function(id){return nm[id]||'Model';}),who=names.length===1?names[0].split(' ')[0]:names.length+' models';
-      out.push(dsShape(row,{id:'pm-'+kind+'-'+row.id,ref:kind+'-'+row.id,src:'model',kind:kind,modelIds:mine,models:names,calName:names.join(', '),title:who+': '+String(row.title||kind)}));
+      out.push(dsShape(row,{id:'pm-'+kind+'-'+row.id,ref:kind+'-'+row.id,src:'model',kind:kind,modelIds:mine,models:names,status:String(row.status||''),visaBlock:!!(row.metadata&&row.metadata.visa_blocking),calName:names.join(', '),title:who+': '+String(row.title||kind)}));
     }
     arr(cal.events).forEach(function(e){add('event',e,e.event_models);});
     arr(cal.bookings).forEach(function(e){add('booking',e,e.booking_models);});
