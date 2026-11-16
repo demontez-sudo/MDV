@@ -4,7 +4,7 @@ import { newTask as newTaskCopy } from './_lib/push-copy.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
 
 // PostgREST returns at most 1000 rows per request, so page through with range() until exhausted.
-async function allRows(build,max=10000){const out=[],width=4;for(let from=0;from<max;from+=1000*width){const pages=await Promise.all(Array.from({length:width},(_,i)=>build().range(from+i*1000,from+i*1000+999)));let done=false;for(const {data,error} of pages){if(error)throw error;const page=data||[];out.push(...page);if(page.length<1000)done=true;}if(done)break;}return out;}
+async function allRows(build,max=10000){const out=[],width=4;for(let from=0;from<max;from+=1000*width){const pages=await Promise.all(Array.from({length:width},(_,i)=>build().range(from+i*1000,from+i*1000+999)));let done=false;for(const {data,error,status} of pages){if(error){if(status===416||String(error.code||'')==='PGRST103'){done=true;continue;}throw error;}const page=data||[];out.push(...page);if(page.length<1000)done=true;}if(done)break;}return out;}
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 
 export const handler=async(event)=>{
