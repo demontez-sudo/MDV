@@ -1,11 +1,12 @@
 import { requireUser, parseBody, json, errorResponse, assertPermission } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
+import { handler as v11Handler } from './agent-task-approval-desk-v11.mjs';
 
 // PostgREST returns at most 1000 rows per request, so page through with range() until exhausted.
 async function allRows(build,max=10000){const out=[];for(let from=0;from<max;from+=1000){const {data,error}=await build().range(from,from+999);if(error)throw error;const page=data||[];out.push(...page);if(page.length<1000)break;}return out;}
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 
-export const handler=async(event)=>{
+const v10Handler=async(event)=>{
   if(!['GET','POST'].includes(event.httpMethod))return json(405,{error:'Method not allowed'});
   try{
     const {user,client}=await requireUser(event),p=event.queryStringParameters||{},body=event.httpMethod==='POST'?parseBody(event):{};
@@ -61,3 +62,8 @@ export const handler=async(event)=>{
     const canWrite=await assertPermission(admin,user.id,organization.id,'tasks.write');const canManage=await assertPermission(admin,user.id,organization.id,'tasks.manage');return json(200,{environment:'veux-saas-v10',organization,tasks:tasks.map(t=>({...t,assignments:assignments.filter(a=>a.task_id===t.id).map(a=>({...a,member:a.member_id?memberMap.get(a.member_id)||null:null})),comments:comments.filter(c=>c.task_id===t.id),dependencies:dependencies.filter(d=>d.task_id===t.id),history:taskHistory.filter(h=>h.task_id===t.id)})),approvals:approvals.map(a=>({...a,assigned_member:a.assigned_member_id?memberMap.get(a.assigned_member_id)||null:null,history:approvalHistory.filter(h=>h.approval_request_id===a.id)})),members:[...memberMap.values()],models,access:{write:canWrite,manage:canManage}});
   }catch(error){return errorResponse(error);}
 };
+
+/* Reads go through the v11 desk: the same reply, but it pages in parallel, groups rows in one pass instead of re-scanning every list for
+   every task, and shrinks the reply before it can pass Netlify's 6 MB limit. The old code here timed out or failed on a long task list,
+   and the Agency Desk (which loads this route) then showed nothing. Writes keep their v10 behaviour. */
+export const handler = async event => (event.httpMethod === 'GET' ? v11Handler(event) : v10Handler(event));
