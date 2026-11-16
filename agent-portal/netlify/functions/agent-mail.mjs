@@ -220,7 +220,9 @@ export const handler = async event => {
       /* when the body points at pictures and none could be loaded, say what the server saw (shown in the page's note; also in the function log) */
       const inline_debug = hasCid && !inline_images.length && !inline_pending.length ? dbg : null;
       if (inline_debug) console.error('[mail] body pictures not loaded for message', id.slice(-12), JSON.stringify(inline_debug));
-      return json(200, { ok: true, message: mapMessage(m), attachments, inline_images: inline_images.map(({ id, ...rest }) => rest), inline_pending, extra_pending, inline_debug });
+      /* every picture on the message (inline or attached), so any of them can be saved to a model profile or to scouting */
+      const pictures = all.filter(x => /^image\/(jpeg|png|webp|gif)$/i.test(x.contentType || '') && Number(x.size || 0) <= MAX_ATT && Number(x.size || 0) > 6000).slice(0, 24).map(x => ({ id: x.id, name: x.name, size: x.size, content_type: x.contentType }));
+      return json(200, { ok: true, message: mapMessage(m), attachments, pictures, inline_images: inline_images.map(({ id, ...rest }) => rest), inline_pending, extra_pending, inline_debug });
     }
 
     /* Every message in the same conversation (received and sent), oldest first, so a reply can be read

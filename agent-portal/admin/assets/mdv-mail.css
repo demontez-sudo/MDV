@@ -225,3 +225,8 @@ html body .mm .mm-chk,html body .mmx .mm-copy,html body .mm-reply .mm-copy{lette
 .mm-form .mm-nco input[type=radio]{width:16px!important;height:16px!important;min-width:16px;padding:0!important;margin:0;flex:none;appearance:auto;-webkit-appearance:radio}
 .mm-ncm>header{position:sticky;top:0;z-index:2;background:var(--mdv-panel,#15130f)}
 .mm-ncm>footer{position:sticky;bottom:0;z-index:2;background:var(--mdv-panel,#15130f);border-top:1px solid var(--mdv-line-2,rgba(255,255,255,.14))}
+
+/* photos in the email: save them to a model profile or into scouting */
+.mm-pics{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 8px;padding:9px 14px;border:1px solid var(--mdv-line,rgba(217,184,102,.3));background:rgba(217,184,102,.06);font-size:12.5px}
+.mm-pics>span{margin-right:auto}.mm-pics b{font-weight:600}
+@media(max-width:700px){.mm-pics>span{flex-basis:100%}}
