@@ -78,7 +78,7 @@ async function openMessage(id){
   if(had){var rd=document.getElementById('mm-reader');if(rd)rd.classList.add('mm-busy');}else paintReader();
   try{
     var d=await call('message',{id:id});if(S.sel!==id)return;
-    d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);d.message.extra_pending=arr(d.extra_pending);d.message.extra=[];S.detail={m:d.message,att:arr(d.attachments)};
+    d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);d.message.extra_pending=arr(d.extra_pending);d.message.extra=[];d.message.inline_debug=d.inline_debug||null;S.detail={m:d.message,att:arr(d.attachments)};
     var row=S.messages.filter(function(x){return x.id===id;})[0];
     if(row&&!row.is_read){row.is_read=true;var f=S.folders.filter(function(x){return x.id===S.folder;})[0];if(f&&f.unread>0)f.unread--;}
   }catch(e){S.detail={error:msg(e)};}
@@ -115,13 +115,25 @@ function paint(){
       +'<button class="mm-btn gold" data-a="connect">'+(re?'Reconnect Microsoft 365':'Connect Microsoft 365')+'</button><p class="mm-err" id="mm-conn-err"></p></div></div>';wire();return;}
   h.innerHTML='<div class="mm '+(S.readerOpen?'read-open':'')+'">'
     +'<aside class="mm-side" id="mm-side"></aside><section class="mm-list" id="mm-list"></section><section class="mm-reader" id="mm-reader"></section></div>';
-  paintSide();paintList();paintReader();fit();
+  paintSide();paintList();paintReader();fit();fitWatch();
 }
 function fit(){
   var h=S.host,mm=h&&h.querySelector('.mm');if(!mm)return;
   if(window.innerWidth<=900){mm.style.height='';return;}
-  var top=mm.getBoundingClientRect().top,pad=parseFloat(getComputedStyle(h).paddingBottom)||0;
-  mm.style.height=Math.max(480,Math.floor(window.innerHeight-top-pad-14))+'px';
+  var top=mm.getBoundingClientRect().top,pad=parseFloat(getComputedStyle(h).paddingBottom)||0,bottom=window.innerHeight-pad-14;
+  /* the floating dock sits over the bottom of the page: end the panel just above it, never under it and never a gap above it */
+  var dock=document.getElementById('ws-dock');
+  if(dock&&dock.offsetParent!==null){var r=dock.getBoundingClientRect();if(r.height>0&&r.top>top+320)bottom=r.top-12;}
+  mm.style.height=Math.max(480,Math.floor(bottom-top))+'px';
+}
+/* the page above Mail can still be settling when it first renders (banners, fonts, the dock), which left the panel short with a gap under it:
+   measure again after it settles and whenever the page or the dock changes size */
+var fitT=null;
+function fitSoon(){if(fitT)return;fitT=setTimeout(function(){fitT=null;fit();},60);}
+function fitWatch(){
+  [150,600,1600].forEach(function(ms){setTimeout(fit,ms);});
+  if(fitWatch.on||!window.ResizeObserver)return;fitWatch.on=true;
+  try{var ro=new ResizeObserver(fitSoon);ro.observe(document.documentElement);if(S.host&&S.host.parentElement)ro.observe(S.host.parentElement);var dk=document.getElementById('ws-dock');if(dk)ro.observe(dk);}catch(e){}
 }
 window.addEventListener('resize',function(){fit();});
 function paintSide(){
@@ -192,6 +204,8 @@ function fillPending(m,repaint){
     }).catch(function(){}).then(next);
   })();
 }
+/* what the server saw when it tried (listed pictures, how many loaded, and any error), so a failure can be traced */
+function dbgNote(m){var d=m&&m.inline_debug;if(!d)return '';return ' ('+esc('server saw '+d.listed+' attachment'+(d.listed===1?'':'s')+', loaded '+d.fetched+(d.timeout?', timed out':'')+(d.errors&&d.errors.length?': '+d.errors.slice(0,2).join('; '):''))+')';}
 /* a picture the body points at that never arrived: say so instead of leaving a broken-image icon */
 function unresolved(m){return !!m&&m.body_type==='html'&&cidsLeft(m).length>0&&(m._pendDone||!arr(m.pending).length);}
 function bodyDoc(m,showImages){
@@ -204,7 +218,7 @@ function bodyDoc(m,showImages){
     Object.keys(plan.pair).forEach(function(k){pics[k]=du(plan.pair[k]);});
     inner=inner.replace(/cid:([^"'\s)>]+)/gi,function(all,id){return pics[cidKey(id)]||all;})
       .replace(/(<img[^>]+src=["'])\/\//gi,'$1https://');
-    if(unresolved(m))inner=inner.replace(/<img\b[^>]*\bsrc=["']cid:[^"']*["'][^>]*>/gi,'<span style="font:12px sans-serif;color:#8a7a5c">[A picture in this email could not be loaded. Download it from the attachments above or open the email in Outlook.]</span>');
+    if(unresolved(m))inner=inner.replace(/<img\b[^>]*\bsrc=["']cid:[^"']*["'][^>]*>/gi,'<span style="font:12px sans-serif;color:#8a7a5c">[A picture in this email could not be loaded. Download it from the attachments above or open the email in Outlook.'+dbgNote(m)+']</span>');
   }
   inner+=arr(m.extra).map(function(x){return '<figure style="margin:18px 0 0"><img alt="'+esc(x.name||'')+'" src="data:'+esc(x.content_type||'image/jpeg')+';base64,'+x.data+'" style="max-width:100%;height:auto;display:block"><figcaption style="font:11px sans-serif;color:#8a7a5c;margin-top:4px">'+esc(x.name||'')+'</figcaption></figure>';}).join('');
   return '<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="'+csp+'"><base target="_blank"><style>body{margin:0;padding:18px 22px;font:14px/1.55 -apple-system,Segoe UI,Calibri,Arial,sans-serif;color:#1b1814;background:#fff;word-wrap:break-word}img{max-width:100%;height:auto}a{color:#8c6a2f}blockquote{margin:8px 0;padding-left:12px;border-left:3px solid #ddd;color:#555}table{max-width:100%}</style></head><body>'+inner+'</body></html>';
@@ -247,7 +261,7 @@ function tBody(id){
   var T=S.thread,m=S.detail&&S.detail.m;
   if(m&&m.id===id)return Promise.resolve(m);
   if(T.bodies[id])return Promise.resolve(T.bodies[id]);
-  return call('message',{id:id}).then(function(d){d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);d.message.extra_pending=arr(d.extra_pending);d.message.extra=[];T.bodies[id]=d.message;return d.message;});
+  return call('message',{id:id}).then(function(d){d.message.inline=arr(d.inline_images);d.message.pending=arr(d.inline_pending);d.message.extra_pending=arr(d.extra_pending);d.message.extra=[];d.message.inline_debug=d.inline_debug||null;T.bodies[id]=d.message;return d.message;});
 }
 function paintThread(){
   var btn=document.getElementById('mm-thr'),box=document.getElementById('mm-thread'),fr=document.querySelector('#mm-reader .mm-body'),T=S.thread;
