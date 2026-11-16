@@ -148,6 +148,28 @@ function modelList(){
   });
 }
 /* The whole agency calendar (everyone's events, bookings and castings except the ones already shown as mine), read-only, for the "Whole agency" switch. */
+/* Time off (book-outs) and tasks of the models, from the same calendar snapshot. Trips, stays and visa deadlines are already calendar events
+   (saving them in Mobility writes the event), so they come through the event lists above. wantIds=null means every model. */
+function moveRows(cal,wantIds,pre,src){
+  var want=wantIds&&wantIds.length?wantIds.map(String):null,out=[],now=Date.now(),lo=now-3*864e5,hi=now+75*864e5,first=function(n){return String(n||'').split(' ')[0];};
+  function model(row){var q=row.models||{};return {id:String(row.model_id||q.id||''),name:q.display_name||''};}
+  function mine(id){return !!id&&(!want||want.indexOf(id)>=0);}
+  arr(cal&&cal.availability_blocks).forEach(function(b){
+    if(!b||!b.starts_at||/^(cancelled|canceled|declined|denied|rejected)$/i.test(String(b.status||'')))return;
+    var m=model(b);if(!mine(m.id))return;var s0=+new Date(b.starts_at),e0=b.ends_at?+new Date(b.ends_at):s0;if(isNaN(s0)||e0<lo||s0>hi)return;
+    /* her own planned book-outs are written as "DaySilk: …"; the label stays plain, not the internal text */
+    var why=String(b.reason||'').replace(/^DaySilk:\s*/i,'').trim(),label=({bookout:'Unavailable',holiday:'Holiday',medical:'Unavailable',travel:'Away'}[String(b.block_type||'').toLowerCase()])||'Unavailable';
+    out.push(dsShape({starts_at:b.starts_at,ends_at:b.ends_at,all_day:true,title:(m.name?first(m.name)+': ':'')+label+(why&&why.length<48?' · '+why:'')},{id:pre+'timeoff-'+b.id,ref:'timeoff-'+b.id,src:src,kind:'time off',cat:'recharge',modelIds:[m.id],models:m.name?[m.name]:[],calName:m.name||'Model'}));
+  });
+  var n=0;
+  arr(cal&&cal.tasks).forEach(function(t){
+    if(n>=150||!t||!t.due_at||/^(completed|done|complete|cancelled|canceled)$/i.test(String(t.status||'')))return;
+    if(t.metadata&&t.metadata.source==='calendar_event')return;   /* the companion task of a meeting is the meeting itself */
+    var m=model(t);if(!mine(m.id))return;var d0=+new Date(t.due_at);if(isNaN(d0)||d0<lo||d0>hi)return;n++;
+    out.push(dsShape({starts_at:t.due_at,title:(m.name?first(m.name)+': ':'')+String(t.title||'Task')},{id:pre+'task-'+t.id,ref:'task-'+t.id,src:src,kind:'task',cat:'focus',modelIds:[m.id],models:m.name?[m.name]:[],calName:m.name||'Model'}));
+  });
+  return out;
+}
 function agencyEvents(force){
   var o=encodeURIComponent(org());
   return Promise.all([get('/api/agent/daysilk?me=1&organization='+o+'&_t='+Date.now()).catch(function(){return null;}),calSnap(force)]).then(function(r){
@@ -163,7 +185,7 @@ function agencyEvents(force){
     arr(cal.events).forEach(function(e){add('event',e,e.event_models);});
     arr(cal.bookings).forEach(function(e){add('booking',e,e.booking_models);});
     arr(cal.castings).forEach(function(e){add('casting',e,e.casting_models);});
-    return out;
+    return out.concat(moveRows(cal,null,'pa-','agency'));
   });
 }
 function modelEvents(ids,force){
@@ -183,7 +205,7 @@ function modelEvents(ids,force){
     arr(cal.events).forEach(function(e){add('event',e,e.event_models);});
     arr(cal.bookings).forEach(function(e){add('booking',e,e.booking_models);});
     arr(cal.castings).forEach(function(e){add('casting',e,e.casting_models);});
-    return out;
+    return out.concat(moveRows(cal,ids,'pm-','model'));
   });
 }
 function ensureAccount(){
