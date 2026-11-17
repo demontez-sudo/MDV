@@ -1488,6 +1488,14 @@ html.emb .cal .cell .ev{background:rgba(255,255,255,.07);color:#efe3cf;border-le
 .ma-nav{display:flex;align-items:stretch;margin-left:auto;border:1px solid var(--line);background:var(--surface)}.ma-nav button{background:none;border:0;color:var(--muted);padding:0 15px;min-height:40px;font:inherit;font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}.ma-nav button:hover{color:var(--ink)}
 .ma-range{display:inline-flex;align-items:center;padding:0 16px;font-size:12px;color:var(--ink);border-left:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap}
 .ma-tabs{display:inline-flex;border:1px solid var(--line);background:var(--surface)}.ma-tabs button{background:none;border:0;color:var(--muted);padding:0 16px;min-height:40px;font:inherit;font-size:12px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}.ma-tabs button.on{color:var(--gold);box-shadow:inset 0 0 0 1px var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
+/* round controls on the Models calendar */
+.ma-nav,.ma-tabs,.ma-pre .calmode,.mg-seg{border-radius:999px;overflow:hidden}
+.ma-add,.ma-sel,.ma-split,.mgbar-dd,.mg-day{border-radius:999px}
+.ma-tabs button,.mg-seg button,.ma-pre .calmode button{border-radius:999px}
+.ma-nav button{border-radius:0}.ma-nav button:first-child{padding-left:18px}.ma-nav button:last-child{padding-right:18px}
+.ma-add{padding:0 24px}.ma-sel{padding:0 22px}
+.mg-seg{padding:3px;gap:2px}.ma-tabs{padding:3px;gap:2px}.ma-tabs button{min-height:34px}.ma-pre .calmode{padding:3px;gap:2px}
+.mg-day{padding:11px 6px}
 .ma-add{background:var(--accent);color:var(--accent-ink);border:0;min-height:40px;padding:0 20px;font:inherit;font-size:12px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}.ma-add:hover{filter:brightness(1.1)}
 .ma-filters{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}
 .ma-sel{min-height:42px;min-width:150px;padding:0 14px;border:1px solid var(--line);background:var(--surface);color:var(--ink);font:inherit;font-size:14px;border-radius:6px}
@@ -1501,6 +1509,7 @@ html.emb .cal .cell .ev{background:rgba(255,255,255,.07);color:#efe3cf;border-le
 .mg-dsum{margin:0 auto;font-size:12.5px;color:var(--muted)}
 .mg-cols.one{grid-template-columns:1fr}
 .mg-ovl{display:block;margin:6px 0 0;padding:5px 9px;font-style:normal;font-size:12px;color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);background:color-mix(in srgb,var(--warn) 7%,transparent)}
+.ma-filters .ma-sel,.ma-filters .lens-kinds button,.ma-filters .ma-split,.ma-top .ma-add{border-radius:999px}.ma-filters .lens-chip{border-radius:999px}
 @media(max-width:700px){.ma-nav,.ma-tabs{width:100%}.ma-tabs button{flex:1;padding:0 8px}}
 
 .dd-card{width:min(560px,100%)}.dd-body{flex:1;overflow-y:auto;padding:16px 22px 26px}
@@ -3844,6 +3853,25 @@ document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest
  if(t.hasAttribute("data-dd-apply"))ddApply();else if(t.hasAttribute("data-dd-rescan"))ddScan();else ddUndo(t.getAttribute("data-dd-undo"))});
 document.addEventListener("change",e=>{const c=e.target.closest&&e.target.closest("[data-dd-pick]");if(c){DD.pick[c.getAttribute("data-dd-pick")]=c.checked;ddPaint()}});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&DD.open&&!DD.busy)ddClose()});
+/* Inside the portal, DaySilk wears the portal's backdrop colour (its colour wave) instead of its own orange. Followed live when the backdrop changes. */
+function embSkin(){
+ if(!EMB)return;
+ try{
+  const w=getComputedStyle(parent.document.documentElement).getPropertyValue("--wave").trim();
+  if(!w||/^(var|calc)\(/i.test(w))return;
+  const r=document.documentElement;if(r.getAttribute("data-emb-wave")===w)return;
+  const cx=document.createElement("canvas").getContext("2d");cx.fillStyle="#000";cx.fillStyle=w;const hex=cx.fillStyle;
+  if(!/^#[0-9a-f]{6}$/i.test(hex))return;
+  const lum=h=>{const n=parseInt(h.slice(1),16);return(.299*(n>>16)+.587*(n>>8&255)+.114*(n&255))/255};
+  const bg=(getComputedStyle(r).getPropertyValue("--bg")||"").trim(),dark=/^#[0-9a-f]{6}$/i.test(bg)?lum(bg)<.5:true;
+  r.style.setProperty("--accent",hex);
+  r.style.setProperty("--gold",dark?"color-mix(in srgb,"+hex+" 72%,#fff)":"color-mix(in srgb,"+hex+" 80%,#000)");
+  r.style.setProperty("--accent-ink",lum(hex)>.58?"#15100D":"#FFFFFF");
+  r.setAttribute("data-emb-wave",w);
+ }catch(_){}
+}
+embSkin();setInterval(embSkin,1500);
+
 
 document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest("[data-lens-retry]");if(r){e.preventDefault();LENS_TRIES=0;lensRepaint();lensModels()}});
 document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest("[data-lens-rm]");if(r)lensRemove(r.dataset.lensRm)});
