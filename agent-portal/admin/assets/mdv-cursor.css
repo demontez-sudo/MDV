@@ -112,3 +112,26 @@ html[data-veux-wave="deepForest"] .mdv-cr .mdv-cr-r::before{inset:-6px;opacity:1
 .mdv-cr.down .mdv-cr-r{transform:scale(.82)}
 @media(prefers-reduced-motion:reduce){.mdv-cr i{transition:none!important}}
 @media(hover:none),(pointer:coarse){.mdv-cr{display:none}}
+
+/* ---- Two cursors per backdrop: html[data-mdv-cstyle] is "arrow" (a basic pointer, the wave trails behind) or "circles" (dot + ring) ---- */
+.mdv-cr .mdv-cr-a{display:none}
+html[data-mdv-cstyle="arrow"] .mdv-cr .mdv-cr-d,html[data-mdv-cstyle="arrow"] .mdv-cr.link .mdv-cr-d{width:calc(16px*var(--mz,1))!important;height:calc(22px*var(--mz,1))!important;margin:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;border:0!important}
+html[data-mdv-cstyle="arrow"] .mdv-cr .mdv-cr-d::before,html[data-mdv-cstyle="arrow"] .mdv-cr .mdv-cr-d::after{display:none!important}
+html[data-mdv-cstyle="arrow"] .mdv-cr .mdv-cr-a{display:block;width:100%;height:100%;overflow:visible;fill:var(--cr-hi);stroke:rgba(10,9,8,.88);stroke-width:1.3;stroke-linejoin:round;filter:drop-shadow(0 0 5px var(--c75))}
+html[data-mdv-cstyle="arrow"] .mdv-cr .mdv-cr-r{width:calc(34px*var(--mz,1));height:calc(34px*var(--mz,1));margin:calc(-17px*var(--mz,1)) 0 0 calc(-17px*var(--mz,1));background:radial-gradient(circle,var(--c34),var(--c14) 60%,transparent 100%);box-shadow:0 0 22px var(--c50),inset 0 0 14px var(--c34);border-color:var(--c50)}
+html[data-mdv-cstyle="arrow"] .mdv-cr.link .mdv-cr-r{width:calc(42px*var(--mz,1));height:calc(42px*var(--mz,1));margin:calc(-21px*var(--mz,1)) 0 0 calc(-21px*var(--mz,1))}
+/* the wave: a ring that keeps rolling outward from the pointer */
+html[data-mdv-cstyle="arrow"] .mdv-cr:not(.label) .mdv-cr-r::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--c50);pointer-events:none;animation:mdvCrRipple 2.6s ease-out infinite}
+@keyframes mdvCrRipple{0%{transform:scale(.7);opacity:.85}100%{transform:scale(1.9);opacity:0}}
+/* the chooser in Appearance */
+.mdv-cp{margin-top:18px;padding-top:16px;border-top:1px solid color-mix(in srgb,currentColor 16%,transparent)}
+.mdv-cp b{display:block;font-size:14px;margin-bottom:4px}.mdv-cp p{margin:0 0 12px;font-size:13px;opacity:.75;line-height:1.45}
+.mdv-cp-row{display:flex;flex-wrap:wrap;gap:10px}
+.mdv-cp-opt{cursor:pointer;display:grid;gap:6px;justify-items:center;padding:10px 14px 9px;min-width:132px;border-radius:10px;border:1px solid color-mix(in srgb,currentColor 24%,transparent);background:transparent;color:inherit;font:inherit;font-size:13px}
+.mdv-cp-opt svg{width:72px;height:45px}
+.mdv-cp-opt svg .r{fill:color-mix(in srgb,var(--wave,#d5b56d) 22%,transparent);stroke:var(--wave,#d5b56d);stroke-width:1.2}
+.mdv-cp-opt svg .r2{fill:none;stroke:color-mix(in srgb,var(--wave,#d5b56d) 55%,transparent);stroke-width:1}
+.mdv-cp-opt svg .a{fill:#fff;stroke:#111;stroke-width:1.2;stroke-linejoin:round}.mdv-cp-opt svg .d{fill:#fff;stroke:#111;stroke-width:1}
+.mdv-cp-opt:hover{border-color:var(--wave,currentColor)}
+.mdv-cp-opt.on{border-color:var(--wave,currentColor);box-shadow:0 0 0 1px var(--wave,currentColor) inset;font-weight:600}
+.mdv-cp-opt:focus-visible{outline:2px solid var(--wave,currentColor);outline-offset:2px}

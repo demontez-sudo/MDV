@@ -10,20 +10,128 @@ html.mdv-cur a,html.mdv-cur button:not(:disabled),html.mdv-cur [role="button"]:n
 .mdv-cr.on{opacity:1}
 .mdv-cr.off{opacity:0!important}
 .mdv-cr i{position:absolute;left:0;top:0;border-radius:50%;display:grid;place-items:center;backface-visibility:hidden}
-/* the highlighted ring */
-.mdv-cr .mdv-cr-r{width:44px;height:44px;margin:-22px 0 0 -22px;border:1.5px solid rgba(239,233,223,.95);
-  background:radial-gradient(circle at 50% 50%,rgba(239,233,223,.20),rgba(239,233,223,.06) 62%,rgba(239,233,223,0) 100%);
-  box-shadow:0 0 0 1.5px rgba(10,9,8,.55),0 0 18px rgba(239,233,223,.28),inset 0 0 12px rgba(239,233,223,.16);
+/* The circles belong to the background that is on. Colour comes from the skin (--wave is set for every skin; without one the public site keeps ivory),
+   and each skin has its own shape below. Decorations live on ::before so the pointer maths never changes. */
+.mdv-cr{--cr:var(--wave,#efe9df);--cr-hi:color-mix(in srgb,var(--cr) 58%,#fff);--cr-ink:#0a0908;
+  --c14:color-mix(in srgb,var(--cr) 14%,transparent);--c22:color-mix(in srgb,var(--cr) 22%,transparent);--c34:color-mix(in srgb,var(--cr) 34%,transparent);--c50:color-mix(in srgb,var(--cr) 50%,transparent);--c75:color-mix(in srgb,var(--cr) 75%,transparent);--c92:color-mix(in srgb,var(--cr) 92%,transparent)}
+.mdv-cr .mdv-cr-r{width:calc(24px*var(--mz,1));height:calc(24px*var(--mz,1));margin:calc(-12px*var(--mz,1)) 0 0 calc(-12px*var(--mz,1));border:1.25px solid var(--c92);
+  background:radial-gradient(circle at 50% 50%,var(--c22),var(--c14) 55%,transparent 100%);
+  box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 20px var(--c34),inset 0 0 12px var(--c22);
   transition:width .45s cubic-bezier(.16,1,.3,1),height .45s cubic-bezier(.16,1,.3,1),margin .45s cubic-bezier(.16,1,.3,1),background .3s ease,border-color .3s ease,box-shadow .3s ease,transform .18s ease}
-/* the bright centre */
-.mdv-cr .mdv-cr-d{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;background:#efe9df;box-shadow:0 0 0 1.5px rgba(10,9,8,.55),0 0 12px 1px rgba(239,233,223,.7);transition:width .3s ease,height .3s ease,margin .3s ease,opacity .25s ease}
-/* over something you can click: the ring opens and warms to brass, the dot shrinks */
-.mdv-cr.link .mdv-cr-r{width:70px;height:70px;margin:-35px 0 0 -35px;border-color:#c9a878;background:radial-gradient(circle,rgba(201,168,120,.26),rgba(201,168,120,.07) 65%,rgba(201,168,120,0));box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 22px rgba(201,168,120,.4),inset 0 0 14px rgba(201,168,120,.22)}
-.mdv-cr.link .mdv-cr-d{width:5px;height:5px;margin:-2.5px 0 0 -2.5px}
+.mdv-cr .mdv-cr-r::before,.mdv-cr .mdv-cr-d::before,.mdv-cr .mdv-cr-d::after{content:"";position:absolute;pointer-events:none;border-radius:50%;opacity:0}
+.mdv-cr .mdv-cr-d{width:calc(6px*var(--mz,1));height:calc(6px*var(--mz,1));margin:calc(-3px*var(--mz,1)) 0 0 calc(-3px*var(--mz,1));background:var(--cr-hi);box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 14px 2px var(--c75);transition:width .3s ease,height .3s ease,margin .3s ease,opacity .25s ease}
+/* over something you can click: the ring opens and fills, the dot shrinks */
+.mdv-cr.link .mdv-cr-r{width:calc(32px*var(--mz,1));height:calc(32px*var(--mz,1));margin:calc(-16px*var(--mz,1)) 0 0 calc(-16px*var(--mz,1));border-color:var(--cr-hi);background:radial-gradient(circle,var(--c34),var(--c14) 65%,transparent);box-shadow:0 0 0 1.5px rgba(10,9,8,.45),0 0 26px var(--c50),inset 0 0 16px var(--c34)}
+.mdv-cr.link .mdv-cr-d{width:calc(4px*var(--mz,1));height:calc(4px*var(--mz,1));margin:calc(-2px*var(--mz,1)) 0 0 calc(-2px*var(--mz,1))}
 /* over a model or a gateway: a filled disc with a word in it */
-.mdv-cr.label .mdv-cr-r{width:98px;height:98px;margin:-49px 0 0 -49px;border-color:transparent;background:rgba(239,233,223,.96);box-shadow:0 8px 24px rgba(0,0,0,.35)}
-.mdv-cr.label .mdv-cr-r::after{content:attr(data-label);font:500 9px/1 'Jost',system-ui,sans-serif;letter-spacing:.26em;text-indent:.26em;text-transform:uppercase;color:#0a0908}
+.mdv-cr.label .mdv-cr-r{width:calc(64px*var(--mz,1));height:calc(64px*var(--mz,1));margin:calc(-32px*var(--mz,1)) 0 0 calc(-32px*var(--mz,1));border-color:transparent;border-style:solid;background:var(--c92);box-shadow:0 8px 26px rgba(0,0,0,.38),0 0 28px var(--c34)}
+.mdv-cr.label .mdv-cr-r::after{content:attr(data-label);font:500 9px/1 'Jost',system-ui,sans-serif;letter-spacing:.26em;text-indent:.26em;text-transform:uppercase;color:var(--cr-ink)}
 .mdv-cr.label .mdv-cr-d{opacity:0}
+.mdv-cr.label .mdv-cr-r::before,.mdv-cr.label .mdv-cr-d::before,.mdv-cr.label .mdv-cr-d::after{display:none}
+
+/* ---- Classic: brass instrument. A second hairline ring inside the first ---- */
+html[data-veux-wave="classic"] .mdv-cr .mdv-cr-r::before,html:not([data-veux-wave]) .mdv-cr .mdv-cr-r::before{inset:5px;border:1px solid var(--c50);opacity:1}
+/* ---- Burnt orange: warm copper, a heavier ring and an ember glow ---- */
+html[data-veux-wave="burntOrange"] .mdv-cr .mdv-cr-r{border-width:2px;box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 28px var(--c50),inset 0 0 16px var(--c34)}
+html[data-veux-wave="burntOrange"] .mdv-cr .mdv-cr-d{box-shadow:0 0 0 1.5px rgba(10,9,8,.5),0 0 18px 4px var(--c75)}
+html[data-veux-wave="burntOrange"] .mdv-cr .mdv-cr-d::before{inset:-6px;background:radial-gradient(circle,var(--c50),transparent 70%);opacity:1;animation:mdvCrEmber 2.4s ease-in-out infinite}
+/* ---- Red: crosshair ticks around the ring ---- */
+html[data-veux-wave="red"] .mdv-cr .mdv-cr-r::before{inset:-8px;opacity:1;background:conic-gradient(var(--cr-hi) 0 3deg,transparent 3deg 87deg,var(--cr-hi) 87deg 93deg,transparent 93deg 177deg,var(--cr-hi) 177deg 183deg,transparent 183deg 267deg,var(--cr-hi) 267deg 273deg,transparent 273deg 357deg,var(--cr-hi) 357deg 360deg);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));mask:radial-gradient(farthest-side,transparent calc(100% - 6px),#000 calc(100% - 6px));border-radius:0}
+html[data-veux-wave="red"] .mdv-cr .mdv-cr-r{border-radius:50%}
+/* ---- Green: a slow breath moving outward ---- */
+html[data-veux-wave="green"] .mdv-cr .mdv-cr-r::before{inset:0;border:1px solid var(--c75);opacity:1;animation:mdvCrBreath 2.8s ease-out infinite}
+/* ---- Blue: a double ring ---- */
+html[data-veux-wave="blue"] .mdv-cr .mdv-cr-r::before{inset:-6px;border:1px solid var(--c50);opacity:1}
+html[data-veux-wave="blue"] .mdv-cr .mdv-cr-r{background:radial-gradient(circle,var(--c14),transparent 70%)}
+/* ---- Purple: a shimmer travelling round the ring ---- */
+html[data-veux-wave="purple"] .mdv-cr .mdv-cr-r::before{inset:-4px;opacity:1;background:conic-gradient(from 0deg,transparent 0 55%,var(--cr-hi) 78%,transparent 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));animation:mdvCrSpin 2.6s linear infinite}
+/* ---- Turquoise: soft ripples ---- */
+html[data-veux-wave="turquoise"] .mdv-cr .mdv-cr-r::before,html[data-veux-wave="waterfall"] .mdv-cr .mdv-cr-r::before{inset:0;border:1px solid var(--c75);opacity:1;animation:mdvCrRipple 2.4s ease-out infinite}
+html[data-veux-wave="turquoise"] .mdv-cr .mdv-cr-d::before,html[data-veux-wave="waterfall"] .mdv-cr .mdv-cr-d::before{inset:-5px;border:1px solid var(--c75);opacity:1;animation:mdvCrRipple 2.4s ease-out .9s infinite}
+/* ---- Waterfall: ripples and a droplet centre ---- */
+html[data-veux-wave="waterfall"] .mdv-cr .mdv-cr-d{background:radial-gradient(circle at 35% 30%,#fff 0 14%,var(--cr-hi) 15%,var(--cr) 100%)}
+/* ---- Galaxy: a star centre with a shimmering ring ---- */
+html[data-veux-wave="galaxy"] .mdv-cr .mdv-cr-r::before{inset:-4px;opacity:1;background:conic-gradient(from 0deg,#6fd3ff,var(--cr-hi),#ff8ad8,#6fd3ff);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));mask:radial-gradient(farthest-side,transparent calc(100% - 2px),#000 calc(100% - 2px));animation:mdvCrSpin 7s linear infinite}
+html[data-veux-wave="galaxy"] .mdv-cr .mdv-cr-d::before{left:50%;top:50%;width:26px;height:1.5px;margin:-.75px 0 0 -13px;border-radius:1px;background:linear-gradient(90deg,transparent,#fff,transparent);opacity:.95;animation:mdvCrTwinkle 2.2s ease-in-out infinite}
+html[data-veux-wave="galaxy"] .mdv-cr .mdv-cr-d::after{left:50%;top:50%;width:1.5px;height:26px;margin:-13px 0 0 -.75px;border-radius:1px;background:linear-gradient(180deg,transparent,#fff,transparent);opacity:.95;animation:mdvCrTwinkle 2.2s ease-in-out .5s infinite}
+/* ---- Winter: the Art Image ring (soft glass, no extras) with a turning snowflake in place of the dot ---- */
+html[data-veux-wave="christmas"] .mdv-cr{--cr:#BFE3F0}
+html[data-veux-wave="christmas"] .mdv-cr .mdv-cr-d{background:transparent;box-shadow:none;width:4px;height:4px;margin:-2px 0 0 -2px}
+html[data-veux-wave="christmas"] .mdv-cr .mdv-cr-d::before{left:50%;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:0;opacity:1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23EAF6FF' stroke-width='1.4' stroke-linecap='round'%3E%3Cg id='a'%3E%3Cpath d='M12 2v20'/%3E%3Cpath d='M12 5.6l-2.8-2.2M12 5.6l2.8-2.2M12 18.4l-2.8 2.2M12 18.4l2.8 2.2M12 9.4l-1.8-1.4M12 9.4l1.8-1.4M12 14.6l-1.8 1.4M12 14.6l1.8 1.4'/%3E%3C/g%3E%3Cuse href='%23a' transform='rotate(60 12 12)'/%3E%3Cuse href='%23a' transform='rotate(120 12 12)'/%3E%3Ccircle cx='12' cy='12' r='1.3' fill='%23EAF6FF' stroke='none'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 0 4px rgba(191,227,240,.9)) drop-shadow(0 0 1px rgba(10,9,8,.8));animation:mdvCrSpin 16s linear infinite}
+html[data-veux-wave="christmas"] .mdv-cr.link .mdv-cr-d::before{width:18px;height:18px;margin:-9px 0 0 -9px}
+html[data-veux-wave="christmas"] .mdv-cr .mdv-cr-d::after{left:50%;top:50%;width:46px;height:46px;margin:-23px 0 0 -23px;opacity:.9;background:radial-gradient(circle at 20% 25%,#fff 0 1.4px,transparent 2px),radial-gradient(circle at 78% 30%,#fff 0 1px,transparent 1.6px),radial-gradient(circle at 62% 82%,#fff 0 1.3px,transparent 2px),radial-gradient(circle at 24% 72%,#fff 0 1px,transparent 1.6px);animation:mdvCrSpin 24s linear infinite reverse}
+/* ---- Earth: a small moon circling the ring ---- */
+html[data-veux-wave="earth"] .mdv-cr .mdv-cr-r::before{inset:-5px;opacity:1;background:radial-gradient(circle at 50% 0,var(--cr-hi) 0 3.5px,transparent 4.5px);animation:mdvCrSpin 5s linear infinite}
+/* ---- White: crisp and monochrome ---- */
+html[data-veux-wave="white"] .mdv-cr .mdv-cr-r{border-width:2px;border-color:#fff;background:transparent;box-shadow:0 0 0 1.5px rgba(10,9,8,.7),0 0 10px rgba(255,255,255,.25)}
+html[data-veux-wave="white"] .mdv-cr .mdv-cr-d{background:#fff;box-shadow:0 0 0 1.5px rgba(10,9,8,.7)}
+/* ---- The nudes: quiet, a thin ring with no fill ---- */
+html[data-veux-wave="blueNude"] .mdv-cr .mdv-cr-r,html[data-veux-wave="greenNude"] .mdv-cr .mdv-cr-r{border-width:1px;border-color:var(--c75);background:transparent;box-shadow:0 0 0 1px rgba(10,9,8,.4),0 0 12px var(--c22)}
+html[data-veux-wave="blueNude"] .mdv-cr .mdv-cr-d,html[data-veux-wave="greenNude"] .mdv-cr .mdv-cr-d{width:7px;height:7px;margin:-3.5px 0 0 -3.5px;background:var(--cr);box-shadow:0 0 0 1px rgba(10,9,8,.4),0 0 8px var(--c50)}
+
+/* ---- Art Image: a gallery frame. Corner brackets close round the ring like a viewfinder, and the centre is a drop of paint ---- */
+html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-r{border-width:1.5px;background:radial-gradient(circle,var(--c14),transparent 70%)}
+html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-r::before{inset:-9px;border-radius:0;opacity:1;transition:inset .35s cubic-bezier(.16,1,.3,1),opacity .3s;
+  background:linear-gradient(var(--cr-hi),var(--cr-hi)) 0 0/11px 1.5px,linear-gradient(var(--cr-hi),var(--cr-hi)) 0 0/1.5px 11px,
+             linear-gradient(var(--cr-hi),var(--cr-hi)) 100% 0/11px 1.5px,linear-gradient(var(--cr-hi),var(--cr-hi)) 100% 0/1.5px 11px,
+             linear-gradient(var(--cr-hi),var(--cr-hi)) 0 100%/11px 1.5px,linear-gradient(var(--cr-hi),var(--cr-hi)) 0 100%/1.5px 11px,
+             linear-gradient(var(--cr-hi),var(--cr-hi)) 100% 100%/11px 1.5px,linear-gradient(var(--cr-hi),var(--cr-hi)) 100% 100%/1.5px 11px;
+  background-repeat:no-repeat;filter:drop-shadow(0 0 3px rgba(10,9,8,.7))}
+html[data-veux-wave="fallArt"] .mdv-cr.link .mdv-cr-r::before{inset:-3px}
+html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-d{border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:radial-gradient(circle at 35% 30%,#fff 0 12%,var(--cr-hi) 13%,var(--cr) 100%);box-shadow:0 0 0 1.5px rgba(10,9,8,.55),0 0 12px 2px var(--c50)}
+/* Art Image runs on a portrait background, so its cursor is a smaller frame: a 30px ring, corner brackets that sit closer, and a finer drop. */
+html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-r{border-width:1.25px}
+html[data-veux-wave="fallArt"] .mdv-cr .mdv-cr-r::before{inset:-5px;
+  background-size:7px 1.25px,1.25px 7px,7px 1.25px,1.25px 7px,7px 1.25px,1.25px 7px,7px 1.25px,1.25px 7px}
+
+
+html[data-veux-wave="fallArt"] .mdv-cr.link .mdv-cr-r::before{inset:-1px}
+
+
+/* ---- Fall Leaf: an amber leaf that sways in place of the dot ---- */
+html[data-veux-wave="fallLeaf"] .mdv-cr .mdv-cr-d{background:transparent;box-shadow:none;width:4px;height:4px;margin:-2px 0 0 -2px}
+html[data-veux-wave="fallLeaf"] .mdv-cr .mdv-cr-d::before{left:50%;top:50%;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:0;opacity:1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3.5 20.5C3 10.5 9.5 3.5 20.5 3.5c.6 10.5-5.5 17.5-17 17z' fill='%23E0925A' stroke='%2373340F' stroke-width='1.1' stroke-linejoin='round'/%3E%3Cpath d='M3.8 20.2L15 9M9.5 14.5l.2-4.6M12.6 11.6l4.4.2' fill='none' stroke='%2373340F' stroke-width='1.1' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 0 4px rgba(224,146,90,.65)) drop-shadow(0 0 1px rgba(10,9,8,.8));transform-origin:50% 50%;animation:mdvCrSway 3.4s ease-in-out infinite alternate}
+html[data-veux-wave="fallLeaf"] .mdv-cr.link .mdv-cr-d::before{width:17px;height:17px;margin:-8.5px 0 0 -8.5px}
+html[data-veux-wave="fallLeaf"] .mdv-cr .mdv-cr-r{border-style:dotted;border-width:2px}
+/* ---- Deep Forest: a small pine in a misty ring ---- */
+html[data-veux-wave="deepForest"] .mdv-cr .mdv-cr-d{background:transparent;box-shadow:none;width:4px;height:4px;margin:-2px 0 0 -2px}
+html[data-veux-wave="deepForest"] .mdv-cr .mdv-cr-d::before{left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:0;opacity:1;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1.8l4.6 6.4h-2.6l3.8 5.4h-3l4.4 6.4H4.8l4.4-6.4h-3l3.8-5.4H7.4z' fill='%238FB27A' stroke='%230F2415' stroke-width='1' stroke-linejoin='round'/%3E%3Crect x='11' y='19.4' width='2' height='3' fill='%23B58E64'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 0 4px rgba(143,178,122,.6)) drop-shadow(0 0 1px rgba(10,9,8,.8))}
+html[data-veux-wave="deepForest"] .mdv-cr.link .mdv-cr-d::before{width:16px;height:16px;margin:-8px 0 0 -8px}
+html[data-veux-wave="deepForest"] .mdv-cr .mdv-cr-r::before{inset:-6px;opacity:1;background:radial-gradient(circle,transparent 52%,var(--c22) 70%,transparent 100%);animation:mdvCrBreathe 3.6s ease-in-out infinite}
+
+@keyframes mdvCrSpin{to{transform:rotate(360deg)}}
+@keyframes mdvCrSway{from{transform:rotate(-22deg)}to{transform:rotate(22deg)}}
+@keyframes mdvCrBreathe{0%,100%{transform:scale(.92);opacity:.5}50%{transform:scale(1.1);opacity:1}}
+@keyframes mdvCrBreath{0%{transform:scale(.8);opacity:.7}100%{transform:scale(1.7);opacity:0}}
+@keyframes mdvCrRipple{0%{transform:scale(.9);opacity:.8}100%{transform:scale(1.9);opacity:0}}
+@keyframes mdvCrTwinkle{0%,100%{opacity:.25;transform:scale(.7)}50%{opacity:1;transform:scale(1.1)}}
+@keyframes mdvCrEmber{0%,100%{opacity:.55;transform:scale(.9)}50%{opacity:1;transform:scale(1.15)}}
+.mdv-cr:not(.on) *{animation-play-state:paused!important}
+.mdv-cr.off *{animation-play-state:paused!important}
+@media(prefers-reduced-motion:reduce){.mdv-cr *,.mdv-cr *::before,.mdv-cr *::after{animation:none!important}}
 .mdv-cr.down .mdv-cr-r{transform:scale(.82)}
 @media(prefers-reduced-motion:reduce){.mdv-cr i{transition:none!important}}
 @media(hover:none),(pointer:coarse){.mdv-cr{display:none}}
+
+/* ---- Two cursors per backdrop: html[data-mdv-cstyle] is "arrow" (a basic pointer, the wave trails behind) or "circles" (dot + ring) ---- */
+.mdv-cr .mdv-cr-a{display:none}
+html[data-mdv-cstyle="arrow"] .mdv-cr .mdv-cr-d,html[data-mdv-cstyle="arrow"] .mdv-cr.link .mdv-cr-d{width:calc(16px*var(--mz,1))!important;height:calc(22px*var(--mz,1))!important;margin:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;border:0!important}
+html[data-mdv-cstyle="arrow"] .mdv-cr .mdv-cr-d::before,html[data-mdv-cstyle="arrow"] .mdv-cr .mdv-cr-d::after{display:none!important}
+html[data-mdv-cstyle="arrow"] .mdv-cr .mdv-cr-a{display:block;width:100%;height:100%;overflow:visible;fill:var(--cr-hi);stroke:rgba(10,9,8,.88);stroke-width:1.3;stroke-linejoin:round;filter:drop-shadow(0 0 5px var(--c75))}
+html[data-mdv-cstyle="arrow"] .mdv-cr .mdv-cr-r{width:calc(34px*var(--mz,1));height:calc(34px*var(--mz,1));margin:calc(-17px*var(--mz,1)) 0 0 calc(-17px*var(--mz,1));background:radial-gradient(circle,var(--c34),var(--c14) 60%,transparent 100%);box-shadow:0 0 22px var(--c50),inset 0 0 14px var(--c34);border-color:var(--c50)}
+html[data-mdv-cstyle="arrow"] .mdv-cr.link .mdv-cr-r{width:calc(42px*var(--mz,1));height:calc(42px*var(--mz,1));margin:calc(-21px*var(--mz,1)) 0 0 calc(-21px*var(--mz,1))}
+/* the wave: a ring that keeps rolling outward from the pointer */
+html[data-mdv-cstyle="arrow"] .mdv-cr:not(.label) .mdv-cr-r::after{content:"";position:absolute;inset:-3px;border-radius:50%;border:1.5px solid var(--c50);pointer-events:none;animation:mdvCrRipple 2.6s ease-out infinite}
+@keyframes mdvCrRipple{0%{transform:scale(.7);opacity:.85}100%{transform:scale(1.9);opacity:0}}
+/* the chooser in Appearance */
+.mdv-cp{margin-top:18px;padding-top:16px;border-top:1px solid color-mix(in srgb,currentColor 16%,transparent)}
+.mdv-cp b{display:block;font-size:14px;margin-bottom:4px}.mdv-cp p{margin:0 0 12px;font-size:13px;opacity:.75;line-height:1.45}
+.mdv-cp-row{display:flex;flex-wrap:wrap;gap:10px}
+.mdv-cp-opt{cursor:pointer;display:grid;gap:6px;justify-items:center;padding:10px 14px 9px;min-width:132px;border-radius:10px;border:1px solid color-mix(in srgb,currentColor 24%,transparent);background:transparent;color:inherit;font:inherit;font-size:13px}
+.mdv-cp-opt svg{width:72px;height:45px}
+.mdv-cp-opt svg .r{fill:color-mix(in srgb,var(--wave,#d5b56d) 22%,transparent);stroke:var(--wave,#d5b56d);stroke-width:1.2}
+.mdv-cp-opt svg .r2{fill:none;stroke:color-mix(in srgb,var(--wave,#d5b56d) 55%,transparent);stroke-width:1}
+.mdv-cp-opt svg .a{fill:#fff;stroke:#111;stroke-width:1.2;stroke-linejoin:round}.mdv-cp-opt svg .d{fill:#fff;stroke:#111;stroke-width:1}
+.mdv-cp-opt:hover{border-color:var(--wave,currentColor)}
+.mdv-cp-opt.on{border-color:var(--wave,currentColor);box-shadow:0 0 0 1px var(--wave,currentColor) inset;font-weight:600}
+.mdv-cp-opt:focus-visible{outline:2px solid var(--wave,currentColor);outline-offset:2px}

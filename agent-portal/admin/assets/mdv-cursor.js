@@ -10,9 +10,30 @@ try{if(!window.matchMedia||!matchMedia('(hover:hover) and (pointer:fine)').match
 var reduce=false;try{reduce=matchMedia('(prefers-reduced-motion:reduce)').matches;}catch(e){}
 var root=document.documentElement,seen=typeof WeakMap==='function'?new WeakMap():null;
 var el=document.createElement('div');el.className='mdv-cr';el.setAttribute('aria-hidden','true');
-el.innerHTML='<i class="mdv-cr-r" data-label=""></i><i class="mdv-cr-d"></i>';
+el.innerHTML='<i class="mdv-cr-r" data-label=""></i><i class="mdv-cr-d"><svg class="mdv-cr-a" viewBox="0 0 16 22" aria-hidden="true"><path d="M1.5 1.5v16.2l4.1-3.9 2.8 6.4 3-1.3-2.8-6.2 5.6-.2z"/></svg></i>';
 var ring=el.firstChild,dot=el.lastChild;
 var x=-200,y=-200,rx=x,ry=y,dx=x,dy=y,started=false,label='',running=false,pending=null,queued=false;
+
+/* Two cursors, chosen per backdrop (the colour wave that is on):
+     arrow    a basic pointer on the mouse, with the backdrop's colour wave drifting a beat behind it
+     circles  a bright dot on the mouse with the wave ring behind it
+   The choice is kept on this device, one per backdrop; a backdrop with no choice yet uses the arrow. */
+var STORE='mdv-cursor-styles',STYLES=['arrow','circles'],arrow=true;
+function waveName(){return root.getAttribute('data-veux-wave')||'classic';}
+function readMap(){try{return JSON.parse(localStorage.getItem(STORE)||'{}')||{};}catch(e){return {};}}
+function styleFor(w){var s=readMap()[w];return STYLES.indexOf(s)>=0?s:'arrow';}
+function applyStyle(){
+  var s=styleFor(waveName());arrow=s==='arrow';
+  if(root.getAttribute('data-mdv-cstyle')!==s)root.setAttribute('data-mdv-cstyle',s);
+  syncPicker();
+}
+function setStyle(w,s){
+  if(STYLES.indexOf(s)<0)return;
+  var m=readMap();m[w]=s;try{localStorage.setItem(STORE,JSON.stringify(m));}catch(e){}
+  applyStyle();
+}
+window.MDV_CURSOR={styles:STYLES.slice(),get:function(w){return styleFor(w||waveName());},set:function(w,s){setStyle(w||waveName(),s);}};
+try{applyStyle();}catch(e){}
 
 /* what does the page want for this element? remember it before we restyle it */
 function kind(t){
@@ -41,7 +62,7 @@ function paintState(){
   el.classList.toggle('link',!!link&&!lab&&k!=='nat');
 }
 function loop(){
-  var kr=reduce?1:.2,kd=reduce?1:.6;
+  var kr=reduce?1:.2,kd=(reduce||arrow)?1:.6;
   rx+=(x-rx)*kr;ry+=(y-ry)*kr;dx+=(x-dx)*kd;dy+=(y-dy)*kd;
   ring.style.transform='translate3d('+rx.toFixed(1)+'px,'+ry.toFixed(1)+'px,0)';
   dot.style.transform='translate3d('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px,0)';
@@ -55,6 +76,8 @@ function start(){
   root.classList.add('mdv-cur');
   rx=x;ry=y;dx=x;dy=y;
 }
+try{new MutationObserver(applyStyle).observe(root,{attributes:true,attributeFilter:['data-veux-wave']});}catch(e){}
+window.addEventListener('storage',function(e){if(e.key===STORE||e.key===null)applyStyle();});
 document.addEventListener('mousemove',function(e){
   px=x;py=y;x=e.clientX;y=e.clientY;lastAt=Date.now();
   if(!started)start();
@@ -114,7 +137,34 @@ function wire(fr){
     skin(d);if(wired.indexOf(fr)<0)wired.push(fr);
   }catch(e){}   /* a frame from another site is left alone */
 }
+
+/* The chooser sits in the Appearance card under the backdrop picker (top page only; frames just follow the saved choice). */
+var PICK_ART={arrow:'<svg viewBox="0 0 48 30" aria-hidden="true"><circle cx="15" cy="12" r="10" class="r"/><circle cx="15" cy="12" r="6" class="r2"/><path class="a" d="M12 4v15l3.8-3.5 2.6 5.9 2.8-1.2-2.6-5.7 5-.2z"/></svg>',
+             circles:'<svg viewBox="0 0 48 30" aria-hidden="true"><circle cx="15" cy="15" r="10" class="r"/><circle cx="15" cy="15" r="6" class="r2"/><circle cx="15" cy="15" r="2.6" class="d"/></svg>'};
+var PICK_NAME={arrow:'Arrow + wave',circles:'Dot + ring'};
+function themeName(w){try{var t=window.VEUX_COLOR_WAVES&&window.VEUX_COLOR_WAVES.themes&&window.VEUX_COLOR_WAVES.themes[w];return t&&t.name?t.name:'this backdrop';}catch(e){return 'this backdrop';}}
+function pickerHTML(){
+  var w=waveName(),cur=styleFor(w);
+  return '<b>Cursor for '+themeName(w).replace(/[<>&]/g,'')+'</b><p>Pick the pointer for this backdrop. Each backdrop remembers its own.</p><div class="mdv-cp-row">'+
+    STYLES.map(function(k){return '<button type="button" class="mdv-cp-opt'+(k===cur?' on':'')+'" data-mdv-cstyle-set="'+k+'" aria-pressed="'+(k===cur?'true':'false')+'">'+PICK_ART[k]+'<span>'+PICK_NAME[k]+'</span></button>';}).join('')+'</div>';
+}
+function syncPicker(){
+  var n=document.getElementById('mdv-cursor-pick');if(!n)return;
+  var h=pickerHTML();if(n.getAttribute('data-sig')!==waveName()+'|'+styleFor(waveName())){n.innerHTML=h;n.setAttribute('data-sig',waveName()+'|'+styleFor(waveName()));}
+}
+function installPicker(){
+  if(window!==window.top)return;
+  var card=document.getElementById('vx-wave-settings');
+  if(!card||card.querySelector('#mdv-cursor-pick'))return;
+  var n=document.createElement('div');n.id='mdv-cursor-pick';n.className='mdv-cp';n.setAttribute('data-sig','');
+  card.appendChild(n);syncPicker();
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('[data-mdv-cstyle-set]');if(!b)return;
+  e.preventDefault();setStyle(waveName(),b.getAttribute('data-mdv-cstyle-set'));
+});
 function scan(){
+  try{installPicker();}catch(e){}
   var f=document.querySelectorAll('iframe');
   for(var i=0;i<f.length;i++){(function(fr){
     if(!fr.__mdvCur){fr.__mdvCur=1;fr.addEventListener('load',function(){wire(fr);});}
