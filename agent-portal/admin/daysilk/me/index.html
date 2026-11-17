@@ -1481,6 +1481,18 @@ html.emb .cal .cell .ev{background:rgba(255,255,255,.07);color:#efe3cf;border-le
 .mgbar{display:grid;gap:12px;border:1px solid var(--line);background:var(--surface);padding:14px 16px;margin:0 0 14px}
 .mgbar-row{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px}.mgbar-row .calmode{margin:0}
 .mgbar-l{font-size:10px;letter-spacing:.16em;color:var(--muted);margin-right:2px}.mgbar-models .lens-chip{margin:0}
+.mgbar-dd{font-size:12px;padding:5px 11px}
+.dd-card{width:min(560px,100%)}.dd-body{flex:1;overflow-y:auto;padding:16px 22px 26px}
+.dd-sum{display:grid;gap:8px;margin:0 0 14px}.dd-opt{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer}
+.dd-opt input{margin-top:3px;width:16px;height:16px}.dd-opt b{display:block;font-size:14px}.dd-opt small{display:block;font-size:13px;color:var(--muted);line-height:1.4}.dd-opt em{font-style:normal;font-weight:700;font-size:15px;color:var(--accent)}
+.dd-opt.zero{opacity:.55;cursor:default}
+.dd-list{margin:0 0 14px;padding:0;list-style:none;display:grid;gap:6px}.dd-list li{font-size:13px;padding:8px 10px;border-left:3px solid var(--line);background:var(--surface);border-radius:0 6px 6px 0;line-height:1.4}
+.dd-list li.t2{border-left-color:var(--gold)}.dd-list li small{display:block;color:var(--muted)}
+.dd-h{font-size:10px;letter-spacing:.16em;color:var(--muted);margin:16px 0 8px}
+.dd-note{font-size:13px;color:var(--muted);line-height:1.5;margin:0 0 12px}.dd-warn{font-size:13px;line-height:1.5;margin:0 0 12px;padding:10px 12px;border-radius:8px;border:1px solid var(--warn);color:var(--warn)}
+.dd-ok{font-size:14px;line-height:1.5;margin:0 0 12px;padding:10px 12px;border-radius:8px;border:1px solid var(--ok);color:var(--ok)}
+.dd-act{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 0}
+.dd-run{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;padding:8px 0;border-bottom:1px solid var(--line)}
 .mgbar-models .lens-add{min-width:210px}
 .mgbar-sw{margin-left:auto;display:inline-flex;align-items:center;gap:9px;font-size:13px;color:var(--ink);cursor:pointer;position:relative}
 .mgbar-sw input{position:absolute;opacity:0;width:1px;height:1px}
@@ -3707,7 +3719,7 @@ function lensBar(){
  const sw=`<label class="mgbar-sw" title="Show every model's items. Switch it off and add models to narrow it down."><input type="checkbox" data-lens-agency ${agencyOn()?"checked":""}><span class="mgbar-track"><i></i></span><span>Whole agency</span></label>`;
  const picker=LENSM.length?`<select class="lens-add" data-lens-add aria-label="Add a model"><option value="">+ Add a model</option>${opts}</select>`:(LENS_TRIES>=6?`<a class="muted small" href="#" data-lens-retry>Could not load models. Tap to retry</a>`:`<span class="muted small">Loading models…</span>`);
  const warn=(!ids.length&&!agencyOn())?`<span class="mgbar-warn">Add a model or switch on Whole agency to see model items.</span>`:"";
- return `<div class="mgbar"><div class="mgbar-row">${calModeSwitch()}${sw}</div><div class="mgbar-row mgbar-models"><span class="mgbar-l">MODELS</span>${chips}${picker}${warn}</div>${kindBar()}${calErrBar()}</div>`
+ return `<div class="mgbar"><div class="mgbar-row">${calModeSwitch()}<button type="button" class="btn ghost mgbar-dd" data-dd-open title="Find and remove the same event added more than once">Clean up duplicates</button>${sw}</div><div class="mgbar-row mgbar-models"><span class="mgbar-l">MODELS</span>${chips}${picker}${warn}</div>${kindBar()}${calErrBar()}</div>`
 }
 function lensRepaint(){const typing=document.activeElement&&document.activeElement.matches&&document.activeElement.matches("input,textarea,select");if(!EMB_ALERTS&&!typing&&["calendar","schedule","today","command","work"].includes(S.view))render()}
 function calErrCheck(l){let msg="";if(!Array.isArray(l)){try{const st=parent.MDV_DS_EMBED.calendarStatus&&parent.MDV_DS_EMBED.calendarStatus();msg=(st&&st.err)||"The calendar did not answer"}catch(_){msg="The calendar did not answer"}}if(msg!==(S.calErr||"")){S.calErr=msg;lensRepaint()}}
@@ -3727,6 +3739,63 @@ async function lensModels(){if(!EMB||EMB_ALERTS||LENSM.length)return;try{const l
 function lensAdd(id){const m=LENSM.find(x=>x.id===id);if(!m)return;const c=core();c.lens=c.lens||{ids:[],names:{}};c.lens.names=c.lens.names||{};if(!c.lens.ids.includes(id))c.lens.ids.push(id);c.lens.names[id]=m.name;markDirty("core");render();modelLensSync(true)}
 function lensRemove(id){const c=core();if(!c.lens)return;c.lens.ids=(c.lens.ids||[]).filter(x=>x!==id);if(c.lens.names)delete c.lens.names[id];markDirty("core");LME=LME.filter(e=>(e.modelIds||[]).some(x=>c.lens.ids.includes(x)));render()}
 document.addEventListener("change",e=>{const a=e.target.closest&&e.target.closest("[data-lens-add]");if(a&&a.value)lensAdd(a.value)});
+/* Clean up duplicates: scan, review, apply (in batches), undo. The work is done by /api/agent/calendar-dedupe; every removed copy is backed up first. */
+var DD={open:false,busy:"",scan:null,runs:[],res:null,err:"",pick:{t1:true,t2:true,tasks:true,blocks:true},lastRun:null};
+function ddApi(action,extra){const b=parent&&parent.MDV_DS_EMBED&&parent.MDV_DS_EMBED.dedupe;return b?b(action,extra):Promise.reject(new Error("The calendar tools are not ready yet"))}
+function ddWhen(v){const d=new Date(v);return isNaN(d)?"":d.toLocaleString([],{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}
+function ddClose(){DD.open=false;const n=document.getElementById("ddsheet");if(n)n.remove();document.body.classList.remove("sheet-open")}
+function ddMsg(e){return String((e&&(e.message||e.error))||e||"Something went wrong").slice(0,200)}
+function ddHTML(){
+ const sc=DD.scan,sm=sc&&sc.summary;let body="";
+ if(DD.err)body+=`<div class="dd-warn" role="alert">${esc(DD.err)}</div>`;
+ if(DD.busy&&!sc)body+=`<p class="dd-note">${esc(DD.busy)}</p>`;
+ if(DD.res)body+=`<div class="dd-ok" role="status">${esc(DD.res)}${DD.lastRun?` <button type="button" class="btn ghost" data-dd-undo="${esc(DD.lastRun)}"${DD.busy?" disabled":""}>Undo this</button>`:""}</div>`;
+ if(sc){
+  const total=sm.exact_copies+sm.lookalike_copies+sm.task_copies+sm.block_copies;
+  if(!sc.backup_ready)body+=`<div class="dd-warn">One-time setup needed before anything can be removed: run <b>2026-11-17-calendar-dedupe-backup.sql</b> in Supabase. You can still review what was found below.</div>`;
+  body+=`<p class="dd-note">${esc(String(sm.events_checked))} events checked. ${total?"Each group keeps one copy (the one with the most detail: its linked task, models, notes) and merges what the others carried into it. Everything removed is backed up so you can undo.":"No duplicates found."}</p>`;
+  const opt=(k,label,desc,n)=>`<label class="dd-opt${n?"":" zero"}"><input type="checkbox" data-dd-pick="${k}" ${DD.pick[k]&&n?"checked":""} ${n?"":"disabled"}><span><b>${label}</b><small>${desc}</small></span><em>${n}</em></label>`;
+  body+=`<div class="dd-sum">`+opt("t1","Exact copies","Same title, start, end and models. Safe to remove.",sm.exact_copies)+opt("t2","Same-day lookalikes","Same models, same day, same title once names are removed (“Visa filing day” and “Sullivan: Visa filing day”). Check the list.",sm.lookalike_copies)+opt("tasks","Repeated model tasks","Open tasks with the same model, title and due time. Extra ones are cancelled.",sm.task_copies)+opt("blocks","Repeated time off","Same model, same dates, same type. Extra ones are cancelled.",sm.block_copies)+`</div>`;
+  if(sc.events&&sc.events.length){body+=`<div class="dd-h">EVENTS FOUND${sc.events.length<sm.exact_groups+sm.lookalike_groups?" (FIRST "+sc.events.length+")":""}</div><ul class="dd-list">`+sc.events.slice(0,60).map(g=>`<li class="${g.tier===2?"t2":""}"><b>${esc(g.title)}</b> ${g.models&&g.models.length?"· "+esc(g.models.join(", ")):""}<small>${esc(ddWhen(g.starts_at))} · ${g.remove.length+1} copies, keeps 1${g.tier===2?" · lookalike":""}</small></li>`).join("")+`</ul>`}
+  if(sc.lookalikes&&sc.lookalikes.length)body+=`<div class="dd-h">BOOKINGS AND CASTINGS TO LOOK AT BY HAND</div><ul class="dd-list">`+sc.lookalikes.slice(0,20).map(g=>`<li><b>${esc(g.title)}</b><small>${esc(g.kind)} · ${esc(ddWhen(g.starts_at))} · ${g.ids.length} copies. Not removed automatically (they carry contracts and pay).</small></li>`).join("")+`</ul>`;
+  const want=(DD.pick.t1?sm.exact_copies:0)+(DD.pick.t2?sm.lookalike_copies:0)+(DD.pick.tasks?sm.task_copies:0)+(DD.pick.blocks?sm.block_copies:0);
+  body+=`<div class="dd-act"><button type="button" class="btn solid" data-dd-apply ${(!sc.backup_ready||!want||DD.busy)?"disabled":""}>${DD.busy?esc(DD.busy):want?"Remove "+want+" duplicate"+(want===1?"":"s"):"Nothing to remove"}</button><button type="button" class="btn ghost" data-dd-rescan ${DD.busy?"disabled":""}>Check again</button></div>`;
+ }
+ if(DD.runs.length)body+=`<div class="dd-h">RECENT CLEAN-UPS</div>`+DD.runs.map(r=>`<div class="dd-run"><span>${esc(ddWhen(r.at))} · ${r.events} event${r.events===1?"":"s"}${r.tasks?", "+r.tasks+" task"+(r.tasks===1?"":"s"):""}${r.blocks?", "+r.blocks+" time off":""}</span><button type="button" class="btn ghost" data-dd-undo="${esc(r.run_id)}" ${DD.busy?"disabled":""}>Undo</button></div>`).join("");
+ return `<div class="sheet-h"><button class="ib" data-dd-close aria-label="Close">×</button><h3>Clean up duplicates</h3><p>Find the same event added more than once, keep one, and remove the rest safely.</p></div><div class="dd-body">${body}</div>`
+}
+function ddPaint(){let n=document.getElementById("ddsheet");if(!DD.open){if(n)n.remove();return}
+ const keep=n&&n.querySelector(".dd-body")?n.querySelector(".dd-body").scrollTop:0;
+ if(!n){n=document.createElement("div");n.id="ddsheet";n.className="sheet";document.body.appendChild(n)}
+ n.innerHTML=`<div class="sheet-bg" data-dd-close></div><div class="sheet-card paper dd-card" role="dialog" aria-modal="true" aria-label="Clean up duplicates">${ddHTML()}</div>`;
+ document.body.classList.add("sheet-open");const b=n.querySelector(".dd-body");if(b)b.scrollTop=keep}
+async function ddScan(){DD.busy="Checking the calendar…";DD.err="";ddPaint();
+ try{DD.scan=await ddApi("scan");const r=await ddApi("runs").catch(()=>null);DD.runs=(r&&r.runs)||[]}catch(e){DD.err="Could not check the calendar: "+ddMsg(e)}
+ DD.busy="";ddPaint()}
+async function ddApply(){DD.err="";DD.res="";let run=null,removed=0,tasks=0,blocks=0,failed=[];
+ try{for(let i=0;i<60;i++){DD.busy="Removing… "+(removed+tasks+blocks)+" done";ddPaint();
+   const r=await ddApi("apply",{run_id:run,tiers:[DD.pick.t1?1:0,DD.pick.t2?2:0].filter(Boolean),tasks:!!DD.pick.tasks,blocks:!!DD.pick.blocks});
+   run=r.run_id;removed+=r.done.events;tasks+=r.done.tasks;blocks+=r.done.blocks;failed=failed.concat(r.done.failed||[]);
+   if(r.complete)break}
+  }catch(e){DD.err="Stopped part-way: "+ddMsg(e)+(run?" What was already removed is backed up and can be undone below.":"")}
+ DD.lastRun=run;DD.res=(removed||tasks||blocks)?"Removed "+removed+" event"+(removed===1?"":"s")+(tasks?", "+tasks+" task"+(tasks===1?"":"s"):"")+(blocks?", "+blocks+" time off":"")+"."+(failed.length?" "+failed.length+" could not be removed ("+failed[0].reason+").":""):"";
+ if(failed.length&&!(removed||tasks||blocks))DD.err="Could not remove: "+failed[0].reason;
+ DD.busy="";try{parent.MDV_DS_EMBED.calendarChanged()}catch(_){}
+ await ddScan()}
+async function ddUndo(run){DD.err="";DD.res="";DD.busy="Putting it back…";ddPaint();let ev=0,tk=0,bl=0;
+ try{for(let i=0;i<60;i++){const r=await ddApi("undo",{run_id:run});ev+=r.restored.events;tk+=r.restored.tasks;bl+=r.restored.blocks;if(r.complete||(!r.restored.events&&!r.restored.tasks&&!r.restored.blocks))break}
+  DD.res="Restored "+ev+" event"+(ev===1?"":"s")+(tk?", "+tk+" task"+(tk===1?"":"s"):"")+(bl?", "+bl+" time off":"")+".";DD.lastRun=null;
+ }catch(e){DD.err="Could not undo: "+ddMsg(e)}
+ DD.busy="";try{parent.MDV_DS_EMBED.calendarChanged()}catch(_){}
+ await ddScan()}
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-dd-open],[data-dd-close],[data-dd-apply],[data-dd-rescan],[data-dd-undo]");if(!t)return;
+ if(t.hasAttribute("data-dd-open")){e.preventDefault();DD.open=true;DD.scan=null;DD.res="";DD.lastRun=null;ddPaint();ddScan();return}
+ if(t.hasAttribute("data-dd-close")){ddClose();return}
+ if(DD.busy)return;
+ if(t.hasAttribute("data-dd-apply"))ddApply();else if(t.hasAttribute("data-dd-rescan"))ddScan();else ddUndo(t.getAttribute("data-dd-undo"))});
+document.addEventListener("change",e=>{const c=e.target.closest&&e.target.closest("[data-dd-pick]");if(c){DD.pick[c.getAttribute("data-dd-pick")]=c.checked;ddPaint()}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&DD.open&&!DD.busy)ddClose()});
+
 document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest("[data-lens-retry]");if(r){e.preventDefault();LENS_TRIES=0;lensRepaint();lensModels()}});
 document.addEventListener("click",e=>{const r=e.target.closest&&e.target.closest("[data-lens-rm]");if(r)lensRemove(r.dataset.lensRm)});
 /* ---------- Everything in one view: the whole agency, tasks on the week, and a day brief that plans for you ---------- */
@@ -3785,7 +3854,10 @@ function peFind(id){return portalEvs().find(x=>x.id===id)}
 function eventsFor(s){
  /* Models calendar: model items plus what I linked to a model. My calendar: my own schedule (including what I linked to a model). */
  const base=modeModels()?(core().events||[]).filter(e=>(e.agModels||[]).length).concat(modelEvs(),agencyEvs()).filter(e=>!kindHide()[kindOf(e)]):(core().events||[]).concat(msEvents(),icsEvents(),portalEvs(),bossEvents());
- return base.filter(e=>evOccurs(e,s)).sort((a,b)=>(a.t||"99")<(b.t||"99")?-1:1)}
+ const list=base.filter(e=>evOccurs(e,s)).sort((a,b)=>(a.t||"99")<(b.t||"99")?-1:1);
+ if(!modeModels())return list;
+ /* the same model item stored twice shows once (Clean up duplicates removes the extra copy for good) */
+ const seen=new Set();return list.filter(e=>{const k=[kindOf(e),String(e.title||"").toLowerCase().replace(/[^a-z0-9]+/g," ").trim(),e.d||"",e.t||"",e.e||"",(e.modelIds||e.agModels||[]).map(m=>m&&m.id||m).sort().join(",")].join("|");if(seen.has(k))return false;seen.add(k);return true})}
 function evDone(e,s){const d=S.days[s];return!!(d&&d.ev&&d.ev[e.id])}
 function evLine(e){return(e.t?fmtT(e.t)+(e.e?" to "+fmtT(e.e):"")+" · ":"All day · ")+e.title}
 function evForm(date){

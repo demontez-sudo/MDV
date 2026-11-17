@@ -98,6 +98,24 @@ async function fallbackSaveEvent(admin,organizationId,userId,action,eventId,payl
   return {verified:true,event:verify,model_ids:actual,persisted_at:verify.updated_at||verify.created_at||new Date().toISOString(),fallback:true};
 }
 
+/* an event with the same title, start, end and models that is not cancelled. Any trouble reading just means "no twin": a save must never fail because of this check. */
+async function findExistingTwin(admin,organizationId,payload,ids){
+  try{
+    const same=await rows(admin.from('events').select('*').eq('organization_id',organizationId).eq('starts_at',payload.starts_at).limit(50));
+    const key=v=>String(v==null?'':v).toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+    const t=v=>Number.isFinite(Date.parse(v))?Date.parse(v):null;
+    const want=[...ids].sort().join('|');
+    for(const e of same){
+      if(String(e.status||'')==='cancelled')continue;
+      if(key(e.title)!==key(payload.title)||t(e.ends_at)!==t(payload.ends_at))continue;
+      if(String(e.booking_id||e.casting_id||'')!==''||(e.recurrence_rule||'')!==(payload.recurrence_rule||''))continue;
+      const links=await rows(admin.from('event_models').select('model_id').eq('organization_id',organizationId).eq('event_id',e.id));
+      const have=cleanIds(links.map(x=>x.model_id)).sort();
+      if(have.join('|')===want)return {event:e,model_ids:have};
+    }
+  }catch(e){console.warn('[calendar] duplicate check skipped',String(e?.message||e).slice(0,100));}
+  return null;
+}
 export const handler=async(event)=>{
   if(!['GET','POST'].includes(event.httpMethod))return json(405,{error:'Method not allowed'});
   try{
@@ -177,6 +195,14 @@ export const handler=async(event)=>{
           recurrence_rule:body.recurrence_rule||null,
           metadata
         };
+        /* the same event added a second time (a double click, a retry, an import run twice) comes back as the one that is already there */
+        if(action==='create_event'){
+          const twin=await findExistingTwin(admin,organization.id,payload,ids);
+          if(twin){
+            console.log('[calendar] create skipped: identical event already exists',twin.event.id);
+            return json(200,{ok:true,verified:true,event:twin.event,model_ids:twin.model_ids,task:null,persisted_at:twin.event.updated_at||twin.event.created_at||new Date().toISOString(),duplicate_prevented:true});
+          }
+        }
         let saved=null;
         const rpcResult=await admin.rpc('save_event_full_v1',{target_org:organization.id,target_event:action==='update_event'?body.event_id:null,target_payload:payload,target_model_ids:ids,target_user:user.id});
         if(rpcResult.error){
@@ -245,7 +271,8 @@ export const handler=async(event)=>{
       const events=allEvents.filter(x=>visibleToUser(x,user.id)&&(inRange(x.starts_at,start,end)||hasRepeat(x)||runsInto(x,start)));
       const bookings=allBookings.filter(x=>inRange(x.starts_at,start,end)||hasRepeat(x)||runsInto(x,start));
       const castings=allCastings.filter(x=>inRange(x.starts_at,start,end)||hasRepeat(x)||runsInto(x,start));
-      const links=(table,col,ids)=>ids.length?rows(admin.from(table).select('id,'+col+',model_id,attendance_status').eq('organization_id',organization.id).in(col,ids)).catch(()=>[]):Promise.resolve([]);
+      /* select('*'): these link tables are keyed on (event_id, model_id) and may have no id column, and a failed select here silently left every event without its models */
+      const links=(table,col,ids)=>ids.length?rows(admin.from(table).select('*').eq('organization_id',organization.id).in(col,ids)).catch(e=>{console.warn('[calendar lite] could not read '+table,e&&e.message);return [];}):Promise.resolve([]);
       const [eventModels,bookingModels,castingModels]=await Promise.all([links('event_models','event_id',events.map(x=>x.id)),links('booking_models','booking_id',bookings.map(x=>x.id)),links('casting_models','casting_id',castings.map(x=>x.id))]);
       const mm=new Map(models.map(x=>[x.id,{id:x.id,display_name:x.display_name}]));
       const em=group(eventModels,'event_id'),bm=group(bookingModels,'booking_id'),castm=group(castingModels,'casting_id');
@@ -359,3 +386,4 @@ export const handler=async(event)=>{
     });
   }catch(error){return errorResponse(error);}
 };
+export const __test={findExistingTwin};
