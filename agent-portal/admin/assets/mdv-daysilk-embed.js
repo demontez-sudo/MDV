@@ -397,6 +397,16 @@ function saveBooking(body){
     calendarChanged();return r;
   });
 }
+/* one save for every kind the event form makes: a booking, a casting, a travel record, a plain event, or an invoice from a booking */
+var SEND={booking:'/api/agent/bookings/v9',casting:'/api/agent/bookings/v9',event:'/api/agent/calendar/v9',travel:'/api/agent/mobility',invoice:'/api/agent/finance'};
+function send(kind,body){
+  if(!SEND[kind])return Promise.reject(new Error('Unknown save type'));
+  var b={};for(var k in (body||{}))b[k]=body[k];b.organization_slug=org();
+  return post(SEND[kind],b).then(function(r){
+    if(kind!=='invoice'&&(!r||r.verified!==true))throw new Error((kind==='booking'?'The booking':kind==='casting'?'The casting':kind==='travel'?'The travel record':'The event')+' was not confirmed as saved.');
+    calendarChanged();return r;
+  });
+}
 function setEventPay(id,pay){return post('/api/agent/calendar/v9',{organization_slug:org(),action:'set_event_pay',event_id:id,paid:!!(pay&&pay.paid),pay_amount:pay&&pay.paid?pay.amount:null,currency:(pay&&pay.cur)||'USD'}).then(function(r){calendarChanged();return r;});}
 function deleteAgencyEvent(id){return post('/api/agent/calendar/v9',{organization_slug:org(),action:'delete_event',event_id:id}).then(function(r){calendarChanged();return r;});}
 /* Model movement: stays, flights and movement windows of the models, from today (a few days back) to about ten weeks ahead */
@@ -417,7 +427,7 @@ function modelMovement(force){
     return out.slice(0,120);
   });
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,calendarStatus:function(){return {err:CS.err||'',at:CS.at||0};},saveAgencyEvent:saveAgencyEvent,deleteAgencyEvent:deleteAgencyEvent,bookingLookups:bookingLookups,setEventPay:setEventPay,saveBooking:saveBooking,dedupe:dedupe,modelMovement:modelMovement,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,calendarStatus:function(){return {err:CS.err||'',at:CS.at||0};},saveAgencyEvent:saveAgencyEvent,deleteAgencyEvent:deleteAgencyEvent,bookingLookups:bookingLookups,setEventPay:setEventPay,send:send,saveBooking:saveBooking,dedupe:dedupe,modelMovement:modelMovement,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */
