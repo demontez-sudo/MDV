@@ -261,7 +261,7 @@ function guardNav(){
     if(E.hold&&Date.now()<E.hold&&/^(travel|globalmobility|mobility|travelvisa|travel-visa)$/i.test(String(p||''))){try{console.warn('[DaySilk] ignored a jump to',p);}catch(x){}return;}
     return n.apply(this,arguments);
   };
-  g.__dsGuard=true;g.__cavyreMobilityAlias=!!n.__cavyreMobilityAlias;g.__previous=n;window.navTo=g;   /* the alias layer is already underneath: stops it wrapping on top of us again and again */
+  g.__dsGuard=true;g.__dsCal=!!n.__dsCal;g.__cavyreMobilityAlias=!!n.__cavyreMobilityAlias;g.__previous=n;window.navTo=g;   /* the alias layer is already underneath: stops it wrapping on top of us again and again */
 }
 setInterval(guardNav,500);guardNav();
 /* The owner's DaySilk (The Rebuild) is a full page like every other portal page: the frame is as tall as its content and the portal page scrolls.
@@ -307,12 +307,21 @@ function attach(root){
   h.innerHTML='<iframe class="dse-hf" src="'+esc(src()+'?home=1')+'" title="DaySilk today" allowtransparency="true" scrolling="no"></iframe>';
 }
 function size(px){if(!(px>20))return;document.querySelectorAll('.dse-hf').forEach(function(f){f.style.height=px+'px';});}
-function openView(v,t){
+function openView(v,t,mode){
   E.want=v;go('helm');var n=0,iv=setInterval(function(){
     n++;var w=frameWin();
-    if(w&&E.host&&E.host.offsetParent!==null){try{w.__dsGo(v,t);}catch(x){}clearInterval(iv);}else if(n>50)clearInterval(iv);
+    if(w&&E.host&&E.host.offsetParent!==null){try{if(mode&&w.__dsMode)w.__dsMode(mode);w.__dsGo(v,t);}catch(x){}clearInterval(iv);}else if(n>50)clearInterval(iv);
   },150);
 }
+/* The portal's Calendar page is DaySilk's Models calendar. Anything that used to open the old Model Agenda (the sidebar, Today, Book, Model 360,
+   Season, Visa, a #calendar link) lands there instead. */
+function toModelsCalendar(){openView('schedule','week','models');}
+function wireCalendar(){
+  var n=window.navTo;
+  if(typeof n==='function'&&!n.__dsCal){var f=function(p){if(String(p==null?'':p)==='calendar'){toModelsCalendar();return;}return n.apply(this,arguments);};f.__dsCal=true;f.__dsGuard=!!n.__dsGuard;f.__cavyreMobilityAlias=!!n.__cavyreMobilityAlias;f.__previous=n;window.navTo=f;}
+  if(!window.renderCalendar||!window.renderCalendar.__dsCal){var r=function(el){try{if(el)el.innerHTML='<div class="dse-note"><p>Opening the calendar in DaySilk\u2026</p></div>';}catch(x){}toModelsCalendar();};r.__dsCal=true;window.renderCalendar=r;}
+}
+setInterval(wireCalendar,500);wireCalendar();
 /* Put events on the owner's own DaySilk calendar (used by "Add to calendar / tasks" in Mail).
    Reads the saved copy, adds the events, saves it back; a DaySilk that is open merges the new events in by itself. */
 function addEvents(list){
