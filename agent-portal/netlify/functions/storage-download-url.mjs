@@ -9,7 +9,7 @@ export const handler=async(event)=>{
     if(doc.status!=='active')return json(410,{error:'Document is not active'});
     if(doc.storage_provider==='external')return json(200,{url:doc.external_url,expires_in:null});
     if(doc.storage_provider!=='supabase'||!doc.storage_bucket||!doc.storage_path)return json(409,{error:'Document has no downloadable storage object'});
-    const expires=Math.min(3600,Math.max(60,Number(event.queryStringParameters?.expires_in||300)));const {data:signed,error:se}=await admin.storage.from(doc.storage_bucket).createSignedUrl(doc.storage_path,expires);if(se)throw se;
+    const expires=Math.min(3600,Math.max(60,Number(event.queryStringParameters?.expires_in||300)));const wantDownload=event.queryStringParameters?.download==='1';const {data:signed,error:se}=await admin.storage.from(doc.storage_bucket).createSignedUrl(doc.storage_path,expires,wantDownload?{download:doc.name||true}:undefined);if(se)throw se;
     return json(200,{document:{id:doc.id,name:doc.name},url:signed.signedUrl,expires_in:expires});
   }catch(error){return errorResponse(error)}
 };

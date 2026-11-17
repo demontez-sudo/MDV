@@ -241,3 +241,12 @@ html[data-outlook="workspace"] #pm::after{content:"";display:block;height:96px}
 
 #ws-hubbar .ws-hubsep{flex:0 0 1px;align-self:stretch;margin:6px 4px;background:var(--ws-line,rgba(255,255,255,.14))}
 html body #pm #ws-hubbar .ws-hubtab[data-ds-go]{}
+
+/* shortcut bar: steps aside for dialogs, and can be tucked away */
+html[data-modal-open] #ws-dock,html[data-modal-open] #ws-dock-open{display:none!important}
+html[data-dock="min"] #ws-dock{display:none!important}
+#ws-dock .ws-dk-x{position:absolute;top:-11px;right:14px;width:24px;height:24px;display:grid;place-items:center;padding:0;border-radius:50%;border:1px solid var(--ws-line);background:#0d0a08;color:var(--ws-mute);cursor:pointer;opacity:.75;min-height:0}
+#ws-dock .ws-dk-x:hover{opacity:1;color:var(--ws-ink)}#ws-dock .ws-dk-x i{font-size:14px}
+#ws-dock-open{display:none;position:fixed;left:calc(var(--ws-side) + (100% - var(--ws-side))/2);transform:translateX(-50%);bottom:10px;z-index:5000;align-items:center;gap:7px;padding:7px 16px;border-radius:999px;border:1px solid var(--ws-line);background:color-mix(in srgb,#0d0a08 88%,transparent);backdrop-filter:blur(14px);color:var(--ws-mute);font:500 12px Archivo,Inter,sans-serif;letter-spacing:.04em;cursor:pointer;min-height:0}
+#ws-dock-open:hover{color:var(--ws-ink)}html[data-dock="min"] #ws-dock-open{display:inline-flex}
+@media(max-width:900px){#ws-dock-open{display:none!important}}

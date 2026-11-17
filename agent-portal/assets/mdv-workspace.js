@@ -67,6 +67,9 @@ function buildDock(){
   if(!dk){dk=document.createElement('nav');dk.id='ws-dock';dk.setAttribute('aria-label','Shortcuts');app.appendChild(dk);}
   var s=items.map(function(d){return d[0];}).join();
   if(dk.dataset.sig!==s){dk.dataset.sig=s;dk.innerHTML=items.map(function(d){return '<button type="button" class="ws-dk" data-dock="'+d[0]+'"><i class="ti '+d[2]+'"></i><span>'+d[1]+'</span>'+(d[0]==='helm'||d[0]==='mail'?'<em class="ws-dkb" data-badge="'+(d[0]==='mail'?'mail':'tasks')+'" hidden></em>':'')+'</button>';}).join('');}
+  if(!dk.querySelector('.ws-dk-x'))dk.insertAdjacentHTML('beforeend','<button type="button" class="ws-dk-x" data-dock-hide aria-label="Hide the shortcut bar" title="Hide the shortcut bar"><i class="ti ti-chevron-down"></i></button>');
+  if(!document.getElementById('ws-dock-open')){var op=document.createElement('button');op.type='button';op.id='ws-dock-open';op.setAttribute('data-dock-show','');op.setAttribute('aria-label','Show the shortcut bar');op.title='Show the shortcut bar';op.innerHTML='<i class="ti ti-chevron-up"></i><span>Shortcuts</span>';app.appendChild(op);}
+  try{document.documentElement.dataset.dock=localStorage.getItem('mdv-dock-min')==='1'?'min':'';}catch(e){}
   var cur=current();dk.querySelectorAll('.ws-dk').forEach(function(b){b.classList.toggle('on',b.dataset.dock===cur||(b.dataset.dock==='helm'&&['tasksconsolidated','approvals','escalations','changecontrol'].indexOf(cur)>-1)||(b.dataset.dock==='globalmobility'&&cur==='visa')||(b.dataset.dock==='financelegal'&&['modelaccounts','agentcommissions'].indexOf(cur)>-1));});
 }
 function itemHtml(it){
@@ -137,6 +140,8 @@ document.addEventListener('click',function(e){
   var so=t.closest('#ws-fly [data-go="__signout__"]');if(so){closeFly();if(typeof window.signOut==='function')window.signOut();return;}
   var it=t.closest('#ws-side .ws-it');
   if(it){var sb=document.getElementById('ws-side'),def=sb.__items&&sb.__items[it.dataset.item];if(def&&def.sub&&def.sub.length){if(openId===def.id)closeFly();else fly(it,def);}else navigate(it.dataset.page);return;}
+  if(t.closest('[data-dock-hide]')){try{localStorage.setItem('mdv-dock-min','1');}catch(e){}document.documentElement.dataset.dock='min';return;}
+  if(t.closest('[data-dock-show]')){try{localStorage.removeItem('mdv-dock-min');}catch(e){}document.documentElement.dataset.dock='';return;}
   var dk=t.closest('#ws-dock [data-dock]');if(dk){navigate(dk.dataset.dock);return;}
   var fi=t.closest('#ws-fly [data-go]');if(fi){navigate(fi.dataset.go);return;}
   var u=t.closest('[data-ws-user]');if(u){if(openId==='user')closeFly();else fly(u,{id:'user',label:'Account',sub:[['systemsettings','Settings & appearance'],['__signout__','Sign out']]});return;}
@@ -540,4 +545,15 @@ window.addEventListener('resize',function(){if(window.innerWidth===lastW)return;
 window.addEventListener('hashchange',tick);window.addEventListener('popstate',tick);window.addEventListener('veux:agency-v16-session',tick);
 window.MDV_WORKSPACE={active:function(){return outlook()==='workspace'&&(isPhone()||!window.matchMedia||!window.matchMedia('(max-width:900px)').matches);},phone:isPhone,sections:function(){return SECTIONS;},settings:function(){return SETTINGS;},counts:function(){var p=window.VEUX_SMART_PORTAL&&VEUX_SMART_PORTAL.last,w=window.MDV_MAIL&&MDV_MAIL.widget&&MDV_MAIL.widget();return {tasks:p&&p.tasks?arr(p.tasks.open).length:0,mail:(w&&w.unread)||0};},home:home,get:outlook,set:function(v){try{localStorage.setItem(KEY,v);}catch(e){}apply(v);tick();if(window.VEUX_SMART_PORTAL&&VEUX_SMART_PORTAL.refresh&&String(window._currentPage||'')==='overview')VEUX_SMART_PORTAL.refresh();}};
 tick();
+})();
+
+/* The shortcut bar floats over the bottom of the screen. While a dialog is open it steps aside, so the dialog's own buttons (Cancel, Save changes) are never covered. */
+(function(){
+  var SEL='.ct-back,.cvx-modal-bg,.cvycrm55-back,.cvyvr47-overlay,.fin-modal-back,.hm-modal,.mc-modal,.mdvf-modal-back,.mf-back,.mm-modal-back,.mp-back,.ot-back,.pk-upd-back,.sc-modal-back,.sch-modal,.sr-back,.sv-back,.v153-modal,.v155-modal-bg,.v1686-modalback,.v16860-media-modal,.vs-back,.vx161142-backdrop,.vx161275-backdrop,.vx16918-modalback,.vx82-modal-back,[role="dialog"][aria-modal="true"],dialog[open]';
+  var t=null;
+  function open(){var els=document.querySelectorAll(SEL);for(var i=0;i<els.length;i++){var e=els[i];if(e.closest('#ws-dock'))continue;var r=e.getBoundingClientRect();if(r.width<200||r.height<120)continue;var cs=getComputedStyle(e);if(cs.display!=='none'&&cs.visibility!=='hidden'&&cs.opacity!=='0')return true;}return false;}
+  function check(){t=null;var o=open(),h=document.documentElement;if(o){if(!h.hasAttribute('data-modal-open'))h.setAttribute('data-modal-open','');}else if(h.hasAttribute('data-modal-open'))h.removeAttribute('data-modal-open');}
+  function soon(){if(t)return;t=setTimeout(check,120);}
+  function start(){if(!document.body)return setTimeout(start,200);try{new MutationObserver(soon).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style','open','hidden','aria-hidden']});}catch(e){}soon();}
+  start();
 })();

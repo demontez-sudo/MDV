@@ -14,7 +14,9 @@ import { resendReady, shouldUseResend, sendViaResend, quoteHtml, copyTarget, sav
 const clean = v => String(v ?? '').trim();
 const FOLDER_ALIASES = new Set(FOLDERS.map(f => f[0]));
 const folderOf = v => { const f = clean(v || 'inbox').toLowerCase(); if (!FOLDER_ALIASES.has(f)) throw appError(400, 'Unknown mail folder.', 'MAIL_BAD_FOLDER'); return f; };
-const NEXT_RX = /^https:\/\/graph\.microsoft\.com\/v1\.0\/me\/(mailFolders|messages)[/?]/;
+/* Microsoft's own next-page link: it comes back as /me/mailFolders('inbox')/messages?… (with brackets) or /users('id')/mailFolders('inbox')/messages?…,
+   and only ever points at the same Graph host. The old check accepted just /me/mailFolders/… and /me/messages, so Load more always failed. */
+const NEXT_RX = /^https:\/\/graph\.microsoft\.com\/v1\.0\/(?:me|users(?:\('[^')]{1,200}'\)|\/[^/?#]{1,200}))\/(?:mailFolders(?:\('[^')]{1,200}'\))?|messages)(?:[/?]|$)/;
 
 function publicConn(c) {
   return c ? { connected: c.status === 'active', needs_reconnect: c.status === 'needs_reconnect', email: c.email, display_name: c.display_name, connected_at: c.created_at, signature: cleanSignature(c.signature) } : { connected: false };

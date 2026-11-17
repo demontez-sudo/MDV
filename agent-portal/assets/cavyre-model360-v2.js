@@ -251,7 +251,14 @@ function tMaterials(){
   if(M.mat.cat==='Call Sheets'){
     body='<div data-mdv-callsheets data-model-id="'+esc(model().id||M.id||'')+'" data-model-name="'+esc(model().display_name||'this model')+'"></div>';
   }else if(M.mat.cat==='Documents'){
-    body=docs.length?'<ul class="m360-docs">'+docs.map(function(d){return '<li>'+ic('ti-file-text')+'<div><b>'+esc(d.name||d.title||'Document')+'</b><p>'+esc(d.category||'general')+' · '+esc(fmtDate(d.created_at))+'</p></div>'+(d.visible_to_model?chip('Model can see','ok'):chip('Internal',''))+'</li>';}).join('')+'</ul>':empty('No documents uploaded.');
+    body=docs.length?'<ul class="m360-docs">'+docs.map(function(d){
+      /* the API returns document LINKS; the file itself (name, type, size) is under d.documents */
+      var f=d.documents||{},id=d.document_id||f.id||'',name=f.name||d.name||d.title||'Untitled file',cat=f.category||d.category||'general',sz=Number(f.size_bytes||0),
+          size=sz>=1048576?(sz/1048576).toFixed(1)+' MB':sz?Math.max(1,Math.round(sz/1024))+' KB':'',ext=String(name).indexOf('.')>-1?String(name).split('.').pop().slice(0,4).toUpperCase():'';
+      var can=id&&String(f.status||'active')==='active';
+      return '<li class="m360-doc">'+ic('ti-file-text')+'<div><b title="'+esc(name)+'">'+esc(name)+'</b><p>'+esc([cat,ext,size,fmtDate(f.created_at||d.created_at)].filter(Boolean).join(' · '))+'</p></div>'
+        +(d.visible_to_model?chip('Model can see','ok'):chip('Internal',''))
+        +(can?'<span class="m360-docact"><button type="button" class="m360-pill" onclick="CAVYRE_M360.openDoc(\''+esc(id)+'\')">View</button><button type="button" class="m360-pill" onclick="CAVYRE_M360.openDoc(\''+esc(id)+'\',1)">Download</button></span>':'<span class="m360-docact"><small>No file</small></span>')+'</li>';}).join('')+'</ul>':empty('No documents uploaded.');
   }else{
     var items=matItems();
     body=items.length?'<div class="m360-media '+M.mat.view+'">'+items.map(function(x){var vid=String(x.media_type||'').toLowerCase()==='video',id=esc(x.id);return '<article class="m360-mcard'+(x.is_primary?' primary':'')+'"><button type="button" class="m360-mimg" onclick="CAVYRE_M360.viewer(\''+id+'\')">'+(vid?'<span class="m360-play">'+ic('ti-player-play')+'</span>':'<img loading="lazy" src="'+esc(x.url||'')+'" alt="">')+(x.is_primary?'<span class="m360-badge">Profile</span>':'')+'</button><div class="m360-mmeta"><div><b>'+esc(x.caption||catOf(x))+'</b><small>'+esc(catOf(x))+' · '+esc(fmtDate(x.created_at,{month:'short',year:'numeric'}))+'</small></div><button type="button" class="m360-dots" aria-label="Actions" onclick="VEUX_V156.toggleMediaActions(\''+id+'\',event)">'+ic('ti-dots')+'</button></div><div class="v16933-media-menu" id="v16933-menu-'+id+'"><button type="button" onclick="CAVYRE_M360.viewer(\''+id+'\')">View Full</button>'+(!x.is_primary&&!vid?'<button type="button" onclick="CAVYRE_M360.setMain(\''+id+'\')">Use as Main Image</button>':'')+'<button type="button" onclick="CAVYRE_M360.viewer(\''+id+'\')">Edit Details</button>'+(!x.is_primary?'<button type="button" class="danger" onclick="CAVYRE_M360.delMedia(\''+id+'\')">Delete</button>':'')+'</div></article>';}).join('')+'</div>':empty('No media in this category.');
@@ -467,7 +474,16 @@ function lbSave(){
 /* ---------- actions ---------- */
 function notesApi(body){return post('/api/agent/model-360',Object.assign({model_id:M.id},body));}
 function reload(){return load(true).then(function(){paint();});}
-window.CAVYRE_M360={
+/* View or download a model document through the signed-link endpoint (opens the tab first so the browser does not block it) */
+function openDoc(id,download){
+  if(!id)return;var w=download?null:window.open('','_blank');
+  get('/api/storage/download-url?document_id='+encodeURIComponent(id)+(download?'&download=1':'')).then(function(r){
+    if(!r||!r.url)throw new Error('No link came back for this file.');
+    if(download){var a=document.createElement('a');a.href=r.url;a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}
+    else if(w)w.location.href=r.url;else window.open(r.url,'_blank');
+  }).catch(function(e){if(w)try{w.close();}catch(x){}toast((e&&e.message)||'That file could not be opened.');});
+}
+window.CAVYRE_M360={openDoc:openDoc,
   version:'2.0.0',render:render,tab:setTab,refresh:function(){M.error=null;paint();return reload().catch(function(e){M.error=e&&e.message||String(e);paint();});},
   ask:function(i){var p=M.prompts[i];if(!p)return;try{if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open)return MDV_VEUXI_CHAT.open(p);}catch(e){}var inp=document.querySelector('.vx73-command input');if(inp){inp.value=p;inp.focus();toast('Press Enter to ask Veux');}},
   askAbout:function(){M.menu=false;var it=M.intel||{},n=model().display_name||'this model';var p='Review '+n+' and recommend next steps. Live signals: '+(signals().slice(0,5).map(function(s){return s.title+' ('+s.detail+')';}).join('; ')||'none')+'.';try{if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open)return MDV_VEUXI_CHAT.open(p);}catch(e){}var inp=document.querySelector('.vx73-command input');if(inp){inp.value=p;inp.focus();}},
