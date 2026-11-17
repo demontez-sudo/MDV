@@ -1373,7 +1373,7 @@ html.emb .cal .cell .ev{background:rgba(255,255,255,.07);color:#efe3cf;border-le
 .cx-rt{position:absolute;left:0;right:0;overflow:hidden;border:0;border-left:3px solid var(--kc,var(--k-recharge));background:color-mix(in srgb,var(--kc,var(--k-recharge)) 12%,transparent);color:var(--muted);border-radius:4px;padding:3px 7px;font:500 11px var(--sans);text-align:left;cursor:pointer;line-height:1.25;display:flex;flex-direction:column;gap:1px}.cx-rt small{font-size:9.5px;opacity:.75;letter-spacing:.02em}.cx-rt.done{opacity:.45;text-decoration:line-through}.cx-rt b{font-weight:500}
 .cx-ev{position:absolute;overflow:hidden;text-align:left;border:0;border-left:3px solid var(--kc,var(--k-connect));border-radius:6px;background:color-mix(in srgb,var(--kc,var(--k-connect)) 24%,var(--surface));color:var(--ink);padding:3px 8px;font:inherit;cursor:pointer;display:flex;flex-direction:column;gap:1px;line-height:1.25;z-index:2}
 .cx-agshare[hidden]{display:none!important}
-.lens-kinds{display:flex;flex-wrap:wrap;gap:6px;flex-basis:100%;margin-top:2px}.lens-kinds button{background:none;border:1px solid var(--line,rgba(255,255,255,.18));color:var(--muted);padding:4px 11px;font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;border-radius:14px}.lens-kinds button.on{background:var(--gold,#d4b077);border-color:var(--gold,#d4b077);color:#15110c;font-weight:600}
+.lens-kinds{display:flex;flex-wrap:wrap;gap:6px;flex-basis:100%;margin-top:2px}.lens-kinds button{background:none;border:1px solid var(--line,rgba(255,255,255,.18));color:var(--muted);padding:4px 11px;font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;border-radius:14px}.lens-kinds button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
 /* Orbit: the day as a dial, moved here from the old agent calendar */
 /* ===== Orbit: the day as a smart dial ===== */
 .so-wrap{--serif:Georgia,serif;--ok:#4aa56a;--pend:#c9a23d;--risk:#e0523f;--trav:#4f86d4;display:grid;gap:14px;color:var(--ink)}
@@ -1405,7 +1405,7 @@ html.emb .cal .cell .ev{background:rgba(255,255,255,.07);color:#efe3cf;border-le
 .so-x{min-height:0!important;width:30px;height:30px;padding:0;border-radius:50%;border:1px solid var(--line);background:none;color:var(--ink);cursor:pointer;font-size:18px;line-height:1;box-shadow:none!important}
 .so-acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 .so-open,.so-join{min-height:40px!important;display:inline-flex;align-items:center;padding:0 16px;border-radius:999px;font:600 13px Inter,sans-serif;letter-spacing:0!important;text-transform:none!important;text-decoration:none;cursor:pointer;box-shadow:none!important}
-.so-open{border:1px solid var(--line);background:none;color:var(--ink)}.so-join{background:var(--gold);color:#15110c!important;border:0}
+.so-open{border:1px solid var(--line);background:none;color:var(--ink)}.so-join{background:var(--accent);color:var(--accent-ink)!important;border:0}
 .so-att,.so-task,.so-row{min-height:0!important;letter-spacing:0!important;text-transform:none!important;box-shadow:none!important}
 .so-att{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;width:100%;text-align:left;border:0;border-left:3px solid var(--pend);background:color-mix(in srgb,var(--ink) 3%,transparent);border-radius:8px;padding:7px 10px;margin:0 0 6px;color:inherit;cursor:pointer}.so-att.risk{border-left-color:var(--risk)}.so-att.warn{border-left-color:#e0a23f}.so-att b{font:600 12px Inter,sans-serif}.so-att span{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .so-wins{display:flex;flex-wrap:wrap;gap:8px}.so-wins span{display:inline-flex;flex-direction:column;padding:7px 12px;border-radius:10px;background:rgba(74,165,106,.12);border:1px solid rgba(74,165,106,.45);font-size:13px}.so-wins small{letter-spacing:0;text-transform:none;color:#9ad8b0;font-size:11px}
@@ -1489,6 +1489,10 @@ html.emb .cal .cell .ev{background:rgba(255,255,255,.07);color:#efe3cf;border-le
 .ma-range{display:inline-flex;align-items:center;padding:0 16px;font-size:12px;color:var(--ink);border-left:1px solid var(--line);border-right:1px solid var(--line);white-space:nowrap}
 .ma-tabs{display:inline-flex;border:1px solid var(--line);background:var(--surface)}.ma-tabs button{background:none;border:0;color:var(--muted);padding:0 16px;min-height:40px;font:inherit;font-size:12px;letter-spacing:.16em;text-transform:uppercase;cursor:pointer}.ma-tabs button.on{color:var(--gold);box-shadow:inset 0 0 0 1px var(--accent);background:color-mix(in srgb,var(--accent) 14%,transparent)}
 /* round controls on the Models calendar */
+/* round controls everywhere in DaySilk */
+.btn{border-radius:999px;padding:7px 16px}
+.calmode{border-radius:999px;overflow:hidden;padding:3px;gap:2px}.calmode button{border-radius:999px}.calmode button+button{border-left:0}
+.cx-quick .sa-in{border-radius:999px;padding-left:18px}
 .ma-nav,.ma-tabs,.ma-pre .calmode,.mg-seg{border-radius:999px;overflow:hidden}
 .ma-add,.ma-sel,.ma-split,.mgbar-dd,.mg-day{border-radius:999px}
 .ma-tabs button,.mg-seg button,.ma-pre .calmode button{border-radius:999px}
@@ -1549,7 +1553,7 @@ html.emb .cal .cell .ev{background:rgba(255,255,255,.07);color:#efe3cf;border-le
 .mg-gap{display:flex;align-items:center;gap:14px;padding:7px 14px 7px 12px;border-top:1px dashed var(--line);font-size:12px;color:var(--muted)}.mg-gap span{font:12px var(--mono,monospace);min-width:92px;text-align:right}.mg-gap em{font-style:normal;opacity:.7}
 .mg-dayview .mg-dmain{gap:12px}
 .orbbar{margin:0 0 12px}.cx-orbwrap{min-width:0}.cx-intel .so-sigs{margin:0 0 8px}.cx-intel .so-att{margin:0 0 6px}
-.calmode{display:inline-flex;border:1px solid var(--line,rgba(255,255,255,.18));margin-right:6px}.calmode button{background:none;border:0;color:var(--muted);padding:7px 14px;font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}.calmode button.on{background:var(--gold,#d4b077);color:#15110c;font-weight:600}.calmode button+button{border-left:1px solid var(--line,rgba(255,255,255,.18))}
+.calmode{display:inline-flex;border:1px solid var(--line,rgba(255,255,255,.18));margin-right:6px}.calmode button{background:none;border:0;color:var(--muted);padding:7px 14px;font:inherit;font-size:12px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}.calmode button.on{background:var(--accent);color:var(--accent-ink);font-weight:600}.calmode button+button{border-left:1px solid var(--line,rgba(255,255,255,.18))}
 .cx-ev small{font-size:10.5px;color:var(--muted)}.cx-ev b{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cx-ev span{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.cx-ev:hover{z-index:3;background:color-mix(in srgb,var(--kc,var(--k-connect)) 36%,var(--surface))}.cx-ev.src-model{border-left-style:dashed}.cx-ev.src-agency{opacity:.82}.cx-ev.onag small::after{content:" · Model Agenda";color:var(--gold)}
 .cx-free{position:absolute;left:0;right:0;border:1px dashed color-mix(in srgb,var(--ok) 45%,transparent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--ok);font-size:11px;pointer-events:none;z-index:1}
 .cx-tk{position:absolute;left:0;right:0;z-index:4;border:0;background:none;display:flex;align-items:center;gap:7px;cursor:pointer;color:var(--ink);font:600 11px var(--sans);padding:0;margin-top:-6px;text-align:left}.cx-tk i{width:9px;height:9px;transform:rotate(45deg);background:var(--gold);flex:none}.cx-tk span{background:var(--surface);padding:1px 6px;border-radius:4px;border:1px solid var(--line);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3866,7 +3870,8 @@ function embSkin(){
   const bg=(getComputedStyle(r).getPropertyValue("--bg")||"").trim(),dark=/^#[0-9a-f]{6}$/i.test(bg)?lum(bg)<.5:true;
   r.style.setProperty("--accent",hex);
   r.style.setProperty("--gold",dark?"color-mix(in srgb,"+hex+" 72%,#fff)":"color-mix(in srgb,"+hex+" 80%,#000)");
-  r.style.setProperty("--accent-ink",lum(hex)>.58?"#15100D":"#FFFFFF");
+  r.style.setProperty("--accent-ink",lum(hex)>.58?"#120D1F":"#FFFFFF");
+  if(dark)r.style.setProperty("--muted","color-mix(in srgb,"+hex+" 22%,#BDB9C8)");
   r.setAttribute("data-emb-wave",w);
  }catch(_){}
 }
