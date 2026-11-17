@@ -27,9 +27,8 @@ function dayDiff(iso){if(!iso)return null;var d=new Date(iso);if(isNaN(d))return
 var SECTIONS=[
  {cap:'Daily',items:[
   {id:'home',label:'Home',icon:'ti-home-2',page:'overview'},
-  {id:'helm',label:'DaySilk',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','DaySilk'],['tasksconsolidated','Team Tasks'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control']]},
-  {id:'inbox',label:'Inbox',icon:'ti-inbox',page:'inbox',badge:'inbox',sub:[['inbox','Messages'],['mail','Mail'],['notes','Notes']]},
-  {id:'calendar',label:'Calendar',icon:'ti-calendar',page:'calendar',sub:[['calendar','Model Agenda'],['availability','Availability']]}]},
+  {id:'helm',label:'DaySilk',icon:'ti-compass',page:'helm',badge:'tasks',sub:[['helm','DaySilk'],['tasksconsolidated','Team Tasks'],['approvals','Approvals'],['escalations','Escalations'],['changecontrol','Change Control'],['availability','Availability']]},
+  {id:'inbox',label:'Inbox',icon:'ti-inbox',page:'inbox',badge:'inbox',sub:[['inbox','Messages'],['mail','Mail'],['notes','Notes']]}]},
  {cap:'Agency',items:[
   {id:'roster',label:'Roster',icon:'ti-users',page:'roster',sub:[['roster','Roster'],['scouting','Scouting'],['seasonmanagement','Season'],['modeldevelopment','Development'],['modelevaluations','Evaluations'],['modelsubmissions','Submissions']]},
   {id:'clients',label:'Clients',icon:'ti-user-circle',page:'industrydirectory',sub:[['industrydirectory','Clients'],['outreach','Outreach']]},
@@ -53,7 +52,7 @@ function visible(){
   function fix(it){var sub=arr(it.sub).filter(function(s){return ok[s[0]];}),page=it.page&&ok[it.page]?it.page:(sub[0]&&sub[0][0])||null;if(!page)return null;sub.forEach(function(s){seen[s[0]]=1;});seen[page]=1;return Object.assign({},it,{page:page,sub:sub.length>1?sub:[]});}
   var secs=SECTIONS.map(function(sc){return {cap:sc.cap,items:sc.items.map(fix).filter(Boolean)};}).filter(function(sc){return sc.items.length;});
   var settings=fix(SETTINGS);
-  var extra=[];groups().forEach(function(g){g.items.forEach(function(i){if(!seen[i[0]]&&i[0]!=='overview'){seen[i[0]]=1;extra.push([i[0],i[1]]);}});});
+  var extra=[];groups().forEach(function(g){g.items.forEach(function(i){if(!seen[i[0]]&&i[0]!=='overview'&&i[0]!=='calendar'){seen[i[0]]=1;extra.push([i[0],i[1]]);}   /* the calendar is DaySilk's Models calendar now: no menu entry of its own */});});
   /* no separate "More pages": anything not placed above is folded into DaySilk so nothing is lost */
   if(extra.length){secs.forEach(function(sc){sc.items.forEach(function(it){if(it.id==='helm'){var have={};pagesOf(it).forEach(function(k){have[k]=1;});var add=extra.filter(function(x){return !have[x[0]];});if(add.length){it.sub=arr(it.sub).length?arr(it.sub).concat(add):[[it.page,it.label]].concat(add);}}});});}
   return {secs:secs,settings:settings};
