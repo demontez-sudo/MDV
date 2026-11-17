@@ -15,7 +15,7 @@ var ring=el.firstChild,dot=el.lastChild;
 var x=-200,y=-200,rx=x,ry=y,dx=x,dy=y,started=false,label='',running=false,pending=null,queued=false;
 
 /* Two cursors, chosen per backdrop (the colour wave that is on):
-     arrow    a basic pointer on the mouse, with the backdrop's colour wave drifting a beat behind it
+     arrow    a basic pointer on its own, filled with the backdrop's colour wave
      circles  a bright dot on the mouse with the wave ring behind it
    The choice is kept on this device, one per backdrop; a backdrop with no choice yet uses the arrow. */
 var STORE='mdv-cursor-styles',STYLES=['arrow','circles'],arrow=true;
@@ -139,9 +139,9 @@ function wire(fr){
 }
 
 /* The chooser sits in the Appearance card under the backdrop picker (top page only; frames just follow the saved choice). */
-var PICK_ART={arrow:'<svg viewBox="0 0 48 30" aria-hidden="true"><circle cx="15" cy="12" r="10" class="r"/><circle cx="15" cy="12" r="6" class="r2"/><path class="a" d="M12 4v15l3.8-3.5 2.6 5.9 2.8-1.2-2.6-5.7 5-.2z"/></svg>',
+var PICK_ART={arrow:'<svg viewBox="0 0 48 30" aria-hidden="true"><path class="a" transform="translate(14 3) scale(1.1)" d="M1.5 1.5v16.2l4.1-3.9 2.8 6.4 3-1.3-2.8-6.2 5.6-.2z"/></svg>',
              circles:'<svg viewBox="0 0 48 30" aria-hidden="true"><circle cx="15" cy="15" r="10" class="r"/><circle cx="15" cy="15" r="6" class="r2"/><circle cx="15" cy="15" r="2.6" class="d"/></svg>'};
-var PICK_NAME={arrow:'Arrow + wave',circles:'Dot + ring'};
+var PICK_NAME={arrow:'Arrow',circles:'Dot + ring'};
 function themeName(w){try{var t=window.VEUX_COLOR_WAVES&&window.VEUX_COLOR_WAVES.themes&&window.VEUX_COLOR_WAVES.themes[w];return t&&t.name?t.name:'this backdrop';}catch(e){return 'this backdrop';}}
 function pickerHTML(){
   var w=waveName(),cur=styleFor(w);
