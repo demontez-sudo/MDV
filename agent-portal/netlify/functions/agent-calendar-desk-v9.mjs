@@ -127,6 +127,19 @@ export const handler=async(event)=>{
       const admin=await requirePermission(user.id,organization.id,'calendar.write');
       const action=String(body.action||'');
 
+      /* pay only: change whether an event is a paid job, the amount and the currency, and nothing else on it */
+      if(action==='set_event_pay'){
+        if(!body.event_id)throw validationError('event_id is required.');
+        const current=await one(admin.from('events').select('id,metadata').eq('organization_id',organization.id).eq('id',body.event_id).maybeSingle());
+        if(!current){const e=new Error('Calendar event not found.');e.statusCode=404;e.code='CALENDAR_EVENT_NOT_FOUND';throw e;}
+        const paid=!!body.paid,raw=body.pay_amount,amount=(paid&&raw!==null&&raw!==undefined&&raw!==''&&Number.isFinite(Number(raw))&&Number(raw)>=0)?Number(raw):null;
+        const currency=String(body.currency||current.metadata?.currency||'USD').slice(0,3).toUpperCase();
+        const metadata={...(current.metadata||{}),paid,pay_amount:amount,currency};
+        const row=await one(admin.from('events').update({metadata,updated_at:new Date().toISOString()}).eq('organization_id',organization.id).eq('id',body.event_id).select('id,metadata').single());
+        if(!row||!!row.metadata?.paid!==paid){const e=new Error('Pay was not saved.');e.statusCode=500;e.publicMessage='The pay change was not confirmed as saved. Please try again.';throw e;}
+        return json(200,{ok:true,verified:true,event_id:row.id,paid,pay_amount:amount,currency});
+      }
+
       if(action==='move_event'){
         if(!body.event_id||!body.starts_at)throw validationError('event_id and starts_at are required.');
         if(!validDateTime(body.starts_at))throw validationError('Invalid event date/time.','CALENDAR_DATETIME_INVALID');
@@ -169,8 +182,9 @@ export const handler=async(event)=>{
           category:body.category||null,
           calendar_event_type:body.calendar_event_type||body.event_type||prior?.metadata?.calendar_event_type||null,
           pipeline_stage:body.pipeline_stage||null,
-          paid:!!body.paid,
-          pay_amount:Number.isFinite(Number(body.pay_amount))?Number(body.pay_amount):null,
+          /* pay is only changed when the caller sends it: an edit that does not mention pay leaves the saved pay alone */
+          paid:Object.prototype.hasOwnProperty.call(body,'paid')?!!body.paid:!!prior?.metadata?.paid,
+          pay_amount:Object.prototype.hasOwnProperty.call(body,'pay_amount')?((body.pay_amount===null||body.pay_amount===''||!Number.isFinite(Number(body.pay_amount)))?null:Number(body.pay_amount)):(prior?.metadata?.pay_amount??null),
           currency:String(body.currency||prior?.metadata?.currency||'USD').slice(0,3).toUpperCase(),
           travel_required:!!body.travel_required,
           visa_required:!!body.visa_required,
@@ -260,6 +274,27 @@ export const handler=async(event)=>{
     /* DaySilk's light view: only events, bookings, castings, time off, tasks and the models they point at. The full reply also carries every contact,
        company and staff profile, each booking's rates and invoices, and a whole model record (with its evaluation text) on every link, which made
        a long window too big or too slow to come back, so the model calendar stayed empty. */
+    /* The lists the booking form needs (models, clients, contacts, markets, agents) and nothing else: the full reply is far too heavy to fetch for a dropdown. */
+    if(p.view==='lookups'){
+      const paged=async build=>{const out=[];for(let from=0;from<6000;from+=1000){const {data,error}=await build().range(from,from+999);if(error){if(error.code==='PGRST103')break;throw error;}out.push(...(data||[]));if((data||[]).length<1000)break;}return out;};
+      const org=organization.id;
+      const [lmodels,companies,contacts,markets,members,profiles]=await Promise.all([
+        paged(()=>admin.from('models').select('id,display_name').eq('organization_id',org).order('display_name').order('id')),
+        paged(()=>admin.from('companies').select('id,name').eq('organization_id',org).order('name').order('id')),
+        paged(()=>admin.from('contacts').select('id,display_name,first_name,last_name,company_id').eq('organization_id',org).order('display_name').order('id')),
+        paged(()=>admin.from('markets').select('id,name,code').eq('organization_id',org).eq('active',true).order('name').order('id')).catch(()=>[]),
+        paged(()=>admin.from('organization_members').select('id,user_id,job_title').eq('organization_id',org).eq('status','active').eq('member_type','staff').order('id')),
+        paged(()=>admin.from('profiles').select('user_id,display_name,first_name,last_name').order('user_id')).catch(()=>[])
+      ]);
+      const pm=new Map(profiles.map(x=>[x.user_id,x]));
+      return json(200,{ok:true,lookups:{
+        models:lmodels.map(x=>({id:x.id,name:x.display_name||'Model'})),
+        companies:companies.map(x=>({id:x.id,name:x.name||'Company'})),
+        contacts:contacts.map(x=>({id:x.id,name:x.display_name||[x.first_name,x.last_name].filter(Boolean).join(' ')||'Contact',company_id:x.company_id||null})),
+        markets:markets.map(x=>({id:x.id,name:x.name||x.code||'Market'})),
+        members:members.map(m=>{const q=pm.get(m.user_id)||{};return {id:m.id,name:q.display_name||[q.first_name,q.last_name].filter(Boolean).join(' ')||m.job_title||'Team'};})
+      }});
+    }
     if(p.view==='lite'){
       const t0=Date.now();
       const [allEvents,allBookings,allCastings,blocks,tasks,models]=await Promise.all([

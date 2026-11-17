@@ -111,7 +111,8 @@ function dsShape(e,extra){
   var md=e.metadata||{},s=new Date(e.starts_at),en=e.ends_at?new Date(e.ends_at):null,d=dayKey(s);
   var hm=function(x){return String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0');};
   var ev={title:String(e.title||'Event'),cat:'connect',rep:'',where:e.location||'',notes:e.notes||'',web:'',
-    video:md.video&&/^https:\/\//i.test(String(md.video.url||''))?md.video:null};
+    video:md.video&&/^https:\/\//i.test(String(md.video.url||''))?md.video:null,
+    paid:!!md.paid,payAmount:(md.paid&&md.pay_amount!=null)?Number(md.pay_amount):null,payCur:md.currency||''};
   /* An all-day event, or any event running a full day or more (a stay, a trip), shows on every day it covers. An overnight one (under 24 hours) keeps its times. */
   if(e.all_day||(en&&dayKey(en)>d&&en-s>=864e5)){ev.d=d;ev.t='';ev.e='';if(en&&dayKey(en)>d){ev.rep='d';ev.until=dayKey(new Date(en.getTime()-1));}}
   else{ev.d=d;ev.t=hm(s);ev.e=en?(dayKey(en)===d?hm(en):'23:59'):hm(new Date(Math.min(s.getTime()+45*6e4,new Date(s.getFullYear(),s.getMonth(),s.getDate(),23,59).getTime())));}
@@ -362,10 +363,13 @@ function agBody(v){
   var start=new Date(v.d+'T'+(v.t||'00:00')+':00'),allDay=!v.t;
   var end=allDay?new Date(v.d+'T23:59:00'):(v.e&&v.e>v.t?new Date(v.d+'T'+v.e+':00'):new Date(start.getTime()+36e5));
   var tz='';try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||'';}catch(e){}
-  return {organization_slug:org(),title:String(v.title||'').trim(),starts_at:start.toISOString(),ends_at:end.toISOString(),all_day:allDay,timezone:tz||null,
+  var b={organization_slug:org(),title:String(v.title||'').trim(),starts_at:start.toISOString(),ends_at:end.toISOString(),all_day:allDay,timezone:tz||null,
     event_type:EV_TYPE[v.cat]||'meeting',status:'scheduled',location:v.where||null,notes:v.notes||null,model_ids:arr(v.modelIds),
     /* shared: the linked models see it on their DaySilk (title, time, place); the agent's notes stay private to the team */
     share_with_models:share,notes_internal:share,visibility:share?'model_shared':'organization',category:'daysilk:'+String(v.id||''),owner_member_id:ME.id||null};
+  /* pay: a paid job carries its amount and currency on the Model Agenda event (only sent when the form has it, so other edits never reset it) */
+  if(v.pay){b.paid=!!v.pay.paid;b.pay_amount=(v.pay.paid&&v.pay.amount!==''&&v.pay.amount!=null&&isFinite(Number(v.pay.amount)))?Number(v.pay.amount):null;b.currency=String(v.pay.cur||'USD').slice(0,3).toUpperCase();}
+  return b;
 }
 /* creates the event on the Model Agenda (or updates it when agId is given) and tells every open view */
 function saveAgencyEvent(v){
@@ -376,6 +380,24 @@ function saveAgencyEvent(v){
 }
 /* duplicate clean-up: scan / apply / undo / runs. A change to the calendar drops the cached read so every view re-reads. */
 function dedupe(action,extra){var b={organization_slug:org(),action:action};for(var k in (extra||{}))if(extra[k]!==null&&extra[k]!==undefined)b[k]=extra[k];return post('/api/agent/calendar-dedupe',b).then(function(r){if(action==='apply'||action==='undo')calendarChanged();return r;});}
+/* Full booking: the lists the form needs (read once, kept five minutes) and the save */
+var BK={at:0,data:null,busy:null};
+function bookingLookups(force){
+  if(!force&&BK.data&&Date.now()-BK.at<300000)return Promise.resolve(BK.data);
+  if(BK.busy)return BK.busy;
+  BK.busy=get('/api/agent/calendar/v9?organization='+encodeURIComponent(org())+'&view=lookups&_t='+Date.now()).then(function(r){
+    if(!r||!r.lookups)throw new Error('The booking lists did not load');BK.data=r.lookups;BK.at=Date.now();BK.busy=null;return BK.data;
+  }).catch(function(x){BK.busy=null;throw x;});
+  return BK.busy;
+}
+function saveBooking(body){
+  var b={};for(var k in (body||{}))b[k]=body[k];b.organization_slug=org();
+  return post('/api/agent/bookings/v9',b).then(function(r){
+    if(!r||r.verified!==true)throw new Error('The booking was not confirmed as saved.');
+    calendarChanged();return r;
+  });
+}
+function setEventPay(id,pay){return post('/api/agent/calendar/v9',{organization_slug:org(),action:'set_event_pay',event_id:id,paid:!!(pay&&pay.paid),pay_amount:pay&&pay.paid?pay.amount:null,currency:(pay&&pay.cur)||'USD'}).then(function(r){calendarChanged();return r;});}
 function deleteAgencyEvent(id){return post('/api/agent/calendar/v9',{organization_slug:org(),action:'delete_event',event_id:id}).then(function(r){calendarChanged();return r;});}
 /* Model movement: stays, flights and movement windows of the models, from today (a few days back) to about ten weeks ahead */
 function modelMovement(force){
@@ -395,7 +417,7 @@ function modelMovement(force){
     return out.slice(0,120);
   });
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,calendarStatus:function(){return {err:CS.err||'',at:CS.at||0};},saveAgencyEvent:saveAgencyEvent,deleteAgencyEvent:deleteAgencyEvent,dedupe:dedupe,modelMovement:modelMovement,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,calendarStatus:function(){return {err:CS.err||'',at:CS.at||0};},saveAgencyEvent:saveAgencyEvent,deleteAgencyEvent:deleteAgencyEvent,bookingLookups:bookingLookups,setEventPay:setEventPay,saveBooking:saveBooking,dedupe:dedupe,modelMovement:modelMovement,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */
