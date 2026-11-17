@@ -141,14 +141,28 @@ function paint(){
     +'<aside class="mm-side" id="mm-side"></aside><section class="mm-list" id="mm-list"></section><section class="mm-reader" id="mm-reader"></section></div>';
   paintSide();paintList();paintReader();fit();fitWatch();
 }
+/* The floating shortcut bar sits over the bottom of the page. The panel should end just above it, and the page should not keep extra empty space
+   under the panel. (The old check used dock.offsetParent, which is always null for a fixed element, so it never ran.) */
+function dockZone(){
+  var d=document.getElementById('ws-dock');
+  if(d){var cs=getComputedStyle(d);if(cs.display!=='none'&&cs.visibility!=='hidden'){var r=d.getBoundingClientRect();if(r.height>0)return Math.max(0,window.innerHeight-r.top)+12;}}
+  return 24;
+}
+function scrollerOf(el){
+  var p=el.parentElement;
+  while(p&&p!==document.body&&p!==document.documentElement){var cs=getComputedStyle(p);if(/(auto|scroll)/.test(cs.overflowY)&&p.scrollHeight>p.clientHeight+1)return p;p=p.parentElement;}
+  return document.documentElement;
+}
 function fit(){
   var h=S.host,mm=h&&h.querySelector('.mm');if(!mm)return;
+  mm.style.marginBottom='';
   if(window.innerWidth<=900){mm.style.height='';return;}
-  var top=mm.getBoundingClientRect().top,pad=parseFloat(getComputedStyle(h).paddingBottom)||0,bottom=window.innerHeight-pad-14;
-  /* the floating dock sits over the bottom of the page: end the panel just above it, never under it and never a gap above it */
-  var dock=document.getElementById('ws-dock');
-  if(dock&&dock.offsetParent!==null){var r=dock.getBoundingClientRect();if(r.height>0&&r.top>top+320)bottom=r.top-12;}
-  mm.style.height=Math.max(480,Math.floor(bottom-top))+'px';
+  var zone=dockZone(),sc=scrollerOf(mm),isDoc=sc===document.documentElement,pos=isDoc?(window.pageYOffset||0):sc.scrollTop,base=isDoc?0:sc.getBoundingClientRect().top;
+  var topAbs=mm.getBoundingClientRect().top-base+pos;                       /* where the panel starts inside the scrolling page */
+  mm.style.height=Math.max(480,Math.floor(window.innerHeight-zone-(base+topAbs)))+'px';   /* first: end it just above the dock */
+  /* then: any space the page still leaves under the panel (the page's own bottom padding) is not needed, so take it back */
+  var below=sc.scrollHeight-(topAbs+mm.offsetHeight),extra=Math.floor(below-zone);
+  if(extra>3)mm.style.marginBottom=(-extra)+'px';
 }
 /* the page above Mail can still be settling when it first renders (banners, fonts, the dock), which left the panel short with a gap under it:
    measure again after it settles and whenever the page or the dock changes size */
