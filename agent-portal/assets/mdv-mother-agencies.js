@@ -118,7 +118,8 @@ function docsPanel(d){
 }
 function modelsPanel(d){
   var ms=arr(d.models),a=d.agency||{};
-  return '<section class="mag-sec"><header><h4>Models</h4><span class="mag-count">'+ms.length+'</span><span class="mag-sec-act"><button type="button" class="mag-btn" onclick="MDV_MAG.openBulk(\''+esc(a.id)+'\')">Paste a list</button><button type="button" class="mag-btn gold" onclick="MDV_MAG.pick(\''+esc(a.id)+'\')">+ Connect models</button></span></header>'
+  var warn=d.warning?'<div class="mag-note bad">'+esc(d.warning)+'</div>':'';
+  return '<section class="mag-sec"><header><h4>Models</h4><span class="mag-count">'+ms.length+'</span><span class="mag-sec-act"><button type="button" class="mag-btn" onclick="MDV_MAG.openBulk(\''+esc(a.id)+'\')">Paste a list</button><button type="button" class="mag-btn gold" onclick="MDV_MAG.pick(\''+esc(a.id)+'\')">+ Connect models</button></span></header>'+warn
    +(ms.length?'<div class="mag-mods">'+ms.map(function(m){return '<div class="mag-modw"><button type="button" class="mag-mod" onclick="MDV_MAG.model(\''+esc(m.id)+'\')"><span class="mag-mph">'+(m.photo?'<img loading="lazy" src="'+esc(m.photo)+'" alt="">':esc(initials(m.name)))+'</span><b>'+esc(m.name)+'</b><em>'+esc([m.market,m.status].filter(Boolean).join(' · ')||'—')+'</em></button><button type="button" class="mag-mod-x" title="Disconnect from this agency" aria-label="Disconnect '+esc(m.name)+'" onclick="MDV_MAG.disconnect(\''+esc(m.id)+'\',\''+esc(String(m.name).replace(/\\/g,'').replace(/'/g,''))+'\')">×</button></div>';}).join('')+'</div>':'<p class="mag-sub">No models are connected to this agency yet. Choose <b>Connect models</b> to pick them from your roster, or <b>Paste a list</b> of names.</p>')+'</section>';
 }
 function paintDrawer(){

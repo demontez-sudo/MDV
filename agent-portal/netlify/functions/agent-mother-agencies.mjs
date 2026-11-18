@@ -91,8 +91,10 @@ async function loadAll(admin, orgId, onlyId) {
   const companies = companyIds.length ? await rows(admin.from('companies').select('id,name').eq('organization_id', orgId).in('id', companyIds)) : [];
   const cm = new Map(companies.map(c => [String(c.id), c]));
   const partnerIds = partners.map(p => p.id);
-  const placements = partnerIds.length ? await rows(admin.from('model_placements').select('id,model_id,partner_agency_id,status,market_id,placement_type').eq('organization_id', orgId).in('partner_agency_id', partnerIds).in('status', ['active', 'pending', 'placed'])).catch(() => []) : [];
-  return { partners, cm, placements };
+  /* select('*'): naming columns here made the whole read fail (and the count show 0 models) on a database where one of them does not exist; the error was swallowed */
+  let placementsError = null;
+  const placements = partnerIds.length ? await pagedRows(() => admin.from('model_placements').select('*').eq('organization_id', orgId).in('partner_agency_id', partnerIds).in('status', ['active', 'pending', 'placed']).order('id')).catch(e => { placementsError = String(e && e.message || e).slice(0, 160); console.warn('[mother agencies] could not read model_placements', placementsError); return []; }) : [];
+  return { partners, cm, placements, placementsError };
 }
 
 function summarize(p, c, placements, signedLogo) {
@@ -124,7 +126,7 @@ export const handler = async event => {
         const d = await directory(admin, organization.id), an = new Map(d.agencies.map(a => [a.id, a.name]));
         return json(200, { ok: true, agencies: d.agencies, models: d.models.map(m => { const aid = d.links.get(m.id) || null; return { ...m, agency_id: aid, agency_name: aid ? an.get(aid) || '' : '' }; }) });
       }
-      const { partners, cm, placements } = await loadAll(admin, organization.id, q.partner_id || null);
+      const { partners, cm, placements, placementsError } = await loadAll(admin, organization.id, q.partner_id || null);
       if (q.partner_id) {
         const p = partners[0];
         if (!p) fail('Mother agency not found', 404);
@@ -139,6 +141,7 @@ export const handler = async event => {
         const mk = new Map(markets.map(m => [String(m.id), m.name])), ph = new Map(media.map(m => [String(m.model_id), m.url]));
         return json(200, {
           ok: true,
+          warning: placementsError ? 'The list of connected models could not be read: ' + placementsError : null,
           agency: { ...summarize(p, c, placements, logo ? await signedUrl(admin, logo, 3600) : null), fields: prof.fields, updated_at: prof.updated_at },
           documents: prof.documents.filter(d => d.type !== 'logo').map(d => ({ id: d.id, type: d.type, label: DOC_LABEL[d.type] || 'Document', name: d.name, expires_on: d.expires_on || null, uploaded_at: d.uploaded_at, days_left: d.expires_on ? daysTo(d.expires_on) : null })),
           models: models.map(m => { const pl = mine.find(x => String(x.model_id) === String(m.id)) || {}; return { id: m.id, name: m.display_name, status: pl.status || m.status || '', market: mk.get(String(pl.market_id)) || '', photo: ph.get(String(m.id)) || '' }; }),
