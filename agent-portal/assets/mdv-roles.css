@@ -70,3 +70,12 @@ select.rl-in{appearance:auto;color-scheme:dark}
 .rl-sc b{display:block;font-size:14px}.rl-sc small{color:#a9a2b6;font-size:12px}
 .rl-sc .rl-btn.danger{margin-left:0}
 .rl-fl[hidden]{display:none}
+
+/* invite a team member */
+.rl-invite{margin-left:8px}
+.rl-iv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:6px}.rl-iv label{display:flex;flex-direction:column;gap:5px}.rl-iv label.full{grid-column:1/-1}
+.rl-iv span{font:600 10px system-ui;letter-spacing:.14em;text-transform:uppercase;color:#a9a2b6}
+.rl-iv input{width:100%;box-sizing:border-box;padding:11px 13px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:rgba(8,8,10,.6);color:inherit;font:inherit;font-size:14.5px}.rl-iv input:focus{outline:0;border-color:rgba(212,176,119,.7)}
+.rl-h3{margin:16px 0 8px;font:600 10px system-ui;letter-spacing:.16em;text-transform:uppercase;color:#a9a2b6}
+.rl-pend{list-style:none;margin:0;padding:0;display:grid;gap:8px}.rl-pend li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border:1px solid rgba(255,255,255,.1);border-radius:12px}.rl-pend small{display:block;color:#a9a2b6;font-size:12px}
+@media(max-width:520px){.rl-iv{grid-template-columns:1fr}}

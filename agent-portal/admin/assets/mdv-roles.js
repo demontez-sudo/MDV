@@ -136,6 +136,7 @@ function run(p,done){
 }
 document.addEventListener('click',function(e){
   var t=e.target;if(!t.closest)return;
+  var iv=t.closest('[data-rl-invite]');if(iv){e.preventDefault();inviteForm();return;}
   var op=t.closest('[data-rl-open]');if(op){e.preventDefault();R.open=true;R.tab='roles';R.msg='';R.err='';paint();load();return;}
   if(!document.getElementById('mdv-roles'))return;
   if(t.closest('[data-rl-close]')||t===document.getElementById('mdv-roles')){R.open=false;paint();return;}
@@ -173,6 +174,15 @@ function place(){
   if(!b){b=document.createElement('button');b.type='button';b.id='mdv-roles-open';b.className='rl-open';b.setAttribute('data-rl-open','');b.textContent='Roles & permissions';}
   pg.insertBefore(b,pg.firstChild);
 }
+function placeInvite(){
+  var pg=document.getElementById('p-team');if(!pg)return;
+  var shown=pg.classList.contains('on')||pg.offsetParent!==null,b=document.getElementById('mdv-team-invite'),r=document.getElementById('mdv-roles-open');
+  if(!shown||!pg.children.length||!r){if(b)b.remove();return;}
+  if(b&&b.previousSibling===r)return;
+  if(!b){b=document.createElement('button');b.type='button';b.id='mdv-team-invite';b.className='rl-open rl-invite';b.setAttribute('data-rl-invite','');b.textContent='+ Invite team member';}
+  r.insertAdjacentElement('afterend',b);
+}
+setInterval(placeInvite,800);
 setInterval(place,800);
 
 /* ---- forms for one person: their roles, and where they can work (these used to be pop-up text prompts) ---- */
@@ -194,6 +204,47 @@ function scopeName(d,sc){
   return t.charAt(0).toUpperCase()+t.slice(1)+': '+(hit?hit.name:'(removed)');
 }
 var LEVELS=[['read','Read only','Can look, but not change anything.'],['work','Work','Can do day-to-day work: edit, create and update.'],['manage','Manage','Can also change set-up and who has access.']];
+
+/* ---- invite a person to the team ---- */
+function inviteForm(){
+  loadTeam().then(function(d){
+    var pending=arr(d.team).filter(function(m){return m.status==='invited';});
+    var roleCards=arr(d.roles).map(function(r){var n=arr(r.permissions).length;return '<label class="rl-rcard"><input type="checkbox" data-rlf-role="'+esc(r.id)+'"><span><b>'+esc(r.name)+'</b><small>'+n+' '+(n===1?'permission':'permissions')+'</small></span></label>';}).join('');
+    var body='<p class="rl-lead">They get an email with a one-time link to choose a password. Pick the roles they should start with; you can change them any time.</p>'
+      +'<div class="rl-iv"><label><span>First name</span><input id="rli-first" autocomplete="off"></label><label><span>Last name</span><input id="rli-last" autocomplete="off"></label><label class="full"><span>Work email</span><input id="rli-email" type="email" autocomplete="off" placeholder="name@example.com"></label><label class="full"><span>Job title (optional)</span><input id="rli-title" placeholder="Booker, Scout, Accounts…"></label></div>'
+      +'<h3 class="rl-h3">Roles</h3><div class="rl-rolebox">'+(roleCards||'<p class="rl-lead">No roles to choose from yet.</p>')+'</div>'
+      +(pending.length?'<h3 class="rl-h3">Waiting to accept ('+pending.length+')</h3><ul class="rl-pend">'+pending.map(function(m){return '<li><span><b>'+esc(memberName(m))+'</b><small>'+esc(m.job_title||'')+'</small></span><button type="button" class="rl-btn sm" data-rlf-resend="'+esc(m.id)+'">Resend invite</button></li>';}).join('')+'</ul>':'');
+    formShell('Invite a team member','Add someone to the Maison de Veux team.',body,'<button type="button" class="rl-btn" data-rlf-close>Close</button><button type="button" class="rl-btn solid" data-rlf-sendinvite>Send invite</button>');
+    var f=document.getElementById('rli-first');if(f)f.focus();
+  }).catch(function(e){window.alert((e&&e.message)||'Could not open the invite form.');});
+}
+function sendInvite(btn){
+  var g=function(id){var el=document.getElementById(id);return el?el.value.trim():'';};
+  var first=g('rli-first'),last=g('rli-last'),email=g('rli-email');
+  if(!first){fmsg('Add their first name.',true);return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){fmsg('Enter a valid email address.',true);return;}
+  var ids=[];F.el.querySelectorAll('[data-rlf-role]').forEach(function(c){if(c.checked)ids.push(c.getAttribute('data-rlf-role'));});
+  btn.disabled=true;btn.textContent='Sending…';fmsg('');
+  api('POST',{action:'invite_member',first_name:first,last_name:last,email:email,job_title:g('rli-title'),role_ids:ids}).then(function(r){
+    var name=(first+' '+last).trim();
+    if(r.email_sent){fmsg('Invite sent to '+name+' ('+email+').'+(r.roles_error?' Their roles could not be set: '+r.roles_error:''),!!r.roles_error);}
+    else fmsg(name+' was added to the team, but the email did not go out: '+(r.email_problem||'unknown problem')+' Use Resend invite below once it is fixed.',true);
+    ['rli-first','rli-last','rli-email','rli-title'].forEach(function(i){var el=document.getElementById(i);if(el)el.value='';});
+    F.el.querySelectorAll('[data-rlf-role]').forEach(function(c){c.checked=false;});
+    refreshTeam();
+    /* show the new person in the waiting list without closing the form */
+    loadTeam().then(function(d){var pend=arr(d.team).filter(function(m){return m.status==='invited';}),ul=F.el&&F.el.querySelector('.rl-pend');
+      var html=pend.map(function(m){return '<li><span><b>'+esc(memberName(m))+'</b><small>'+esc(m.job_title||'')+'</small></span><button type="button" class="rl-btn sm" data-rlf-resend="'+esc(m.id)+'">Resend invite</button></li>';}).join('');
+      if(ul)ul.innerHTML=html;else if(pend.length&&F.el){var h=document.createElement('div');h.innerHTML='<h3 class="rl-h3">Waiting to accept ('+pend.length+')</h3><ul class="rl-pend">'+html+'</ul>';F.el.querySelector('.rl-body').appendChild(h);}});
+  }).catch(function(err){fmsg((err&&err.message)||'The invite did not go through.',true);}).then(function(){btn.disabled=false;btn.textContent='Send invite';});
+}
+function resend(btn){
+  var id=btn.getAttribute('data-rlf-resend');btn.disabled=true;var was=btn.textContent;btn.textContent='Sending…';
+  api('POST',{action:'resend_invite',member_id:id}).then(function(r){
+    if(r.email_sent){fmsg('Invite sent again to '+r.to+'.');btn.textContent='Sent';}
+    else{fmsg('The email did not go out: '+(r.email_problem||'unknown problem'),true);btn.disabled=false;btn.textContent=was;}
+  }).catch(function(err){fmsg((err&&err.message)||'Could not resend.',true);btn.disabled=false;btn.textContent=was;});
+}
 
 function memberRolesForm(id){
   loadTeam().then(function(d){
@@ -233,6 +284,8 @@ document.addEventListener('click',function(e){
   var t=e.target;if(!t.closest||!F.el)return;
   if(t===F.el||t.closest('[data-rlf-close]')){closeForm();return;}
   if(t.closest('[data-rlf-editroles]')){closeForm();window.MDV_ROLES.open();return;}
+  var si=t.closest('[data-rlf-sendinvite]');if(si){sendInvite(si);return;}
+  var rs=t.closest('[data-rlf-resend]');if(rs){resend(rs);return;}
   var sr=t.closest('[data-rlf-saveroles]');if(sr){
     var ids=[];F.el.querySelectorAll('[data-rlf-role]').forEach(function(c){if(c.checked)ids.push(c.getAttribute('data-rlf-role'));});
     fmsg('Saving…');
@@ -253,5 +306,5 @@ function hook(){
   var b=window.VEUX_V10;if(b&&!b.__rlForms&&('memberRoles' in b||'memberScope' in b)){b.memberRoles=memberRolesForm;b.memberScope=memberScopeForm;b.__rlForms=1;}
 }
 setInterval(hook,700);hook();
-window.MDV_ROLES={open:function(){R.open=true;R.tab='roles';paint();load();},memberRoles:memberRolesForm,memberScope:memberScopeForm};
+window.MDV_ROLES={invite:inviteForm,open:function(){R.open=true;R.tab='roles';paint();load();},memberRoles:memberRolesForm,memberScope:memberScopeForm};
 })();

@@ -1,5 +1,8 @@
 import { requireUser, parseBody, json, errorResponse, assertPermission } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
+import { sanitizeInvite, inviteStaff, resendInvite } from './_lib/staff-invite.mjs';
+import { getOrganizationCapacity, assertCapacity } from './_lib/entitlements.mjs';
+import { sendResendEmail } from './_lib/email.mjs';
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 
 export const handler=async(event)=>{
@@ -16,6 +19,22 @@ export const handler=async(event)=>{
         await requirePermission(user.id,organization.id,'members.manage');const {data,error}=await client.rpc('set_member_roles',{target_org:organization.id,target_member:body.member_id,target_role_ids:Array.isArray(body.role_ids)?body.role_ids:[]});if(error)throw error;return json(200,{ok:true,verified:true,result:data,persisted_at:new Date().toISOString()});
       }
       const admin=await requirePermission(user.id,organization.id,'members.manage');
+      /* ---- inviting people to the team ---- */
+      if(action==='invite_member'||action==='resend_invite'){
+        const {data:me}=await admin.from('profiles').select('display_name,first_name,last_name').eq('user_id',user.id).maybeSingle();
+        const inviter={id:user.id,name:(me&&(me.display_name||[me.first_name,me.last_name].filter(Boolean).join(' ')))||''};
+        const deps={
+          sendEmail:sendResendEmail,
+          capacity:async()=>{assertCapacity(await getOrganizationCapacity(admin,organization.id),'staff',1);},
+          setRoles:async(memberId,roleIds)=>{const {error}=await client.rpc('set_member_roles',{target_org:organization.id,target_member:memberId,target_role_ids:roleIds});if(error)throw error;}
+        };
+        if(action==='invite_member'){
+          const out=await inviteStaff({admin,organization,inviter,input:sanitizeInvite(body),deps});
+          return json(201,{ok:true,verified:true,...out});
+        }
+        const out=await resendInvite({admin,organization,inviter,memberId:String(body.member_id||''),deps});
+        return json(200,{ok:true,verified:true,...out});
+      }
       /* ---- custom roles: create, change what a role allows, delete ---- */
       if(['create_role','save_role','delete_role'].includes(action)){
         const KEY=/^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$/;
