@@ -100,13 +100,18 @@ function summary(an){
 function tagsHtml(l){l=arr(l);return l.length?'<span class="ag-tags">'+l.map(function(x){return '<i>'+esc(x)+'</i>';}).join('')+'</span>':'<span class="ag-none">Not added</span>';}
 function detailsView(){
   var f=(A.data&&A.data.profile)||{};
-  function row(k,v,href,full){return '<div'+(full?' class="full"':'')+'><small>'+esc(k)+'</small><b>'+(v?(href?'<a href="'+esc(href)+'">'+esc(v)+'</a>':esc(v)):'<span class="ag-none">Not added</span>')+'</b></div>';}
   var addr=[f.address_line,f.address_line2,[f.postal_code,f.city].filter(Boolean).join(' '),f.state,f.country].filter(Boolean).join(', ');
-  return '<section class="ag-card"><header><h3>Agency details</h3><button type="button" class="ag-link" onclick="MDV_MA_AGENCY.edit(true)">Edit</button></header>'
-   +'<div class="ag-about">'+(f.bio?'<p>'+esc(f.bio).replace(/\n/g,'<br>')+'</p>':'<p class="ag-none">Tell Maison de Veux about your agency.</p>')+'</div>'
-   +'<div class="ag-grid">'+row('Legal name',f.legal_name)+row('Registration / licence no.',f.registration_no)+row('Tax ID',f.tax_id)+row('Founded',f.founded_year)+row('Models in your agency',f.models_count)+row('Website',f.website,f.website)+row('Address',addr,null,true)
-   +'<div class="full"><small>Specialties</small><b>'+tagsHtml(f.specialties)+'</b></div><div class="full"><small>Markets and regions</small><b>'+tagsHtml(f.regions)+'</b></div><div class="full"><small>Languages</small><b>'+tagsHtml(f.languages)+'</b></div>'
-   +row('Instagram',f.instagram&&'@'+String(f.instagram).replace(/^@/,''),f.instagram&&'https://instagram.com/'+String(f.instagram).replace(/^@/,''))+row('Main contact',[f.contact_name,f.contact_role].filter(Boolean).join(' · '))+row('Email',f.contact_email,f.contact_email&&'mailto:'+f.contact_email)+row('Phone',f.contact_phone,f.contact_phone&&'tel:'+f.contact_phone)+row('WhatsApp',f.whatsapp)+'</div></section>';
+  var ig=f.instagram&&String(f.instagram).replace(/^@/,'');
+  /* [label, value, link, full width] */
+  var items=[['Legal name',f.legal_name],['Registration / licence no.',f.registration_no],['Tax ID',f.tax_id],['Founded',f.founded_year],['Models in your agency',f.models_count],['Website',f.website,f.website],['Address',addr,null,1],['Specialties',arr(f.specialties).length?{tags:f.specialties}:'',null,1],['Markets and regions',arr(f.regions).length?{tags:f.regions}:'',null,1],['Languages',arr(f.languages).length?{tags:f.languages}:'',null,1],['Instagram',ig&&'@'+ig,ig&&'https://instagram.com/'+ig],['Main contact',[f.contact_name,f.contact_role].filter(Boolean).join(' · ')],['Email',f.contact_email,f.contact_email&&'mailto:'+f.contact_email],['Phone',f.contact_phone,f.contact_phone&&'tel:'+f.contact_phone],['WhatsApp',f.whatsapp]];
+  var have=items.filter(function(x){return x[1];}),gone=items.filter(function(x){return !x[1];}).map(function(x){return x[0];});
+  if(!f.tagline)gone.push('Tagline');if(!f.bio)gone.push('About');
+  var total=items.length+2,done=have.length+(f.tagline?1:0)+(f.bio?1:0);
+  function cell(x){var v=x[1],body=v.tags?tagsHtml(v.tags):(x[2]?'<a href="'+esc(x[2])+'">'+esc(v)+'</a>':esc(v));return '<div'+(x[3]?' class="full"':'')+'><small>'+esc(x[0])+'</small><b>'+body+'</b></div>';}
+  return '<section class="ag-card"><header><h3>Agency details</h3><span class="ag-prog" title="Details added">'+done+' of '+total+'<i><b style="width:'+Math.round(done/total*100)+'%"></b></i></span><button type="button" class="ag-link" onclick="MDV_MA_AGENCY.edit(true)">Edit</button></header>'
+   +(f.bio?'<div class="ag-about"><p>'+esc(f.bio).replace(/\n/g,'<br>')+'</p></div>':'')
+   +(have.length?'<div class="ag-grid">'+have.map(cell).join('')+'</div>':'<p class="ag-none">Tell Maison de Veux about your agency.</p>')
+   +(gone.length?'<p class="ag-empties"><span>Not added yet:</span> '+esc(gone.join(', '))+' <button type="button" class="ag-link" onclick="MDV_MA_AGENCY.edit(true)">+ Add details</button></p>':'')+'</section>';
 }
 function detailsEdit(){
   var f=(A.data&&A.data.profile)||{},by={};FIELDS.forEach(function(x){by[x[0]]=x;});
@@ -127,11 +132,12 @@ function teamCard(){
 /* ---- the terms: set by Maison de Veux, read only here ---- */
 function termsCard(){
   var t=(A.data&&A.data.terms)||{},c=(A.data&&A.data.contract)||{state:'none'};
-  var has=Object.keys(t).filter(function(k){return k!=='updated_at'&&k!=='updated_by'&&t[k]!==''&&t[k]!=null;}).length;
-  function row(k,v,full){return '<div'+(full?' class="full"':'')+'><small>'+esc(k)+'</small><b>'+(v?esc(v):'<span class="ag-none">Not set</span>')+'</b></div>';}
   var badge=c.state==='active'?'<span class="ag-pill ok">Contract active</span>':c.state==='renew'?'<span class="ag-pill warn">Renews in '+c.days_left+' days</span>':c.state==='ended'?'<span class="ag-pill bad">Contract ended</span>':'';
   var split=(t.commission_pct!=null||t.agency_share_pct!=null)?[t.commission_pct!=null?'Maison de Veux '+t.commission_pct+'%':'',t.agency_share_pct!=null?'Your agency '+t.agency_share_pct+'%':''].filter(Boolean).join(' · '):'';
-  return '<section class="ag-card"><header><div><h3>Terms with Maison de Veux</h3><p>Set by Maison de Veux. To change anything here, contact your Maison de Veux booker.</p></div>'+badge+'</header>'+(has?'<div class="ag-grid">'+row('Split',split)+row('Contract',[t.contract_start&&'from '+t.contract_start,t.contract_end&&'to '+t.contract_end].filter(Boolean).join(' '))+row('Renewal notice',t.renewal_notice_days!=null?t.renewal_notice_days+' days':'')+row('Exclusivity',[EXCL[t.exclusivity],t.exclusivity_note].filter(Boolean).join(' · '))+row('Payment terms',[PAYT[t.payment_terms],t.payment_terms_note].filter(Boolean).join(' · '))+row('Currency',t.currency)+row('Payout contact',[t.payout_contact_name,t.payout_contact_email].filter(Boolean).join(' · '))+row('Invoicing',t.invoicing_notes,true)+'</div>':'<p class="ag-none">Your terms have not been added yet.</p>')+'</section>';
+  var items=[['Split',split],['Contract',[t.contract_start&&'from '+t.contract_start,t.contract_end&&'to '+t.contract_end].filter(Boolean).join(' ')],['Renewal notice',t.renewal_notice_days!=null?t.renewal_notice_days+' days':''],['Exclusivity',[EXCL[t.exclusivity],t.exclusivity_note].filter(Boolean).join(' · ')],['Payment terms',[PAYT[t.payment_terms],t.payment_terms_note].filter(Boolean).join(' · ')],['Currency',t.currency],['Payout contact',[t.payout_contact_name,t.payout_contact_email].filter(Boolean).join(' · ')],['Invoicing',t.invoicing_notes,1]];
+  var have=items.filter(function(x){return x[1];}),gone=items.filter(function(x){return !x[1];}).map(function(x){return x[0];});
+  return '<section class="ag-card"><header><div><h3>Terms with Maison de Veux</h3><p>Set by Maison de Veux. To change anything here, contact your Maison de Veux booker.</p></div>'+badge+'</header>'
+   +(have.length?'<div class="ag-grid">'+have.map(function(x){return '<div'+(x[2]?' class="full"':'')+'><small>'+esc(x[0])+'</small><b>'+esc(x[1])+'</b></div>';}).join('')+'</div>'+(gone.length?'<p class="ag-empties"><span>Not set yet:</span> '+esc(gone.join(', '))+'</p>':''):'<p class="ag-none">Your terms have not been added yet. Your Maison de Veux booker will set them.</p>')+'</section>';
 }
 function docsCard(){
   var docs=arr(A.data&&A.data.documents);
