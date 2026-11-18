@@ -5,6 +5,7 @@
 import crypto from 'node:crypto';
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
+import { norm, agencyKey, matchName, parseList, pagedRows, motherPartners, currentLinks, connectModel, disconnectModel } from './_lib/mother-agency-link.mjs';
 
 const TEXT = { tagline: 140, bio: 1800, city: 80, country: 80, website: 200, instagram: 80, founded_year: 4, contact_name: 120, contact_role: 120, contact_email: 160, contact_phone: 60, whatsapp: 60 };
 const DOC_LABEL = { logo: 'Logo', contract: 'Agency agreement', licence: 'Business licence', id: 'Representative ID', other: 'Other' };
@@ -16,6 +17,33 @@ const clean = (v, max) => String(v == null ? '' : v).replace(/[\u0000-\u0008\u00
 const fail = (message, statusCode = 400) => { const e = new Error(message); e.statusCode = statusCode; e.publicMessage = message; throw e; };
 const bucketName = () => process.env.VEUX_PRIVATE_STORAGE_BUCKET || 'veux-private';
 async function rows(q) { const { data, error } = await q; if (error) throw error; return data || []; }
+
+/* find or make the company and the mother-agency partner for a name (used by Add agency and by the bulk connect) */
+async function ensurePartner(admin, orgId, name) {
+  let company = (await rows(admin.from('companies').select('id,name').eq('organization_id', orgId).ilike('name', name.replace(/[%_]/g, m => '\\' + m)).limit(1)))[0];
+  if (!company) {
+    const ins = await admin.from('companies').insert({ organization_id: orgId, legacy_id: 'partner-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 48), name, company_type: 'agency', status: 'active', notes: 'Mother Agency' }).select('id,name').single();
+    if (ins.error) throw ins.error; company = ins.data;
+  }
+  let partner = (await rows(admin.from('partner_agencies').select('*').eq('organization_id', orgId).eq('company_id', company.id).limit(1)))[0];
+  if (!partner) {
+    const up = await admin.from('partner_agencies').insert({ organization_id: orgId, company_id: company.id, partner_type: 'mother_agency', portal_enabled: true, notes: 'Mother Agency portal' }).select('*').single();
+    if (up.error) throw up.error; partner = up.data;
+  }
+  return { company, partner };
+}
+
+/* every mother agency as {id, name}, and every model as {id, name, status}, plus who each model is with now */
+async function directory(admin, orgId) {
+  const partners = await motherPartners(admin, orgId);
+  const companyIds = [...new Set(partners.map(p => p.company_id).filter(Boolean))];
+  const companies = companyIds.length ? await rows(admin.from('companies').select('id,name').eq('organization_id', orgId).in('id', companyIds)) : [];
+  const cm = new Map(companies.map(c => [String(c.id), c.name]));
+  const agencies = partners.map(p => ({ id: String(p.id), name: cm.get(String(p.company_id)) || 'Mother agency' })).sort((a, b) => a.name.localeCompare(b.name));
+  const models = (await pagedRows(() => admin.from('models').select('id,display_name,status,active').eq('organization_id', orgId).order('display_name').order('id'))).map(m => ({ id: String(m.id), name: m.display_name || 'Model', status: m.status || '', active: m.active !== false }));
+  const links = await currentLinks(admin, orgId, partners.map(p => p.id));
+  return { partners, agencies, models, links, motherIds: new Set(partners.map(p => String(p.id))) };
+}
 
 function newCode() {
   const bytes = crypto.randomBytes(12);
@@ -92,6 +120,10 @@ export const handler = async event => {
 
     if (event.httpMethod === 'GET') {
       const admin = await requirePermission(user.id, organization.id, 'crm.read');
+      if (q.models === '1') {
+        const d = await directory(admin, organization.id), an = new Map(d.agencies.map(a => [a.id, a.name]));
+        return json(200, { ok: true, agencies: d.agencies, models: d.models.map(m => { const aid = d.links.get(m.id) || null; return { ...m, agency_id: aid, agency_name: aid ? an.get(aid) || '' : '' }; }) });
+      }
       const { partners, cm, placements } = await loadAll(admin, organization.id, q.partner_id || null);
       if (q.partner_id) {
         const p = partners[0];
@@ -127,16 +159,7 @@ export const handler = async event => {
       const admin = await requirePermission(user.id, organization.id, 'crm.write');
       const name = clean(body.name, 120);
       if (name.length < 2) fail('Enter the agency name.');
-      let company = (await rows(admin.from('companies').select('id,name').eq('organization_id', organization.id).ilike('name', name.replace(/[%_]/g, m => '\\' + m)).limit(1)))[0];
-      if (!company) {
-        const ins = await admin.from('companies').insert({ organization_id: organization.id, legacy_id: 'partner-' + name.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 48), name, company_type: 'agency', status: 'active', notes: 'Mother Agency' }).select('id,name').single();
-        if (ins.error) throw ins.error; company = ins.data;
-      }
-      let partner = (await rows(admin.from('partner_agencies').select('*').eq('organization_id', organization.id).eq('company_id', company.id).limit(1)))[0];
-      if (!partner) {
-        const up = await admin.from('partner_agencies').insert({ organization_id: organization.id, company_id: company.id, partner_type: 'mother_agency', portal_enabled: true, notes: 'Mother Agency portal' }).select('*').single();
-        if (up.error) throw up.error; partner = up.data;
-      }
+      const { partner } = await ensurePartner(admin, organization.id, name);
       const f = {};
       for (const k of ['city', 'country', 'contact_name', 'contact_email']) if (body[k]) f[k] = clean(body[k], TEXT[k]);
       if (f.contact_email && !EMAIL.test(f.contact_email)) fail('Enter a valid contact email.');
@@ -145,6 +168,79 @@ export const handler = async event => {
         await admin.from('partner_agencies').update({ metadata: { ...(partner.metadata || {}), profile: { ...(partner.metadata?.profile || {}), fields: { ...prof.fields, ...f }, documents: prof.documents, updated_at: new Date().toISOString() } } }).eq('id', partner.id).eq('organization_id', organization.id);
       }
       return json(201, { ok: true, partner_id: partner.id });
+    }
+
+    /* ---- connecting models ---- */
+    if (action === 'bulk_preview') {
+      const admin = await requirePermission(user.id, organization.id, 'crm.write');
+      const d = await directory(admin, organization.id), an = new Map(d.agencies.map(a => [a.id, a.name]));
+      const fixed = body.agency_id ? String(body.agency_id) : '';
+      if (fixed && !an.has(fixed)) fail('That mother agency was not found.', 404);
+      const parsed = parseList(body.text, { agencyOnly: !!fixed });
+      if (parsed.length > 1500) fail('That list is too long. Send it in parts of up to 1,500 lines.');
+      const seen = new Map(), out = [];
+      for (const r of parsed) {
+        const m = matchName(r.model, d.models);
+        const a = fixed ? { id: fixed, how: 'chosen' } : (r.agency ? matchName(r.agency, d.agencies, agencyKey) : {});
+        const row = { line: r.line, model_typed: r.model, agency_typed: fixed ? an.get(fixed) : r.agency, model_id: m.id || null, model_name: m.id ? (d.models.find(x => x.id === m.id) || {}).name : null, model_candidates: m.candidates || [], agency_id: a.id || null, agency_name: a.id ? an.get(a.id) : null, agency_candidates: a.candidates || [], current_agency_id: null, current_agency_name: null, status: '' };
+        if (!m.id) row.status = m.candidates ? 'model_ambiguous' : 'model_missing';
+        else {
+          const cur = d.links.get(m.id) || null; row.current_agency_id = cur; row.current_agency_name = cur ? an.get(cur) || '' : null;
+          if (seen.has(m.id)) row.status = 'duplicate'; else seen.set(m.id, r.line);
+        }
+        if (!row.status) {
+          if (!r.agency && !fixed) row.status = 'no_agency';
+          else if (!a.id) row.status = a.candidates ? 'agency_ambiguous' : 'agency_missing';
+          else if (row.current_agency_id === row.agency_id) row.status = 'already';
+          else if (row.current_agency_id) row.status = 'move';
+          else row.status = 'ready';
+        }
+        out.push(row);
+      }
+      const count = k => out.filter(x => x.status === k).length;
+      return json(200, { ok: true, rows: out, agencies: d.agencies, summary: { total: out.length, ready: count('ready'), move: count('move'), already: count('already'), problems: out.length - count('ready') - count('move') - count('already') - count('no_agency') - count('duplicate'), skipped: count('no_agency') + count('duplicate') } });
+    }
+
+    if (action === 'bulk_apply' || action === 'connect_models') {
+      const admin = await requirePermission(user.id, organization.id, 'crm.write');
+      const d = await directory(admin, organization.id);
+      let list;
+      if (action === 'connect_models') {
+        const pid = String(body.partner_id || ''); if (!d.motherIds.has(pid)) fail('That mother agency was not found.', 404);
+        list = (Array.isArray(body.model_ids) ? body.model_ids : []).map(id => ({ model_id: String(id), partner_id: pid }));
+      } else list = (Array.isArray(body.rows) ? body.rows : []).map(r => ({ model_id: String(r.model_id || ''), partner_id: r.partner_id ? String(r.partner_id) : '', agency_name: clean(r.agency_name, 120) }));
+      if (!list.length) fail('Choose at least one model.');
+      if (list.length > 1500) fail('That is too many at once. Send up to 1,500.');
+      const modelIds = new Set(d.models.map(m => m.id)), made = new Map(), results = [];
+      for (const r of list) {
+        const res = { model_id: r.model_id, partner_id: r.partner_id || null, ok: false, already: false, error: null };
+        try {
+          if (!modelIds.has(r.model_id)) throw new Error('Model not found');
+          let pid = r.partner_id;
+          if (!pid && r.agency_name) {
+            const key = agencyKey(r.agency_name);
+            if (!made.has(key)) { const { partner } = await ensurePartner(admin, organization.id, r.agency_name); made.set(key, String(partner.id)); d.motherIds.add(String(partner.id)); }
+            pid = made.get(key); res.partner_id = pid; res.created_agency = true;
+          }
+          if (!pid || !d.motherIds.has(pid)) throw new Error('Mother agency not found');
+          const c = await connectModel(admin, organization.id, r.model_id, pid, d.motherIds);
+          res.ok = c.ok; res.already = c.already; res.error = c.error;
+        } catch (e) { res.error = String(e && e.message || e).slice(0, 140); }
+        results.push(res);
+      }
+      /* read it back: the answer says what is true now, not what was asked */
+      const after = await currentLinks(admin, organization.id, [...d.motherIds]);
+      for (const r of results) if (r.ok && after.get(r.model_id) !== r.partner_id) { r.ok = false; r.error = 'The connection was not confirmed.'; }
+      const ok = results.filter(r => r.ok).length;
+      return json(200, { ok: true, verified: ok > 0 && ok === results.length, connected: ok, already: results.filter(r => r.ok && r.already).length, failed: results.filter(r => !r.ok).length, agencies_created: made.size, results });
+    }
+
+    if (action === 'disconnect_model') {
+      const admin = await requirePermission(user.id, organization.id, 'crm.write');
+      const pid = String(body.partner_id || ''), mid = String(body.model_id || '');
+      if (!pid || !mid) fail('partner_id and model_id are required');
+      const n = await disconnectModel(admin, organization.id, mid, pid);
+      return json(200, { ok: true, verified: true, ended: n });
     }
 
     const partnerId = String(body.partner_id || '');
