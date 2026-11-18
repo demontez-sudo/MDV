@@ -2792,8 +2792,8 @@ function mgRow(r,s,risk,note){return`<button type="button" class="mg-row c-${r.m
 function mgStrip(s){const ws=weekDates(s),t0=todayIso();return`<div class="mg-strip">${ws.map(d=>{const n=mgShown(d).length;return`<button type="button" class="mg-day${d===s?" on":""}${d===t0?" today":""}" data-mg-day="${d}"><small>${DOW[parse(d).getDay()].slice(0,3).toUpperCase()}</small><b>${parse(d).getDate()}</b>${n?`<i title="${n} item${n===1?"":"s"}"></i>`:""}</button>`}).join("")}</div>`}
 /* Model Agenda: the week at a glance, then the chosen day split into the team and each model */
 function modelsAgenda(s){
- const ws=weekDates(s);let n=0,hrs=0,conf=0,wait=0;const ms=new Set();
- ws.forEach(d=>{const it=mgShown(d);n+=it.length;it.forEach(r=>{if(r.e.t&&!r.span)hrs+=(r.b-r.a)/60;r.models.forEach(m=>ms.add(m));if(ORB_WAIT.test(r.status))wait++});conf+=orbConflicts(orbRows(d)).length});
+ const ws=weekDates(s);let n=0,hrs=0,conf=0,wait=0,norate=0;const ms=new Set();
+ ws.forEach(d=>{const it=mgShown(d);n+=it.length;it.forEach(r=>{if(r.e.t&&!r.span)hrs+=(r.b-r.a)/60;r.models.forEach(m=>ms.add(m));if(ORB_WAIT.test(r.status))wait++;if(r.e.noRate&&/^(confirmed|job)$/i.test(r.status))norate++});conf+=orbConflicts(orbRows(d)).length});
  const items=mgShown(s).sort((x,y)=>(x.e.t?x.a:-1)-(y.e.t?y.a:-1)||x.title.localeCompare(y.title)),ox=orbRows(s),cfr=orbConflicts(ox),cf=new Set(cfr.map(r=>r.id)),team=items.filter(r=>!r.models.length),mod=items.filter(r=>r.models.length),groups={};
  const note=r=>{const me=ox.find(x=>x.id===r.id);if(!me)return"";const y=ox.find(o=>orbOverlap(me,o));return y?"Overlaps "+(y.models.length?"":"your ")+y.title+" ("+fmtT(y.e.t)+")":""};
  mod.forEach(r=>{(groups[r.models[0]]=groups[r.models[0]]||[]).push(r)});
@@ -2805,8 +2805,19 @@ function modelsAgenda(s){
  const cols=show==="team"?teamCol:show==="models"?modCol:teamCol+modCol;
  const mv=[];ws.forEach(d=>mItems(d).filter(r=>(r.mc==="move"||r.mc==="visa")&&!mHide()[r.mc]&&(!r.span||r.first)).forEach(r=>mv.push({d,r})));
  const movement=`<section class="mg-plans"><header><h3>Model plans &amp; movement</h3><span class="muted small">This week</span></header>${mv.length?`<h4>MOVEMENT <em>${mv.length}</em></h4>`+mv.slice(0,12).map(({d,r})=>`<button type="button" class="mg-mv c-${r.mc}" ${mgOpen(r,d)}><span><small>${DOW[parse(d).getDay()].slice(0,3).toUpperCase()}</small><b>${parse(d).getDate()}</b></span><span class="mg-what"><b>${esc(r.title)}</b><small>${esc([r.models.join(", "),r.e.t?fmtT(r.e.t):""].filter(Boolean).join(" · "))}</small></span><i class="mg-tag" style="--c:${mgColor(r.mc)}">${r.mc==="visa"?"Visa":"Travel"}</i></button>`).join(""):`<p class="so-none">No model movement this week.</p>`}</section>`;
- const alerts=`${conf?`<span class="ma-al risk"><b>${conf}</b> overlapping commitment${conf===1?"":"s"}</span>`:""}${wait?`<span class="ma-al wait"><b>${wait}</b> awaiting a reply</span>`:""}`;
+ const alerts=`${conf?`<span class="ma-al risk"><b>${conf}</b> overlapping commitment${conf===1?"":"s"}</span>`:""}${wait?`<span class="ma-al wait"><b>${wait}</b> awaiting a reply</span>`:""}${norate?`<span class="ma-al risk"><b>${norate}</b> confirmed booking${norate===1?"":"s"} with no rate</span>`:""}`;
  return`<div class="mg-wrap"><div class="ma-sum"><span><b>${n}</b> events this week</span><i>·</i><span><b>${hrs.toFixed(1)}h</b> scheduled</span><i>·</i><span><b>${ms.size}</b> models</span>${alerts?`<div class="ma-als"><em>✦ VEUX</em>${alerts}</div>`:""}</div>${mgStrip(s)}<div class="mg-dayhead"><h3>${DOW[parse(s).getDay()]} <small>${MON[parse(s).getMonth()]} ${parse(s).getDate()}</small>${s===todayIso()?' <em class="mg-today">TODAY</em>':""}</h3><span class="mg-dsum">${items.length} event${items.length===1?"":"s"} · ${dayHrs.toFixed(1)}h</span><div class="mg-seg"><button type="button" class="${S.mgGrid?"":"on"}" data-mg-grid="0">Full day</button><button type="button" class="${S.mgGrid?"on":""}" data-mg-grid="1">Week grid</button></div></div>${banner}<div class="mg-cols${split?"":" one"}">${cols}</div>${movement}</div>`}
+/* seasons (their shows join the calendar when chosen) and the team, for the Model Agenda filters */
+var SEAS={list:[],shows:[],loaded:false,busy:false},TEAM={list:[],loaded:false,busy:false};
+function seasonEvs(){if(!modeModels())return[];const v=((core().lens)||{}).season||"none";if(v==="none")return[];return SEAS.shows.filter(x=>v==="all"||x.seasonId===v)}
+async function seasonSync(force){
+ if(!EMB||EMB_ALERTS||SEAS.busy||(SEAS.loaded&&!force))return;SEAS.busy=true;
+ try{const r=await parent.MDV_DS_EMBED.seasonCal(!!force);SEAS.list=r.seasons||[];SEAS.shows=r.shows||[];SEAS.loaded=true;lensRepaint()}catch(_){SEAS.loaded=true}
+ SEAS.busy=false}
+async function teamSync(){
+ if(!EMB||EMB_ALERTS||TEAM.busy||TEAM.loaded)return;TEAM.busy=true;
+ try{const r=await parent.MDV_DS_EMBED.bookingLookups();TEAM.list=(r&&r.members)||[];TEAM.loaded=true;lensRepaint()}catch(_){TEAM.loaded=true}
+ TEAM.busy=false}
 /* Model Agenda header: the layout of the old Model Agenda (title, week nav, Timeline | Day | Orbit | Month, Add event, filters) on DaySilk's data */
 function maRange(t,s){if(t==="day")return longDate(s);if(t==="month"){const[Y,M]=S.calMonth.split("-").map(Number);return MON[M-1]+" "+Y}const w=weekDates(s),a=parse(w[0]),b=parse(w[6]);return MON[a.getMonth()].slice(0,3)+" "+a.getDate()+" – "+MON[b.getMonth()].slice(0,3)+" "+b.getDate()}
 function maTab(t){return t==="month"?"month":t==="week"?"timeline":orbMode()?"orbit":"day"}
@@ -2817,8 +2828,11 @@ function maFilters(){
  const lab=ag?"All models"+(LENSM.length?" ("+LENSM.length+")":""):ids.length?"Add another model":"Choose models";
  const mdl=LENSM.length?`<select class="ma-sel" data-ma-models aria-label="Models"><option value="">${esc(lab)}</option>${ag?"":`<option value="__all">All models${LENSM.length?" ("+LENSM.length+")":""}</option>`}${opts}</select>`:(LENS_TRIES>=6?`<a class="muted small" href="#" data-lens-retry>Could not load models. Tap to retry</a>`:`<span class="muted small">Loading models…</span>`);
  const warn=(!ids.length&&!ag)?`<span class="mgbar-warn">Choose All models or pick a model to see model items.</span>`:"";
- return `<div class="ma-filters"><select class="ma-sel" data-ma-show aria-label="Who to show"><option value="all"${show==="all"?" selected":""}>Everyone</option><option value="team"${show==="team"?" selected":""}>Team &amp; agency only</option><option value="models"${show==="models"?" selected":""}>Models only</option></select>${mdl}${chips}${warn}${kindBar()}<button type="button" class="ma-split${S.maSplit!==false?" on":""}" data-ma-split title="Show the team and the models side by side">Split</button><button type="button" class="ma-book" data-bk-open>+ Full booking</button></div>${calErrBar()}`}
+ const own=S.maOwner||"",mem=TEAM.list.map(m=>`<option value="m:${esc(m.id)}"${own===String(m.id)?" selected":""}>${esc(m.name)}</option>`).join(""),sv=((core().lens)||{}).season||"none";
+ const seas=`<select class="ma-sel" data-ma-season aria-label="Season"><option value="none"${sv==="none"?" selected":""}>Agency only</option>${SEAS.list.length?`<option value="all"${sv==="all"?" selected":""}>All seasons</option>`:""}${SEAS.list.map(z=>`<option value="${esc(z.id)}"${sv===z.id?" selected":""}>${esc(z.name)}${z.market?" · "+esc(z.market):""}</option>`).join("")}</select>`;
+ return `<div class="ma-filters"><select class="ma-sel" data-ma-show aria-label="Who to show"><option value="all"${show==="all"&&!own?" selected":""}>Everyone${TEAM.list.length?" ("+TEAM.list.length+")":""}</option><option value="team"${show==="team"&&!own?" selected":""}>Team &amp; agency only</option><option value="models"${show==="models"&&!own?" selected":""}>Models only</option>${mem?`<optgroup label="Owned by">${mem}</optgroup>`:""}</select>${mdl}${seas}${chips}${warn}${kindBar()}<button type="button" class="ma-split${S.maSplit!==false?" on":""}" data-ma-split title="Show the team and the models side by side">Split</button><button type="button" class="ma-book" data-bk-open>+ Full booking</button></div>${calErrBar()}`}
 function maTop(t,s){
+ seasonSync();teamSync();
  const act=t==="month"?"mon":"day",step=t==="week"?7:1,m=t==="month"?1:step,cur=maTab(t);
  const tabs=[["timeline","Timeline"],["day","Day"],["orbit","Orbit"],["month","Month"]].map(([k,l])=>`<button type="button" role="tab" data-ma-tab="${k}" class="${cur===k?"on":""}" aria-selected="${cur===k}">${l}</button>`).join("");
  return`<div class="ma-pre">${calModeSwitch()}<button type="button" class="btn ghost mgbar-dd" data-dd-open title="Find and remove the same event added more than once">Clean up duplicates</button></div><header class="ma-top"><div class="ma-ttl"><small>LIVE · YOUR WEEK AT A GLANCE</small><h2>MODEL AGENDA</h2></div><div class="ma-nav"><button type="button" data-act="${act}" data-n="-${m}" aria-label="Previous">‹</button><button type="button" data-act="${act}" data-n="0">Today</button><span class="ma-range">${esc(maRange(t,s))}</span><button type="button" data-act="${act}" data-n="${m}" aria-label="Next">›</button></div><div class="ma-tabs" role="tablist">${tabs}</div><button type="button" class="ma-add" data-act="newev" data-d="${s}">Add event +</button></header>${maFilters()}`}
@@ -2827,7 +2841,8 @@ document.addEventListener("click",e=>{const T=e.target.closest&&e.target.closest
  const k=T.dataset.maTab,c=core();c.lens=c.lens||{ids:[],names:{}};
  if(k==="orbit"||k==="day"){S.tabs.schedule="day";c.lens.dayMode=k==="orbit"?"orbit":"timeline";S.orbSel=null;markDirty("core")}else S.tabs.schedule=k==="month"?"month":"week";
  if(k==="timeline")S.mgGrid=false;render()});
-document.addEventListener("change",e=>{const a=e.target.closest&&e.target.closest("[data-ma-show]");if(a){S.maShow=a.value;render();return}
+document.addEventListener("change",e=>{const sn=e.target.closest&&e.target.closest("[data-ma-season]");if(sn){const c=core();c.lens=c.lens||{ids:[],names:{}};c.lens.season=sn.value;markDirty("core");render();return}
+ const a=e.target.closest&&e.target.closest("[data-ma-show]");if(a){if(a.value.startsWith("m:")){S.maOwner=a.value.slice(2);S.maShow="all"}else{S.maOwner="";S.maShow=a.value}render();return}
  const m=e.target.closest&&e.target.closest("[data-ma-models]");if(!m)return;const v=m.value;if(v==="__all"){const c=core();c.lens=c.lens||{ids:[],names:{}};c.lens.ids=[];c.lens.names={};LME=[];agencyToggle(true)}else if(v){if(agencyOn())agencyToggle(false);lensAdd(v)}});
 /* Season Matrix: the month as a dial of counts, with Veux Model Intelligence for the chosen day */
 function mgPanel(sel){
@@ -2861,7 +2876,7 @@ document.addEventListener("click",e=>{const T=e.target.closest?e.target:null;if(
 const mgStats=a=>`<div class="mg-tiles">${a.map(x=>`<div><b>${x[0]}</b><small>${esc(x[1])}</small></div>`).join("")}</div>`;
 function mgKindCounts(){const out={};let ds;
  if((S.tabs&&S.tabs.schedule)==="month"&&S.calMonth){const[Y,M]=S.calMonth.split("-").map(Number),n=new Date(Y,M,0).getDate();ds=Array.from({length:n},(_,i)=>Y+"-"+pad(M)+"-"+pad(i+1))}else ds=weekDates(S.date);
- const raw=(core().events||[]).filter(e=>(e.agModels||[]).length).concat(modelEvs(),agencyEvs());
+ const raw=(core().events||[]).filter(e=>(e.agModels||[]).length).concat(modelEvs(),agencyEvs(),seasonEvs());
  ds.forEach(d=>raw.forEach(e=>{if(!evOccurs(e,d))return;if(e.rep==="d"&&e.until&&e.until>e.d&&e.d!==d)return;const k=kindOf(e);out[k]=(out[k]||0)+1}));return out}
 function modelsDay(s){
  const all=mgShown(s),tasks=all.filter(r=>r.e.kind==="task"),items=all.filter(r=>r.e.kind!=="task"),rowsO=orbRows(s),cf=new Set(orbConflicts(rowsO).map(r=>r.id));
@@ -3798,7 +3813,7 @@ function lensIds(){const l=(core().lens)||{};return Array.isArray(l.ids)?l.ids:[
 /* Two calendars: "mine" (my schedule plus anything I linked to a model) and "models" (every model's items: bookings, castings, events, movement) */
 function modeModels(){return ((core().lens)||{}).mode==="models"}
 function modelEvs(){return modeModels()&&lensIds().length?LME:[]}
-const LENS_KINDS=[["event","Events"],["booking","Bookings"],["casting","Castings"],["time off","Time off"],["task","Tasks"]];
+const LENS_KINDS=[["event","Events"],["booking","Bookings"],["casting","Castings"],["show","Shows"],["time off","Time off"],["task","Tasks"]];
 function kindHide(){const h=(core().lens||{}).hide;return h||{task:true}}
 function kindOf(e){return e.kind||"event"}
 function kindBar(){const h=kindHide(),c=mgKindCounts();return `<div class="lens-kinds" role="group" aria-label="Show">${LENS_KINDS.map(k=>`<button type="button" data-lens-kind="${esc(k[0])}" class="${h[k[0]]?"off":"on"}" aria-pressed="${h[k[0]]?"false":"true"}">${esc(k[1])}<b>${c[k[0]]||0}</b></button>`).join("")}</div>`}
@@ -3914,7 +3929,7 @@ embSkin();setInterval(embSkin,1500);
 /* ================= Pay on events, and the Full booking form (moved from the old Model Agenda) ================= */
 const PAY_CURS=["USD","EUR","GBP","CAD","AUD","CHF","JPY"];
 const payMoney=(n,c)=>{try{return new Intl.NumberFormat("en-US",{style:"currency",currency:c||"USD",maximumFractionDigits:2}).format(Number(n)||0)}catch(_){return(c||"USD")+" "+Number(n||0).toFixed(2)}};
-const payTxt=e=>e&&e.paid?"Paid"+(e.payAmount!=null&&isFinite(e.payAmount)?" · "+payMoney(e.payAmount,e.payCur):""):"";
+const payTxt=e=>e&&e.paid?"Paid"+(e.payAmount!=null&&isFinite(e.payAmount)?" · "+payMoney(e.payAmount,e.payCur):""):(e&&e.rateGross!=null?"Rate "+payMoney(e.rateGross,e.rateCur):(e&&e.noRate&&/^(confirmed|job)$/i.test(String(e.status||""))?"No rate yet":""));
 const payEvId=e=>{const m=/^event-(.+)$/.exec(String(e&&e.ref||""));return m?m[1]:""};
 function payForm(id,e){
  return`<form class="pay-form" data-pay-form="${esc(id)}"><label class="cx-agck"><input type="checkbox" name="paid" ${e.paid?"checked":""}><span><b>Paid job</b><small>Shows the pay on the Models calendar.</small></span></label><span class="pay-f" ${e.paid?"":"hidden"}><input class="txt" type="number" name="amount" min="0" step="0.01" placeholder="Amount" value="${e.payAmount!=null?esc(String(e.payAmount)):""}"><select class="txt" name="cur">${PAY_CURS.map(c=>`<option ${c===(e.payCur||"USD")?"selected":""}>${c}</option>`).join("")}</select></span><span class="pay-act"><button type="submit" class="btn sm solid">Save pay</button><button type="button" class="btn sm ghost" data-pay-cancel>Cancel</button></span></form>`}
@@ -3992,7 +4007,7 @@ function bkBuild(root,LK,rec,seed){
     +field("Currency",`<select class="txt" id="bk-cur">${curOpts("USD")}</select>`,"","booking")
     +`</div>`
     +`<div class="bk-rates" data-k="booking"><div class="bk-same"><span>Same for all</span><select class="txt" id="bk-s-unit">${opt(BK_UNITS,"day",x=>[x[0],x[1]])}</select><input class="txt" id="bk-s-qty" type="number" min="0.5" step="0.5" value="1" title="Days or hours"><input class="txt" id="bk-s-amt" type="number" min="0" step="0.01" placeholder="Rate"><select class="txt" id="bk-s-cur">${curOpts("USD")}</select><input class="txt" id="bk-s-comm" type="number" min="0" max="100" step="0.5" value="20" title="Agency commission %"><button type="button" class="btn sm solid" id="bk-apply">Apply to all</button></div><div class="bk-tblwrap"><table class="bk-tbl"><thead><tr><th>Model</th><th>Rate type</th><th>Qty</th><th>Rate</th><th>Cur</th><th>Comm %</th><th>Gross</th><th>Talent net</th><th></th></tr></thead><tbody id="bk-rows"></tbody></table></div><div class="bk-tot" id="bk-tot"></div></div>`
-    +`<div class="bk-flags"><label><input type="checkbox" id="bk-confirmed"> Confirmed</label><label><input type="checkbox" id="bk-paid"> Paid</label><label><input type="checkbox" id="bk-travel"> Travel required</label><label><input type="checkbox" id="bk-visa"> Visa required</label><label data-k="booking"><input type="checkbox" id="bk-notify"${seed?"":" checked"}> Ask the models to respond</label><label data-k="booking"><input type="checkbox" id="bk-invoice"> Create a draft invoice (uses this rate, client and commission)</label></div><p class="bk-help">When travel or a visa is required, run Mobility Readiness from Travel &amp; Visa after saving.</p>`)
+    +`<div class="bk-flags"><label><input type="checkbox" id="bk-confirmed"> Confirmed</label><label><input type="checkbox" id="bk-paid"> Paid</label><label><input type="checkbox" id="bk-travel"> Travel required</label><label><input type="checkbox" id="bk-visa"> Visa required</label><label data-k="booking"><input type="checkbox" id="bk-notify"${seed?"":" checked"}> Ask the models to respond</label><label data-k="booking"><input type="checkbox" id="bk-invoice"> Create a draft invoice (uses this rate, client and commission)</label></div><p class="bk-help">When travel or a visa is required, Mobility Readiness runs automatically after saving a booking (it needs a market with a country).</p>`)
   +sec("Booker handoff","Everything the model needs before arrival, in one place.",`<div class="bk-grid">${handoff}</div>`)
   +sec("Internal notes / details","",`<label class="bk-f"><textarea class="txt" id="bk-notes" rows="4" maxlength="3000" placeholder="Internal agency notes, commercial context, follow-up details"></textarea></label>`);
  const aside=`<aside class="bk-prev"><small>EVENT PREVIEW</small><div class="bk-pt"><i></i><span id="bkp-type">CAMPAIGN</span></div><h3 id="bkp-title">Untitled calendar event</h3><ul><li id="bkp-date"></li><li id="bkp-time"></li><li id="bkp-loc">Location not set</li><li id="bkp-models">No models selected</li><li id="bkp-client">Client / brand</li><li id="bkp-agent">Agent / booker</li></ul><p>Live preview · updates as you edit</p></aside>`;
@@ -4061,7 +4076,12 @@ function bkBuild(root,LK,rec,seed){
     Object.assign(base,{action:seed?"update_booking":"create_booking",booking_id:seed?seed.id:undefined,job_type:bkKey(type),assigned_member_id:$("#bk-member").value||null,call_time:callT?iso(d1,callT):null,wrap_time:wrapT?iso(d2,wrapT):null,currency:$("#bk-cur").value,payment_status:$("#bk-payment").value,usage_rights:usageTxt||null,confirmed:base.confirmed,model_response_required:$("#bk-notify").checked,
      model_rates:st.rows.filter(r=>r.amount!==""&&Number(r.amount)>=0).map(r=>{const u=unitOf(r.unit);return{model_id:r.id,rate_unit:r.unit,quantity:u[2]?(Number(r.qty)||1):1,unit_amount:Number(r.amount),currency:r.cur,agency_commission_pct:Number(r.comm)||0}})});
     res=await parent.MDV_DS_EMBED.send("booking",base);doneMsg=seed?"Booking saved":"Booking created";
-    const bid=(res&&res.booking&&res.booking.id)||null;
+    const bid=(res&&res.booking&&res.booking.id)||(seed&&seed.id)||null;
+    if(bid&&(base.travel_required||base.visa_required)){
+     const mk=markets.find(x=>String(x.id)===String(base.market_id)),country=mk&&String(mk.country_code||"").toUpperCase();
+     if(!country)doneMsg+=" · Mobility not auto-run: pick a market that has a country";
+     else{const rs=await Promise.all(model_ids.map(id=>parent.MDV_DS_EMBED.send("mobility",{action:"check_model",model_id:id,country_code:country,target_date:d1,market_id:base.market_id||null,booking_id:bid,persist:true}).then(r=>({ok:true,status:String((r&&r.readiness&&r.readiness.status)||"checked")})).catch(x=>({ok:false,error:String((x&&x.message)||x)}))));
+      doneMsg+=rs.every(x=>x.ok&&/^clear$/i.test(x.status))?" · Mobility clear":rs.some(x=>!x.ok)?" · Mobility check could not run for "+rs.filter(x=>!x.ok).length+" model(s)":" · Mobility needs action (see Travel & Visa)"}}
     if(invoice&&bid&&!res.auto_invoice){try{await parent.MDV_DS_EMBED.send("invoice",{action:"create_invoice_from_booking",booking_id:bid,notes:"Created from DaySilk · "+title});doneMsg+=" · draft invoice created"}catch(ie){doneMsg+=" · the invoice could not be created: "+String((ie&&ie.message)||ie).slice(0,60)}}
    }else if(k==="casting"){
     Object.assign(base,{action:seed?"update_casting":"create_casting",casting_id:seed?seed.id:undefined,casting_type:(rec&&rec.record&&rec.record.casting_type)||"in_person",assigned_member_id:$("#bk-member").value||null,rate_amount:pay,rate_text:$("#bk-pay-amt").value,currency:curE,usage_rights:$("#bk-usage").value.trim()||null});
@@ -4184,7 +4204,7 @@ function portalEvs(){return PE||[]}
 function peFind(id){return portalEvs().find(x=>x.id===id)}
 function eventsFor(s){
  /* Models calendar: model items plus what I linked to a model. My calendar: my own schedule (including what I linked to a model). */
- const base=modeModels()?(core().events||[]).filter(e=>(e.agModels||[]).length).concat(modelEvs(),agencyEvs()).filter(e=>!kindHide()[kindOf(e)]):(core().events||[]).concat(msEvents(),icsEvents(),portalEvs(),bossEvents());
+ const base=modeModels()?(core().events||[]).filter(e=>(e.agModels||[]).length).concat(modelEvs(),agencyEvs(),seasonEvs()).filter(e=>!kindHide()[kindOf(e)]&&(!S.maOwner||String(e.ownerId||"")===S.maOwner)):(core().events||[]).concat(msEvents(),icsEvents(),portalEvs(),bossEvents());
  const list=base.filter(e=>evOccurs(e,s)).sort((a,b)=>(a.t||"99")<(b.t||"99")?-1:1);
  if(!modeModels())return list;
  /* the same model item stored twice shows once (Clean up duplicates removes the extra copy for good) */
@@ -4488,7 +4508,7 @@ function schedDay(){const s=S.date,dt=parse(s),L=locOf(s),ev=eventsFor(s);
  return h}
 
 /* ================= Smart calendar: open, create, edit, reschedule ================= */
-const evById=id=>(core().events||[]).find(x=>x.id===id)||msFind(id)||peFind(id)||meFind(id)||agFind(id);
+const evById=id=>(core().events||[]).find(x=>x.id===id)||msFind(id)||peFind(id)||meFind(id)||agFind(id)||SEAS.shows.find(x=>x.id===id);
 const catName=k=>(EV_CATS.find(c=>c[0]===k)||["","Event"])[1];
 const evTag=e=>e.src==="agency"?"Agency":e.src==="model"?((e.models||[]).length===1?e.models[0]:"Models"):e.src==="portal"?"Agency":e.src==="ics"?(e.calName||"Calendar"):e.src==="outlook"?(e.calName||"Outlook"):({move:"Body",travel:"Travel",recharge:"Personal",close:"Personal",focus:"Focus",connect:"Meeting"}[e.cat]||"Meeting");
 const longDate=s=>{const d=parse(s);return DOW[d.getDay()]+", "+MON[d.getMonth()]+" "+d.getDate()};

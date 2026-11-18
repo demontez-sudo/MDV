@@ -294,7 +294,7 @@ export const handler=async(event)=>{
         paged(()=>admin.from('models').select('id,display_name').eq('organization_id',org).order('display_name').order('id')),
         paged(()=>admin.from('companies').select('id,name').eq('organization_id',org).order('name').order('id')),
         paged(()=>admin.from('contacts').select('id,display_name,first_name,last_name,company_id').eq('organization_id',org).order('display_name').order('id')),
-        paged(()=>admin.from('markets').select('id,name,code').eq('organization_id',org).eq('active',true).order('name').order('id')).catch(()=>[]),
+        paged(()=>admin.from('markets').select('*').eq('organization_id',org).eq('active',true).order('name').order('id')).catch(()=>[]),
         paged(()=>admin.from('organization_members').select('id,user_id,job_title').eq('organization_id',org).eq('status','active').eq('member_type','staff').order('id')),
         paged(()=>admin.from('profiles').select('user_id,display_name,first_name,last_name').order('user_id')).catch(()=>[])
       ]);
@@ -303,7 +303,7 @@ export const handler=async(event)=>{
         models:lmodels.map(x=>({id:x.id,name:x.display_name||'Model'})),
         companies:companies.map(x=>({id:x.id,name:x.name||'Company'})),
         contacts:contacts.map(x=>({id:x.id,name:x.display_name||[x.first_name,x.last_name].filter(Boolean).join(' ')||'Contact',company_id:x.company_id||null})),
-        markets:markets.map(x=>({id:x.id,name:x.name||x.code||'Market'})),
+        markets:markets.map(x=>({id:x.id,name:x.name||x.code||'Market',country_code:String(x.country_code||x.country||'').toUpperCase()})),
         members:members.map(m=>{const q=pm.get(m.user_id)||{};return {id:m.id,name:q.display_name||[q.first_name,q.last_name].filter(Boolean).join(' ')||m.job_title||'Team'};})
       }});
     }
@@ -323,10 +323,15 @@ export const handler=async(event)=>{
       const [eventModels,bookingModels,castingModels]=await Promise.all([links('event_models','event_id',events.map(x=>x.id)),links('booking_models','booking_id',bookings.map(x=>x.id)),links('casting_models','casting_id',castings.map(x=>x.id))]);
       const mm=new Map(models.map(x=>[x.id,{id:x.id,display_name:x.display_name}]));
       const em=group(eventModels,'event_id'),bm=group(bookingModels,'booking_id'),castm=group(castingModels,'casting_id');
+      /* each booking's rates (so the calendar can show the pay and flag a confirmed booking with no rate); read in small groups to keep the request short */
+      let rateRows=[];
+      {const ids=bookings.map(x=>x.id);const chunks=[];for(let i=0;i<ids.length;i+=120)chunks.push(ids.slice(i,i+120));
+       const got=await Promise.all(chunks.map(c=>rows(admin.from('booking_rates').select('booking_id,model_id,unit_amount,quantity,currency').eq('organization_id',organization.id).in('booking_id',c)).catch(e=>{console.warn('[calendar lite] could not read booking_rates',e&&e.message);return [];})));rateRows=got.flat();}
+      const br=group(rateRows,'booking_id');
       const out={environment:'veux-desk-lite',organization,range:{start,end},
         lookups:{models:models.map(x=>({id:x.id,display_name:x.display_name,primary_market_label:x.primary_market_label,status:x.status,active:x.active}))},
         events:events.map(x=>({...x,event_models:(em.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),
-        bookings:bookings.map(x=>({...x,booking_models:(bm.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),
+        bookings:bookings.map(x=>({...x,booking_models:(bm.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null})),booking_rates:br.get(x.id)||[]})),
         castings:castings.map(x=>({...x,casting_models:(castm.get(x.id)||[]).map(y=>({...y,models:mm.get(y.model_id)||null}))})),
         availability_blocks:blocks.map(x=>({...x,models:mm.get(x.model_id)||null})),
         tasks:tasks.map(x=>({...x,models:mm.get(x.model_id)||null}))};

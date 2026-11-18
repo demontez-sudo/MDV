@@ -112,7 +112,9 @@ function dsShape(e,extra){
   var hm=function(x){return String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0');};
   var ev={title:String(e.title||'Event'),cat:'connect',rep:'',where:e.location||'',notes:e.notes||'',web:'',
     video:md.video&&/^https:\/\//i.test(String(md.video.url||''))?md.video:null,
-    paid:!!md.paid,payAmount:(md.paid&&md.pay_amount!=null)?Number(md.pay_amount):null,payCur:md.currency||'',etype:String(e.event_type||'')+' '+String(md.calendar_event_type||'')};
+    paid:!!md.paid,payAmount:(md.paid&&md.pay_amount!=null)?Number(md.pay_amount):null,payCur:md.currency||'',etype:String(e.event_type||'')+' '+String(md.calendar_event_type||''),
+    ownerId:String(e.owner_member_id||e.assigned_member_id||'')};
+  if(Array.isArray(e.booking_rates)){var gr=0;e.booking_rates.forEach(function(r){gr+=(Number(r.quantity)||1)*(Number(r.unit_amount)||0);});ev.noRate=!e.booking_rates.length;if(e.booking_rates.length){ev.rateGross=gr;ev.rateCur=e.booking_rates[0].currency||'USD';}}
   /* An all-day event, or any event running a full day or more (a stay, a trip), shows on every day it covers. An overnight one (under 24 hours) keeps its times. */
   if(e.all_day||(en&&dayKey(en)>d&&en-s>=864e5)){ev.d=d;ev.t='';ev.e='';if(en&&dayKey(en)>d){ev.rep='d';ev.until=dayKey(new Date(en.getTime()-1));}}
   else{ev.d=d;ev.t=hm(s);ev.e=en?(dayKey(en)===d?hm(en):'23:59'):hm(new Date(Math.min(s.getTime()+45*6e4,new Date(s.getFullYear(),s.getMonth(),s.getDate(),23,59).getTime())));}
@@ -398,12 +400,12 @@ function saveBooking(body){
   });
 }
 /* one save for every kind the event form makes: a booking, a casting, a travel record, a plain event, or an invoice from a booking */
-var SEND={booking:'/api/agent/bookings/v9',casting:'/api/agent/bookings/v9',event:'/api/agent/calendar/v9',travel:'/api/agent/mobility',invoice:'/api/agent/finance'};
+var SEND={booking:'/api/agent/bookings/v9',casting:'/api/agent/bookings/v9',event:'/api/agent/calendar/v9',travel:'/api/agent/mobility',mobility:'/api/agent/mobility',invoice:'/api/agent/finance'};
 function send(kind,body){
   if(!SEND[kind])return Promise.reject(new Error('Unknown save type'));
   var b={};for(var k in (body||{}))b[k]=body[k];b.organization_slug=org();
   return post(SEND[kind],b).then(function(r){
-    if(kind!=='invoice'&&(!r||r.verified!==true))throw new Error((kind==='booking'?'The booking':kind==='casting'?'The casting':kind==='travel'?'The travel record':'The event')+' was not confirmed as saved.');
+    if(kind!=='invoice'&&(!r||r.verified!==true))throw new Error((kind==='booking'?'The booking':kind==='casting'?'The casting':kind==='travel'?'The travel record':kind==='mobility'?'The readiness check':'The event')+' was not confirmed as saved.');
     calendarChanged();return r;
   });
 }
@@ -417,6 +419,22 @@ function deleteRecord(kind,id){
   var path=kind==='event'?SEND.event:SEND.booking,body={organization_slug:org()};
   if(kind==='event'){body.action='delete_event';body.event_id=id;}else if(kind==='booking'){body.action='delete_booking';body.booking_id=id;}else if(kind==='casting'){body.action='delete_casting';body.casting_id=id;}else return Promise.reject(new Error('Unknown record type'));
   return post(path,body).then(function(r){if(!r||r.verified!==true)throw new Error('The delete was not confirmed. Please check and try again.');calendarChanged();return r;});
+}
+/* Season shows on the calendar: the seasons (Paris, Milan, London, New York...) and their shows, read once and kept ten minutes */
+var SC={at:0,data:null,busy:null};
+function seasonCal(force){
+  if(!force&&SC.data&&Date.now()-SC.at<600000)return Promise.resolve(SC.data);
+  if(SC.busy)return SC.busy;
+  SC.busy=get('/api/agent/season/v9?organization='+encodeURIComponent(org())+'&view=calendar&_t='+Date.now()).then(function(r){
+    var seasons=arr(r&&r.seasons).map(function(x){return {id:x.id,name:x.name,market:x.market||'',starts_on:x.starts_on,ends_on:x.ends_on};});
+    var byId={};seasons.forEach(function(x){byId[x.id]=x;});
+    var shows=arr(r&&r.shows).map(function(x){
+      var n=String(x.notes||''),ends=(n.match(/ends=([^;]+)/)||[])[1]||'',kind=(n.match(/kind=(\w+)/)||[])[1]||'show',se=byId[x.season_id]||{};
+      return dsShape({starts_at:x.starts_at,ends_at:ends||null,all_day:false,title:x.title,location:x.location},{id:'ps-'+x.id,ref:'show-'+x.id,src:'agency',kind:'show',seasonId:x.season_id,models:arr(x.models),status:String(x.status||''),calName:se.name||'Season',title:(x.client?x.client+': ':'')+String(x.title||'Show'),sub:kind==='presentation'?'Presentation':'Fashion show'});
+    });
+    SC.data={seasons:seasons,shows:shows};SC.at=Date.now();SC.busy=null;return SC.data;
+  }).catch(function(x){SC.busy=null;throw x;});
+  return SC.busy;
 }
 function setEventPay(id,pay){return post('/api/agent/calendar/v9',{organization_slug:org(),action:'set_event_pay',event_id:id,paid:!!(pay&&pay.paid),pay_amount:pay&&pay.paid?pay.amount:null,currency:(pay&&pay.cur)||'USD'}).then(function(r){calendarChanged();return r;});}
 function deleteAgencyEvent(id){return post('/api/agent/calendar/v9',{organization_slug:org(),action:'delete_event',event_id:id}).then(function(r){calendarChanged();return r;});}
@@ -438,7 +456,7 @@ function modelMovement(force){
     return out.slice(0,120);
   });
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,calendarStatus:function(){return {err:CS.err||'',at:CS.at||0};},saveAgencyEvent:saveAgencyEvent,deleteAgencyEvent:deleteAgencyEvent,bookingLookups:bookingLookups,setEventPay:setEventPay,send:send,recordFor:recordFor,deleteRecord:deleteRecord,saveBooking:saveBooking,dedupe:dedupe,modelMovement:modelMovement,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,calendarStatus:function(){return {err:CS.err||'',at:CS.at||0};},saveAgencyEvent:saveAgencyEvent,deleteAgencyEvent:deleteAgencyEvent,bookingLookups:bookingLookups,setEventPay:setEventPay,seasonCal:seasonCal,send:send,recordFor:recordFor,deleteRecord:deleteRecord,saveBooking:saveBooking,dedupe:dedupe,modelMovement:modelMovement,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */

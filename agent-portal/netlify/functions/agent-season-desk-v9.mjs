@@ -149,6 +149,22 @@ export const handler=async(event)=>{
       return json(400,{error:'Unsupported season action'});
     }
     const admin=await requirePermission(user.id,organization.id,'season.read'),seasonId=p.season_id||null;
+    /* the calendar's light view: seasons and their shows (with the client and models), without the roster, readiness and contact lists */
+    if(p.view==='calendar'){
+      const org=organization.id;
+      const paged=async build=>{const out=[];for(let from=0;from<12000;from+=1000){const {data,error}=await build().range(from,from+999);if(error){if(error.code==='PGRST103')break;throw error;}out.push(...(data||[]));if((data||[]).length<1000)break;}return out;};
+      const [seasons,shows,showModels,models,companies,markets]=await Promise.all([
+        paged(()=>admin.from('seasons').select('id,name,starts_on,ends_on,market_id').eq('organization_id',org).order('starts_on',{ascending:false}).order('id')),
+        paged(()=>admin.from('season_shows').select('id,season_id,title,company_id,starts_at,location,status,notes').eq('organization_id',org).order('starts_at').order('id')),
+        paged(()=>admin.from('season_show_models').select('season_show_id,model_id').eq('organization_id',org).order('season_show_id')),
+        paged(()=>admin.from('models').select('id,display_name').eq('organization_id',org).order('id')),
+        paged(()=>admin.from('companies').select('id,name').eq('organization_id',org).order('id')),
+        paged(()=>admin.from('markets').select('id,name').eq('organization_id',org).order('id')).catch(()=>[])
+      ]);
+      const mm=new Map(models.map(x=>[x.id,x.display_name||'Model'])),cm=new Map(companies.map(x=>[x.id,x.name])),kk=new Map(markets.map(x=>[x.id,x.name])),by=new Map();
+      for(const l of showModels){if(!by.has(l.season_show_id))by.set(l.season_show_id,[]);by.get(l.season_show_id).push(mm.get(l.model_id)||'Model');}
+      return json(200,{ok:true,seasons:seasons.map(x=>({id:x.id,name:x.name,starts_on:x.starts_on,ends_on:x.ends_on,market:kk.get(x.market_id)||''})),shows:shows.filter(x=>x.starts_at).map(x=>({id:x.id,season_id:x.season_id,title:x.title,client:cm.get(x.company_id)||'',starts_at:x.starts_at,location:x.location||'',status:x.status||'planned',notes:x.notes||'',models:by.get(x.id)||[]}))});
+    }
     let seasonsQ=admin.from('seasons').select('*').eq('organization_id',organization.id).order('starts_on',{ascending:false});if(seasonId)seasonsQ=seasonsQ.eq('id',seasonId);
     let modelQ=admin.from('season_models').select('*').eq('organization_id',organization.id).order('readiness_percent',{ascending:true});if(seasonId)modelQ=modelQ.eq('season_id',seasonId);
     let showQ=admin.from('season_shows').select('*').eq('organization_id',organization.id).order('starts_at',{ascending:true});if(seasonId)showQ=showQ.eq('season_id',seasonId);
