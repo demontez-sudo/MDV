@@ -112,7 +112,7 @@ function dsShape(e,extra){
   var hm=function(x){return String(x.getHours()).padStart(2,'0')+':'+String(x.getMinutes()).padStart(2,'0');};
   var ev={title:String(e.title||'Event'),cat:'connect',rep:'',where:e.location||'',notes:e.notes||'',web:'',
     video:md.video&&/^https:\/\//i.test(String(md.video.url||''))?md.video:null,
-    paid:!!md.paid,payAmount:(md.paid&&md.pay_amount!=null)?Number(md.pay_amount):null,payCur:md.currency||''};
+    paid:!!md.paid,payAmount:(md.paid&&md.pay_amount!=null)?Number(md.pay_amount):null,payCur:md.currency||'',etype:String(e.event_type||'')+' '+String(md.calendar_event_type||'')};
   /* An all-day event, or any event running a full day or more (a stay, a trip), shows on every day it covers. An overnight one (under 24 hours) keeps its times. */
   if(e.all_day||(en&&dayKey(en)>d&&en-s>=864e5)){ev.d=d;ev.t='';ev.e='';if(en&&dayKey(en)>d){ev.rep='d';ev.until=dayKey(new Date(en.getTime()-1));}}
   else{ev.d=d;ev.t=hm(s);ev.e=en?(dayKey(en)===d?hm(en):'23:59'):hm(new Date(Math.min(s.getTime()+45*6e4,new Date(s.getFullYear(),s.getMonth(),s.getDate(),23,59).getTime())));}
@@ -132,7 +132,7 @@ function portalEvents(force){
     arr(cal.events).forEach(function(e){
       if(!e||String(e.owner_member_id||'')!==String(mid)||!e.starts_at)return;
       var md=e.metadata||{};if(md.plan==='g90'||/^daysilk:/.test(String(md.category||''))||/^(cancelled|canceled)$/i.test(String(e.status||'')))return;
-      list.push(dsShape(e,{id:'pe-'+e.id,src:'portal',calName:'Model Agenda',models:arr(e.event_models).map(function(m){var q=m.models||{};return q.display_name||'';}).filter(Boolean)}));
+      list.push(dsShape(e,{id:'pe-'+e.id,ref:'event-'+e.id,kind:'event',src:'portal',calName:'Model Agenda',models:arr(e.event_models).map(function(m){var q=m.models||{};return q.display_name||'';}).filter(Boolean)}));
     });
     PE.list=list;PE.at=Date.now();return list;
   }).catch(function(){return null;}).then(function(x){PE.busy=null;return x;});
@@ -407,6 +407,17 @@ function send(kind,body){
     calendarChanged();return r;
   });
 }
+/* Edit: read one record in full, and remove one */
+function recordFor(kind,id){
+  return get('/api/agent/calendar/v9?organization='+encodeURIComponent(org())+'&view=record&kind='+encodeURIComponent(kind)+'&id='+encodeURIComponent(id)+'&_t='+Date.now()).then(function(r){
+    if(!r||!r.record)throw new Error('That record could not be read');return r;
+  });
+}
+function deleteRecord(kind,id){
+  var path=kind==='event'?SEND.event:SEND.booking,body={organization_slug:org()};
+  if(kind==='event'){body.action='delete_event';body.event_id=id;}else if(kind==='booking'){body.action='delete_booking';body.booking_id=id;}else if(kind==='casting'){body.action='delete_casting';body.casting_id=id;}else return Promise.reject(new Error('Unknown record type'));
+  return post(path,body).then(function(r){if(!r||r.verified!==true)throw new Error('The delete was not confirmed. Please check and try again.');calendarChanged();return r;});
+}
 function setEventPay(id,pay){return post('/api/agent/calendar/v9',{organization_slug:org(),action:'set_event_pay',event_id:id,paid:!!(pay&&pay.paid),pay_amount:pay&&pay.paid?pay.amount:null,currency:(pay&&pay.cur)||'USD'}).then(function(r){calendarChanged();return r;});}
 function deleteAgencyEvent(id){return post('/api/agent/calendar/v9',{organization_slug:org(),action:'delete_event',event_id:id}).then(function(r){calendarChanged();return r;});}
 /* Model movement: stays, flights and movement windows of the models, from today (a few days back) to about ten weeks ahead */
@@ -427,7 +438,7 @@ function modelMovement(force){
     return out.slice(0,120);
   });
 }
-window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,calendarStatus:function(){return {err:CS.err||'',at:CS.at||0};},saveAgencyEvent:saveAgencyEvent,deleteAgencyEvent:deleteAgencyEvent,bookingLookups:bookingLookups,setEventPay:setEventPay,send:send,saveBooking:saveBooking,dedupe:dedupe,modelMovement:modelMovement,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
+window.MDV_DS_EMBED={render:function(el){E.host=el;var first=E.owner===undefined;paint();resolveOwner().then(function(){if(first)paint(true);ensureAccount();});refresh(false);},classic:classic,src:src,menu:menu,active:active,attach:attach,size:size,pageSize:pageSize,portalTasks:portalTasks,portalEvents:portalEvents,calendarChanged:calendarChanged,calendarStatus:function(){return {err:CS.err||'',at:CS.at||0};},saveAgencyEvent:saveAgencyEvent,deleteAgencyEvent:deleteAgencyEvent,bookingLookups:bookingLookups,setEventPay:setEventPay,send:send,recordFor:recordFor,deleteRecord:deleteRecord,saveBooking:saveBooking,dedupe:dedupe,modelMovement:modelMovement,modelList:modelList,modelEvents:modelEvents,agencyEvents:agencyEvents,completePortalTask:completePortalTask,addEvents:addEvents,prepare:function(){return resolveOwner().then(function(o){return {owner:!!o,ready:!!(o||E.ready),src:src()};});},   /* never creates an account: a teammate's alerts start once they have opened DaySilk */alertFeed:function(l){try{window.MDV_DS_ALERTS&&MDV_DS_ALERTS.feed(l);}catch(x){}},refreshChips:function(){if(E.host)paint();},hold:function(){E.hold=Date.now()+1200;},open:openView,home:function(){go('overview');}};
 /* the DaySilk page is now the original platform; the earlier agent agenda is still the DaySilk Calendar */
 var impl=function(el){return window.MDV_DS_EMBED.render(el);};
 /* mdv-helm.js may load after this file and assign its own renderHelm; keep ours and remember theirs as the classic agenda */

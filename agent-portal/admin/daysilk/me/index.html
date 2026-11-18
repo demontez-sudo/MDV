@@ -1531,6 +1531,7 @@ form.cx-quick .sa-in{border-radius:999px;padding-left:18px}
 .bk-tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}.bk-tbl{width:100%;border-collapse:collapse;font-size:13px}.bk-tbl th{font:600 10px system-ui;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}.bk-tbl td{padding:6px 8px;border-bottom:1px solid color-mix(in srgb,var(--ink) 7%,transparent);vertical-align:middle}.bk-tbl .txt{width:100%;min-width:64px;padding:6px 8px}.bk-tbl .nm{font-weight:600;white-space:nowrap}.bk-tbl .g{white-space:nowrap;font-variant-numeric:tabular-nums}.bk-tbl .empty{color:var(--muted);text-align:center;padding:18px}.bk-tbl .rm{border:0;background:none;color:var(--muted);font-size:18px;cursor:pointer}
 .bk-tot{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:center;margin-top:10px;font-size:13px}.bk-tot span{display:grid}.bk-tot small{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}.bk-tot b{font-size:15px}.bk-tot i{width:1px;align-self:stretch;background:var(--line)}
 .bk-flags{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:10px;font-size:13px}.bk-flags label{display:flex;gap:6px;align-items:center}
+.bk-del{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 50%,transparent)}.bk-del.armed{background:var(--warn);color:#fff;border-color:var(--warn)}
 .bk-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface);padding:12px 0 2px;border-top:1px solid var(--line)}.bk-msg{margin-right:auto;font-size:13px;color:var(--muted)}
 @media(max-width:720px){.bk-grid,.bk-grid.three,.bk-grid.four{grid-template-columns:1fr 1fr}}
 [data-k][hidden]{display:none!important}
@@ -3917,6 +3918,11 @@ const payTxt=e=>e&&e.paid?"Paid"+(e.payAmount!=null&&isFinite(e.payAmount)?" · 
 const payEvId=e=>{const m=/^event-(.+)$/.exec(String(e&&e.ref||""));return m?m[1]:""};
 function payForm(id,e){
  return`<form class="pay-form" data-pay-form="${esc(id)}"><label class="cx-agck"><input type="checkbox" name="paid" ${e.paid?"checked":""}><span><b>Paid job</b><small>Shows the pay on the Models calendar.</small></span></label><span class="pay-f" ${e.paid?"":"hidden"}><input class="txt" type="number" name="amount" min="0" step="0.01" placeholder="Amount" value="${e.payAmount!=null?esc(String(e.payAmount)):""}"><select class="txt" name="cur">${PAY_CURS.map(c=>`<option ${c===(e.payCur||"USD")?"selected":""}>${c}</option>`).join("")}</select></span><span class="pay-act"><button type="submit" class="btn sm solid">Save pay</button><button type="button" class="btn sm ghost" data-pay-cancel>Cancel</button></span></form>`}
+function editRow(e){
+ if(!EMB||EMB_ALERTS||!e||(e.src!=="agency"&&e.src!=="model"&&e.src!=="portal"))return"";
+ const m=/^(event|booking|casting)-(.+)$/.exec(String(e.ref||""));if(!m)return"";
+ if(m[1]==="event"&&/travel/i.test(String(e.etype||"")))return row("cal","Travel is edited in Travel &amp; Visa.");
+ return row("cal",`<b>${m[1]==="booking"?"Booking":m[1]==="casting"?"Casting":"Event"}</b> <button type="button" class="linkbtn" data-bk-edit="${esc(m[1]+"|"+m[2])}">Edit details</button>`)}
 function payRow(e){
  if(!EMB||EMB_ALERTS||!e||e.kind!=="event"||(e.src!=="agency"&&e.src!=="model"&&e.src!=="portal"))return"";
  const id=payEvId(e);if(!id)return"";
@@ -3943,13 +3949,13 @@ const bkKind=t=>t==="Casting"?"casting":["Editorial","Campaign","Runway"].includ
 const bkMoney=v=>{const x=String(v||"").replace(/[^0-9.\-]/g,"");return x?Number(x):null};
 let BKS=null;
 function bkClose(){const n=document.getElementById("bksheet");if(n)n.remove();document.body.classList.remove("sheet-open");BKS=null}
-async function bkOpen(){
+async function bkOpen(seed){
  if(!EMB)return;let n=document.getElementById("bksheet");if(n)n.remove();
  n=document.createElement("div");n.id="bksheet";n.className="sheet";document.body.appendChild(n);document.body.classList.add("sheet-open");
- n.innerHTML=`<div class="sheet-bg" data-bk-close></div><div class="sheet-card paper bk-card" role="dialog" aria-modal="true" aria-label="New calendar event"><div class="sheet-h"><button class="ib" data-bk-close aria-label="Close">×</button><h3>New calendar event</h3><p>Everything for a booking, casting, travel or event in one place.</p></div><div class="bk-body"><p class="bk-note">Loading your clients, models and team…</p></div></div>`;
- let lk;try{lk=await parent.MDV_DS_EMBED.bookingLookups()}catch(err){const b=n.querySelector(".bk-body");if(b)b.innerHTML=`<div class="dd-warn" role="alert">Could not load the lists for the form: ${esc(String((err&&err.message)||err).slice(0,140))}</div><div class="dd-act"><button type="button" class="btn ghost" data-bk-retry>Try again</button></div>`;return}
- if(!document.getElementById("bksheet"))return;bkBuild(n,lk)}
-function bkBuild(root,LK){
+ n.innerHTML=`<div class="sheet-bg" data-bk-close></div><div class="sheet-card paper bk-card" role="dialog" aria-modal="true" aria-label="${seed?"Edit":"New"} calendar event"><div class="sheet-h"><button class="ib" data-bk-close aria-label="Close">×</button><h3>${seed?"Edit "+(seed.kind==="booking"?"booking":seed.kind==="casting"?"casting":"event"):"New calendar event"}</h3><p>${seed?"Change any detail and save. Models, rates and dates update everywhere.":"Everything for a booking, casting, travel or event in one place."}</p></div><div class="bk-body"><p class="bk-note">Loading your clients, models and team…</p></div></div>`;
+ let lk,rec=null;try{[lk,rec]=await Promise.all([parent.MDV_DS_EMBED.bookingLookups(),seed?parent.MDV_DS_EMBED.recordFor(seed.kind,seed.id):null])}catch(err){const b=n.querySelector(".bk-body");if(b)b.innerHTML=`<div class="dd-warn" role="alert">Could not load ${seed?"this record":"the lists for the form"}: ${esc(String((err&&err.message)||err).slice(0,140))}</div><div class="dd-act"><button type="button" class="btn ghost" data-bk-retry${seed?` data-bk-edit="${esc(seed.kind+"|"+seed.id)}"`:""}>Try again</button></div>`;return}
+ if(!document.getElementById("bksheet"))return;bkBuild(n,lk,rec,seed)}
+function bkBuild(root,LK,rec,seed){
  const ok=l=>(Array.isArray(l)?l:[]).filter(x=>x&&x.id),models=ok(LK.models).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))),companies=ok(LK.companies),contacts=ok(LK.contacts),markets=ok(LK.markets),members=ok(LK.members);
  const st={rows:[],same:{unit:"day",qty:1,amount:"",cur:"USD",comm:20}};BKS=st;
  const unitOf=u=>BK_UNITS.find(x=>x[0]===u)||BK_UNITS[0],calc=r=>{const q=unitOf(r.unit)[2]?Number(r.qty)||1:1,g=q*(Number(r.amount)||0),f=g*(Number(r.comm)||0)/100;return{gross:g,fee:f,net:g-f}};
@@ -3964,7 +3970,7 @@ function bkBuild(root,LK){
    +field("Event type *",`<select class="txt" id="bk-type">${BK_TYPES.map(t=>`<option${t==="Campaign"?" selected":""}>${esc(t)}</option>`).join("")}</select>`)
    +field("Event title *",`<input class="txt" id="bk-title" placeholder="SS27 editorial casting">`)
    +field("Date *",`<input class="txt" id="bk-date" type="date" value="${esc(d0)}">`)
-   +field("Until (multi-day)",`<input class="txt" id="bk-date2" type="date">`,"","booking")
+   +field("Until (multi-day)",`<input class="txt" id="bk-date2" type="date">`)
    +field("Start time *",`<input class="txt" id="bk-start" type="time" value="09:00">`)+field("End time *",`<input class="txt" id="bk-end" type="time" value="17:00">`)
    +`<label class="bk-f bk-chk"><span>All day</span><span class="bk-ck"><input type="checkbox" id="bk-allday"> All day</span></label></div>`)
   +sec("Recurrence","Create a one-time event or a recurring series.",`<div class="bk-grid"><label class="bk-f"><span>Repeat</span><select class="txt" id="bk-repeat"><option value="">Does not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="custom">Custom</option></select></label></div><div class="bk-custom" id="bk-custom" hidden><div class="bk-grid four"><label class="bk-f"><span>Repeat every</span><span class="bk-pair"><input class="txt" type="number" min="1" max="99" id="bk-c-int" value="1"><select class="txt" id="bk-c-freq"><option value="DAILY">Day(s)</option><option value="WEEKLY">Week(s)</option><option value="MONTHLY">Month(s)</option></select></span></label><label class="bk-f"><span>Ends</span><select class="txt" id="bk-c-end"><option value="never">Never</option><option value="until">On date</option><option value="count">After occurrences</option></select></label><label class="bk-f" id="bk-c-until-w" hidden><span>End date</span><input class="txt" type="date" id="bk-c-until"></label><label class="bk-f" id="bk-c-count-w" hidden><span># of occurrences</span><input class="txt" type="number" min="2" max="365" id="bk-c-count" value="10"></label></div><div class="bk-days">${[["MO","M"],["TU","T"],["WE","W"],["TH","T"],["FR","F"],["SA","S"],["SU","S"]].map(x=>`<label><input type="checkbox" class="bk-day" value="${x[0]}"><span>${x[1]}</span></label>`).join("")}</div></div>`,"event","bk-rec")
@@ -3986,14 +3992,14 @@ function bkBuild(root,LK){
     +field("Currency",`<select class="txt" id="bk-cur">${curOpts("USD")}</select>`,"","booking")
     +`</div>`
     +`<div class="bk-rates" data-k="booking"><div class="bk-same"><span>Same for all</span><select class="txt" id="bk-s-unit">${opt(BK_UNITS,"day",x=>[x[0],x[1]])}</select><input class="txt" id="bk-s-qty" type="number" min="0.5" step="0.5" value="1" title="Days or hours"><input class="txt" id="bk-s-amt" type="number" min="0" step="0.01" placeholder="Rate"><select class="txt" id="bk-s-cur">${curOpts("USD")}</select><input class="txt" id="bk-s-comm" type="number" min="0" max="100" step="0.5" value="20" title="Agency commission %"><button type="button" class="btn sm solid" id="bk-apply">Apply to all</button></div><div class="bk-tblwrap"><table class="bk-tbl"><thead><tr><th>Model</th><th>Rate type</th><th>Qty</th><th>Rate</th><th>Cur</th><th>Comm %</th><th>Gross</th><th>Talent net</th><th></th></tr></thead><tbody id="bk-rows"></tbody></table></div><div class="bk-tot" id="bk-tot"></div></div>`
-    +`<div class="bk-flags"><label><input type="checkbox" id="bk-confirmed"> Confirmed</label><label><input type="checkbox" id="bk-paid"> Paid</label><label><input type="checkbox" id="bk-travel"> Travel required</label><label><input type="checkbox" id="bk-visa"> Visa required</label><label data-k="booking"><input type="checkbox" id="bk-notify" checked> Ask the models to respond</label><label data-k="booking"><input type="checkbox" id="bk-invoice"> Create a draft invoice (uses this rate, client and commission)</label></div><p class="bk-help">When travel or a visa is required, run Mobility Readiness from Travel &amp; Visa after saving.</p>`)
+    +`<div class="bk-flags"><label><input type="checkbox" id="bk-confirmed"> Confirmed</label><label><input type="checkbox" id="bk-paid"> Paid</label><label><input type="checkbox" id="bk-travel"> Travel required</label><label><input type="checkbox" id="bk-visa"> Visa required</label><label data-k="booking"><input type="checkbox" id="bk-notify"${seed?"":" checked"}> Ask the models to respond</label><label data-k="booking"><input type="checkbox" id="bk-invoice"> Create a draft invoice (uses this rate, client and commission)</label></div><p class="bk-help">When travel or a visa is required, run Mobility Readiness from Travel &amp; Visa after saving.</p>`)
   +sec("Booker handoff","Everything the model needs before arrival, in one place.",`<div class="bk-grid">${handoff}</div>`)
   +sec("Internal notes / details","",`<label class="bk-f"><textarea class="txt" id="bk-notes" rows="4" maxlength="3000" placeholder="Internal agency notes, commercial context, follow-up details"></textarea></label>`);
  const aside=`<aside class="bk-prev"><small>EVENT PREVIEW</small><div class="bk-pt"><i></i><span id="bkp-type">CAMPAIGN</span></div><h3 id="bkp-title">Untitled calendar event</h3><ul><li id="bkp-date"></li><li id="bkp-time"></li><li id="bkp-loc">Location not set</li><li id="bkp-models">No models selected</li><li id="bkp-client">Client / brand</li><li id="bkp-agent">Agent / booker</li></ul><p>Live preview · updates as you edit</p></aside>`;
- root.querySelector(".bk-body").innerHTML=`<div class="bk-layout"><main class="bk-main">${form}</main>${aside}</div><div class="bk-foot"><span class="bk-msg" id="bk-msg"></span><button type="button" class="btn ghost" data-bk-close>Cancel</button><button type="button" class="btn solid" id="bk-go">Save event</button></div>`;
+ root.querySelector(".bk-body").innerHTML=`<div class="bk-layout"><main class="bk-main">${form}</main>${aside}</div><div class="bk-foot">${seed?`<button type="button" class="btn ghost bk-del" id="bk-del">Delete</button>`:""}<span class="bk-msg" id="bk-msg"></span><button type="button" class="btn ghost" data-bk-close>Cancel</button><button type="button" class="btn solid" id="bk-go">Save event</button></div>`;
  const $=q=>root.querySelector(q);
- const kind=()=>bkKind($("#bk-type").value);
- function applyKind(){const k=kind();root.querySelectorAll("[data-k]").forEach(el=>{el.hidden=!el.getAttribute("data-k").split(",").includes(k)});$("#bk-go").textContent=k==="booking"?"Create booking":k==="casting"?"Create casting":k==="travel"?"Save travel":"Save event";root.querySelector(".bk-tbl")&&root.querySelector(".bk-tbl").classList.toggle("bk-norates",k!=="booking");drawRows()}
+ const kind=()=>seed?seed.kind:bkKind($("#bk-type").value);
+ function applyKind(){const k=kind();root.querySelectorAll("[data-k]").forEach(el=>{el.hidden=!el.getAttribute("data-k").split(",").includes(k)});$("#bk-go").textContent=seed?"Save changes":k==="booking"?"Create booking":k==="casting"?"Create casting":k==="travel"?"Save travel":"Save event";root.querySelector(".bk-tbl")&&root.querySelector(".bk-tbl").classList.toggle("bk-norates",k!=="booking");drawRows()}
  function preview(){const t=$("#bk-title").value.trim(),d=$("#bk-date").value,s=$("#bk-start").value,e=$("#bk-end").value,co=$("#bk-company"),me=$("#bk-member");
   $("#bkp-type").textContent=String($("#bk-type").value).toUpperCase();$("#bkp-title").textContent=t||"Untitled calendar event";
   $("#bkp-date").textContent=d?longDate(d):"No date";$("#bkp-time").textContent=$("#bk-allday").checked?"All day":(s&&e?fmtT(s)+" to "+fmtT(e):"Time not set");
@@ -4037,7 +4043,7 @@ function bkBuild(root,LK){
    const k=kind(),type=$("#bk-type").value,title=$("#bk-title").value.trim();if(!title)throw new Error("Title is required.");
    const d1=$("#bk-date").value;if(!d1)throw new Error("Date is required.");const allDay=$("#bk-allday").checked;
    let s0=$("#bk-start").value,e0=$("#bk-end").value;if(allDay){s0="00:00";e0="23:59"}else if(!s0||!e0)throw new Error("Start and end times are required.");
-   const d2=(k==="booking"&&$("#bk-date2").value)||d1,starts=iso(d1,s0),ends=iso(d2,e0);if(new Date(ends)<new Date(starts))throw new Error("The end cannot be before the start.");
+   const d2=$("#bk-date2").value||d1,starts=iso(d1,s0),ends=iso(d2,e0);if(new Date(ends)<new Date(starts))throw new Error("The end cannot be before the start.");
    if((k==="booking"||k==="casting")&&!st.rows.length)throw new Error("Select at least one model for this "+k+".");
    const company=$("#bk-company").value,paidFlag=$("#bk-paid").checked,statusTxt=$("#bk-status").value.trim()||"Tentative";
    if(k==="booking"&&(paidFlag||$("#bk-payment").value==="Client Paid")&&!company)throw new Error("A paid booking needs a client or brand so the invoice can be created.");
@@ -4052,14 +4058,14 @@ function bkBuild(root,LK){
     if(noRate.length&&!confirm(noRate.length+" model"+(noRate.length===1?" has":"s have")+" no rate yet. Create the booking anyway?")){go.disabled=false;go.textContent=label;return}
     const callT=$("#bk-call").value,wrapT=$("#bk-wrap").value,usageTxt=$("#bk-usage").value.trim(),invoice=$("#bk-invoice").checked;
     if(invoice&&!st.rows.some(r=>Number(r.amount)>0))throw new Error("Enter a rate before creating an invoice.");if(invoice&&!company)throw new Error("Select a client or brand before creating an invoice.");
-    Object.assign(base,{action:"create_booking",job_type:bkKey(type),assigned_member_id:$("#bk-member").value||null,call_time:callT?iso(d1,callT):null,wrap_time:wrapT?iso(d2,wrapT):null,currency:$("#bk-cur").value,payment_status:$("#bk-payment").value,usage_rights:usageTxt||null,confirmed:base.confirmed,model_response_required:$("#bk-notify").checked,
+    Object.assign(base,{action:seed?"update_booking":"create_booking",booking_id:seed?seed.id:undefined,job_type:bkKey(type),assigned_member_id:$("#bk-member").value||null,call_time:callT?iso(d1,callT):null,wrap_time:wrapT?iso(d2,wrapT):null,currency:$("#bk-cur").value,payment_status:$("#bk-payment").value,usage_rights:usageTxt||null,confirmed:base.confirmed,model_response_required:$("#bk-notify").checked,
      model_rates:st.rows.filter(r=>r.amount!==""&&Number(r.amount)>=0).map(r=>{const u=unitOf(r.unit);return{model_id:r.id,rate_unit:r.unit,quantity:u[2]?(Number(r.qty)||1):1,unit_amount:Number(r.amount),currency:r.cur,agency_commission_pct:Number(r.comm)||0}})});
-    res=await parent.MDV_DS_EMBED.send("booking",base);doneMsg="Booking created";
+    res=await parent.MDV_DS_EMBED.send("booking",base);doneMsg=seed?"Booking saved":"Booking created";
     const bid=(res&&res.booking&&res.booking.id)||null;
     if(invoice&&bid&&!res.auto_invoice){try{await parent.MDV_DS_EMBED.send("invoice",{action:"create_invoice_from_booking",booking_id:bid,notes:"Created from DaySilk · "+title});doneMsg+=" · draft invoice created"}catch(ie){doneMsg+=" · the invoice could not be created: "+String((ie&&ie.message)||ie).slice(0,60)}}
    }else if(k==="casting"){
-    Object.assign(base,{action:"create_casting",casting_type:"in_person",assigned_member_id:$("#bk-member").value||null,rate_amount:pay,rate_text:$("#bk-pay-amt").value,currency:curE,usage_rights:$("#bk-usage").value.trim()||null});
-    res=await parent.MDV_DS_EMBED.send("casting",base);doneMsg="Casting created";
+    Object.assign(base,{action:seed?"update_casting":"create_casting",casting_id:seed?seed.id:undefined,casting_type:(rec&&rec.record&&rec.record.casting_type)||"in_person",assigned_member_id:$("#bk-member").value||null,rate_amount:pay,rate_text:$("#bk-pay-amt").value,currency:curE,usage_rights:$("#bk-usage").value.trim()||null});
+    res=await parent.MDV_DS_EMBED.send("casting",base);doneMsg=seed?"Casting saved":"Casting created";
    }else if(k==="travel"){
     if(model_ids.length!==1)throw new Error("Travel needs exactly one model so Mobility stays the source of truth.");
     const dest=$("#bk-loc").value.trim();if(!dest)throw new Error("Enter the travel destination in Location.");
@@ -4067,13 +4073,57 @@ function bkBuild(root,LK){
     doneMsg="Travel saved";
    }else{
     const rule=repeatRule();
-    Object.assign(base,{action:"create_event",event_type:bkKey(type),owner_member_id:$("#bk-member").value||null,recurrence_rule:rule||null,repeat:rule,pay_amount:pay,currency:curE,paid:paidFlag});
-    res=await parent.MDV_DS_EMBED.send("event",base);doneMsg="Event created";
+    Object.assign(base,{action:seed?"update_event":"create_event",event_id:seed?seed.id:undefined,visibility:seed&&rec&&rec.record&&rec.record.visibility?rec.record.visibility:undefined,event_type:bkKey(type),owner_member_id:$("#bk-member").value||null,recurrence_rule:rule||null,repeat:rule,pay_amount:pay,currency:curE,paid:paidFlag});
+    res=await parent.MDV_DS_EMBED.send("event",base);doneMsg=seed?"Event saved":"Event created";
    }
    bkClose();toast(doneMsg+(model_ids.length?" · "+model_ids.length+" model"+(model_ids.length===1?"":"s"):"")+(res&&res.warning?" · "+res.warning:""));try{render()}catch(_){}
   }catch(err){msg.textContent=(err&&err.message)||String(err);msg.style.color="var(--warn)";go.disabled=false;go.textContent=label}};
+
+ /* ---- editing: fill the form from the saved record, and allow delete ---- */
+ if(seed&&rec){
+  const R=rec.record||{},md=R.metadata||{},sv=(id,v)=>{const el=$(id);if(el&&v!=null&&v!=="")el.value=v};
+  const dt=v=>{if(!v)return null;const x=new Date(v);return isNaN(x)?null:{d:x.getFullYear()+"-"+pad(x.getMonth()+1)+"-"+pad(x.getDate()),t:pad(x.getHours())+":"+pad(x.getMinutes())}};
+  const stored=md.calendar_event_type||R.job_type||R.event_type||"";
+  const hit=BK_TYPES.find(t=>t.toLowerCase()===String(stored).toLowerCase().replace(/_/g," ")||bkKey(t)===bkKey(stored));
+  const tp=seed.kind==="casting"?"Casting":seed.kind==="booking"?(hit&&bkKind(hit)==="booking"?hit:"Campaign"):(hit||"Meeting");
+  sv("#bk-type",tp);$("#bk-type").disabled=true;$("#bk-type").title="The type of an existing item is fixed. Create a new one to change it.";
+  sv("#bk-title",R.title);
+  const a=dt(R.starts_at),b=dt(R.ends_at);
+  if(a){sv("#bk-date",a.d);sv("#bk-start",a.t)}
+  if(b){sv("#bk-end",b.t);if(a&&b.d!==a.d)sv("#bk-date2",b.d)}
+  if(R.all_day){$("#bk-allday").checked=true}
+  sv("#bk-company",R.company_id);if(R.company_id)$("#bk-company").dispatchEvent(new Event("change"));
+  sv("#bk-contact",R.primary_contact_id||R.casting_director_contact_id||R.contact_id);
+  sv("#bk-member",R.assigned_member_id||R.owner_member_id);sv("#bk-market",R.market_id);sv("#bk-loc",R.location);
+  sv("#bk-status",R.status?String(R.status).replace(/^./,c=>c.toUpperCase()):"");
+  sv("#bk-pipe",md.pipeline_stage);
+  const c1=dt(R.call_time),w1=dt(R.wrap_time);if(c1)sv("#bk-call",c1.t);if(w1)sv("#bk-wrap",w1.t);
+  if(md.pay_amount!=null)sv("#bk-pay-amt",String(md.pay_amount));sv("#bk-pay-cur",md.currency);
+  sv("#bk-usage",(rec.usage&&rec.usage[0]&&rec.usage[0].notes)||R.usage_rights||md.usage_rights);
+  if(BK_PAYMENT.includes(md.payment_status))sv("#bk-payment",md.payment_status);
+  const cur=R.currency||(rec.rates&&rec.rates[0]&&rec.rates[0].currency)||"";if(PAY_CURS.includes(cur)){sv("#bk-cur",cur);$("#bk-s-cur").value=cur;st.same.cur=cur}
+  $("#bk-confirmed").checked=/^(confirmed|job)$/i.test(String(R.status||""));$("#bk-paid").checked=!!md.paid;$("#bk-travel").checked=!!R.travel_required;$("#bk-visa").checked=!!R.visa_required;
+  const ho=md.booker_handoff||{};BK_HANDOFF.forEach(h=>sv("#bk-h-"+h[0],ho[h[0]]));
+  sv("#bk-notes",R.internal_notes||R.brief||R.notes);
+  const rule=R.recurrence_rule||(md.repeat&&typeof md.repeat==="string"?md.repeat:"");
+  if(rule){const o={};String(rule).split(";").forEach(x=>{const i=x.indexOf("=");if(i>0)o[x.slice(0,i).toUpperCase()]=x.slice(i+1)});
+   const plain=Object.keys(o).length===1&&o.FREQ;
+   if(plain&&{DAILY:1,WEEKLY:1,MONTHLY:1}[o.FREQ])sv("#bk-repeat",o.FREQ.toLowerCase());
+   else{sv("#bk-repeat","custom");$("#bk-custom").hidden=false;sv("#bk-c-freq",o.FREQ||"WEEKLY");sv("#bk-c-int",o.INTERVAL||1);
+    (o.BYDAY||"").split(",").forEach(dv=>{const cb=root.querySelector('.bk-day[value="'+dv+'"]');if(cb)cb.checked=true});
+    if(o.UNTIL){sv("#bk-c-end","until");$("#bk-c-until-w").hidden=false;const u=String(o.UNTIL);sv("#bk-c-until",u.slice(0,4)+"-"+u.slice(4,6)+"-"+u.slice(6,8))}else if(o.COUNT){sv("#bk-c-end","count");$("#bk-c-count-w").hidden=false;sv("#bk-c-count",o.COUNT)}}}
+  const nameOf=id=>(models.find(m=>String(m.id)===String(id))||{}).name||"Model";
+  const unitFrom=r=>{const u=(r.metadata&&r.metadata.rate_unit)||r.rate_type;return BK_UNITS.some(x=>x[0]===u)?u:(u==="job"||u==="other"?"flat":"day")};
+  const ids=rec.model_ids||[];ids.forEach(id=>{const base=newRow({id,name:nameOf(id)}),r=(rec.rates||[]).find(x=>String(x.model_id)===String(id));
+   if(r){base.unit=unitFrom(r);base.qty=r.quantity||1;base.amount=r.unit_amount!=null?String(r.unit_amount):"";base.cur=r.currency||base.cur;base.comm=r.agency_fee_rate==null?base.comm:Math.round(Number(r.agency_fee_rate)*1000)/10}else base.amount="";
+   st.rows.push(base)});
+  let armed=false;$("#bk-del").onclick=async function(){const dl=this,msg=$("#bk-msg");
+   if(!armed){armed=true;dl.textContent="Click again to delete for good";dl.classList.add("armed");setTimeout(()=>{armed=false;dl.textContent="Delete";dl.classList.remove("armed")},5000);return}
+   dl.disabled=true;dl.textContent="Deleting…";
+   try{await parent.MDV_DS_EMBED.deleteRecord(seed.kind,seed.id);bkClose();toast("Deleted");try{S.item=null;render()}catch(_){}}catch(err){msg.textContent=(err&&err.message)||String(err);msg.style.color="var(--warn)";dl.disabled=false;dl.textContent="Delete";armed=false}};
+ }
  applyKind();preview();const f=$("#bk-title");if(f)f.focus()}
-document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-bk-open],[data-bk-close],[data-bk-retry]");if(!t)return;e.preventDefault();if(t.hasAttribute("data-bk-close")){bkClose();return}bkOpen()});
+document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-bk-open],[data-bk-close],[data-bk-retry],[data-bk-edit]");if(!t)return;e.preventDefault();if(t.hasAttribute("data-bk-close")){bkClose();return}const ed=t.getAttribute("data-bk-edit");if(ed){const i=ed.indexOf("|");bkOpen({kind:ed.slice(0,i),id:ed.slice(i+1)});return}bkOpen()});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.getElementById("bksheet"))bkClose()});
 
 
@@ -4475,7 +4525,7 @@ function itemHTML(it){
   const px=e.src==="portal"||e.src==="model"||e.src==="agency",vn={zoom:"Zoom",meet:"Google Meet",teams:"Microsoft Teams"};
   h+=`<div class="sheet-act">${e.video?`<a class="btn sm solid" href="${esc(e.video.url)}" target="_blank" rel="noopener noreferrer">Join ${esc(vn[e.video.provider]||"video meeting")}</a>`:""}<button class="btn sm ${done?"":"solid"}" data-act="itdone">${done?"Mark not done":"Mark done"}</button>${px?"":`<button class="btn sm" data-act="itedit">Edit</button><button class="btn sm" data-act="itdup">Duplicate</button>`}<button class="btn sm" data-act="itday">Open day</button>${e.web?`<a class="btn sm" href="${esc(e.web)}" target="_blank" rel="noopener">Open in Outlook ${xi("arrow","xi sm")}</a>`:""}</div>`;
   if(cl.length)h+=`<div class="sheet-warn">${xi("alert","xi sm")}<span>Overlaps with ${cl.map(x=>`<b>${esc(x.title)}</b> (${rangeTxt({time:x.t,end:x.e})})`).join(", ")}</span></div>`;
-  h+=`<div class="sheet-info">${row("cal",e.src==="agency"?"On the Model Agenda"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" · "+esc(e.kind||"event"):e.src==="model"?"On "+esc((e.models||[]).join(", "))+"'s calendar · "+esc(e.kind||"event"):e.src==="portal"?"From the Model Agenda"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):""):e.src==="ics"?"From "+esc(e.calName||"a linked calendar")+" (read-only)":e.src==="outlook"?"From your Outlook calendar"+(e.calName?" · "+esc(e.calName):"")+(e.org?" · organised by "+esc(e.org):""):esc(catName(e.cat))+(e.rep?" · "+esc(repTxt(e)):""))}${cxAgRow(e)}${payRow(e)}${row("pin",esc(e.where||""))}${e.notes?`<div class="sheet-notes">${esc(e.notes)}</div>`:""}${row("check",done?"Done for this day":s<todayIso()||(s===todayIso()&&e.t&&hm(e.e||e.t)<nowMin())?"<b class='late'>Not marked done</b>":"")}</div>`;
+  h+=`<div class="sheet-info">${row("cal",e.src==="agency"?"On the Model Agenda"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" · "+esc(e.kind||"event"):e.src==="model"?"On "+esc((e.models||[]).join(", "))+"'s calendar · "+esc(e.kind||"event"):e.src==="portal"?"From the Model Agenda"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):""):e.src==="ics"?"From "+esc(e.calName||"a linked calendar")+" (read-only)":e.src==="outlook"?"From your Outlook calendar"+(e.calName?" · "+esc(e.calName):"")+(e.org?" · organised by "+esc(e.org):""):esc(catName(e.cat))+(e.rep?" · "+esc(repTxt(e)):""))}${cxAgRow(e)}${payRow(e)}${editRow(e)}${row("pin",esc(e.where||""))}${e.notes?`<div class="sheet-notes">${esc(e.notes)}</div>`:""}${row("check",done?"Done for this day":s<todayIso()||(s===todayIso()&&e.t&&hm(e.e||e.t)<nowMin())?"<b class='late'>Not marked done</b>":"")}</div>`;
   if(!px)h+=reschedForm(s,{kind:"e",ev:e,time:e.t,end:e.e});
   if(!px)h+=`<div class="sheet-danger">${e.rep?`<button class="linkbtn" data-act="itskip">Remove just ${fmtMD(s)}</button><button class="linkbtn" data-act="itdel">Delete the whole series</button>`:`<button class="linkbtn" data-act="itdel">Delete event</button>`}</div>`;
   return h+`</div>`}

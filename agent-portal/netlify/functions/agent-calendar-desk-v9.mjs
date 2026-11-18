@@ -274,6 +274,18 @@ export const handler=async(event)=>{
     /* DaySilk's light view: only events, bookings, castings, time off, tasks and the models they point at. The full reply also carries every contact,
        company and staff profile, each booking's rates and invoices, and a whole model record (with its evaluation text) on every link, which made
        a long window too big or too slow to come back, so the model calendar stayed empty. */
+    /* One record in full, for the edit form: the row, its models, and for a booking its per-model rates and usage terms. */
+    if(p.view==='record'){
+      const kind=String(p.kind||''),id=String(p.id||'');
+      const T={event:['events','event_models','event_id'],booking:['bookings','booking_models','booking_id'],casting:['castings','casting_models','casting_id']}[kind];
+      if(!T||!id)throw validationError('kind and id are required.');
+      const row=await one(admin.from(T[0]).select('*').eq('organization_id',organization.id).eq('id',id).maybeSingle());
+      if(!row||(kind==='event'&&!visibleToUser(row,user.id))){const e=new Error('Record not found.');e.statusCode=404;e.code='CALENDAR_EVENT_NOT_FOUND';throw e;}
+      const links=await rows(admin.from(T[1]).select('*').eq('organization_id',organization.id).eq(T[2],id));
+      const rates=kind==='booking'?await rows(admin.from('booking_rates').select('*').eq('organization_id',organization.id).eq('booking_id',id)).catch(()=>[]):[];
+      const usage=kind==='booking'?await rows(admin.from('booking_usage_terms').select('*').eq('organization_id',organization.id).eq('booking_id',id)).catch(()=>[]):[];
+      return json(200,{ok:true,kind,record:row,model_ids:cleanIds(links.map(x=>x.model_id)),rates,usage});
+    }
     /* The lists the booking form needs (models, clients, contacts, markets, agents) and nothing else: the full reply is far too heavy to fetch for a dropdown. */
     if(p.view==='lookups'){
       const paged=async build=>{const out=[];for(let from=0;from<6000;from+=1000){const {data,error}=await build().range(from,from+999);if(error){if(error.code==='PGRST103')break;throw error;}out.push(...(data||[]));if((data||[]).length<1000)break;}return out;};
