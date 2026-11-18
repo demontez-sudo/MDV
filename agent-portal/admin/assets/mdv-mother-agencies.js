@@ -341,17 +341,55 @@ function tabBody(d){
     default:return overviewPanel(d);
   }
 }
+
+/* ---------- the profile page: header card, figures, a main column and a sidebar (like a company or contact profile) ---------- */
+function mainContact(d){var f=d.agency.fields||{},m=arr(d.team).filter(function(x){return x.primary;})[0]||arr(d.team)[0];return {name:(m&&m.name)||f.contact_name||'',role:(m&&m.role)||f.contact_role||'',email:(m&&m.email)||f.contact_email||'',phone:(m&&m.phone)||f.contact_phone||''};}
+function lastActivity(){var t=S.activity&&arr(S.activity.timeline)[0];return t?fmtD(t.at):'';}
+function heroHtml(d){
+  var a=d.agency,c=mainContact(d),fl=flags(a),logo=a.logo_url?'<img src="'+esc(a.logo_url)+'" alt="">':'<span>'+esc(initials(a.name))+'</span>';
+  var first=(c.name||'').split(' ')[0];
+  var acts=(c.email?'<a class="mag-ha primary" href="mailto:'+esc(c.email)+'">✉ Email '+esc(first||'the agency')+'</a>':'<button type="button" class="mag-ha primary" onclick="MDV_MAG.teamAdd()">+ Add a contact</button>')
+    +'<button type="button" class="mag-ha" onclick="MDV_MAG.pick(\''+esc(a.id)+'\')">+ Connect models</button><a class="mag-ha" href="'+PORTAL+'" target="_blank" rel="noopener">Open the portal</a><button type="button" class="mag-ha" onclick="MDV_MAG.edit(true)">Edit</button>';
+  return '<header class="mag-hero"><div class="mag-hero-l"><div class="mag-logo big">'+logo+'</div><div class="mag-hero-t"><div class="mag-kicker">MOTHER AGENCY PROFILE</div><h2>'+esc(a.name)+'</h2><p>'+esc([a.city,a.country].filter(Boolean).join(', ')||'Location not added')+(c.name?' · '+esc(c.name)+(c.role?', '+esc(c.role):''):'')+'</p>'+(fl.length?'<div class="mag-flags big">'+fl.map(function(x){return '<span class="'+x.tone+'">'+esc(x.text)+'</span>';}).join('')+'</div>':'')+'</div></div><div class="mag-hero-a">'+acts+'</div></header>';
+}
+function tilesHtml(d){
+  var a=d.agency,k=S.activity&&S.activity.kpis,cur=S.activity&&S.activity.main_currency,c=a.contract||{state:'none'};
+  var contract=c.state==='active'?'Active':c.state==='renew'?'Renews in '+c.days_left+'d':c.state==='ended'?'Ended':c.state==='open'?'Open':'—';
+  var cells=[[S.roster&&S.roster.roster?S.roster.roster.length:arr(d.models).length,'Models'],[k?k.bookings:'…','Jobs, 90 days'],[k?k.castings:'…','Castings'],[k?money(k.commission,cur):'…','Commission, 90 days'],[contract,'Contract'],[lastActivity()||'—','Last activity']];
+  return '<div class="mag-tiles">'+cells.map(function(x){return '<div class="mag-tile"><b>'+esc(String(x[0]))+'</b><small>'+esc(x[1])+'</small></div>';}).join('')+'</div>';
+}
+function veuxHtml(d){
+  var a=d.agency,R=S.roster,s=(R&&R.summary)||{},c=a.contract||{},parts=[],todo=tasksLeft(d),ct=mainContact(d);
+  if(s.urgent)parts.push(plural(s.urgent,'model')+' need'+(s.urgent===1?'s':'')+' urgent attention.');else if(s.needs_attention)parts.push(plural(s.needs_attention,'model')+' need'+(s.needs_attention===1?'s':'')+' a look.');
+  if(c.state==='renew')parts.push('The contract renews in '+c.days_left+' days.');else if(c.state==='ended')parts.push('The contract has ended.');
+  if(S.activity&&S.activity.kpis&&S.activity.kpis.waiting_on_models)parts.push(plural(S.activity.kpis.waiting_on_models,'model')+' still to answer a booking request.');
+  if(todo.length)parts.push(plural(todo.length,'detail')+' still to fill in on this profile.');
+  var text=parts.length?parts.join(' '):(S.activity&&arr(S.activity.timeline).length?'Everything is up to date.':'No recorded activity with '+a.name+' yet. A short introduction is the best next step.');
+  var cta=ct.email?'<a class="mag-cta" href="mailto:'+esc(ct.email)+'?subject='+encodeURIComponent('Maison de Veux · '+a.name)+'">✉ Write a follow-up</a>':'<button type="button" class="mag-cta" onclick="MDV_MAG.teamAdd()">+ Add a contact</button>';
+  return '<section class="mag-veux"><small>✦ VEUX</small><p>'+esc(text)+'</p>'+cta+'</section>';
+}
+function todoCard(d){
+  var todo=tasksLeft(d);if(!todo.length)return '';
+  return '<section class="mag-sec"><header><h4>To do</h4><span class="mag-count">'+todo.length+'</span></header><ul class="mag-todo">'+todo.map(function(x){return '<li><span>'+esc(x.text)+'</span><button type="button" class="mag-link" onclick="MDV_MAG.tab(\''+x.tab+'\')">Open</button></li>';}).join('')+'</ul></section>';
+}
+function recentCard(){
+  var a=S.activity;if(!a||!arr(a.recent_bookings).length)return '';
+  return '<section class="mag-sec"><header><h4>Recent jobs</h4><span class="mag-count">'+a.recent_bookings.length+'</span></header><ul class="mag-rd-l">'+a.recent_bookings.map(function(b){return '<li><b>'+esc(b.title)+'</b> '+esc(b.model)+' · '+esc(fmtD(b.starts_at))+' · '+(b.has_rate?esc(money(b.commission,b.currency))+' commission':'<span class="bad">no rate</span>')+'</li>';}).join('')+'</ul></section>';
+}
+function secWrap(id,html){return '<div id="mag-s-'+id+'" class="mag-anchor">'+html+'</div>';}
+function profilePage(d){
+  return heroHtml(d)+tilesHtml(d)
+   +'<div class="mag-pcols"><div class="mag-pmain">'+secWrap('company',companyPanel(d))+secWrap('team',teamPanel(d))+secWrap('models',modelsPanel(d))+secWrap('activity',activityPanel(d))+secWrap('terms',termsPanel(d))+'</div>'
+   +'<aside class="mag-pside">'+veuxHtml(d)+accessPanel(d.agency)+todoCard(d)+secWrap('docs',docsPanel(d))+recentCard()+'</aside></div>';
+}
 function paintDrawer(){
   var d=drawerEl(),a=S.detail&&S.detail.agency,oldP=d.querySelector('.mag-panel'),keepTop=oldP&&!S.inl?oldP.scrollTop:0,keepY=S.inl?window.scrollY:0,keepTab=d.getAttribute('data-tab');d.setAttribute('data-tab',S.tab);
   if(S.detailLoading&&!S.detail){d.innerHTML='<aside class="mag-panel'+(S.inl?' inl':'')+'"><div class="mag-empty">Loading…</div></aside>';return;}
   if(!S.detail){d.innerHTML='<aside class="mag-panel'+(S.inl?' inl':'')+'"><button class="mag-x" onclick="MDV_MAG.close()">×</button><div class="mag-empty">'+esc(S.error||'Could not load this agency.')+'</div></aside>';return;}
   var logo=a.logo_url?'<img src="'+esc(a.logo_url)+'" alt="">':'<span>'+esc(initials(a.name))+'</span>',fl=flags(a);
-  d.innerHTML='<aside class="mag-panel'+(S.inl?' inl':'')+'" role="dialog" aria-label="'+esc(a.name)+'"><button class="mag-back" onclick="MDV_MAG.close()">← All mother agencies</button><button class="mag-x" aria-label="Close" onclick="MDV_MAG.close()">×</button>'
-   +'<div class="mag-phead"><div class="mag-logo big">'+logo+'</div><div><div class="mag-kicker">MOTHER AGENCY</div><h2>'+esc(a.name)+'</h2><p>'+esc([a.city,a.country].filter(Boolean).join(', ')||'Location not added')+' · '+a.models+' model'+(a.models===1?'':'s')+' · profile '+a.profile.score+'%</p></div></div>'
-   +(fl.length?'<div class="mag-flags big">'+fl.map(function(x){return '<span class="'+x.tone+'">'+esc(x.text)+'</span>';}).join('')+'</div>':'')
-   +tabBar(S.detail)+'<div class="mag-tabbody'+(S.tab==='overview'?' ov':'')+'">'+tabBody(S.detail)+'</div></aside>';
-  var np=d.querySelector('.mag-panel');if(np&&keepTop&&keepTab===S.tab)np.scrollTop=keepTop;
-  if(S.inl&&keepY&&keepTab===S.tab)window.scrollTo(0,keepY);
+  d.innerHTML='<aside class="mag-panel'+(S.inl?' inl':'')+' mag-profile" role="dialog" aria-label="'+esc(a.name)+'"><button class="mag-back" onclick="MDV_MAG.close()">← Mother agencies</button><button class="mag-x" aria-label="Close" onclick="MDV_MAG.close()">×</button>'+profilePage(S.detail)+'</aside>';
+  var np=d.querySelector('.mag-panel');if(np&&keepTop)np.scrollTop=keepTop;
+  if(S.inl&&keepY)window.scrollTo(0,keepY);
 }
 
 /* ---------- data and actions ---------- */
@@ -362,8 +400,8 @@ function load(){
 }
 function open(id){
   if(!inlineOK()&&typeof window.navTo==='function'&&!S.noNav){S.pending=id;window.navTo('motheragencies');return Promise.resolve();}   /* from another page: go to the Mother Agencies page first */
-  S.inl=inlineOK();S.open=id;S.detail=null;S.edit=false;S.teamEdit=null;S.termsEdit=false;S.roster=null;S.activity=null;S.activityWarn=null;S.tab='overview';AC.open=false;AC.tl=12;RS.open=null;RS.edit=null;S.code=null;S.detailLoading=true;S.error=null;paintDrawer();document.addEventListener('keydown',onKey);
-  return get('/api/agent/mother-agencies?organization='+encodeURIComponent(org())+'&partner_id='+encodeURIComponent(id)).then(function(r){S.detail=r;}).catch(function(e){S.error=(e&&e.message)||'';}).then(function(){S.detailLoading=false;paintDrawer();if(S.detail)loadRoster(id);});
+  S.inl=inlineOK();S.open=id;S.detail=null;S.edit=false;S.teamEdit=null;S.termsEdit=false;S.roster=null;S.activity=null;S.activityWarn=null;S.tab='overview';AC.open=true;AC.tl=12;RS.open=null;RS.edit=null;S.code=null;S.detailLoading=true;S.error=null;paintDrawer();document.addEventListener('keydown',onKey);
+  return get('/api/agent/mother-agencies?organization='+encodeURIComponent(org())+'&partner_id='+encodeURIComponent(id)).then(function(r){S.detail=r;}).catch(function(e){S.error=(e&&e.message)||'';}).then(function(){S.detailLoading=false;paintDrawer();if(S.detail){loadRoster(id);loadActivity();}});
 }
 function refreshOpen(){return open(S.open).then(function(){return load();});}
 async function access(kind){
@@ -548,7 +586,7 @@ function exportAll(){
 }
 
 window.renderMotherAgencies=function(el){S.host=el;paint();return load().then(function(){if(S.pending){var id=S.pending;S.pending=null;S.noNav=true;open(id);S.noNav=false;}});};
-window.MDV_MAG={render:window.renderMotherAgencies,reload:load,open:open,close:close,filter:function(f){S.filter=f;paint();},search:function(v){S.q=v;paint();},add:add,access:access,portal:portal,edit:function(on){S.edit=!!on;if(on)S.tab='company';paintDrawer();},save:save,view:view,copy:copy,model:openModel,state:S,actOpen:function(){AC.open=true;AC.tl=12;S.tab='activity';loadActivity();},actDays:function(n){AC.days=n;loadActivity();},actMore:function(){AC.tl+=20;paintDrawer();},rosterOpen:function(id){RS.open=RS.open===id?null:id;RS.edit=null;paintDrawer();},rosterFilter:function(f){RS.filter=f;paintDrawer();},rosterSearch:function(v){RS.q=v;var el=document.querySelector('.mag-rr-list'),l=rosterFiltered();if(el)el.innerHTML=l.length?l.map(rosterRow).join(''):'<div class="mag-empty">No models match.</div>';},rosterEdit:function(id){RS.edit=id;paintDrawer();},rosterSave:rosterSave,tab:function(t){S.tab=t;if(S.inl)window.scrollTo(0,0);if(t==='activity'&&!AC.open){AC.open=true;AC.tl=12;loadActivity();return;}var p=document.querySelector('.mag-panel');if(p)p.scrollTop=0;paintDrawer();var q=document.querySelector('.mag-panel');if(q)q.scrollTop=0;},teamAdd:function(){S.teamEdit='new';S.tab='team';paintDrawer();},teamEdit:function(i){S.teamEdit=i;paintDrawer();},teamCancel:function(){S.teamEdit=null;paintDrawer();},teamSave:teamSave,teamRemove:teamRemove,termsEdit:function(on){S.termsEdit=!!on;if(on)S.tab='terms';paintDrawer();},termsSave:termsSave,pick:openPick,pickFilter:function(f){LK.pick.filter=f;paintPick();},pickSearch:function(v){LK.pick.q=v;LK.pick.focusSearch=true;paintPick();},pickToggle:function(id,on){if(on)LK.pick.sel[id]=1;else delete LK.pick.sel[id];paintPick();},pickGo:pickGo,disconnect:disconnect,openBulk:openBulk,closeModal:closeModal,bulkText:function(v){LK.bulk.text=v;var b=document.querySelector('#mag-bulk footer .gold');if(b)b.disabled=!v.trim();},bulkFile:readFile,bulkCheck:bulkCheck,bulkGo:bulkGo,bulkBack:function(){LK.bulk.res=null;LK.bulk.dec={};paintBulk();},bulkTick:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;});decOf(row).on=!!on;paintBulk();},bulkSet:function(line,what,val){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);if(what==='model')d.model_id=val||null;else{d.partner_id=val||'';if(val)d.create=false;}d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},bulkCreate:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);d.create=!!on;if(on)d.partner_id='';d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},template:function(){download('mother-agency-template.csv',TEMPLATE);},exportAll:exportAll};
+window.MDV_MAG={render:window.renderMotherAgencies,reload:load,open:open,close:close,filter:function(f){S.filter=f;paint();},search:function(v){S.q=v;paint();},add:add,access:access,portal:portal,edit:function(on){S.edit=!!on;if(on)S.tab='company';paintDrawer();},save:save,view:view,copy:copy,model:openModel,state:S,actOpen:function(){AC.open=true;AC.tl=12;S.tab='activity';loadActivity();},actDays:function(n){AC.days=n;loadActivity();},actMore:function(){AC.tl+=20;paintDrawer();},rosterOpen:function(id){RS.open=RS.open===id?null:id;RS.edit=null;paintDrawer();},rosterFilter:function(f){RS.filter=f;paintDrawer();},rosterSearch:function(v){RS.q=v;var el=document.querySelector('.mag-rr-list'),l=rosterFiltered();if(el)el.innerHTML=l.length?l.map(rosterRow).join(''):'<div class="mag-empty">No models match.</div>';},rosterEdit:function(id){RS.edit=id;paintDrawer();},rosterSave:rosterSave,tab:function(t){var el=document.getElementById('mag-s-'+t);if(el)el.scrollIntoView({behavior:'smooth',block:'start'});},teamAdd:function(){S.teamEdit='new';S.tab='team';paintDrawer();},teamEdit:function(i){S.teamEdit=i;paintDrawer();},teamCancel:function(){S.teamEdit=null;paintDrawer();},teamSave:teamSave,teamRemove:teamRemove,termsEdit:function(on){S.termsEdit=!!on;if(on)S.tab='terms';paintDrawer();},termsSave:termsSave,pick:openPick,pickFilter:function(f){LK.pick.filter=f;paintPick();},pickSearch:function(v){LK.pick.q=v;LK.pick.focusSearch=true;paintPick();},pickToggle:function(id,on){if(on)LK.pick.sel[id]=1;else delete LK.pick.sel[id];paintPick();},pickGo:pickGo,disconnect:disconnect,openBulk:openBulk,closeModal:closeModal,bulkText:function(v){LK.bulk.text=v;var b=document.querySelector('#mag-bulk footer .gold');if(b)b.disabled=!v.trim();},bulkFile:readFile,bulkCheck:bulkCheck,bulkGo:bulkGo,bulkBack:function(){LK.bulk.res=null;LK.bulk.dec={};paintBulk();},bulkTick:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;});decOf(row).on=!!on;paintBulk();},bulkSet:function(line,what,val){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);if(what==='model')d.model_id=val||null;else{d.partner_id=val||'';if(val)d.create=false;}d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},bulkCreate:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);d.create=!!on;if(on)d.partner_id='';d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},template:function(){download('mother-agency-template.csv',TEMPLATE);},exportAll:exportAll};
 (function register(){
   function put(){var m=window.VEUX_V15_ROUTE_RENDERERS;if(m&&typeof m==='object'){m.motheragencies=function(el){return window.renderMotherAgencies(el);};return true;}return false;}
   if(put())return;var n=0,t=setInterval(function(){if(put()||++n>400)clearInterval(t);},150);
