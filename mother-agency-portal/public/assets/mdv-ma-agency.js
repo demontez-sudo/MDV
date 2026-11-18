@@ -4,7 +4,7 @@
 'use strict';
 if(window.MDV_MA_AGENCY)return;
 
-var A={data:null,loading:false,error:null,edit:false,busy:'',tab:'profile',teamEdit:null,roster:null,rosterLoading:false,rosterErr:'',rFilter:'all',rQ:'',rOpen:null};
+var A={data:null,loading:false,error:null,edit:false,busy:'',tab:'profile',teamEdit:null,roster:null,rosterLoading:false,rosterErr:'',rFilter:'all',rQ:'',rOpen:null,act:null,actLoading:false,aDays:90,aTl:12};
 var DOCS=[['contract','Agency agreement','The signed agreement between your agency and Maison de Veux.'],['licence','Business licence','Your licence or registration to operate as a model agency.'],['id','Representative ID','Passport or ID of the person who signs for your agency.']];
 var FIELDS=[['tagline','Tagline','text','One line that sums up your agency'],['bio','About the agency','area','Who you are, who you represent and what you are known for'],['legal_name','Legal name','text','The registered company name'],['registration_no','Registration / licence no.','text',''],['tax_id','Tax ID','text',''],['founded_year','Founded','text','2012'],['models_count','Models in your agency','text','e.g. 40'],['address_line','Address','text','Street and number'],['address_line2','Address line 2','text',''],['city','City','text',''],['state','State / region','text',''],['postal_code','Postal code','text',''],['country','Country','text',''],['specialties','Specialties','list','Editorial, Commercial, Runway (separate with commas)'],['regions','Markets and regions you cover','list','Lagos, West Africa, Europe'],['languages','Languages spoken','list','English, French, Yoruba'],['website','Website','text','www.youragency.com'],['instagram','Instagram','text','@youragency'],['contact_name','Main contact','text',''],['contact_role','Their role','text','Head booker, director…'],['contact_email','Contact email','text',''],['contact_phone','Contact phone','text',''],['whatsapp','WhatsApp','text','']];
 var GROUPS=[['About',['tagline','bio']],['Company',['legal_name','registration_no','tax_id','founded_year','models_count']],['Address',['address_line','address_line2','city','state','postal_code','country']],['Focus',['specialties','regions','languages']],['Online',['website','instagram']],['Main contact',['contact_name','contact_role','contact_email','contact_phone','whatsapp']]];
@@ -197,6 +197,32 @@ function loadRoster(){
   if(A.rosterLoading)return;A.rosterLoading=true;A.rosterErr='';
   return api('/api/partner/roster?organization=maison-de-veux').then(function(r){A.roster=r;}).catch(function(e){A.rosterErr=(e&&e.message)||'';A.roster=null;}).then(function(){A.rosterLoading=false;paint();});
 }
+
+/* ---- activity and earnings ---- */
+function amoney(n,c){try{return new Intl.NumberFormat('en-US',{style:'currency',currency:c||'USD',maximumFractionDigits:0}).format(Number(n)||0);}catch(e){return (c||'')+' '+Math.round(Number(n)||0);}}
+function monthLbl(m){var d=new Date(m+'-15T12:00:00');return isNaN(d)?m:d.toLocaleDateString([], {month:'short'});}
+var KIND_ICON={placement:'◍',update:'✎',booking:'▤',approval:'✓',statement:'≡',payment:'$',document:'▣'};
+function activityCard(){
+  var a=A.act;
+  var head='<header><div><h3>Activity and earnings</h3><p>What your models have worked on, what your agency earns, what has been paid, and what has passed between you and Maison de Veux.</p></div><div class="ag-chips">'+[[30,'30 days'],[90,'90 days'],[365,'1 year'],[0,'All']].map(function(p){return '<button type="button" class="ag-chip'+(A.aDays===p[0]?' on':'')+'" onclick="MDV_MA_AGENCY.actDays('+p[0]+')">'+p[1]+'</button>';}).join('')+'</div></header>';
+  if(!a)return '<section class="ag-card" id="ag-activity">'+head+'<p class="ag-sub">'+(A.actLoading?'Loading…':'The activity could not be loaded right now.')+'</p></section>';
+  var k=a.kpis,cur=a.main_currency;
+  var tiles=[['Jobs worked',k.bookings,k.upcoming?k.upcoming+' coming up':''],['Gross billed',amoney(k.gross,cur),''],['Your commission',amoney(k.commission,cur),a.money.length>1?'plus '+a.money.slice(1).map(function(m){return amoney(m.commission,m.currency);}).join(', '):''],['Paid so far',amoney(k.paid,k.paid_currency||cur),''],['Castings',k.castings,k.booking_rate!=null?k.booking_rate+'% booked':''],['Waiting on models',k.waiting_on_models,k.no_rate?k.no_rate+' without a rate':'']].map(function(x){return '<div class="ag-rk"><b>'+esc(String(x[1]))+'</b><small>'+esc(x[0])+'</small>'+(x[2]?'<em>'+esc(x[2])+'</em>':'')+'</div>';}).join('');
+  var maxC=Math.max.apply(null,a.monthly.map(function(m){return m.commission;}).concat([1]));
+  var chart='<div class="ag-bars" role="img" aria-label="Commission by month">'+a.monthly.map(function(m){return '<div class="ag-bar" title="'+esc(monthLbl(m.month)+': '+amoney(m.commission,cur)+' · '+m.bookings+' job'+(m.bookings===1?'':'s'))+'"><i style="height:'+Math.max(m.commission?4:1,Math.round(m.commission/maxC*100))+'%"></i><small>'+esc(monthLbl(m.month))+'</small></div>';}).join('')+'</div>';
+  var tot=a.commission_by_state.reduce(function(n,s){return n+s.amount;},0);
+  var states=tot?'<div class="ag-stack">'+a.commission_by_state.filter(function(s){return s.amount>0;}).map(function(s){return '<i class="s-'+s.key+'" style="flex:'+s.amount+'" title="'+esc(s.label+': '+amoney(s.amount,cur))+'"></i>';}).join('')+'</div><div class="ag-legend">'+a.commission_by_state.map(function(s){return '<span class="s-'+s.key+'"><i></i>'+esc(s.label)+' <b>'+esc(amoney(s.amount,cur))+'</b></span>';}).join('')+'</div>':'<p class="ag-sub">No commission on worked jobs in this period.</p>';
+  var bm=a.by_model.length?'<table class="ag-tbl"><thead><tr><th>Model</th><th>Jobs</th><th>Gross</th><th>Commission</th><th>Castings</th><th>Last job</th></tr></thead><tbody>'+a.by_model.map(function(m){return '<tr><td><b>'+esc(m.name)+'</b>'+(m.current?'':' <em class="ag-badge">Past</em>')+(m.no_rate?' <em class="ag-badge warn">'+m.no_rate+' no rate</em>':'')+'</td><td>'+m.bookings+(m.upcoming?' <small>+'+m.upcoming+'</small>':'')+'</td><td>'+esc(amoney(m.gross,cur))+'</td><td><b>'+esc(amoney(m.commission,cur))+'</b></td><td>'+m.castings+(m.castings?' <small>'+m.castings_booked+' booked</small>':'')+'</td><td>'+esc(fmtD(m.last_booking)||'—')+'</td></tr>';}).join('')+'</tbody></table>':'<p class="ag-sub">No models yet.</p>';
+  var rb=arr(a.recent_bookings).length?'<ul class="ag-rd-l">'+a.recent_bookings.map(function(b){return '<li><b>'+esc(b.title)+'</b> '+esc(b.model)+' · '+esc(fmtD(b.starts_at))+' · '+(b.has_rate?esc(amoney(b.commission,b.currency))+' commission':'no rate yet')+'</li>';}).join('')+'</ul>':'<p class="ag-sub">Nothing worked in this period.</p>';
+  var st=arr(a.statements).length?'<ul class="ag-rd-l">'+a.statements.map(function(x){return '<li><b>'+esc(fmtD(x.period_start)+' to '+fmtD(x.period_end))+'</b> '+esc(x.status)+(x.closing_balance!=null?' · '+esc(amoney(x.closing_balance,x.currency)):'')+'</li>';}).join('')+'</ul>':'<p class="ag-sub">No statements issued yet.</p>';
+  var tl=arr(a.timeline),shown=tl.slice(0,A.aTl);
+  var tlh=tl.length?'<ol class="ag-tl">'+shown.map(function(t){return '<li class="'+t.tone+'"><span class="ag-tl-i">'+(KIND_ICON[t.kind]||'•')+'</span><div><b>'+esc(t.title)+'</b>'+(t.detail?'<small>'+esc(t.detail)+'</small>':'')+'</div><time>'+esc(fmtD(t.at))+'</time></li>';}).join('')+'</ol>'+(tl.length>A.aTl?'<button type="button" class="ag-link" onclick="MDV_MA_AGENCY.actMore()">Show more ('+(tl.length-A.aTl)+')</button>':''):'<p class="ag-sub">Nothing has happened yet.</p>';
+  return '<section class="ag-card" id="ag-activity">'+head+'<div class="ag-rks">'+tiles+'</div><h4 class="ag-h4">Commission by month</h4>'+chart+'<h4 class="ag-h4">Where your commission stands</h4>'+states+'<h4 class="ag-h4">By model</h4><div class="ag-tblwrap">'+bm+'</div><div class="ag-rd-grid"><div class="ag-rd-sec"><h6>Recent jobs</h6>'+rb+'</div><div class="ag-rd-sec"><h6>Statements</h6>'+st+'</div></div><h4 class="ag-h4">Timeline</h4>'+tlh+'</section>';
+}
+function loadActivity(){
+  A.actLoading=true;
+  return api('/api/partner/activity?organization=maison-de-veux&days='+A.aDays).then(function(r){A.act=r.activity;}).catch(function(){A.act=null;}).then(function(){A.actLoading=false;paint();});
+}
 function modelsCardBasic(){
   var ms=arr(boot().models);
   var cards=ms.map(function(m){
@@ -211,7 +237,7 @@ function paint(el){
   if(A.loading&&!A.data){el.innerHTML='<div class="v15p-page ag-page"><div class="ag-empty">Loading your agency profile…</div></div>';return;}
   if(A.error&&!A.data){el.innerHTML='<div class="v15p-page ag-page"><div class="ag-empty">'+esc(A.error)+'</div><p style="text-align:center"><button class="v15p-btn" onclick="MDV_MA_AGENCY.reload()">Try again</button></p></div>';return;}
   var an=analyse();
-  el.innerHTML='<div class="v15p-page ag-page"><input type="file" id="ag-file" hidden accept=".pdf,.jpg,.jpeg,.png,.webp,image/*,application/pdf" onchange="MDV_MA_AGENCY.picked(this)">'+identity(an)+summary(an)+'<div class="ag-cols"><div>'+(A.edit?detailsEdit():detailsView())+teamCard()+termsCard()+'</div><div>'+docsCard()+modelsCard()+'</div></div></div>';
+  el.innerHTML='<div class="v15p-page ag-page"><input type="file" id="ag-file" hidden accept=".pdf,.jpg,.jpeg,.png,.webp,image/*,application/pdf" onchange="MDV_MA_AGENCY.picked(this)">'+identity(an)+summary(an)+'<div class="ag-cols"><div>'+(A.edit?detailsEdit():detailsView())+teamCard()+termsCard()+'</div><div>'+docsCard()+activityCard()+modelsCard()+'</div></div></div>';
 }
 
 /* ---------- data and actions ---------- */
@@ -219,7 +245,7 @@ function load(force){
   if(A.loading)return;
   if(A.data&&!force){paint();return;}
   A.loading=true;A.error=null;paint();
-  loadRoster();
+  loadRoster();loadActivity();
   return api('/api/partner/agency-profile?organization=maison-de-veux').then(function(d){A.data=d;}).catch(function(e){A.error=(e&&e.message)||'Could not load your agency profile.';}).then(function(){A.loading=false;paint();});
 }
 function apply(d){A.data=d;A.busy='';paint();}
@@ -277,5 +303,5 @@ function act(fn){
 }
 function report(placementId){if(window.VEUX_PARTNER_V15&&VEUX_PARTNER_V15.placementUpdate)return VEUX_PARTNER_V15.placementUpdate(placementId);}
 
-window.MDV_MA_AGENCY={rosterOpen:function(id){A.rOpen=A.rOpen===id?null:id;paint();},rosterFilter:function(f){A.rFilter=f;paint();},rosterSearch:function(v){A.rQ=v;var el=document.querySelector('.ag-rr-list'),l=rosterFiltered();if(el)el.innerHTML=l.length?l.map(rosterRow).join(''):'<div class="ag-empty">No models match.</div>';},teamAdd:function(){A.teamEdit='new';paint();var t=document.getElementById('ag-team');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});},teamEdit:function(i){A.teamEdit=i;paint();},teamCancel:function(){A.teamEdit=null;paint();},teamSave:teamSave,teamRemove:teamRemove,render:function(el){paint(el);load(false);},reload:function(){return load(true);},edit:function(on){A.edit=!!on;paint();},save:save,pick:pick,picked:picked,open:open,remove:remove,expiry:expiry,act:act,report:report,analyse:analyse};
+window.MDV_MA_AGENCY={actDays:function(n){A.aDays=n;loadActivity();},actMore:function(){A.aTl+=20;paint();},rosterOpen:function(id){A.rOpen=A.rOpen===id?null:id;paint();},rosterFilter:function(f){A.rFilter=f;paint();},rosterSearch:function(v){A.rQ=v;var el=document.querySelector('.ag-rr-list'),l=rosterFiltered();if(el)el.innerHTML=l.length?l.map(rosterRow).join(''):'<div class="ag-empty">No models match.</div>';},teamAdd:function(){A.teamEdit='new';paint();var t=document.getElementById('ag-team');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});},teamEdit:function(i){A.teamEdit=i;paint();},teamCancel:function(){A.teamEdit=null;paint();},teamSave:teamSave,teamRemove:teamRemove,render:function(el){paint(el);load(false);},reload:function(){return load(true);},edit:function(on){A.edit=!!on;paint();},save:save,pick:pick,picked:picked,open:open,remove:remove,expiry:expiry,act:act,report:report,analyse:analyse};
 })();

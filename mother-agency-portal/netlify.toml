@@ -130,3 +130,9 @@
   to = "/.netlify/functions/partner-roster"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/partner/activity"
+  to = "/.netlify/functions/partner-activity"
+  status = 200
+  force = true

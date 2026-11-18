@@ -5,6 +5,7 @@
 import crypto from 'node:crypto';
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
+import { loadActivityData, buildActivity } from './_lib/agency-activity.mjs';
 import { loadRosterData, buildRoster, sanitizePlacementTerms } from './_lib/agency-roster.mjs';
 import { sanitizeFields, sanitizeTeam, sanitizeTerms, contractState, TEXT_FIELDS } from './_lib/agency-profile-depth.mjs';
 import { norm, agencyKey, matchName, parseList, pagedRows, motherPartners, currentLinks, connectModel, disconnectModel } from './_lib/mother-agency-link.mjs';
@@ -126,6 +127,10 @@ export const handler = async event => {
 
     if (event.httpMethod === 'GET') {
       const admin = await requirePermission(user.id, organization.id, 'crm.read');
+      if (q.activity === '1' && q.partner_id) {
+        const data = await loadActivityData(admin, organization.id, String(q.partner_id), { partnerView: false });
+        return json(200, { ok: true, activity: buildActivity(data, { audience: 'staff', days: Number(q.days) }), warnings: data.warnings });
+      }
       if (q.roster === '1' && q.partner_id) {
         const data = await loadRosterData(admin, organization.id, String(q.partner_id), { partnerView: false });
         const { rows, summary } = buildRoster(data, { audience: 'staff' });
