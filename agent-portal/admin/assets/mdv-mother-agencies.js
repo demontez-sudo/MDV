@@ -81,6 +81,7 @@ function listHtml(){
 }
 function paint(){
   var el=S.host;if(!el||!document.body.contains(el))return;
+  if(S.open&&S.inl){paintDrawer();return;}
   if(S.loading&&!S.list){el.innerHTML='<div class="mag-page"><div class="mag-empty">Loading mother agencies…</div></div>';return;}
   if(S.error&&!S.list){el.innerHTML='<div class="mag-page"><div class="mag-empty">'+esc(S.error)+'</div><p style="text-align:center"><button class="mag-btn" onclick="MDV_MAG.reload()">Try again</button></p></div>';return;}
   var keep=document.activeElement&&document.activeElement.classList&&document.activeElement.classList.contains('mag-search');
@@ -89,8 +90,10 @@ function paint(){
 }
 
 /* ---------- drawer ---------- */
-function drawerEl(){var d=document.getElementById('mag-drawer');if(!d){d=document.createElement('div');d.id='mag-drawer';d.className='mag-drawer';d.onclick=function(e){if(e.target===d)close();};document.body.appendChild(d);}return d;}
-function close(){S.open=null;S.detail=null;S.edit=false;S.code=null;var d=document.getElementById('mag-drawer');if(d)d.remove();document.removeEventListener('keydown',onKey);}
+/* The profile is a page inside the portal (like a model's or a contact's), not an overlay: it replaces the list in the page area and keeps the portal's header and menu. Only when the Mother Agencies page is not on screen does it fall back to an overlay. */
+function inlineOK(){return !!(S.host&&document.body.contains(S.host)&&S.host.offsetParent!==null);}
+function drawerEl(){if(S.inl&&S.host&&document.body.contains(S.host))return S.host;var d=document.getElementById('mag-drawer');if(!d){d=document.createElement('div');d.id='mag-drawer';d.className='mag-drawer';d.onclick=function(e){if(e.target===d)close();};document.body.appendChild(d);}return d;}
+function close(){var was=S.inl;S.open=null;S.detail=null;S.edit=false;S.code=null;S.inl=false;var d=document.getElementById('mag-drawer');if(d)d.remove();document.removeEventListener('keydown',onKey);if(was){paint();try{window.scrollTo(0,0);}catch(e){}}}
 function onKey(e){if(e.key!=='Escape')return;var m=document.getElementById('mag-pick')||document.getElementById('mag-bulk');if(m){closeModal(m.id);return;}close();}
 function accessPanel(a){
   var ac=accessState(a),x=a.access||{};
@@ -339,15 +342,16 @@ function tabBody(d){
   }
 }
 function paintDrawer(){
-  var d=drawerEl(),a=S.detail&&S.detail.agency,oldP=d.querySelector('.mag-panel'),keepTop=oldP?oldP.scrollTop:0,keepTab=d.getAttribute('data-tab');d.setAttribute('data-tab',S.tab);
-  if(S.detailLoading&&!S.detail){d.innerHTML='<aside class="mag-panel"><div class="mag-empty">Loading…</div></aside>';return;}
-  if(!S.detail){d.innerHTML='<aside class="mag-panel"><button class="mag-x" onclick="MDV_MAG.close()">×</button><div class="mag-empty">'+esc(S.error||'Could not load this agency.')+'</div></aside>';return;}
+  var d=drawerEl(),a=S.detail&&S.detail.agency,oldP=d.querySelector('.mag-panel'),keepTop=oldP&&!S.inl?oldP.scrollTop:0,keepY=S.inl?window.scrollY:0,keepTab=d.getAttribute('data-tab');d.setAttribute('data-tab',S.tab);
+  if(S.detailLoading&&!S.detail){d.innerHTML='<aside class="mag-panel'+(S.inl?' inl':'')+'"><div class="mag-empty">Loading…</div></aside>';return;}
+  if(!S.detail){d.innerHTML='<aside class="mag-panel'+(S.inl?' inl':'')+'"><button class="mag-x" onclick="MDV_MAG.close()">×</button><div class="mag-empty">'+esc(S.error||'Could not load this agency.')+'</div></aside>';return;}
   var logo=a.logo_url?'<img src="'+esc(a.logo_url)+'" alt="">':'<span>'+esc(initials(a.name))+'</span>',fl=flags(a);
-  d.innerHTML='<aside class="mag-panel" role="dialog" aria-label="'+esc(a.name)+'"><button class="mag-back" onclick="MDV_MAG.close()">← All mother agencies</button><button class="mag-x" aria-label="Close" onclick="MDV_MAG.close()">×</button>'
+  d.innerHTML='<aside class="mag-panel'+(S.inl?' inl':'')+'" role="dialog" aria-label="'+esc(a.name)+'"><button class="mag-back" onclick="MDV_MAG.close()">← All mother agencies</button><button class="mag-x" aria-label="Close" onclick="MDV_MAG.close()">×</button>'
    +'<div class="mag-phead"><div class="mag-logo big">'+logo+'</div><div><div class="mag-kicker">MOTHER AGENCY</div><h2>'+esc(a.name)+'</h2><p>'+esc([a.city,a.country].filter(Boolean).join(', ')||'Location not added')+' · '+a.models+' model'+(a.models===1?'':'s')+' · profile '+a.profile.score+'%</p></div></div>'
    +(fl.length?'<div class="mag-flags big">'+fl.map(function(x){return '<span class="'+x.tone+'">'+esc(x.text)+'</span>';}).join('')+'</div>':'')
    +tabBar(S.detail)+'<div class="mag-tabbody'+(S.tab==='overview'?' ov':'')+'">'+tabBody(S.detail)+'</div></aside>';
   var np=d.querySelector('.mag-panel');if(np&&keepTop&&keepTab===S.tab)np.scrollTop=keepTop;
+  if(S.inl&&keepY&&keepTab===S.tab)window.scrollTo(0,keepY);
 }
 
 /* ---------- data and actions ---------- */
@@ -357,7 +361,8 @@ function load(){
   return get('/api/agent/mother-agencies?organization='+encodeURIComponent(org())).then(function(r){S.list=arr(r.agencies);}).catch(function(e){S.error=(e&&e.message)||'Could not load mother agencies.';}).then(function(){S.loading=false;paint();});
 }
 function open(id){
-  S.open=id;S.detail=null;S.edit=false;S.teamEdit=null;S.termsEdit=false;S.roster=null;S.activity=null;S.activityWarn=null;S.tab='overview';AC.open=false;AC.tl=12;RS.open=null;RS.edit=null;S.code=null;S.detailLoading=true;S.error=null;paintDrawer();document.addEventListener('keydown',onKey);
+  if(!inlineOK()&&typeof window.navTo==='function'&&!S.noNav){S.pending=id;window.navTo('motheragencies');return Promise.resolve();}   /* from another page: go to the Mother Agencies page first */
+  S.inl=inlineOK();S.open=id;S.detail=null;S.edit=false;S.teamEdit=null;S.termsEdit=false;S.roster=null;S.activity=null;S.activityWarn=null;S.tab='overview';AC.open=false;AC.tl=12;RS.open=null;RS.edit=null;S.code=null;S.detailLoading=true;S.error=null;paintDrawer();document.addEventListener('keydown',onKey);
   return get('/api/agent/mother-agencies?organization='+encodeURIComponent(org())+'&partner_id='+encodeURIComponent(id)).then(function(r){S.detail=r;}).catch(function(e){S.error=(e&&e.message)||'';}).then(function(){S.detailLoading=false;paintDrawer();if(S.detail)loadRoster(id);});
 }
 function refreshOpen(){return open(S.open).then(function(){return load();});}
@@ -542,8 +547,8 @@ function exportAll(){
   }).catch(function(e){toast((e&&e.message)||'Could not make the file');});
 }
 
-window.renderMotherAgencies=function(el){S.host=el;paint();return load();};
-window.MDV_MAG={render:window.renderMotherAgencies,reload:load,open:open,close:close,filter:function(f){S.filter=f;paint();},search:function(v){S.q=v;paint();},add:add,access:access,portal:portal,edit:function(on){S.edit=!!on;if(on)S.tab='company';paintDrawer();},save:save,view:view,copy:copy,model:openModel,state:S,actOpen:function(){AC.open=true;AC.tl=12;S.tab='activity';loadActivity();},actDays:function(n){AC.days=n;loadActivity();},actMore:function(){AC.tl+=20;paintDrawer();},rosterOpen:function(id){RS.open=RS.open===id?null:id;RS.edit=null;paintDrawer();},rosterFilter:function(f){RS.filter=f;paintDrawer();},rosterSearch:function(v){RS.q=v;var el=document.querySelector('.mag-rr-list'),l=rosterFiltered();if(el)el.innerHTML=l.length?l.map(rosterRow).join(''):'<div class="mag-empty">No models match.</div>';},rosterEdit:function(id){RS.edit=id;paintDrawer();},rosterSave:rosterSave,tab:function(t){S.tab=t;if(t==='activity'&&!AC.open){AC.open=true;AC.tl=12;loadActivity();return;}var p=document.querySelector('.mag-panel');if(p)p.scrollTop=0;paintDrawer();var q=document.querySelector('.mag-panel');if(q)q.scrollTop=0;},teamAdd:function(){S.teamEdit='new';S.tab='team';paintDrawer();},teamEdit:function(i){S.teamEdit=i;paintDrawer();},teamCancel:function(){S.teamEdit=null;paintDrawer();},teamSave:teamSave,teamRemove:teamRemove,termsEdit:function(on){S.termsEdit=!!on;if(on)S.tab='terms';paintDrawer();},termsSave:termsSave,pick:openPick,pickFilter:function(f){LK.pick.filter=f;paintPick();},pickSearch:function(v){LK.pick.q=v;LK.pick.focusSearch=true;paintPick();},pickToggle:function(id,on){if(on)LK.pick.sel[id]=1;else delete LK.pick.sel[id];paintPick();},pickGo:pickGo,disconnect:disconnect,openBulk:openBulk,closeModal:closeModal,bulkText:function(v){LK.bulk.text=v;var b=document.querySelector('#mag-bulk footer .gold');if(b)b.disabled=!v.trim();},bulkFile:readFile,bulkCheck:bulkCheck,bulkGo:bulkGo,bulkBack:function(){LK.bulk.res=null;LK.bulk.dec={};paintBulk();},bulkTick:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;});decOf(row).on=!!on;paintBulk();},bulkSet:function(line,what,val){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);if(what==='model')d.model_id=val||null;else{d.partner_id=val||'';if(val)d.create=false;}d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},bulkCreate:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);d.create=!!on;if(on)d.partner_id='';d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},template:function(){download('mother-agency-template.csv',TEMPLATE);},exportAll:exportAll};
+window.renderMotherAgencies=function(el){S.host=el;paint();return load().then(function(){if(S.pending){var id=S.pending;S.pending=null;S.noNav=true;open(id);S.noNav=false;}});};
+window.MDV_MAG={render:window.renderMotherAgencies,reload:load,open:open,close:close,filter:function(f){S.filter=f;paint();},search:function(v){S.q=v;paint();},add:add,access:access,portal:portal,edit:function(on){S.edit=!!on;if(on)S.tab='company';paintDrawer();},save:save,view:view,copy:copy,model:openModel,state:S,actOpen:function(){AC.open=true;AC.tl=12;S.tab='activity';loadActivity();},actDays:function(n){AC.days=n;loadActivity();},actMore:function(){AC.tl+=20;paintDrawer();},rosterOpen:function(id){RS.open=RS.open===id?null:id;RS.edit=null;paintDrawer();},rosterFilter:function(f){RS.filter=f;paintDrawer();},rosterSearch:function(v){RS.q=v;var el=document.querySelector('.mag-rr-list'),l=rosterFiltered();if(el)el.innerHTML=l.length?l.map(rosterRow).join(''):'<div class="mag-empty">No models match.</div>';},rosterEdit:function(id){RS.edit=id;paintDrawer();},rosterSave:rosterSave,tab:function(t){S.tab=t;if(S.inl)window.scrollTo(0,0);if(t==='activity'&&!AC.open){AC.open=true;AC.tl=12;loadActivity();return;}var p=document.querySelector('.mag-panel');if(p)p.scrollTop=0;paintDrawer();var q=document.querySelector('.mag-panel');if(q)q.scrollTop=0;},teamAdd:function(){S.teamEdit='new';S.tab='team';paintDrawer();},teamEdit:function(i){S.teamEdit=i;paintDrawer();},teamCancel:function(){S.teamEdit=null;paintDrawer();},teamSave:teamSave,teamRemove:teamRemove,termsEdit:function(on){S.termsEdit=!!on;if(on)S.tab='terms';paintDrawer();},termsSave:termsSave,pick:openPick,pickFilter:function(f){LK.pick.filter=f;paintPick();},pickSearch:function(v){LK.pick.q=v;LK.pick.focusSearch=true;paintPick();},pickToggle:function(id,on){if(on)LK.pick.sel[id]=1;else delete LK.pick.sel[id];paintPick();},pickGo:pickGo,disconnect:disconnect,openBulk:openBulk,closeModal:closeModal,bulkText:function(v){LK.bulk.text=v;var b=document.querySelector('#mag-bulk footer .gold');if(b)b.disabled=!v.trim();},bulkFile:readFile,bulkCheck:bulkCheck,bulkGo:bulkGo,bulkBack:function(){LK.bulk.res=null;LK.bulk.dec={};paintBulk();},bulkTick:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;});decOf(row).on=!!on;paintBulk();},bulkSet:function(line,what,val){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);if(what==='model')d.model_id=val||null;else{d.partner_id=val||'';if(val)d.create=false;}d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},bulkCreate:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);d.create=!!on;if(on)d.partner_id='';d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},template:function(){download('mother-agency-template.csv',TEMPLATE);},exportAll:exportAll};
 (function register(){
   function put(){var m=window.VEUX_V15_ROUTE_RENDERERS;if(m&&typeof m==='object'){m.motheragencies=function(el){return window.renderMotherAgencies(el);};return true;}return false;}
   if(put())return;var n=0,t=setInterval(function(){if(put()||++n>400)clearInterval(t);},150);
