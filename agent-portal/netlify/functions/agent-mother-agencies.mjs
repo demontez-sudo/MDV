@@ -5,6 +5,7 @@
 import crypto from 'node:crypto';
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
+import { loadRosterData, buildRoster, sanitizePlacementTerms } from './_lib/agency-roster.mjs';
 import { sanitizeFields, sanitizeTeam, sanitizeTerms, contractState, TEXT_FIELDS } from './_lib/agency-profile-depth.mjs';
 import { norm, agencyKey, matchName, parseList, pagedRows, motherPartners, currentLinks, connectModel, disconnectModel } from './_lib/mother-agency-link.mjs';
 
@@ -125,6 +126,11 @@ export const handler = async event => {
 
     if (event.httpMethod === 'GET') {
       const admin = await requirePermission(user.id, organization.id, 'crm.read');
+      if (q.roster === '1' && q.partner_id) {
+        const data = await loadRosterData(admin, organization.id, String(q.partner_id), { partnerView: false });
+        const { rows, summary } = buildRoster(data, { audience: 'staff' });
+        return json(200, { ok: true, roster: rows, summary, warnings: data.warnings });
+      }
       if (q.models === '1') {
         const d = await directory(admin, organization.id), an = new Map(d.agencies.map(a => [a.id, a.name]));
         return json(200, { ok: true, agencies: d.agencies, models: d.models.map(m => { const aid = d.links.get(m.id) || null; return { ...m, agency_id: aid, agency_name: aid ? an.get(aid) || '' : '' }; }) });
@@ -241,6 +247,18 @@ export const handler = async event => {
       for (const r of results) if (r.ok && after.get(r.model_id) !== r.partner_id) { r.ok = false; r.error = 'The connection was not confirmed.'; }
       const ok = results.filter(r => r.ok).length;
       return json(200, { ok: true, verified: ok > 0 && ok === results.length, connected: ok, already: results.filter(r => r.ok && r.already).length, failed: results.filter(r => !r.ok).length, agencies_created: made.size, results });
+    }
+
+    if (action === 'save_placement_terms') {
+      const admin = await requirePermission(user.id, organization.id, 'crm.write');
+      const pid = String(body.partner_id || ''), mid = String(body.model_id || '');
+      if (!pid || !mid) fail('partner_id and model_id are required');
+      const pl = (await rows(admin.from('model_placements').select('*').eq('organization_id', organization.id).eq('partner_agency_id', pid).eq('model_id', mid).in('status', ['active', 'pending', 'placed']).limit(1)))[0];
+      if (!pl) fail('This model is not connected to that agency.', 404);
+      const terms = { ...sanitizePlacementTerms(body.terms, (pl.metadata && pl.metadata.agency_terms) || {}), updated_at: new Date().toISOString(), updated_by: user.id };
+      const { error } = await admin.from('model_placements').update({ metadata: { ...(pl.metadata || {}), agency_terms: terms } }).eq('organization_id', organization.id).eq('id', pl.id);
+      if (error) throw error;
+      return json(200, { ok: true, verified: true, terms });
     }
 
     if (action === 'disconnect_model') {

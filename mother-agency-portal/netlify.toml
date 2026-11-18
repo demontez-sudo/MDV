@@ -124,3 +124,9 @@
   to = "/.netlify/functions/partner-agency-profile"
   status = 200
   force = true
+
+[[redirects]]
+  from = "/api/partner/roster"
+  to = "/.netlify/functions/partner-roster"
+  status = 200
+  force = true

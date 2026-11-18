@@ -4,7 +4,7 @@
 'use strict';
 if(window.MDV_MA_AGENCY)return;
 
-var A={data:null,loading:false,error:null,edit:false,busy:'',tab:'profile',teamEdit:null};
+var A={data:null,loading:false,error:null,edit:false,busy:'',tab:'profile',teamEdit:null,roster:null,rosterLoading:false,rosterErr:'',rFilter:'all',rQ:'',rOpen:null};
 var DOCS=[['contract','Agency agreement','The signed agreement between your agency and Maison de Veux.'],['licence','Business licence','Your licence or registration to operate as a model agency.'],['id','Representative ID','Passport or ID of the person who signs for your agency.']];
 var FIELDS=[['tagline','Tagline','text','One line that sums up your agency'],['bio','About the agency','area','Who you are, who you represent and what you are known for'],['legal_name','Legal name','text','The registered company name'],['registration_no','Registration / licence no.','text',''],['tax_id','Tax ID','text',''],['founded_year','Founded','text','2012'],['models_count','Models in your agency','text','e.g. 40'],['address_line','Address','text','Street and number'],['address_line2','Address line 2','text',''],['city','City','text',''],['state','State / region','text',''],['postal_code','Postal code','text',''],['country','Country','text',''],['specialties','Specialties','list','Editorial, Commercial, Runway (separate with commas)'],['regions','Markets and regions you cover','list','Lagos, West Africa, Europe'],['languages','Languages spoken','list','English, French, Yoruba'],['website','Website','text','www.youragency.com'],['instagram','Instagram','text','@youragency'],['contact_name','Main contact','text',''],['contact_role','Their role','text','Head booker, director…'],['contact_email','Contact email','text',''],['contact_phone','Contact phone','text',''],['whatsapp','WhatsApp','text','']];
 var GROUPS=[['About',['tagline','bio']],['Company',['legal_name','registration_no','tax_id','founded_year','models_count']],['Address',['address_line','address_line2','city','state','postal_code','country']],['Focus',['specialties','regions','languages']],['Online',['website','instagram']],['Main contact',['contact_name','contact_role','contact_email','contact_phone','whatsapp']]];
@@ -145,7 +145,59 @@ function docsCard(){
   var otherRows=other.map(function(q){return '<div class="ag-doc ok"><div class="ag-doc-main"><b>'+esc(q.name)+'</b></div><div class="ag-doc-side"><div class="ag-doc-btns"><button type="button" onclick="MDV_MA_AGENCY.open(\''+esc(q.id)+'\')">View</button><button type="button" onclick="MDV_MA_AGENCY.remove(\''+esc(q.id)+'\')">Remove</button></div></div></div>';}).join('');
   return '<section class="ag-card"><header><h3>Agency documents</h3><button type="button" class="ag-link" onclick="MDV_MA_AGENCY.pick(\'doc:other\')">+ Other document</button></header><div class="ag-docs">'+rows+otherRows+'</div><p class="ag-note">PDF, JPG, PNG or WebP, up to 50 MB. Only your agency and Maison de Veux can see these.</p></section>';
 }
+function fmtD(v){if(!v)return '';var d=new Date(String(v).slice(0,10)+'T12:00:00');return isNaN(d)?'':d.toLocaleDateString([], {month:'short',day:'numeric'});}
+function plural(n,w){return n+' '+w+(n===1?'':'s');}
+function rchip(tone,text,title){return '<span class="ag-rc '+tone+'"'+(title?' title="'+esc(title)+'"':'')+'>'+esc(text)+'</span>';}
+function rcAvail(r){var a=r.availability;if(a.state==='away')return rchip('warn','Away'+(a.now&&a.now.until?' until '+fmtD(a.now.until):''),a.now&&a.now.type);if(a.state==='soon'&&a.next)return rchip('info','Unavailable from '+fmtD(a.next.starts_at));return rchip('ok','Available');}
+function rcTravel(r){var t=r.travel.next;if(!t)return rchip('off','No trips');return rchip(t.days!=null&&t.days<=14&&!/^(confirmed|booked|ticketed)$/i.test(t.status)?'warn':'info',(t.destination||'Trip')+' · '+fmtD(t.starts_at),t.status);}
+function rcVisa(r){var v=r.visa;if(v.state==='none')return rchip('off','No visa cases');if(v.state==='urgent')return rchip('bad','Visa urgent');if(v.state==='action')return rchip('warn',plural(v.open,'visa case')+' open');return rchip('ok','Visa clear');}
+function rcWork(r){var b=r.bookings;return b.in_30_days?rchip('info',plural(b.in_30_days,'booking')+' in 30 days'):rchip('off','Nothing booked');}
+function rosterFiltered(){
+  var list=arr(A.roster&&A.roster.roster),q=A.rQ.trim().toLowerCase(),f=A.rFilter;
+  return list.filter(function(r){
+    if(q&&r.name.toLowerCase().indexOf(q)<0)return false;
+    if(f==='attention')return r.level!=='ok';
+    if(f==='away')return r.availability.state==='away';
+    if(f==='travel')return !!(r.travel.next&&r.travel.next.days!=null&&r.travel.next.days<=30);
+    if(f==='visa')return r.visa.open>0||r.visa.state==='urgent';
+    return true;
+  });
+}
+function rosterDetail(r){
+  var t=r.terms||{},bm=arr(boot().models).filter(function(m){return String(m.id)===String(r.model_id);})[0]||{};
+  function sec(h,body){return '<div class="ag-rd-sec"><h6>'+esc(h)+'</h6>'+body+'</div>';}
+  var gaps=[];var mk=bm.measurement?measLine(bm.measurement):{missing:[]};if(mk.missing.length)gaps.push('Missing measurements: '+mk.missing.join(', '));
+  var out=arr(r.outstanding).concat(gaps.map(function(g){return {tone:'info',text:g};}));
+  var outH=out.length?'<ul class="ag-rd-out">'+out.map(function(o){return '<li class="'+o.tone+'"><i></i>'+esc(o.text)+'</li>';}).join('')+'</ul>':'<p class="ag-sub">Nothing outstanding.</p>';
+  var av=arr(r.availability.upcoming).length?'<ul class="ag-rd-l">'+r.availability.upcoming.map(function(b){return '<li><b>'+esc(String(b.type).replace(/_/g,' '))+'</b> '+esc(fmtD(b.starts_at)+(b.ends_at&&b.ends_at!==b.starts_at?' to '+fmtD(b.ends_at):''))+(b.status==='pending'?' <em>pending</em>':'')+'</li>';}).join('')+'</ul>':'<p class="ag-sub">No time off or blocks coming up.</p>';
+  var tr=r.travel.next?'<p><b>'+esc(r.travel.next.destination||'Trip')+'</b> '+esc(fmtD(r.travel.next.starts_at)+(r.travel.next.ends_at?' to '+fmtD(r.travel.next.ends_at):''))+' · '+esc(r.travel.next.status||'planned')+(r.travel.count>1?'<br><span class="ag-sub">+ '+(r.travel.count-1)+' more</span>':'')+'</p>':'<p class="ag-sub">No trips planned.</p>';
+  var vz=arr(r.visa.cases).length?'<ul class="ag-rd-l">'+r.visa.cases.map(function(c){return '<li><b>'+esc((c.country||'')+' '+(c.type||'visa'))+'</b> '+esc(String(c.status||'').replace(/_/g,' '))+(c.deadline?' · due '+esc(fmtD(c.deadline)):'')+'</li>';}).join('')+'</ul>':'<p class="ag-sub">No visa cases.</p>';
+  var wk='<p>'+(r.bookings.next?'Next: <b>'+esc(r.bookings.next.title)+'</b> '+esc(fmtD(r.bookings.next.starts_at)):'Nothing booked ahead')+'</p>'+(r.bookings.last?'<p class="ag-sub">Last job: '+esc(r.bookings.last.title)+', '+esc(fmtD(r.bookings.last.starts_at))+'</p>':'')+(r.castings.upcoming?'<p class="ag-sub">'+plural(r.castings.upcoming,'casting')+' coming up</p>':'');
+  var up=arr(r.updates).length?'<ul class="ag-rd-l">'+r.updates.map(function(u){return '<li><b>'+esc(u.type)+'</b> '+esc(fmtD(u.at))+'<br>'+esc(u.note)+'</li>';}).join('')+'</ul>':'<p class="ag-sub">You have not sent an update for this model.</p>';
+  var excl={none:'Not exclusive',market:'Exclusive in some markets',full:'Fully exclusive'},cs=t.contract_state;
+  var badge=cs==='active'?'<span class="ag-pill ok">Contract active</span>':cs==='renew'?'<span class="ag-pill warn">Ends in '+t.contract_days_left+' days</span>':cs==='ended'?'<span class="ag-pill bad">Contract ended</span>':'';
+  var terms=(badge?'<p>'+badge+'</p>':'')+'<div class="ag-grid">'+[['Contract',[t.contract_start&&'from '+fmtD(t.contract_start),t.contract_end&&'to '+fmtD(t.contract_end)].filter(Boolean).join(' ')],['Commission',t.commission_override_pct!=null?t.commission_override_pct+'%':''],['Exclusivity',excl[t.exclusivity]||''],['With you since',fmtD(r.placement.since)]].map(function(x){return '<div><small>'+esc(x[0])+'</small><b>'+(x[1]?esc(x[1]):'<span class="ag-none">Not set</span>')+'</b></div>';}).join('')+'</div>'+(t.notes?'<p class="ag-sub">'+esc(t.notes)+'</p>':'');
+  return '<div class="ag-rd"><div class="ag-rd-grid">'+sec('Outstanding',outH)+sec('Availability',av)+sec('Travel',tr)+sec('Visa',vz+(r.work_auth?'<p class="ag-sub">Work authorisation expires '+esc(fmtD(r.work_auth.expires_on))+'</p>':''))+sec('Work',wk)+sec('Your updates',up)+sec('Placement and terms',terms)+'</div><div class="ag-formact"><button type="button" class="v15p-btn" onclick="VEUX_PARTNER_V15.openModel(\''+esc(r.model_id)+'\')">Open profile</button>'+(r.placement.id?'<button type="button" class="v15p-btn gold" onclick="MDV_MA_AGENCY.report(\''+esc(r.placement.id)+'\')">Send an update</button>':'')+'</div></div>';
+}
+function rosterRow(r){
+  var open=A.rOpen===r.model_id,n=arr(r.outstanding).filter(function(o){return o.tone!=='info';}).length;
+  return '<article class="ag-rr '+r.level+(open?' open':'')+'"><button type="button" class="ag-rr-h" onclick="MDV_MA_AGENCY.rosterOpen(\''+esc(r.model_id)+'\')" aria-expanded="'+open+'"><span class="ag-mph">'+(r.photo?'<img loading="lazy" src="'+esc(r.photo)+'" alt="">':'<span>'+esc(initials(r.name))+'</span>')+'</span><span class="ag-rr-name"><b>'+esc(r.name)+'</b><small>'+esc([arr(r.placement.markets).join(', '),r.placement.status].filter(Boolean).join(' · ')||'Placed')+'</small></span><span class="ag-rr-chips">'+rcAvail(r)+rcTravel(r)+rcVisa(r)+rcWork(r)+'</span>'+(n?'<span class="ag-rr-n '+r.level+'" title="Needs attention">'+n+'</span>':'<span class="ag-rr-n ok" title="All clear">✓</span>')+'</button>'+(open?rosterDetail(r):'')+'</article>';
+}
 function modelsCard(){
+  var R=A.roster;
+  if(!R){return A.rosterLoading?'<section class="ag-card" id="ag-models"><header><div><h3>Models you represent</h3><p>Loading availability, travel, visa and bookings…</p></div></header></section>':modelsCardBasic();}
+  var s=R.summary||{},list=rosterFiltered();
+  var kp=[['Need attention',s.needs_attention,s.urgent?'bad':s.needs_attention?'warn':''],['Away now',s.away_now,''],['Traveling in 30 days',s.traveling_soon,''],['Visa open',s.visa_open,s.visa_open?'warn':''],['Bookings in 30 days',s.upcoming_bookings,'']].map(function(x){return '<div class="ag-rk '+x[2]+'"><b>'+(x[1]||0)+'</b><small>'+esc(x[0])+'</small></div>';}).join('');
+  var chips=[['all','All'],['attention','Needs attention'],['away','Away'],['travel','Traveling'],['visa','Visa']].map(function(c){return '<button type="button" class="ag-chip'+(A.rFilter===c[0]?' on':'')+'" onclick="MDV_MA_AGENCY.rosterFilter(\''+c[0]+'\')">'+c[1]+'</button>';}).join('');
+  var warns=arr(R.warnings).length?'<p class="ag-sub">Some information could not load right now.</p>':'';
+  return '<section class="ag-card" id="ag-models"><header><div><h3>Models you represent</h3><p>Where each model is: availability, travel, visa and what is booked. Spot something wrong? Send an update from the model.</p></div><span class="ag-count">'+arr(R.roster).length+'</span></header>'
+   +(arr(R.roster).length?'<div class="ag-rks">'+kp+'</div><div class="ag-rtools"><div class="ag-chips">'+chips+'</div><input class="ag-rsearch" id="ag-rq" type="search" placeholder="Search models" value="'+esc(A.rQ)+'" oninput="MDV_MA_AGENCY.rosterSearch(this.value)"></div>'+warns+(list.length?'<div class="ag-rr-list">'+list.map(rosterRow).join('')+'</div>':'<div class="ag-empty">No models match.</div>'):'<div class="ag-empty">No models are placed with your agency yet.</div>')+'</section>';
+}
+function loadRoster(){
+  if(A.rosterLoading)return;A.rosterLoading=true;A.rosterErr='';
+  return api('/api/partner/roster?organization=maison-de-veux').then(function(r){A.roster=r;}).catch(function(e){A.rosterErr=(e&&e.message)||'';A.roster=null;}).then(function(){A.rosterLoading=false;paint();});
+}
+function modelsCardBasic(){
   var ms=arr(boot().models);
   var cards=ms.map(function(m){
     var p=placementFor(m.id),ph=photoOf(m),mk=measLine(m.measurement),market=marketOf(m);
@@ -167,6 +219,7 @@ function load(force){
   if(A.loading)return;
   if(A.data&&!force){paint();return;}
   A.loading=true;A.error=null;paint();
+  loadRoster();
   return api('/api/partner/agency-profile?organization=maison-de-veux').then(function(d){A.data=d;}).catch(function(e){A.error=(e&&e.message)||'Could not load your agency profile.';}).then(function(){A.loading=false;paint();});
 }
 function apply(d){A.data=d;A.busy='';paint();}
@@ -224,5 +277,5 @@ function act(fn){
 }
 function report(placementId){if(window.VEUX_PARTNER_V15&&VEUX_PARTNER_V15.placementUpdate)return VEUX_PARTNER_V15.placementUpdate(placementId);}
 
-window.MDV_MA_AGENCY={teamAdd:function(){A.teamEdit='new';paint();var t=document.getElementById('ag-team');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});},teamEdit:function(i){A.teamEdit=i;paint();},teamCancel:function(){A.teamEdit=null;paint();},teamSave:teamSave,teamRemove:teamRemove,render:function(el){paint(el);load(false);},reload:function(){return load(true);},edit:function(on){A.edit=!!on;paint();},save:save,pick:pick,picked:picked,open:open,remove:remove,expiry:expiry,act:act,report:report,analyse:analyse};
+window.MDV_MA_AGENCY={rosterOpen:function(id){A.rOpen=A.rOpen===id?null:id;paint();},rosterFilter:function(f){A.rFilter=f;paint();},rosterSearch:function(v){A.rQ=v;var el=document.querySelector('.ag-rr-list'),l=rosterFiltered();if(el)el.innerHTML=l.length?l.map(rosterRow).join(''):'<div class="ag-empty">No models match.</div>';},teamAdd:function(){A.teamEdit='new';paint();var t=document.getElementById('ag-team');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});},teamEdit:function(i){A.teamEdit=i;paint();},teamCancel:function(){A.teamEdit=null;paint();},teamSave:teamSave,teamRemove:teamRemove,render:function(el){paint(el);load(false);},reload:function(){return load(true);},edit:function(on){A.edit=!!on;paint();},save:save,pick:pick,picked:picked,open:open,remove:remove,expiry:expiry,act:act,report:report,analyse:analyse};
 })();
