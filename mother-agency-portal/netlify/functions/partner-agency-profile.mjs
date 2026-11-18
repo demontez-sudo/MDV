@@ -4,6 +4,7 @@
 import crypto from 'node:crypto';
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requirePartnerPortal } from './_lib/portal-bridge.mjs';
+import { sanitizeFields, sanitizeTeam, termsForAgency, contractState } from './_lib/agency-profile-depth.mjs';
 
 const TEXT = { tagline: 140, bio: 1800, city: 80, country: 80, website: 200, instagram: 80, founded_year: 4, contact_name: 120, contact_role: 120, contact_email: 160, contact_phone: 60, whatsapp: 60 };
 const DOC_TYPES = { logo: 'Logo', contract: 'Agency agreement', licence: 'Business licence', id: 'Representative ID', other: 'Other' };
@@ -17,7 +18,7 @@ const bucketName = () => process.env.VEUX_PRIVATE_STORAGE_BUCKET || 'veux-privat
 
 function readProfile(partner) {
   const p = (partner.metadata && partner.metadata.profile) || {};
-  return { fields: p.fields && typeof p.fields === 'object' ? p.fields : {}, documents: Array.isArray(p.documents) ? p.documents : [], updated_at: p.updated_at || null };
+  return { fields: p.fields && typeof p.fields === 'object' ? p.fields : {}, documents: Array.isArray(p.documents) ? p.documents : [], team: Array.isArray(p.team) ? p.team : [], updated_at: p.updated_at || null };
 }
 
 async function writeProfile(admin, org, partner, profile) {
@@ -42,6 +43,10 @@ async function view(admin, org, partner, company) {
     ok: true,
     agency: { id: partner.id, name: (company && company.name) || null, partner_type: partner.partner_type, portal_enabled: partner.portal_enabled !== false },
     profile: profile.fields,
+    team: profile.team,
+    /* the commercial terms are set by Maison de Veux: the agency sees them, never edits them, and never sees the internal notes */
+    terms: termsForAgency(partner.metadata && partner.metadata.terms),
+    contract: contractState(partner.metadata && partner.metadata.terms),
     documents: documents.filter(d => d.type !== 'logo'),
     logo_url: logoDoc ? await signed(admin, logoDoc, 3600) : null,
     logo_id: logoDoc ? logoDoc.id : null,
@@ -74,12 +79,14 @@ export const handler = async event => {
 
     if (action === 'save') {
       const incoming = body.profile && typeof body.profile === 'object' ? body.profile : {};
-      const fields = { ...profile.fields };
-      for (const [k, max] of Object.entries(TEXT)) if (incoming[k] !== undefined) fields[k] = clean(incoming[k], max);
-      if (fields.contact_email && !EMAIL.test(fields.contact_email)) fail('Enter a valid contact email.');
-      if (fields.founded_year && !/^(18|19|20)\d{2}$/.test(fields.founded_year)) fail('Enter the year as four digits, for example 2012.');
-      if (fields.website && !/^https?:\/\//i.test(fields.website)) fields.website = 'https://' + fields.website;
+      const fields = sanitizeFields(incoming, profile.fields);
       const saved = await writeProfile(admin, organization, partner, { ...profile, fields });
+      return json(200, await view(admin, organization, { ...partner, metadata: saved.metadata }, company));
+    }
+
+    if (action === 'save_team') {
+      const team = sanitizeTeam(body.team);
+      const saved = await writeProfile(admin, organization, partner, { ...profile, team });
       return json(200, await view(admin, organization, { ...partner, metadata: saved.metadata }, company));
     }
 

@@ -4,9 +4,13 @@
 'use strict';
 if(window.MDV_MA_AGENCY)return;
 
-var A={data:null,loading:false,error:null,edit:false,busy:'',tab:'profile'};
+var A={data:null,loading:false,error:null,edit:false,busy:'',tab:'profile',teamEdit:null};
 var DOCS=[['contract','Agency agreement','The signed agreement between your agency and Maison de Veux.'],['licence','Business licence','Your licence or registration to operate as a model agency.'],['id','Representative ID','Passport or ID of the person who signs for your agency.']];
-var FIELDS=[['tagline','Tagline','text','One line that sums up your agency'],['bio','About the agency','area','Who you are, who you represent and what you are known for'],['city','City','text',''],['country','Country','text',''],['founded_year','Founded','text','2012'],['website','Website','text','www.youragency.com'],['instagram','Instagram','text','@youragency'],['contact_name','Contact person','text',''],['contact_role','Their role','text','Head booker, director…'],['contact_email','Contact email','text',''],['contact_phone','Contact phone','text',''],['whatsapp','WhatsApp','text','']];
+var FIELDS=[['tagline','Tagline','text','One line that sums up your agency'],['bio','About the agency','area','Who you are, who you represent and what you are known for'],['legal_name','Legal name','text','The registered company name'],['registration_no','Registration / licence no.','text',''],['tax_id','Tax ID','text',''],['founded_year','Founded','text','2012'],['models_count','Models in your agency','text','e.g. 40'],['address_line','Address','text','Street and number'],['address_line2','Address line 2','text',''],['city','City','text',''],['state','State / region','text',''],['postal_code','Postal code','text',''],['country','Country','text',''],['specialties','Specialties','list','Editorial, Commercial, Runway (separate with commas)'],['regions','Markets and regions you cover','list','Lagos, West Africa, Europe'],['languages','Languages spoken','list','English, French, Yoruba'],['website','Website','text','www.youragency.com'],['instagram','Instagram','text','@youragency'],['contact_name','Main contact','text',''],['contact_role','Their role','text','Head booker, director…'],['contact_email','Contact email','text',''],['contact_phone','Contact phone','text',''],['whatsapp','WhatsApp','text','']];
+var GROUPS=[['About',['tagline','bio']],['Company',['legal_name','registration_no','tax_id','founded_year','models_count']],['Address',['address_line','address_line2','city','state','postal_code','country']],['Focus',['specialties','regions','languages']],['Online',['website','instagram']],['Main contact',['contact_name','contact_role','contact_email','contact_phone','whatsapp']]];
+var TOPICS=[['bookings','Bookings'],['castings','Castings'],['travel','Travel'],['visa','Visa'],['accounts','Accounts and payments'],['contracts','Contracts'],['development','Development'],['general','General']];
+var ROLES=['Director','Head booker','Booker','Scout','Accounts','Travel coordinator','Visa and legal','Assistant'];
+var EXCL={none:'Not exclusive',market:'Exclusive in some markets',full:'Fully exclusive'},PAYT={on_receipt:'On receipt',net_15:'Net 15 days',net_30:'Net 30 days',net_45:'Net 45 days',net_60:'Net 60 days',custom:'Custom (see notes)'};
 
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function arr(v){return Array.isArray(v)?v:[];}
@@ -58,6 +62,11 @@ function analyse(){
   chk(!!f.contact_name,5,{id:'cn',tone:'warn',text:'Name the person we should contact',act:'Edit',fn:'edit'});
   chk(!!(f.contact_email&&/@/.test(f.contact_email)),10,{id:'ce',tone:'warn',text:'Add a contact email',act:'Edit',fn:'edit'});
   chk(!!f.contact_phone,5,{id:'cp',tone:'info',text:'Add a contact phone number',act:'Edit',fn:'edit'});
+  /* recommended, not scored */
+  if(!f.legal_name||!f.registration_no)todo.push({id:'legal',tone:'info',text:'Add your legal name and registration number',act:'Edit',fn:'edit'});
+  if(!f.address_line)todo.push({id:'addr',tone:'info',text:'Add your office address',act:'Edit',fn:'edit'});
+  if(!arr(f.specialties).length)todo.push({id:'spec',tone:'info',text:'Say what you specialise in (editorial, commercial, runway…)',act:'Edit',fn:'edit'});
+  if(!arr(d.team).length)todo.push({id:'team',tone:'info',text:'Add the people we should work with: bookers, accounts, travel, visa',act:'Team',fn:'team'});
   DOCS.forEach(function(x){
     var have=docs.filter(function(q){return q.type===x[0];}).sort(function(a,b){return String(b.uploaded_at).localeCompare(String(a.uploaded_at));})[0];
     var left=have&&have.expires_on?daysTo(have.expires_on):null;
@@ -88,17 +97,41 @@ function summary(an){
   var items=an.todo.length?an.todo.slice(0,6).map(function(t){return '<li class="'+t.tone+'"><span class="ag-dot"></span><span class="ag-tx">'+esc(t.text)+'</span><button type="button" onclick="MDV_MA_AGENCY.act(\''+esc(t.fn)+'\')">'+esc(t.act)+'</button></li>';}).join(''):'<li class="ok"><span class="ag-dot"></span><span class="ag-tx">Everything is complete and up to date.</span></li>';
   return '<section class="ag-card ag-smart"><div class="ag-smart-top">'+ring(an.score)+'<div><div class="ag-eyebrow">✦ Agency summary</div><p class="ag-sentence">'+esc(an.sentence)+'</p></div></div><ul class="ag-todo">'+items+'</ul>'+(an.todo.length>6?'<p class="ag-more">+ '+(an.todo.length-6)+' more</p>':'')+'</section>';
 }
+function tagsHtml(l){l=arr(l);return l.length?'<span class="ag-tags">'+l.map(function(x){return '<i>'+esc(x)+'</i>';}).join('')+'</span>':'<span class="ag-none">Not added</span>';}
 function detailsView(){
   var f=(A.data&&A.data.profile)||{};
-  function row(k,v,href){return '<div><small>'+esc(k)+'</small><b>'+(v?(href?'<a href="'+esc(href)+'">'+esc(v)+'</a>':esc(v)):'<span class="ag-none">Not added</span>')+'</b></div>';}
+  function row(k,v,href,full){return '<div'+(full?' class="full"':'')+'><small>'+esc(k)+'</small><b>'+(v?(href?'<a href="'+esc(href)+'">'+esc(v)+'</a>':esc(v)):'<span class="ag-none">Not added</span>')+'</b></div>';}
+  var addr=[f.address_line,f.address_line2,[f.postal_code,f.city].filter(Boolean).join(' '),f.state,f.country].filter(Boolean).join(', ');
   return '<section class="ag-card"><header><h3>Agency details</h3><button type="button" class="ag-link" onclick="MDV_MA_AGENCY.edit(true)">Edit</button></header>'
    +'<div class="ag-about">'+(f.bio?'<p>'+esc(f.bio).replace(/\n/g,'<br>')+'</p>':'<p class="ag-none">Tell Maison de Veux about your agency.</p>')+'</div>'
-   +'<div class="ag-grid">'+row('Location',[f.city,f.country].filter(Boolean).join(', '))+row('Founded',f.founded_year)+row('Website',f.website,f.website)+row('Instagram',f.instagram&&'@'+String(f.instagram).replace(/^@/,''),f.instagram&&'https://instagram.com/'+String(f.instagram).replace(/^@/,''))+row('Contact person',[f.contact_name,f.contact_role].filter(Boolean).join(' · '))+row('Email',f.contact_email,f.contact_email&&'mailto:'+f.contact_email)+row('Phone',f.contact_phone,f.contact_phone&&'tel:'+f.contact_phone)+row('WhatsApp',f.whatsapp)+'</div></section>';
+   +'<div class="ag-grid">'+row('Legal name',f.legal_name)+row('Registration / licence no.',f.registration_no)+row('Tax ID',f.tax_id)+row('Founded',f.founded_year)+row('Models in your agency',f.models_count)+row('Website',f.website,f.website)+row('Address',addr,null,true)
+   +'<div class="full"><small>Specialties</small><b>'+tagsHtml(f.specialties)+'</b></div><div class="full"><small>Markets and regions</small><b>'+tagsHtml(f.regions)+'</b></div><div class="full"><small>Languages</small><b>'+tagsHtml(f.languages)+'</b></div>'
+   +row('Instagram',f.instagram&&'@'+String(f.instagram).replace(/^@/,''),f.instagram&&'https://instagram.com/'+String(f.instagram).replace(/^@/,''))+row('Main contact',[f.contact_name,f.contact_role].filter(Boolean).join(' · '))+row('Email',f.contact_email,f.contact_email&&'mailto:'+f.contact_email)+row('Phone',f.contact_phone,f.contact_phone&&'tel:'+f.contact_phone)+row('WhatsApp',f.whatsapp)+'</div></section>';
 }
 function detailsEdit(){
-  var f=(A.data&&A.data.profile)||{};
-  var inputs=FIELDS.map(function(x){var v=esc(f[x[0]]||'');return '<label class="'+(x[2]==='area'||x[0]==='tagline'?'full':'')+'"><span>'+esc(x[1])+'</span>'+(x[2]==='area'?'<textarea id="ag-f-'+x[0]+'" rows="5" maxlength="1800" placeholder="'+esc(x[3])+'">'+v+'</textarea>':'<input id="ag-f-'+x[0]+'" value="'+v+'" placeholder="'+esc(x[3])+'">')+'</label>';}).join('');
-  return '<section class="ag-card"><header><h3>Edit agency details</h3></header><div class="ag-form">'+inputs+'</div><div class="ag-formact"><button class="v15p-btn" onclick="MDV_MA_AGENCY.edit(false)">Cancel</button><button class="v15p-btn gold" id="ag-save" onclick="MDV_MA_AGENCY.save()">Save profile</button></div></section>';
+  var f=(A.data&&A.data.profile)||{},by={};FIELDS.forEach(function(x){by[x[0]]=x;});
+  var body=GROUPS.map(function(g){return '<h4 class="ag-h4">'+esc(g[0])+'</h4><div class="ag-form">'+g[1].map(function(k){var x=by[k],v=esc(Array.isArray(f[k])?f[k].join(', '):(f[k]||''));return '<label class="'+(x[2]==='area'||x[2]==='list'||k==='tagline'?'full':'')+'"><span>'+esc(x[1])+'</span>'+(x[2]==='area'?'<textarea id="ag-f-'+k+'" rows="5" maxlength="1800" placeholder="'+esc(x[3])+'">'+v+'</textarea>':'<input id="ag-f-'+k+'" value="'+v+'" placeholder="'+esc(x[3])+'">')+'</label>';}).join('')+'</div>';}).join('');
+  return '<section class="ag-card"><header><h3>Edit agency details</h3></header>'+body+'<div class="ag-formact"><button class="v15p-btn" onclick="MDV_MA_AGENCY.edit(false)">Cancel</button><button class="v15p-btn gold" id="ag-save" onclick="MDV_MA_AGENCY.save()">Save profile</button></div></section>';
+}
+/* ---- the team: the agency keeps its own list ---- */
+function teamCard(){
+  var team=arr(A.data&&A.data.team),e=A.teamEdit;
+  function card(m,i){return '<div class="ag-person"><div class="ag-pav">'+esc(initials(m.name))+'</div><div class="ag-pinfo"><b>'+esc(m.name)+(m.primary?' <em class="ag-badge">Main contact</em>':'')+'</b><small>'+esc(m.role||'No role added')+'</small><span class="ag-plinks">'+(m.email?'<a href="mailto:'+esc(m.email)+'">'+esc(m.email)+'</a>':'')+(m.phone?'<a href="tel:'+esc(m.phone)+'">'+esc(m.phone)+'</a>':'')+(m.whatsapp?'<span>WhatsApp '+esc(m.whatsapp)+'</span>':'')+'</span>'+(arr(m.topics).length?'<span class="ag-tags">'+m.topics.map(function(t){var o=TOPICS.filter(function(x){return x[0]===t;})[0];return '<i>'+esc(o?o[1]:t)+'</i>';}).join('')+'</span>':'')+'</div><div class="ag-pact"><button type="button" class="ag-link" onclick="MDV_MA_AGENCY.teamEdit('+i+')">Edit</button><button type="button" class="ag-link bad" onclick="MDV_MA_AGENCY.teamRemove('+i+')">Remove</button></div></div>';}
+  var form='';
+  if(e!==null&&e!==undefined){
+    var m=e==='new'?{topics:[]}:team[e]||{topics:[]};
+    form='<div class="ag-pform"><h4 class="ag-h4">'+(e==='new'?'Add a person':'Edit '+esc(m.name))+'</h4><div class="ag-form"><label><span>Name</span><input id="ag-t-name" value="'+esc(m.name||'')+'"></label><label><span>Role</span><input id="ag-t-role" list="ag-roles" value="'+esc(m.role||'')+'"><datalist id="ag-roles">'+ROLES.map(function(r){return '<option>'+r+'</option>';}).join('')+'</datalist></label><label><span>Email</span><input id="ag-t-email" type="email" value="'+esc(m.email||'')+'"></label><label><span>Phone</span><input id="ag-t-phone" value="'+esc(m.phone||'')+'"></label><label><span>WhatsApp</span><input id="ag-t-whatsapp" value="'+esc(m.whatsapp||'')+'"></label><label class="ag-chkrow"><input type="checkbox" id="ag-t-primary" '+(m.primary?'checked':'')+'><span>Main contact for the agency</span></label></div><div class="ag-topics"><span>Reach them about</span>'+TOPICS.map(function(t){return '<label><input type="checkbox" class="ag-t-topic" value="'+t[0]+'" '+(arr(m.topics).indexOf(t[0])>=0?'checked':'')+'> '+t[1]+'</label>';}).join('')+'</div><div class="ag-formact"><button class="v15p-btn" onclick="MDV_MA_AGENCY.teamCancel()">Cancel</button><button class="v15p-btn gold" onclick="MDV_MA_AGENCY.teamSave()">Save person</button></div></div>';
+  }
+  return '<section class="ag-card" id="ag-team"><header><div><h3>Your team</h3><p>The people Maison de Veux should work with, and what to reach each one about.</p></div><button type="button" class="v15p-btn" onclick="MDV_MA_AGENCY.teamAdd()">+ Add person</button></header>'+(team.length?'<div class="ag-people">'+team.map(card).join('')+'</div>':'<p class="ag-none">No one added yet.</p>')+form+'</section>';
+}
+/* ---- the terms: set by Maison de Veux, read only here ---- */
+function termsCard(){
+  var t=(A.data&&A.data.terms)||{},c=(A.data&&A.data.contract)||{state:'none'};
+  var has=Object.keys(t).filter(function(k){return k!=='updated_at'&&k!=='updated_by'&&t[k]!==''&&t[k]!=null;}).length;
+  function row(k,v,full){return '<div'+(full?' class="full"':'')+'><small>'+esc(k)+'</small><b>'+(v?esc(v):'<span class="ag-none">Not set</span>')+'</b></div>';}
+  var badge=c.state==='active'?'<span class="ag-pill ok">Contract active</span>':c.state==='renew'?'<span class="ag-pill warn">Renews in '+c.days_left+' days</span>':c.state==='ended'?'<span class="ag-pill bad">Contract ended</span>':'';
+  var split=(t.commission_pct!=null||t.agency_share_pct!=null)?[t.commission_pct!=null?'Maison de Veux '+t.commission_pct+'%':'',t.agency_share_pct!=null?'Your agency '+t.agency_share_pct+'%':''].filter(Boolean).join(' · '):'';
+  return '<section class="ag-card"><header><div><h3>Terms with Maison de Veux</h3><p>Set by Maison de Veux. To change anything here, contact your Maison de Veux booker.</p></div>'+badge+'</header>'+(has?'<div class="ag-grid">'+row('Split',split)+row('Contract',[t.contract_start&&'from '+t.contract_start,t.contract_end&&'to '+t.contract_end].filter(Boolean).join(' '))+row('Renewal notice',t.renewal_notice_days!=null?t.renewal_notice_days+' days':'')+row('Exclusivity',[EXCL[t.exclusivity],t.exclusivity_note].filter(Boolean).join(' · '))+row('Payment terms',[PAYT[t.payment_terms],t.payment_terms_note].filter(Boolean).join(' · '))+row('Currency',t.currency)+row('Payout contact',[t.payout_contact_name,t.payout_contact_email].filter(Boolean).join(' · '))+row('Invoicing',t.invoicing_notes,true)+'</div>':'<p class="ag-none">Your terms have not been added yet.</p>')+'</section>';
 }
 function docsCard(){
   var docs=arr(A.data&&A.data.documents);
@@ -126,7 +159,7 @@ function paint(el){
   if(A.loading&&!A.data){el.innerHTML='<div class="v15p-page ag-page"><div class="ag-empty">Loading your agency profile…</div></div>';return;}
   if(A.error&&!A.data){el.innerHTML='<div class="v15p-page ag-page"><div class="ag-empty">'+esc(A.error)+'</div><p style="text-align:center"><button class="v15p-btn" onclick="MDV_MA_AGENCY.reload()">Try again</button></p></div>';return;}
   var an=analyse();
-  el.innerHTML='<div class="v15p-page ag-page"><input type="file" id="ag-file" hidden accept=".pdf,.jpg,.jpeg,.png,.webp,image/*,application/pdf" onchange="MDV_MA_AGENCY.picked(this)">'+identity(an)+summary(an)+'<div class="ag-cols"><div>'+(A.edit?detailsEdit():detailsView())+docsCard()+'</div><div>'+modelsCard()+'</div></div></div>';
+  el.innerHTML='<div class="v15p-page ag-page"><input type="file" id="ag-file" hidden accept=".pdf,.jpg,.jpeg,.png,.webp,image/*,application/pdf" onchange="MDV_MA_AGENCY.picked(this)">'+identity(an)+summary(an)+'<div class="ag-cols"><div>'+(A.edit?detailsEdit():detailsView())+teamCard()+termsCard()+'</div><div>'+docsCard()+modelsCard()+'</div></div></div>';
 }
 
 /* ---------- data and actions ---------- */
@@ -153,6 +186,26 @@ async function picked(input){
   }catch(e){toast('Upload failed: '+((e&&e.message)||e));}
   pending=null;
 }
+function personFromForm(){
+  var g=function(id){var el=document.getElementById(id);return el?el.value.trim():'';};
+  return {name:g('ag-t-name'),role:g('ag-t-role'),email:g('ag-t-email'),phone:g('ag-t-phone'),whatsapp:g('ag-t-whatsapp'),primary:!!(document.getElementById('ag-t-primary')||{}).checked,topics:Array.prototype.map.call(document.querySelectorAll('.ag-t-topic:checked'),function(x){return x.value;})};
+}
+async function saveTeam(list,msg){
+  try{var d=await api('/api/partner/agency-profile',{action:'save_team',team:list});A.teamEdit=null;apply(d);toast(msg);}
+  catch(e){toast((e&&e.message)||'Could not save the team');}
+}
+function teamSave(){
+  var team=arr(A.data&&A.data.team).map(function(m){return Object.assign({},m);}),p=personFromForm(),e=A.teamEdit;
+  if(!p.name){toast('Add the person’s name.');return;}
+  if(e==='new')team.push(p);else{p.id=team[e].id;team[e]=p;}
+  if(p.primary)team.forEach(function(m){if(m!==p)m.primary=false;});
+  return saveTeam(team,e==='new'?'Person added':'Person saved');
+}
+async function teamRemove(i){
+  var team=arr(A.data&&A.data.team).slice(),m=team[i];if(!m)return;
+  if(!(await MDV_DIALOG.confirm({title:'Remove '+m.name+'?',message:'They are taken off your team list.',confirm:'Remove',danger:true})))return;
+  team.splice(i,1);return saveTeam(team,'Person removed');
+}
 async function save(){
   var profile={};FIELDS.forEach(function(x){var el=document.getElementById('ag-f-'+x[0]);if(el)profile[x[0]]=el.value;});
   var b=document.getElementById('ag-save');if(b){b.disabled=true;b.textContent='Saving…';}
@@ -166,9 +219,10 @@ function act(fn){
   if(fn==='edit'){A.edit=true;paint();var t=document.querySelector('.ag-form input,.ag-form textarea');if(t)t.scrollIntoView({block:'center',behavior:'smooth'});}
   else if(fn==='logo')pick('logo');
   else if(fn.indexOf('doc:')===0)pick(fn);
+  else if(fn==='team'){var t=document.getElementById('ag-team');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});A.teamEdit='new';paint();}
   else if(fn==='models'){var m=document.getElementById('ag-models');if(m)m.scrollIntoView({behavior:'smooth',block:'start'});}
 }
 function report(placementId){if(window.VEUX_PARTNER_V15&&VEUX_PARTNER_V15.placementUpdate)return VEUX_PARTNER_V15.placementUpdate(placementId);}
 
-window.MDV_MA_AGENCY={render:function(el){paint(el);load(false);},reload:function(){return load(true);},edit:function(on){A.edit=!!on;paint();},save:save,pick:pick,picked:picked,open:open,remove:remove,expiry:expiry,act:act,report:report,analyse:analyse};
+window.MDV_MA_AGENCY={teamAdd:function(){A.teamEdit='new';paint();var t=document.getElementById('ag-team');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});},teamEdit:function(i){A.teamEdit=i;paint();},teamCancel:function(){A.teamEdit=null;paint();},teamSave:teamSave,teamRemove:teamRemove,render:function(el){paint(el);load(false);},reload:function(){return load(true);},edit:function(on){A.edit=!!on;paint();},save:save,pick:pick,picked:picked,open:open,remove:remove,expiry:expiry,act:act,report:report,analyse:analyse};
 })();

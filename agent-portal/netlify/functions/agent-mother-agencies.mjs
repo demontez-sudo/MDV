@@ -5,9 +5,10 @@
 import crypto from 'node:crypto';
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
+import { sanitizeFields, sanitizeTeam, sanitizeTerms, contractState, TEXT_FIELDS } from './_lib/agency-profile-depth.mjs';
 import { norm, agencyKey, matchName, parseList, pagedRows, motherPartners, currentLinks, connectModel, disconnectModel } from './_lib/mother-agency-link.mjs';
 
-const TEXT = { tagline: 140, bio: 1800, city: 80, country: 80, website: 200, instagram: 80, founded_year: 4, contact_name: 120, contact_role: 120, contact_email: 160, contact_phone: 60, whatsapp: 60 };
+const TEXT = TEXT_FIELDS;
 const DOC_LABEL = { logo: 'Logo', contract: 'Agency agreement', licence: 'Business licence', id: 'Representative ID', other: 'Other' };
 const REQUIRED_DOCS = ['contract', 'licence', 'id'];
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -53,7 +54,8 @@ function newCode() {
 const normCode = v => String(v || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 function hashCode(code, salt) { return crypto.scryptSync(normCode(code), salt, 32).toString('hex'); }
 
-function profileOf(p) { const x = (p.metadata && p.metadata.profile) || {}; return { fields: x.fields || {}, documents: Array.isArray(x.documents) ? x.documents : [], updated_at: x.updated_at || null }; }
+function profileOf(p) { const x = (p.metadata && p.metadata.profile) || {}; return { fields: x.fields || {}, documents: Array.isArray(x.documents) ? x.documents : [], team: Array.isArray(x.team) ? x.team : [], updated_at: x.updated_at || null }; }
+const termsOf = p => (p.metadata && p.metadata.terms && typeof p.metadata.terms === 'object') ? p.metadata.terms : {};
 function daysTo(d) { const t = d ? new Date(d + 'T12:00:00').getTime() : NaN; return Number.isFinite(t) ? Math.ceil((t - Date.now()) / 864e5) : null; }
 
 /* the same 100-point rule the agency sees on its own page */
@@ -109,6 +111,7 @@ function summarize(p, c, placements, signedLogo) {
     profile: { score: as.score, missing: as.missing, updated_at: prof.updated_at, tagline: f.tagline || '' },
     documents: as.docs, expired: as.expired, expiring: as.expiring,
     access: accessOf(p), logo_url: signedLogo || null,
+    contract: contractState(termsOf(p)), team_size: prof.team.length,
   };
 }
 
@@ -143,6 +146,8 @@ export const handler = async event => {
           ok: true,
           warning: placementsError ? 'The list of connected models could not be read: ' + placementsError : null,
           agency: { ...summarize(p, c, placements, logo ? await signedUrl(admin, logo, 3600) : null), fields: prof.fields, updated_at: prof.updated_at },
+          team: prof.team,
+          terms: termsOf(p),
           documents: prof.documents.filter(d => d.type !== 'logo').map(d => ({ id: d.id, type: d.type, label: DOC_LABEL[d.type] || 'Document', name: d.name, expires_on: d.expires_on || null, uploaded_at: d.uploaded_at, days_left: d.expires_on ? daysTo(d.expires_on) : null })),
           models: models.map(m => { const pl = mine.find(x => String(x.model_id) === String(m.id)) || {}; return { id: m.id, name: m.display_name, status: pl.status || m.status || '', market: mk.get(String(pl.market_id)) || '', photo: ph.get(String(m.id)) || '' }; }),
         });
@@ -279,13 +284,30 @@ export const handler = async event => {
       const p = (await rows(admin.from('partner_agencies').select('*').eq('organization_id', organization.id).eq('id', partnerId).limit(1)))[0];
       if (!p) fail('Mother agency not found', 404);
       const prof = profileOf(p), incoming = body.profile && typeof body.profile === 'object' ? body.profile : {};
-      const fields = { ...prof.fields };
-      for (const [k, max] of Object.entries(TEXT)) if (incoming[k] !== undefined) fields[k] = clean(incoming[k], max);
-      if (fields.contact_email && !EMAIL.test(fields.contact_email)) fail('Enter a valid contact email.');
-      if (fields.website && !/^https?:\/\//i.test(fields.website)) fields.website = 'https://' + fields.website;
+      const fields = sanitizeFields(incoming, prof.fields);
       const { error } = await admin.from('partner_agencies').update({ metadata: { ...(p.metadata || {}), profile: { ...(p.metadata?.profile || {}), fields, documents: prof.documents, updated_at: new Date().toISOString() } } }).eq('organization_id', organization.id).eq('id', partnerId);
       if (error) throw error;
       return json(200, { ok: true, verified: true });
+    }
+
+    if (action === 'save_team') {
+      const admin = await requirePermission(user.id, organization.id, 'crm.write');
+      const p = (await rows(admin.from('partner_agencies').select('*').eq('organization_id', organization.id).eq('id', partnerId).limit(1)))[0];
+      if (!p) fail('Mother agency not found', 404);
+      const team = sanitizeTeam(body.team), prof = profileOf(p);
+      const { error } = await admin.from('partner_agencies').update({ metadata: { ...(p.metadata || {}), profile: { ...(p.metadata?.profile || {}), fields: prof.fields, documents: prof.documents, team, updated_at: new Date().toISOString() } } }).eq('organization_id', organization.id).eq('id', partnerId);
+      if (error) throw error;
+      return json(200, { ok: true, verified: true, team });
+    }
+
+    if (action === 'save_terms') {
+      const admin = await requirePermission(user.id, organization.id, 'crm.write');
+      const p = (await rows(admin.from('partner_agencies').select('*').eq('organization_id', organization.id).eq('id', partnerId).limit(1)))[0];
+      if (!p) fail('Mother agency not found', 404);
+      const terms = { ...sanitizeTerms(body.terms, termsOf(p)), updated_at: new Date().toISOString(), updated_by: user.id };
+      const { error } = await admin.from('partner_agencies').update({ metadata: { ...(p.metadata || {}), terms } }).eq('organization_id', organization.id).eq('id', partnerId);
+      if (error) throw error;
+      return json(200, { ok: true, verified: true, terms, contract: contractState(terms) });
     }
 
     if (action === 'download_url') {

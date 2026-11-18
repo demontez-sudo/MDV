@@ -4,9 +4,9 @@
 'use strict';
 if(window.__MDV_MAG__)return;window.__MDV_MAG__=true;
 
-var S={host:null,list:null,loading:false,error:null,filter:'all',q:'',open:null,detail:null,detailLoading:false,edit:false,code:null,busy:''};
+var S={host:null,list:null,loading:false,error:null,filter:'all',q:'',open:null,detail:null,detailLoading:false,edit:false,teamEdit:null,termsEdit:false,code:null,busy:''};
 var PORTAL='https://www.maisondeveux.com/ma';
-var FIELDS=[['tagline','Tagline',1],['bio','About',1],['city','City'],['country','Country'],['founded_year','Founded'],['website','Website'],['instagram','Instagram'],['contact_name','Contact person'],['contact_role','Their role'],['contact_email','Contact email'],['contact_phone','Contact phone'],['whatsapp','WhatsApp']];
+var FIELDS=[['tagline','Tagline',1],['bio','About',1],['legal_name','Legal name'],['registration_no','Registration / licence no.'],['tax_id','Tax ID'],['founded_year','Founded'],['models_count','Models in the agency'],['address_line','Address'],['address_line2','Address line 2'],['city','City'],['state','State / region'],['postal_code','Postal code'],['country','Country'],['specialties','Specialties (comma separated)',1],['regions','Markets and regions covered (comma separated)',1],['languages','Languages (comma separated)',1],['website','Website'],['instagram','Instagram'],['contact_name','Contact person'],['contact_role','Their role'],['contact_email','Contact email'],['contact_phone','Contact phone'],['whatsapp','WhatsApp']];
 
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function arr(v){return Array.isArray(v)?v:[];}
@@ -35,6 +35,8 @@ function flags(a){
   if(a.expiring)f.push({tone:'warn',text:a.expiring+' expiring soon'});
   var miss=arr(a.documents).filter(function(d){return d.state==='missing';}).length;
   if(miss)f.push({tone:'info',text:miss+' document'+(miss===1?'':'s')+' missing'});
+  if(a.contract&&a.contract.state==='ended')f.push({tone:'bad',text:'Contract ended'});
+  if(a.contract&&a.contract.state==='renew')f.push({tone:'warn',text:'Contract renews in '+a.contract.days_left+' days'});
   if(a.profile&&a.profile.score<60)f.push({tone:'info',text:'Profile '+a.profile.score+'%'});
   if(ac.k==='info'&&a.access.set_at&&(Date.now()-new Date(a.access.set_at).getTime())>14*864e5)f.push({tone:'info',text:'Never signed in'});
   return f;
@@ -98,17 +100,91 @@ function accessPanel(a){
    +'<div class="mag-actions">'+(x.has_code?'<button type="button" class="mag-btn" '+(S.busy?'disabled':'')+' onclick="MDV_MAG.access(\'set_access\')">Reset code</button><button type="button" class="mag-btn" onclick="MDV_MAG.access(\'clear_access\')">Remove access</button>':'<button type="button" class="mag-btn gold" '+(S.busy?'disabled':'')+' onclick="MDV_MAG.access(\'set_access\')">Create access code</button>')
    +(x.has_code?'<button type="button" class="mag-btn" onclick="MDV_MAG.portal('+(x.portal_enabled===false?'true':'false')+')">'+(x.portal_enabled===false?'Enable portal':'Disable portal')+'</button>':'')+'</div></section>';
 }
-function profilePanel(d){
+/* ---------- in depth: company, team and terms ---------- */
+var TOPICS=[['bookings','Bookings'],['castings','Castings'],['travel','Travel'],['visa','Visa'],['accounts','Accounts and payments'],['contracts','Contracts'],['development','Development'],['general','General']];
+var EXCL=[['','Not set'],['none','Not exclusive'],['market','Exclusive in some markets'],['full','Fully exclusive']];
+var PAYT=[['','Not set'],['on_receipt','On receipt'],['net_15','Net 15 days'],['net_30','Net 30 days'],['net_45','Net 45 days'],['net_60','Net 60 days'],['custom','Custom (see notes)']];
+var CURS=['','USD','EUR','GBP','CAD','AUD','CHF','JPY','NGN','ZAR','BRL'];
+var ROLES=['Director','Head booker','Booker','Scout','Accounts','Travel coordinator','Visa and legal','Assistant'];
+function listTxt(v){return Array.isArray(v)?v.join(', '):(v||'');}
+function chips(v){var l=Array.isArray(v)?v:[];return l.length?'<span class="mag-tags">'+l.map(function(x){return '<i>'+esc(x)+'</i>';}).join('')+'</span>':'<i class="mag-none">Not added</i>';}
+function lookup(list,k){var x=list.filter(function(e){return e[0]===k;})[0];return x?x[1]:'';}
+function companyPanel(d){
   var f=d.agency.fields||{};
   if(S.edit){
-    return '<section class="mag-sec"><header><h4>Edit profile</h4></header><div class="mag-form">'+FIELDS.map(function(x){return '<label class="'+(x[2]?'full':'')+'"><span>'+esc(x[1])+'</span>'+(x[0]==='bio'?'<textarea id="mag-f-'+x[0]+'" rows="5">'+esc(f[x[0]]||'')+'</textarea>':'<input id="mag-f-'+x[0]+'" value="'+esc(f[x[0]]||'')+'">')+'</label>';}).join('')+'</div><div class="mag-actions"><button type="button" class="mag-btn" onclick="MDV_MAG.edit(false)">Cancel</button><button type="button" class="mag-btn gold" onclick="MDV_MAG.save()">Save</button></div></section>';
+    var groups=[['The agency',['tagline','bio']],['Company',['legal_name','registration_no','tax_id','founded_year','models_count']],['Address',['address_line','address_line2','city','state','postal_code','country']],['Focus',['specialties','regions','languages']],['Online',['website','instagram']],['Main contact',['contact_name','contact_role','contact_email','contact_phone','whatsapp']]];
+    var byK={};FIELDS.forEach(function(x){byK[x[0]]=x;});
+    return '<section class="mag-sec"><header><h4>Edit company details</h4></header>'+groups.map(function(g){return '<h5 class="mag-h5">'+esc(g[0])+'</h5><div class="mag-form">'+g[1].map(function(k){var x=byK[k];if(!x)return '';return '<label class="'+(x[2]?'full':'')+'"><span>'+esc(x[1])+'</span>'+(k==='bio'?'<textarea id="mag-f-'+k+'" rows="5">'+esc(f[k]||'')+'</textarea>':'<input id="mag-f-'+k+'" value="'+esc(listTxt(f[k]))+'">')+'</label>';}).join('')+'</div>';}).join('')+'<div class="mag-actions"><button type="button" class="mag-btn" onclick="MDV_MAG.edit(false)">Cancel</button><button type="button" class="mag-btn gold" onclick="MDV_MAG.save()">Save</button></div></section>';
   }
-  function r(k,v){return '<div><small>'+esc(k)+'</small><b>'+(v?esc(v):'<i class="mag-none">Not added</i>')+'</b></div>';}
-  var miss=arr(d.agency.profile.missing);
-  return '<section class="mag-sec"><header><h4>Profile</h4><button type="button" class="mag-link" onclick="MDV_MAG.edit(true)">Edit</button></header>'
+  function r(k,v,full){return '<div'+(full?' class="full"':'')+'><small>'+esc(k)+'</small><b>'+(v?(typeof v==='string'?esc(v):v.html):'<i class="mag-none">Not added</i>')+'</b></div>';}
+  var miss=arr(d.agency.profile.missing),addr=[f.address_line,f.address_line2,[f.postal_code,f.city].filter(Boolean).join(' '),f.state,f.country].filter(Boolean).join(', ');
+  return '<section class="mag-sec"><header><h4>Company</h4><button type="button" class="mag-link" onclick="MDV_MAG.edit(true)">Edit</button></header>'
    +(f.tagline?'<p class="mag-tag">'+esc(f.tagline)+'</p>':'')+(f.bio?'<p class="mag-bio">'+esc(f.bio).replace(/\n/g,'<br>')+'</p>':'')
-   +'<div class="mag-grid">'+r('Location',[f.city,f.country].filter(Boolean).join(', '))+r('Founded',f.founded_year)+r('Website',f.website)+r('Instagram',f.instagram)+r('Contact',[f.contact_name,f.contact_role].filter(Boolean).join(' · '))+r('Email',f.contact_email)+r('Phone',f.contact_phone)+r('WhatsApp',f.whatsapp)+'</div>'
+   +'<div class="mag-grid">'+r('Legal name',f.legal_name)+r('Registration / licence no.',f.registration_no)+r('Tax ID',f.tax_id)+r('Founded',f.founded_year)+r('Models in the agency',f.models_count)+r('Website',f.website)+r('Address',addr,true)+r('Specialties',arr(f.specialties).length?{html:chips(f.specialties)}:'',true)+r('Markets and regions',arr(f.regions).length?{html:chips(f.regions)}:'',true)+r('Languages',arr(f.languages).length?{html:chips(f.languages)}:'',true)+r('Instagram',f.instagram)+r('Main contact',[f.contact_name,f.contact_role].filter(Boolean).join(' · '))+r('Email',f.contact_email)+r('Phone',f.contact_phone)+r('WhatsApp',f.whatsapp)+'</div>'
    +(miss.length?'<p class="mag-miss">Still missing: '+esc(miss.join(', '))+'.</p>':'')+'</section>';
+}
+function teamPanel(d){
+  var team=arr(d.team),e=S.teamEdit;
+  function card(m,i){
+    return '<div class="mag-person"><div class="mag-pav">'+esc(initials(m.name))+'</div><div class="mag-pinfo"><b>'+esc(m.name)+(m.primary?' <em class="mag-badge">Main contact</em>':'')+'</b><small>'+esc(m.role||'No role added')+'</small>'
+     +'<span class="mag-plinks">'+(m.email?'<a href="mailto:'+esc(m.email)+'">'+esc(m.email)+'</a>':'')+(m.phone?'<a href="tel:'+esc(m.phone)+'">'+esc(m.phone)+'</a>':'')+(m.whatsapp?'<span>WhatsApp '+esc(m.whatsapp)+'</span>':'')+'</span>'
+     +(arr(m.topics).length?'<span class="mag-tags">'+m.topics.map(function(t){return '<i>'+esc(lookup(TOPICS,t))+'</i>';}).join('')+'</span>':'')+'</div>'
+     +'<div class="mag-pact"><button type="button" class="mag-link" onclick="MDV_MAG.teamEdit('+i+')">Edit</button><button type="button" class="mag-link bad" onclick="MDV_MAG.teamRemove('+i+')">Remove</button></div></div>';
+  }
+  var form='';
+  if(e!==null&&e!==undefined){
+    var m=e==='new'?{topics:[]}:team[e]||{topics:[]};
+    form='<div class="mag-pform"><h5 class="mag-h5">'+(e==='new'?'Add a person':'Edit '+esc(m.name))+'</h5><div class="mag-form"><label><span>Name</span><input id="mag-t-name" value="'+esc(m.name||'')+'"></label><label><span>Role</span><input id="mag-t-role" list="mag-roles" value="'+esc(m.role||'')+'"><datalist id="mag-roles">'+ROLES.map(function(r){return '<option>'+r+'</option>';}).join('')+'</datalist></label><label><span>Email</span><input id="mag-t-email" type="email" value="'+esc(m.email||'')+'"></label><label><span>Phone</span><input id="mag-t-phone" value="'+esc(m.phone||'')+'"></label><label><span>WhatsApp</span><input id="mag-t-whatsapp" value="'+esc(m.whatsapp||'')+'"></label><label class="mag-chkrow"><input type="checkbox" id="mag-t-primary" '+(m.primary?'checked':'')+'><span>Main contact for this agency</span></label></div>'
+      +'<div class="mag-topics"><span>Reach them about</span>'+TOPICS.map(function(t){return '<label><input type="checkbox" class="mag-t-topic" value="'+t[0]+'" '+(arr(m.topics).indexOf(t[0])>=0?'checked':'')+'> '+t[1]+'</label>';}).join('')+'</div>'
+      +'<div class="mag-actions"><button type="button" class="mag-btn" onclick="MDV_MAG.teamCancel()">Cancel</button><button type="button" class="mag-btn gold" onclick="MDV_MAG.teamSave()">Save person</button></div></div>';
+  }
+  return '<section class="mag-sec"><header><h4>Team</h4><span class="mag-count">'+team.length+'</span><span class="mag-sec-act"><button type="button" class="mag-btn gold" onclick="MDV_MAG.teamAdd()">+ Add person</button></span></header>'
+   +(team.length?'<div class="mag-people">'+team.map(card).join('')+'</div>':'<p class="mag-sub">No team added yet. Add the people we work with at this agency and what to reach them about.</p>')+form+'</section>';
+}
+function termsPanel(d){
+  var t=d.terms||{},c=d.agency.contract||{state:'none'};
+  if(S.termsEdit){
+    function sel(id,list,v){return '<select id="'+id+'">'+list.map(function(o){var k=Array.isArray(o)?o[0]:o,l=Array.isArray(o)?o[1]:(o||'Not set');return '<option value="'+esc(k)+'"'+(String(v||'')===String(k)?' selected':'')+'>'+esc(l)+'</option>';}).join('')+'</select>';}
+    function inp(id,v,type,ph){return '<input id="'+id+'" type="'+(type||'text')+'" value="'+esc(v==null?'':v)+'"'+(ph?' placeholder="'+esc(ph)+'"':'')+'>';}
+    return '<section class="mag-sec"><header><h4>Edit terms</h4></header><h5 class="mag-h5">Split</h5><div class="mag-form"><label><span>Maison de Veux commission (%)</span>'+inp('mag-x-commission_pct',t.commission_pct,'number','e.g. 20')+'</label><label><span>Agency share (%)</span>'+inp('mag-x-agency_share_pct',t.agency_share_pct,'number','e.g. 50')+'</label></div>'
+     +'<h5 class="mag-h5">Contract</h5><div class="mag-form"><label><span>Starts</span>'+inp('mag-x-contract_start',t.contract_start,'date')+'</label><label><span>Ends</span>'+inp('mag-x-contract_end',t.contract_end,'date')+'</label><label><span>Renewal notice (days)</span>'+inp('mag-x-renewal_notice_days',t.renewal_notice_days,'number','60')+'</label><label><span>Exclusivity</span>'+sel('mag-x-exclusivity',EXCL,t.exclusivity)+'</label><label class="full"><span>Exclusivity details</span>'+inp('mag-x-exclusivity_note',t.exclusivity_note,'text','Which markets, which models')+'</label></div>'
+     +'<h5 class="mag-h5">Payment</h5><div class="mag-form"><label><span>Payment terms</span>'+sel('mag-x-payment_terms',PAYT,t.payment_terms)+'</label><label><span>Currency</span>'+sel('mag-x-currency',CURS,t.currency)+'</label><label class="full"><span>Payment notes</span>'+inp('mag-x-payment_terms_note',t.payment_terms_note,'text','Anything outside the standard terms')+'</label><label><span>Payout contact</span>'+inp('mag-x-payout_contact_name',t.payout_contact_name)+'</label><label><span>Payout email</span>'+inp('mag-x-payout_contact_email',t.payout_contact_email,'email')+'</label><label class="full"><span>Invoicing notes</span><textarea id="mag-x-invoicing_notes" rows="3" placeholder="How they invoice, what each invoice needs. Bank details are shared securely, not stored here.">'+esc(t.invoicing_notes||'')+'</textarea></label></div>'
+     +'<h5 class="mag-h5">Internal</h5><div class="mag-form"><label class="full"><span>Private notes (the agency never sees these)</span><textarea id="mag-x-internal_notes" rows="3">'+esc(t.internal_notes||'')+'</textarea></label></div>'
+     +'<div class="mag-actions"><button type="button" class="mag-btn" onclick="MDV_MAG.termsEdit(false)">Cancel</button><button type="button" class="mag-btn gold" onclick="MDV_MAG.termsSave()">Save terms</button></div></section>';
+  }
+  function r(k,v,full){return '<div'+(full?' class="full"':'')+'><small>'+esc(k)+'</small><b>'+(v?esc(v):'<i class="mag-none">Not set</i>')+'</b></div>';}
+  var badge=c.state==='active'?'<span class="mag-pill ok">Contract active</span>':c.state==='renew'?'<span class="mag-pill warn">Renews in '+c.days_left+' days</span>':c.state==='ended'?'<span class="mag-pill bad">Contract ended</span>':c.state==='open'?'<span class="mag-pill info">Open-ended</span>':'<span class="mag-pill off">No contract dates</span>';
+  var split=(t.commission_pct!=null||t.agency_share_pct!=null)?[t.commission_pct!=null?'MDV '+t.commission_pct+'%':'',t.agency_share_pct!=null?'Agency '+t.agency_share_pct+'%':''].filter(Boolean).join(' · '):'';
+  return '<section class="mag-sec"><header><h4>Terms</h4>'+badge+'<button type="button" class="mag-link" onclick="MDV_MAG.termsEdit(true)">Edit</button></header><div class="mag-grid">'
+   +r('Split',split)+r('Contract',[t.contract_start&&'from '+t.contract_start,t.contract_end&&'to '+t.contract_end].filter(Boolean).join(' '))+r('Renewal notice',t.renewal_notice_days!=null?t.renewal_notice_days+' days':'')+r('Exclusivity',[lookup(EXCL,t.exclusivity||''),t.exclusivity_note].filter(Boolean).join(' · '))
+   +r('Payment terms',[lookup(PAYT,t.payment_terms||''),t.payment_terms_note].filter(Boolean).join(' · '))+r('Currency',t.currency)+r('Payout contact',[t.payout_contact_name,t.payout_contact_email].filter(Boolean).join(' · '))+r('Invoicing',t.invoicing_notes,true)+r('Private notes',t.internal_notes,true)+'</div></section>';
+}
+async function saveTeamList(list,msg){
+  var a=S.detail&&S.detail.agency;if(!a)return;
+  try{var r=await post({action:'save_team',partner_id:a.id,team:list});S.detail.team=r.team;S.teamEdit=null;toast(msg);}catch(e){toast((e&&e.message)||'Could not save the team');return;}   /* on an error the form stays as typed */
+  paintDrawer();load();
+}
+function readPerson(){
+  var g=function(id){var el=document.getElementById(id);return el?el.value.trim():'';};
+  return {name:g('mag-t-name'),role:g('mag-t-role'),email:g('mag-t-email'),phone:g('mag-t-phone'),whatsapp:g('mag-t-whatsapp'),primary:!!(document.getElementById('mag-t-primary')||{}).checked,topics:Array.prototype.map.call(document.querySelectorAll('.mag-t-topic:checked'),function(x){return x.value;})};
+}
+function teamSave(){
+  var team=arr(S.detail&&S.detail.team).slice(),p=readPerson(),e=S.teamEdit;
+  if(!p.name){toast('Add the person’s name.');return;}
+  if(e==='new'){team.push(p);}else{p.id=team[e].id;team[e]=p;}
+  if(p.primary)team.forEach(function(m){if(m!==p)m.primary=false;});
+  return saveTeamList(team,e==='new'?'Person added':'Person saved');
+}
+async function teamRemove(i){
+  var team=arr(S.detail&&S.detail.team).slice(),m=team[i];if(!m)return;
+  if(!(await MDV_DIALOG.confirm({title:'Remove '+m.name+'?',message:m.name+' is removed from this agency’s team. This does not affect their portal access.',confirm:'Remove',danger:true})))return;
+  team.splice(i,1);return saveTeamList(team,'Person removed');
+}
+async function termsSave(){
+  var a=S.detail&&S.detail.agency;if(!a)return;var t={};
+  ['commission_pct','agency_share_pct','contract_start','contract_end','renewal_notice_days','exclusivity','exclusivity_note','payment_terms','payment_terms_note','currency','payout_contact_name','payout_contact_email','invoicing_notes','internal_notes'].forEach(function(k){var el=document.getElementById('mag-x-'+k);if(el)t[k]=el.value;});
+  try{var r=await post({action:'save_terms',partner_id:a.id,terms:t});S.detail.terms=r.terms;S.detail.agency.contract=r.contract;S.termsEdit=false;toast('Terms saved');}catch(e){toast((e&&e.message)||'Could not save the terms');return;}   /* on an error the form stays as typed */
+  paintDrawer();load();
 }
 function docsPanel(d){
   var all=arr(d.agency.documents).map(function(x){var have=arr(d.documents).filter(function(q){return q.type===x.type;}).sort(function(a,b){return String(b.uploaded_at).localeCompare(String(a.uploaded_at));})[0];return {s:x,doc:have};});
@@ -130,7 +206,7 @@ function paintDrawer(){
   d.innerHTML='<aside class="mag-panel" role="dialog" aria-label="'+esc(a.name)+'"><button class="mag-x" aria-label="Close" onclick="MDV_MAG.close()">×</button>'
    +'<div class="mag-phead"><div class="mag-logo big">'+logo+'</div><div><div class="mag-kicker">MOTHER AGENCY</div><h2>'+esc(a.name)+'</h2><p>'+esc([a.city,a.country].filter(Boolean).join(', ')||'Location not added')+' · '+a.models+' model'+(a.models===1?'':'s')+' · profile '+a.profile.score+'%</p></div></div>'
    +(fl.length?'<div class="mag-flags big">'+fl.map(function(x){return '<span class="'+x.tone+'">'+esc(x.text)+'</span>';}).join('')+'</div>':'')
-   +accessPanel(a)+profilePanel(S.detail)+docsPanel(S.detail)+modelsPanel(S.detail)+'</aside>';
+   +accessPanel(a)+companyPanel(S.detail)+teamPanel(S.detail)+termsPanel(S.detail)+docsPanel(S.detail)+modelsPanel(S.detail)+'</aside>';
 }
 
 /* ---------- data and actions ---------- */
@@ -140,7 +216,7 @@ function load(){
   return get('/api/agent/mother-agencies?organization='+encodeURIComponent(org())).then(function(r){S.list=arr(r.agencies);}).catch(function(e){S.error=(e&&e.message)||'Could not load mother agencies.';}).then(function(){S.loading=false;paint();});
 }
 function open(id){
-  S.open=id;S.detail=null;S.edit=false;S.code=null;S.detailLoading=true;S.error=null;paintDrawer();document.addEventListener('keydown',onKey);
+  S.open=id;S.detail=null;S.edit=false;S.teamEdit=null;S.termsEdit=false;S.code=null;S.detailLoading=true;S.error=null;paintDrawer();document.addEventListener('keydown',onKey);
   return get('/api/agent/mother-agencies?organization='+encodeURIComponent(org())+'&partner_id='+encodeURIComponent(id)).then(function(r){S.detail=r;}).catch(function(e){S.error=(e&&e.message)||'';}).then(function(){S.detailLoading=false;paintDrawer();});
 }
 function refreshOpen(){return open(S.open).then(function(){return load();});}
@@ -326,7 +402,7 @@ function exportAll(){
 }
 
 window.renderMotherAgencies=function(el){S.host=el;paint();return load();};
-window.MDV_MAG={render:window.renderMotherAgencies,reload:load,open:open,close:close,filter:function(f){S.filter=f;paint();},search:function(v){S.q=v;paint();},add:add,access:access,portal:portal,edit:function(on){S.edit=!!on;paintDrawer();},save:save,view:view,copy:copy,model:openModel,state:S,pick:openPick,pickFilter:function(f){LK.pick.filter=f;paintPick();},pickSearch:function(v){LK.pick.q=v;LK.pick.focusSearch=true;paintPick();},pickToggle:function(id,on){if(on)LK.pick.sel[id]=1;else delete LK.pick.sel[id];paintPick();},pickGo:pickGo,disconnect:disconnect,openBulk:openBulk,closeModal:closeModal,bulkText:function(v){LK.bulk.text=v;var b=document.querySelector('#mag-bulk footer .gold');if(b)b.disabled=!v.trim();},bulkFile:readFile,bulkCheck:bulkCheck,bulkGo:bulkGo,bulkBack:function(){LK.bulk.res=null;LK.bulk.dec={};paintBulk();},bulkTick:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;});decOf(row).on=!!on;paintBulk();},bulkSet:function(line,what,val){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);if(what==='model')d.model_id=val||null;else{d.partner_id=val||'';if(val)d.create=false;}d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},bulkCreate:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);d.create=!!on;if(on)d.partner_id='';d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},template:function(){download('mother-agency-template.csv',TEMPLATE);},exportAll:exportAll};
+window.MDV_MAG={render:window.renderMotherAgencies,reload:load,open:open,close:close,filter:function(f){S.filter=f;paint();},search:function(v){S.q=v;paint();},add:add,access:access,portal:portal,edit:function(on){S.edit=!!on;paintDrawer();},save:save,view:view,copy:copy,model:openModel,state:S,teamAdd:function(){S.teamEdit='new';paintDrawer();},teamEdit:function(i){S.teamEdit=i;paintDrawer();},teamCancel:function(){S.teamEdit=null;paintDrawer();},teamSave:teamSave,teamRemove:teamRemove,termsEdit:function(on){S.termsEdit=!!on;paintDrawer();},termsSave:termsSave,pick:openPick,pickFilter:function(f){LK.pick.filter=f;paintPick();},pickSearch:function(v){LK.pick.q=v;LK.pick.focusSearch=true;paintPick();},pickToggle:function(id,on){if(on)LK.pick.sel[id]=1;else delete LK.pick.sel[id];paintPick();},pickGo:pickGo,disconnect:disconnect,openBulk:openBulk,closeModal:closeModal,bulkText:function(v){LK.bulk.text=v;var b=document.querySelector('#mag-bulk footer .gold');if(b)b.disabled=!v.trim();},bulkFile:readFile,bulkCheck:bulkCheck,bulkGo:bulkGo,bulkBack:function(){LK.bulk.res=null;LK.bulk.dec={};paintBulk();},bulkTick:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;});decOf(row).on=!!on;paintBulk();},bulkSet:function(line,what,val){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);if(what==='model')d.model_id=val||null;else{d.partner_id=val||'';if(val)d.create=false;}d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},bulkCreate:function(line,on){var row=LK.bulk.res.rows.find(function(x){return x.line===line;}),d=decOf(row);d.create=!!on;if(on)d.partner_id='';d.on=!!(d.model_id&&(d.partner_id||d.create));paintBulk();},template:function(){download('mother-agency-template.csv',TEMPLATE);},exportAll:exportAll};
 (function register(){
   function put(){var m=window.VEUX_V15_ROUTE_RENDERERS;if(m&&typeof m==='object'){m.motheragencies=function(el){return window.renderMotherAgencies(el);};return true;}return false;}
   if(put())return;var n=0,t=setInterval(function(){if(put()||++n>400)clearInterval(t);},150);
