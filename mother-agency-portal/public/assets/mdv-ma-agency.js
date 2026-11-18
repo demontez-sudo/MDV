@@ -97,6 +97,12 @@ function summary(an){
   var items=an.todo.length?an.todo.slice(0,6).map(function(t){return '<li class="'+t.tone+'"><span class="ag-dot"></span><span class="ag-tx">'+esc(t.text)+'</span><button type="button" onclick="MDV_MA_AGENCY.act(\''+esc(t.fn)+'\')">'+esc(t.act)+'</button></li>';}).join(''):'<li class="ok"><span class="ag-dot"></span><span class="ag-tx">Everything is complete and up to date.</span></li>';
   return '<section class="ag-card ag-smart"><div class="ag-smart-top">'+ring(an.score)+'<div><div class="ag-eyebrow">✦ Agency summary</div><p class="ag-sentence">'+esc(an.sentence)+'</p></div></div><ul class="ag-todo">'+items+'</ul>'+(an.todo.length>6?'<p class="ag-more">+ '+(an.todo.length-6)+' more</p>':'')+'</section>';
 }
+function tilesHtml(an){
+  var k=A.act&&A.act.kpis,cur=A.act&&A.act.main_currency,c=(A.data&&A.data.contract)||{state:'none'},per=A.aDays?A.aDays+' days':'all time';
+  var contract=c.state==='active'?'Active':c.state==='renew'?'Renews in '+c.days_left+'d':c.state==='ended'?'Ended':'Not set';
+  var cells=[[an.models,'Models'],[k?k.bookings:'…','Jobs, '+per],[k?k.castings:'…','Castings'],[k?amoney(k.commission,cur):'…','Your commission'],[contract,'Contract'],[an.score+'%','Profile complete']];
+  return '<div class="ag-tiles">'+cells.map(function(x){return '<div class="ag-tile"><b>'+esc(String(x[0]))+'</b><small>'+esc(x[1])+'</small></div>';}).join('')+'</div>';
+}
 function tagsHtml(l){l=arr(l);return l.length?'<span class="ag-tags">'+l.map(function(x){return '<i>'+esc(x)+'</i>';}).join('')+'</span>':'<span class="ag-none">Not added</span>';}
 function detailsView(){
   var f=(A.data&&A.data.profile)||{};
@@ -243,7 +249,7 @@ function paint(el){
   if(A.loading&&!A.data){el.innerHTML='<div class="v15p-page ag-page"><div class="ag-empty">Loading your agency profile…</div></div>';return;}
   if(A.error&&!A.data){el.innerHTML='<div class="v15p-page ag-page"><div class="ag-empty">'+esc(A.error)+'</div><p style="text-align:center"><button class="v15p-btn" onclick="MDV_MA_AGENCY.reload()">Try again</button></p></div>';return;}
   var an=analyse();
-  el.innerHTML='<div class="v15p-page ag-page"><input type="file" id="ag-file" hidden accept=".pdf,.jpg,.jpeg,.png,.webp,image/*,application/pdf" onchange="MDV_MA_AGENCY.picked(this)">'+identity(an)+summary(an)+'<div class="ag-cols"><div>'+(A.edit?detailsEdit():detailsView())+teamCard()+termsCard()+'</div><div>'+docsCard()+activityCard()+modelsCard()+'</div></div></div>';
+  el.innerHTML='<div class="v15p-page ag-page"><input type="file" id="ag-file" hidden accept=".pdf,.jpg,.jpeg,.png,.webp,image/*,application/pdf" onchange="MDV_MA_AGENCY.picked(this)">'+identity(an)+tilesHtml(an)+'<div class="ag-cols"><div class="ag-main">'+(A.edit?detailsEdit():detailsView())+teamCard()+modelsCard()+activityCard()+'</div><aside class="ag-side">'+summary(an)+termsCard()+docsCard()+'</aside></div></div>';
 }
 
 /* ---------- data and actions ---------- */
