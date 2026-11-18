@@ -343,10 +343,10 @@ function paintDrawer(){
   if(S.detailLoading&&!S.detail){d.innerHTML='<aside class="mag-panel"><div class="mag-empty">Loading…</div></aside>';return;}
   if(!S.detail){d.innerHTML='<aside class="mag-panel"><button class="mag-x" onclick="MDV_MAG.close()">×</button><div class="mag-empty">'+esc(S.error||'Could not load this agency.')+'</div></aside>';return;}
   var logo=a.logo_url?'<img src="'+esc(a.logo_url)+'" alt="">':'<span>'+esc(initials(a.name))+'</span>',fl=flags(a);
-  d.innerHTML='<aside class="mag-panel" role="dialog" aria-label="'+esc(a.name)+'"><button class="mag-x" aria-label="Close" onclick="MDV_MAG.close()">×</button>'
+  d.innerHTML='<aside class="mag-panel" role="dialog" aria-label="'+esc(a.name)+'"><button class="mag-back" onclick="MDV_MAG.close()">← All mother agencies</button><button class="mag-x" aria-label="Close" onclick="MDV_MAG.close()">×</button>'
    +'<div class="mag-phead"><div class="mag-logo big">'+logo+'</div><div><div class="mag-kicker">MOTHER AGENCY</div><h2>'+esc(a.name)+'</h2><p>'+esc([a.city,a.country].filter(Boolean).join(', ')||'Location not added')+' · '+a.models+' model'+(a.models===1?'':'s')+' · profile '+a.profile.score+'%</p></div></div>'
    +(fl.length?'<div class="mag-flags big">'+fl.map(function(x){return '<span class="'+x.tone+'">'+esc(x.text)+'</span>';}).join('')+'</div>':'')
-   +tabBar(S.detail)+'<div class="mag-tabbody">'+tabBody(S.detail)+'</div></aside>';
+   +tabBar(S.detail)+'<div class="mag-tabbody'+(S.tab==='overview'?' ov':'')+'">'+tabBody(S.detail)+'</div></aside>';
   var np=d.querySelector('.mag-panel');if(np&&keepTop&&keepTab===S.tab)np.scrollTop=keepTop;
 }
 
