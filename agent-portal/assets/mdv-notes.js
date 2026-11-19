@@ -29,6 +29,11 @@ function ago(v){if(!v)return '';var t=new Date(v).getTime();if(!t)return '';var 
 function dayKey(v){var d=new Date(v);return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();}
 function dayLabel(v){var d=new Date(v),t=new Date(),y=new Date(Date.now()-864e5);if(dayKey(d)===dayKey(t))return 'Today';if(dayKey(d)===dayKey(y))return 'Yesterday';return d.toLocaleDateString([],{weekday:'long',month:'short',day:'numeric',year:d.getFullYear()===t.getFullYear()?undefined:'numeric'});}
 function shortDate(v){var d=new Date(v);return isNaN(d)?'':d.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'});}
+/* a date with its time, but the 9:00 we fill in when nobody picked a time stays quiet */
+function hasTime(v){var d=new Date(v);return !isNaN(d)&&!(d.getHours()===9&&d.getMinutes()===0);}
+function whenText(v){var d=new Date(v);if(isNaN(d))return '';return shortDate(v)+(hasTime(v)?' · '+d.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'}):'');}
+function toLocalInput(v){if(!v)return '';var d=new Date(v);if(isNaN(d))return '';var z=function(n){return String(n).padStart(2,'0');};return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+'T'+z(d.getHours())+':'+z(d.getMinutes());}
+function fromLocalInput(v){var d=v?new Date(v):null;return d&&!isNaN(d)?d.toISOString():null;}
 function dueState(v){var d=new Date(v);if(isNaN(d))return '';var t0=new Date();t0.setHours(0,0,0,0);var n=Math.round((new Date(d).setHours(0,0,0,0)-t0)/864e5);return n<0?'bad':n<=1?'warn':'';}
 function inDays(n){var d=new Date();d.setDate(d.getDate()+n);d.setHours(9,0,0,0);return d.toISOString();}
 
@@ -44,6 +49,8 @@ function parseWhen(s){
   else if((m=s.match(/\b(mon(?:day)?|tue(?:s|sday)?|wed(?:nesday)?|thu(?:r|rs|rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\b/))){var idx=WD.indexOf(m[1].slice(0,3));d=new Date(n);var diff=(idx-d.getDay()+7)%7;if(diff===0)diff=7;d.setDate(d.getDate()+diff);}
   else if((m=s.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b/))){d=new Date(n.getFullYear(),MON.indexOf(m[1]),+m[2],9,0,0);if(d<new Date(Date.now()-864e5))d.setFullYear(d.getFullYear()+1);}
   else if((m=s.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/))){var yr=m[3]?(+m[3]<100?2000+(+m[3]):+m[3]):n.getFullYear();d=new Date(yr,+m[1]-1,+m[2],9,0,0);if(!m[3]&&d<new Date(Date.now()-864e5))d.setFullYear(d.getFullYear()+1);}
+  if(d&&!isNaN(d)){var tm=s.match(/\b(?:at\s+|@\s*)?(\d{1,2})(?::(\d{2}))?\s*(am|pm|a\.m\.|p\.m\.)/)||s.match(/\b(?:at\s+)?([01]?\d|2[0-3]):([0-5]\d)\b()/);
+    if(tm){var h=+tm[1],mi=+(tm[2]||0),ap=String(tm[3]||'').replace(/\./g,'');if(ap==='pm'&&h<12)h+=12;if(ap==='am'&&h===12)h=0;if(h<24&&mi<60)d.setHours(h,mi,0,0);}}
   return d&&!isNaN(d)?d.toISOString():null;
 }
 
@@ -158,13 +165,16 @@ try{S.seen=Number(localStorage.getItem('mdv-nt-seen'))||0;}catch(e){}
 function markSeen(){S.seen=Date.now();try{localStorage.setItem('mdv-nt-seen',String(S.seen));}catch(e){}badge();}
 
 /* ---------- the composer (used on the page and in the slide-over) ---------- */
-function newCompose(ctx){return {text:'',title:'',links:ctx?[Object.assign({},ctx)]:[],dismissed:{},vis:'team',kind:'auto',follow:null,followSet:false,taskOff:{},ctx:ctx||null,busy:false};}
+function newCompose(ctx){return {text:'',title:'',links:ctx?[Object.assign({},ctx)]:[],dismissed:{},vis:'team',kind:'auto',follow:null,followSet:false,taskOff:{},taskDue:{},cal:true,ctx:ctx||null,busy:false};}
 function chip(l,rm){var m=LINKS[l.type]||LINKS.page;return '<span class="nt-chip lk" style="--c:'+m[2]+'"><i class="ti '+m[1]+'"></i>'+esc(l.label||m[0])+(rm?'<button type="button" data-rm="'+esc(l.type+':'+l.id)+'" aria-label="Remove">×</button>':'')+'</span>';}
 function composerHtml(C,id){
   return '<section class="nt-comp" data-c="'+id+'"><input class="nt-tt" type="text" maxlength="160" placeholder="Title (optional)" aria-label="Note title" autocomplete="off"><textarea class="nt-ta" rows="3" placeholder="Write a note. Name a model, contact or company to connect it, @ a teammate, add #tags. Start a line with “todo” to make it a task.">'+esc(C.text)+'</textarea><div class="nt-live"></div>'
    +'<div class="nt-bar"><label class="nt-sel"><i class="ti ti-eye"></i><select data-vis><option value="team">Team can see</option><option value="private">Only me</option><option value="model">Shareable with the model</option></select></label>'
    +'<label class="nt-sel"><i class="ti ti-tag"></i><select data-kind><option value="auto">Type: auto</option>'+Object.keys(KINDS).map(function(k){return '<option value="'+k+'">'+KINDS[k][0]+'</option>';}).join('')+'</select></label><span class="nt-sp"></span><button type="button" class="nt-btn gold" data-save>Save note</button></div></section>';
 }
+/* the follow-up: the one you chose, otherwise the earliest of the tasks found (with any time you changed), otherwise a date in the text */
+function effFollow(C,A){if(C.followSet)return C.follow;var ds=A.tasks.map(function(t,i){return taskDue(C,t,i);}).filter(Boolean).sort();return ds.length?ds[0]:A.follow_up;}
+function taskDue(C,t,i){var o=C.taskDue&&C.taskDue[i];return o===false?null:(o||t.due||null);}
 function liveHtml(C,A){
   var h='';
   var all=C.links.concat(A.links);
@@ -172,9 +182,9 @@ function liveHtml(C,A){
   if(A.suggest.length)h+='<div class="nt-row"><b>Did you mean</b>'+A.suggest.map(function(l){var m=LINKS[l.type];return '<button type="button" class="nt-chip sg" data-add="'+esc(l.type+':'+l.id)+'" data-label="'+esc(l.label)+'"><i class="ti ti-plus"></i>'+esc(l.label)+'</button>';}).join('')+'</div>';
   if(A.mentions.length)h+='<div class="nt-row"><b>Mentions</b>'+A.mentions.map(function(m){return '<span class="nt-chip mn"><i class="ti ti-at"></i>'+esc(m.name)+'</span>';}).join('')+'</div>';
   if(A.tags.length)h+='<div class="nt-row"><b>Tags</b>'+A.tags.map(function(t){return '<span class="nt-chip tg">#'+esc(t)+'</span>';}).join('')+'</div>';
-  var fu=C.followSet?C.follow:A.follow_up;
-  h+='<div class="nt-row"><b>Follow-up</b>'+(fu?'<span class="nt-chip fu '+dueState(fu)+'"><i class="ti ti-bell"></i>'+esc(shortDate(fu))+'<button type="button" data-fu-clear aria-label="Clear">×</button></span>':'')+'<select class="nt-fu" data-fu><option value="">'+(fu?'Change…':'Remind me…')+'</option><option value="1">Tomorrow</option><option value="3">In 3 days</option><option value="7">In a week</option><option value="14">In 2 weeks</option></select></div>';
-  if(A.tasks.length)h+='<div class="nt-row col"><b>Tasks I found</b>'+A.tasks.map(function(t,i){return '<label class="nt-task"><input type="checkbox" data-task="'+i+'"'+(C.taskOff[i]===undefined?(t.on?' checked':''):(C.taskOff[i]?'':' checked'))+'> <span>'+esc(t.title)+'</span>'+(t.due?'<em>'+esc(shortDate(t.due))+'</em>':'')+'</label>';}).join('')+'<small>Ticked tasks are created for you when you save.</small></div>';
+  var fu=effFollow(C,A);
+  h+='<div class="nt-row"><b>Follow-up</b>'+(fu?'<span class="nt-chip fu '+dueState(fu)+'"><i class="ti ti-bell"></i>'+esc(whenText(fu))+'<button type="button" data-fu-clear aria-label="Clear">×</button></span>':'')+'<select class="nt-fu" data-fu><option value="">'+(fu?'Change…':'Remind me…')+'</option><option value="1">Tomorrow</option><option value="3">In 3 days</option><option value="7">In a week</option><option value="14">In 2 weeks</option></select><input type="datetime-local" class="nt-dt" data-fu-at aria-label="Pick a date and time" value="'+esc(toLocalInput(fu))+'">'+(fu?'<label class="nt-cal"><input type="checkbox" data-cal'+(C.cal===false?'':' checked')+'> Add to my calendar</label>':'')+'</div>';
+  if(A.tasks.length)h+='<div class="nt-row col"><b>Tasks I found</b>'+A.tasks.map(function(t,i){return '<label class="nt-task"><input type="checkbox" data-task="'+i+'"'+(C.taskOff[i]===undefined?(t.on?' checked':''):(C.taskOff[i]?'':' checked'))+'> <span>'+esc(t.title)+'</span>'+'<input type="datetime-local" class="nt-dt sm" data-task-at="'+i+'" aria-label="When" value="'+esc(toLocalInput(taskDue(C,t,i)))+'"></label>';}).join('')+'<small>Ticked tasks are created for you when you save.</small></div>';
   var kind=C.kind==='auto'?A.kind:C.kind;
   h+='<div class="nt-row dim">Reads like a <b>'+esc((KINDS[kind]||KINDS.note)[0].toLowerCase())+'</b>'+(A.priority?' · <b>high priority</b>':'')+'</div>';
   return h;
@@ -191,6 +201,9 @@ function wireComposer(root,C,onSaved){
     live.querySelectorAll('[data-rm]').forEach(function(b){b.onclick=function(){var k=b.dataset.rm;C.links=C.links.filter(function(l){return l.type+':'+l.id!==k;});C.dismissed[k]=1;refresh();};});
     live.querySelectorAll('[data-add]').forEach(function(b){b.onclick=function(){var p=b.dataset.add.split(':');C.links.push({type:p[0],id:p.slice(1).join(':'),label:b.dataset.label});refresh();};});
     var fc=live.querySelector('[data-fu-clear]');if(fc)fc.onclick=function(){C.followSet=true;C.follow=null;refresh();};
+    var fa=live.querySelector('[data-fu-at]');if(fa)fa.onchange=function(){var v=fromLocalInput(fa.value);if(v){C.followSet=true;C.follow=v;refresh();}};
+    var fcal=live.querySelector('[data-cal]');if(fcal)fcal.onchange=function(){C.cal=fcal.checked;};
+    live.querySelectorAll('[data-task-at]').forEach(function(i){i.onchange=function(){C.taskDue[i.dataset.taskAt]=fromLocalInput(i.value)||false;refresh();};});
     var fs=live.querySelector('[data-fu]');if(fs)fs.onchange=function(){if(fs.value){C.followSet=true;C.follow=inDays(+fs.value);refresh();}};
     live.querySelectorAll('[data-task]').forEach(function(c){c.onchange=function(){C.taskOff[c.dataset.task]=!c.checked;};});
   }
@@ -201,7 +214,7 @@ function wireComposer(root,C,onSaved){
     if(C.busy)return;C.text=ta.value;var text=C.text.trim();if(!text){toast('Write something first.',true);return;}
     var dis2=Object.keys(C.dismissed).map(function(k){var p=k.split(':');return {type:p[0],id:p.slice(1).join(':')};});var A=analyze(text,C.links.concat(dis2)),btn=root.querySelector('[data-save]');
     var links=C.links.concat(A.links);
-    var fu=C.followSet?C.follow:A.follow_up;
+    var fu=effFollow(C,A);
     C.busy=true;btn.disabled=true;btn.textContent='Saving…';
     var made=[];
     try{
@@ -210,14 +223,24 @@ function wireComposer(root,C,onSaved){
         var on=C.taskOff[i]===undefined?A.tasks[i].on:!C.taskOff[i];if(!on)continue;
         var model=links.filter(function(l){return l.type==='model';})[0];
         try{
-          var r=await bridge().api('/api/agent/tasks/v11',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organization_slug:org(),action:'create_task',title:A.tasks[i].title,description:'From a note: '+text.slice(0,240),priority:A.priority||'normal',due_at:A.tasks[i].due||null,model_id:model?model.id:null,member_ids:S.me&&S.me.member_id?[S.me.member_id]:[]}),__fresh:true});
+          var r=await bridge().api('/api/agent/tasks/v11',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organization_slug:org(),action:'create_task',title:A.tasks[i].title,description:'From a note: '+text.slice(0,240),priority:A.priority||'normal',due_at:taskDue(C,A.tasks[i],i),model_id:model?model.id:null,member_ids:S.me&&S.me.member_id?[S.me.member_id]:[]}),__fresh:true});
           if(r&&r.task)made.push({id:r.task.id,title:A.tasks[i].title});
         }catch(e){toast('A task could not be created: '+msg(e),true);}
       }
+      var fuTask=null;
+      /* the follow-up becomes a calendar item: a task with its date and time, which the calendar and Today's schedule already show */
+      if(fu&&C.cal!==false&&(C.followSet||!made.length)){
+        try{
+          var fmodel=links.filter(function(l){return l.type==='model';})[0],ft=(String(C.title||'').trim()||A.title||text.split('\n')[0]).slice(0,100);
+          var fr=await bridge().api('/api/agent/tasks/v11',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({organization_slug:org(),action:'create_task',title:'Follow up: '+ft,description:'Follow-up from a note: '+text.slice(0,240),priority:A.priority||'normal',due_at:fu,model_id:fmodel?fmodel.id:null,member_ids:S.me&&S.me.member_id?[S.me.member_id]:[]}),__fresh:true});
+          if(fr&&fr.task)fuTask={id:fr.task.id,title:'Follow up: '+ft};
+        }catch(e){toast('The follow-up could not be added to your calendar: '+msg(e),true);}
+      }
+      if(fuTask)made.push(fuTask);
       var r2=await post({action:'create',body:text,title:(String(C.title||'').trim().slice(0,160))||A.title,kind:C.kind==='auto'?A.kind:C.kind,visibility:C.vis,links:links,mentions:A.mentions,tags:A.tags,follow_up_at:fu,smart:{priority:A.priority||null,tasks:made,suggested_tasks:A.tasks.length}});
       if(!r2||r2.verified!==true)throw new Error('The note was not confirmed as saved.');
       S.notes.unshift(r2.note);badge();
-      toast('✓ Note saved'+(links.length?' · connected to '+links.length:'')+(made.length?' · '+made.length+' task'+(made.length===1?'':'s')+' created':''));
+      toast('✓ Note saved'+(links.length?' · connected to '+links.length:'')+(made.length?' · '+made.length+(made.length===1?' item':' items')+' added to tasks and your calendar':''));
       var ctx=C.ctx;Object.assign(C,newCompose(ctx));
       if(onSaved)onSaved(r2.note);
     }catch(e){toast(msg(e),true);C.busy=false;btn.disabled=false;btn.textContent='Save note';}
@@ -236,7 +259,7 @@ function noteHtml(n,replies,compact){
   var k=KINDS[n.kind]||KINDS.note,mine=S.me&&n.author_id===S.me.id,hl=mentionsMe(n)&&!mine;
   var chips=arr(n.links).map(function(l){var m=LINKS[l.type]||LINKS.page;return '<span class="nt-chip lk" style="--c:'+m[2]+'"><button type="button" class="nt-lkf" data-f="'+esc(l.type+':'+l.id)+'" data-l="'+esc(l.label||'')+'" title="Show every note connected to this">'+'<i class="ti '+m[1]+'"></i>'+esc(l.label||m[0])+'</button><button type="button" class="nt-lko" data-o="'+esc(l.type+':'+l.id)+'" aria-label="Open" title="Open">↗</button></span>';}).join('');
   var tags=arr(n.tags).map(function(t){return '<span class="nt-chip tg">#'+esc(t)+'</span>';}).join('');
-  var fu=n.follow_up_at&&!n.resolved?'<span class="nt-chip fu '+dueState(n.follow_up_at)+'"><i class="ti ti-bell"></i>'+esc(shortDate(n.follow_up_at))+'</span>':'';
+  var fu=n.follow_up_at&&!n.resolved?'<span class="nt-chip fu '+dueState(n.follow_up_at)+'"><i class="ti ti-bell"></i>'+esc(whenText(n.follow_up_at))+'</span>':'';
   var tk=arr(n.smart&&n.smart.tasks).length?'<span class="nt-chip tk"><i class="ti ti-checkbox"></i>'+n.smart.tasks.length+' task'+(n.smart.tasks.length===1?'':'s')+' created</span>':'';
   var vis=n.visibility==='private'?'<span class="nt-chip vs"><i class="ti ti-lock"></i>Only author</span>':n.visibility==='model'?'<span class="nt-chip vs"><i class="ti ti-share"></i>Shareable with model</span>':'';
   var editing=S.editing===n.id;
@@ -325,7 +348,7 @@ function paintPage(){
   var side='<aside class="nt-side"><section class="nt-card"><h3><i class="ti ti-sparkles"></i> Veux</h3><div class="nt-veuxi">'
    +'<button type="button" data-v="week">Summarise this week’s notes</button><button type="button" data-v="follow">What needs a follow-up?</button><button type="button" data-v="team">What does the team need to know?</button></div></section>'
    +'<section class="nt-card"><h3>Most connected</h3>'+(tl.length?'<div class="nt-top">'+tl.map(function(l){var m=LINKS[l.type]||LINKS.page;return '<button type="button" data-f="'+esc(l.type+':'+l.id)+'" data-l="'+esc(l.label||'')+'"><i class="ti '+m[1]+'" style="color:'+m[2]+'"></i><span>'+esc(l.label||m[0])+'</span><em>'+l.n+'</em></button>';}).join('')+'</div>':'<p class="nt-mute">Connections appear as you write.</p>')+'</section>'
-   +'<section class="nt-card"><h3>Coming up</h3>'+(due.length?'<ul class="nt-fl">'+due.map(function(n){return '<li data-jump="'+esc(n.id)+'"><span class="nt-chip fu '+dueState(n.follow_up_at)+'"><i class="ti ti-bell"></i>'+esc(shortDate(n.follow_up_at))+'</span><span>'+esc((n.title||n.body).slice(0,70))+'</span></li>';}).join('')+'</ul>':'<p class="nt-mute">No follow-ups set.</p>')+'</section></aside>';
+   +'<section class="nt-card"><h3>Coming up</h3>'+(due.length?'<ul class="nt-fl">'+due.map(function(n){return '<li data-jump="'+esc(n.id)+'"><span class="nt-chip fu '+dueState(n.follow_up_at)+'"><i class="ti ti-bell"></i>'+esc(whenText(n.follow_up_at))+'</span><span>'+esc((n.title||n.body).slice(0,70))+'</span></li>';}).join('')+'</ul>':'<p class="nt-mute">No follow-ups set.</p>')+'</section></aside>';
   el.innerHTML='<div class="nt"><header class="nt-head"><div><small>SMART NOTES</small><h1>Everything the team knows, connected</h1><p>Write once. Notes link themselves to models, contacts and companies, remind you to follow up, turn to-dos into tasks and show up wherever they matter.</p></div></header>'
    +'<div class="nt-kpis"><button type="button" data-s="followups"><b>'+k.due+'</b><span>Follow-ups due</span></button><button type="button" data-s="mentions"><b>'+k.men+'</b><span>Mention you</span></button><button type="button" data-s="pinned"><b>'+k.pin+'</b><span>Pinned</span></button><button type="button" data-s="all"><b>'+k.wk+'</b><span>This week</span></button></div>'
    +'<div class="nt-cols"><div class="nt-main">'+composerHtml(PC,'pg')
