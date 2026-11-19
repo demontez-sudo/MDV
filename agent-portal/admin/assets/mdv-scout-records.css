@@ -156,3 +156,5 @@ html body .sr-main label.chk,html body .sr-main label.chk span{text-transform:no
 .sr-btn.danger{border-color:#8a4a3c;color:#e5a07a}.sr-btn.danger:hover{background:#8a3b2d;border-color:#8a3b2d;color:#fff}
 #sr-decline .sr-body{display:grid;gap:14px}#sr-decline label{display:grid;gap:6px}#sr-decline label span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
 #sr-decline>.sr-dlg>footer{display:flex;gap:10px;justify-content:flex-end;padding:12px 20px;border-top:1px solid var(--l2)}
+
+.sr-tplsw{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}.sr-tplsw>span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);margin-right:4px}
