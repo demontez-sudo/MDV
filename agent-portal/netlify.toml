@@ -9,6 +9,8 @@
 [build]
 publish = "."
 functions = "netlify/functions"
+# gives every startup file a version taken from its content (see scripts/stamp-assets.mjs); falls back to a new stamp per deploy if it cannot
+command = "node scripts/stamp-assets.mjs"
 
 # Netlify's post-processing (Asset Optimization) was silently rewriting every
 # absolute "/admin/assets/..." href/src in admin/index.html into a bare
