@@ -105,8 +105,10 @@ function rewriteLogin(){
   var form=card.querySelector('.lg-body');
   if(form){
     form.setAttribute('onsubmit','return false;');
-    form.innerHTML='<label class="lg-lbl" for="veuxEmail">Email address</label><div class="lg-field email"><input class="lg-inp" id="veuxEmail" type="email" autocomplete="username" placeholder="Enter your email"></div><label class="lg-lbl" for="veuxPassword">Password</label><div class="lg-field password"><input class="lg-inp" id="veuxPassword" type="password" autocomplete="current-password" placeholder="Enter your password">'+EYE+'</div><div class="lg-options"><label class="lg-remember"><input id="veuxRemember" type="checkbox" checked> Keep me signed in</label><button type="button" id="veuxForgotBtn">Forgot password?</button></div><div class="lg-err" id="veuxLoginErr" style="display:none"></div><button class="lg-btn" id="veuxLoginBtn" type="button" aria-label="Sign in">Sign In to Portal →</button>';
-    qs('veuxLoginBtn').onclick=signIn;qs('veuxForgotBtn').onclick=forgotPassword;qs('veuxPassword').addEventListener('keydown',function(e){if(e.key==='Enter')signIn();});
+    form.innerHTML='<label class="lg-lbl" for="veuxEmail">Email address</label><div class="lg-field email"><input class="lg-inp" id="veuxEmail" type="email" autocomplete="username" placeholder="Enter your email"></div><label class="lg-lbl" for="veuxPassword">Password</label><div class="lg-field password"><input class="lg-inp" id="veuxPassword" type="password" autocomplete="current-password" placeholder="Enter your password">'+EYE+'</div><div class="lg-options"><label class="lg-remember"><input id="veuxRemember" type="checkbox" checked> Keep me signed in</label><button type="button" id="veuxForgotBtn">Forgot password?</button></div><div class="lg-err" id="veuxLoginErr" style="display:none"></div><button class="lg-btn" id="veuxLoginBtn" type="submit" aria-label="Sign in">Sign In to Portal →</button>';
+    /* a real form submit (button + Enter both submit), so the browser sees a sign-in with its email and password and can offer to save them */
+    qs('veuxForgotBtn').onclick=forgotPassword;
+    if(!form.__veuxSubmit){form.__veuxSubmit=1;form.addEventListener('submit',function(e){e.preventDefault();signIn();});}
   }
   var foot=card.querySelector('.lg-foot');if(foot)foot.textContent='';
   var reset=qs('pwreset');if(reset)reset.style.display='none';
