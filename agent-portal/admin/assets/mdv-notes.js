@@ -158,10 +158,10 @@ try{S.seen=Number(localStorage.getItem('mdv-nt-seen'))||0;}catch(e){}
 function markSeen(){S.seen=Date.now();try{localStorage.setItem('mdv-nt-seen',String(S.seen));}catch(e){}badge();}
 
 /* ---------- the composer (used on the page and in the slide-over) ---------- */
-function newCompose(ctx){return {text:'',links:ctx?[Object.assign({},ctx)]:[],dismissed:{},vis:'team',kind:'auto',follow:null,followSet:false,taskOff:{},ctx:ctx||null,busy:false};}
+function newCompose(ctx){return {text:'',title:'',links:ctx?[Object.assign({},ctx)]:[],dismissed:{},vis:'team',kind:'auto',follow:null,followSet:false,taskOff:{},ctx:ctx||null,busy:false};}
 function chip(l,rm){var m=LINKS[l.type]||LINKS.page;return '<span class="nt-chip lk" style="--c:'+m[2]+'"><i class="ti '+m[1]+'"></i>'+esc(l.label||m[0])+(rm?'<button type="button" data-rm="'+esc(l.type+':'+l.id)+'" aria-label="Remove">×</button>':'')+'</span>';}
 function composerHtml(C,id){
-  return '<section class="nt-comp" data-c="'+id+'"><textarea class="nt-ta" rows="3" placeholder="Write a note. Name a model, contact or company to connect it, @ a teammate, add #tags. Start a line with “todo” to make it a task.">'+esc(C.text)+'</textarea><div class="nt-live"></div>'
+  return '<section class="nt-comp" data-c="'+id+'"><input class="nt-tt" type="text" maxlength="160" placeholder="Title (optional)" aria-label="Note title" autocomplete="off"><textarea class="nt-ta" rows="3" placeholder="Write a note. Name a model, contact or company to connect it, @ a teammate, add #tags. Start a line with “todo” to make it a task.">'+esc(C.text)+'</textarea><div class="nt-live"></div>'
    +'<div class="nt-bar"><label class="nt-sel"><i class="ti ti-eye"></i><select data-vis><option value="team">Team can see</option><option value="private">Only me</option><option value="model">Shareable with the model</option></select></label>'
    +'<label class="nt-sel"><i class="ti ti-tag"></i><select data-kind><option value="auto">Type: auto</option>'+Object.keys(KINDS).map(function(k){return '<option value="'+k+'">'+KINDS[k][0]+'</option>';}).join('')+'</select></label><span class="nt-sp"></span><button type="button" class="nt-btn gold" data-save>Save note</button></div></section>';
 }
@@ -183,6 +183,7 @@ function liveHtml(C,A){
 function wireComposer(root,C,onSaved){
   var ta=root.querySelector('.nt-ta'),live=root.querySelector('.nt-live'),t;
   var vs=root.querySelector('[data-vis]'),ks=root.querySelector('[data-kind]');vs.value=C.vis;ks.value=C.kind;
+  var tt=root.querySelector('.nt-tt');tt.value=C.title||'';tt.oninput=function(){C.title=tt.value;};tt.onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();ta.focus();}};
   function refresh(){
     C.text=ta.value;var dis=Object.keys(C.dismissed).map(function(k){var p=k.split(':');return {type:p[0],id:p.slice(1).join(':')};});var A=C._A=analyze(C.text,C.links.concat(dis));
     /* exact name matches are attached for you, unless you removed them */
@@ -213,7 +214,7 @@ function wireComposer(root,C,onSaved){
           if(r&&r.task)made.push({id:r.task.id,title:A.tasks[i].title});
         }catch(e){toast('A task could not be created: '+msg(e),true);}
       }
-      var r2=await post({action:'create',body:text,title:A.title,kind:C.kind==='auto'?A.kind:C.kind,visibility:C.vis,links:links,mentions:A.mentions,tags:A.tags,follow_up_at:fu,smart:{priority:A.priority||null,tasks:made,suggested_tasks:A.tasks.length}});
+      var r2=await post({action:'create',body:text,title:(String(C.title||'').trim().slice(0,160))||A.title,kind:C.kind==='auto'?A.kind:C.kind,visibility:C.vis,links:links,mentions:A.mentions,tags:A.tags,follow_up_at:fu,smart:{priority:A.priority||null,tasks:made,suggested_tasks:A.tasks.length}});
       if(!r2||r2.verified!==true)throw new Error('The note was not confirmed as saved.');
       S.notes.unshift(r2.note);badge();
       toast('✓ Note saved'+(links.length?' · connected to '+links.length:'')+(made.length?' · '+made.length+' task'+(made.length===1?'':'s')+' created':''));
@@ -229,6 +230,8 @@ function wireComposer(root,C,onSaved){
 function bodyHtml(t){
   return esc(t).replace(/\n/g,'<br>').replace(/(^|\s|>)#([a-z0-9_-]{2,30})/gi,'$1<span class="nt-ht">#$2</span>').replace(/(^|\s|>)@([A-Za-z][\w.'-]*)/g,'$1<span class="nt-hm">@$2</span>').replace(/(^|<br>)\s*(?:[-*•]\s*)?\[ \]/g,'$1<span class="nt-cb">☐</span>').replace(/(^|<br>)\s*(?:[-*•]\s*)?\[x\]/gi,'$1<span class="nt-cb on">☑</span>');
 }
+/* the first line of the note is shown as its title only when it really is the title */
+function firstLineIs(n){var b=String(n.body||''),i=b.indexOf('\n'),first=(i<0?b:b.slice(0,i)).replace(/^#+\s*/,'').trim();return n.title&&i>=0&&first===String(n.title).trim()?b.slice(i).replace(/^\s+/,''):b;}
 function noteHtml(n,replies,compact){
   var k=KINDS[n.kind]||KINDS.note,mine=S.me&&n.author_id===S.me.id,hl=mentionsMe(n)&&!mine;
   var chips=arr(n.links).map(function(l){var m=LINKS[l.type]||LINKS.page;return '<span class="nt-chip lk" style="--c:'+m[2]+'"><button type="button" class="nt-lkf" data-f="'+esc(l.type+':'+l.id)+'" data-l="'+esc(l.label||'')+'" title="Show every note connected to this">'+'<i class="ti '+m[1]+'"></i>'+esc(l.label||m[0])+'</button><button type="button" class="nt-lko" data-o="'+esc(l.type+':'+l.id)+'" aria-label="Open" title="Open">↗</button></span>';}).join('');
@@ -239,7 +242,7 @@ function noteHtml(n,replies,compact){
   var editing=S.editing===n.id;
   return '<article class="nt-note'+(n.pinned?' pin':'')+(n.resolved?' done':'')+(hl?' hl':'')+'" data-id="'+esc(n.id)+'"><header><span class="nt-av">'+esc(initials(n.author_name))+'</span><div class="nt-by"><b>'+esc(n.author_name||'Team')+'</b><small><i class="ti '+k[1]+'"></i>'+esc(k[0])+' · '+esc(ago(n.created_at))+'</small></div>'+(n.pinned?'<i class="ti ti-pin-filled nt-pn" title="Pinned"></i>':'')+'</header>'
    +(n.title?'<h4>'+esc(n.title)+'</h4>':'')
-   +(editing?'<textarea class="nt-edit" rows="5">'+esc(n.body)+'</textarea><div class="nt-acts"><button type="button" class="nt-btn sm gold" data-esave>Save</button><button type="button" class="nt-btn sm" data-ecancel>Cancel</button></div>':'<div class="nt-body">'+bodyHtml(n.title&&n.body.indexOf(n.title)===0?n.body.slice(n.title.length).replace(/^\s+/,''):n.body)+'</div>')
+   +(editing?'<input class="nt-edit-title" type="text" maxlength="160" placeholder="Title (optional)" aria-label="Note title" value="'+esc(n.title||'')+'"><textarea class="nt-edit" rows="5">'+esc(n.body)+'</textarea><div class="nt-acts"><button type="button" class="nt-btn sm gold" data-esave>Save</button><button type="button" class="nt-btn sm" data-ecancel>Cancel</button></div>':'<div class="nt-body">'+bodyHtml(firstLineIs(n))+'</div>')
    +((chips||tags||fu||tk||vis)?'<div class="nt-chips">'+chips+fu+tk+tags+vis+'</div>':'')
    +(compact?'':'<footer class="nt-acts"><button type="button" data-a="pin">'+(n.pinned?'Unpin':'Pin')+'</button><button type="button" data-a="resolve">'+(n.resolved?'Reopen':'Mark done')+'</button><button type="button" data-a="reply">Reply</button><button type="button" data-a="veuxi"><i class="ti ti-sparkles"></i> Ask Veux</button>'+(mine?'<button type="button" data-a="edit">Edit</button><button type="button" data-a="del" class="danger">Delete</button>':'')+'</footer>')
    +(arr(replies).length?'<div class="nt-replies">'+replies.map(function(r){return '<div class="nt-rep"><b>'+esc(r.author_name||'Team')+'</b> <small>'+esc(ago(r.created_at))+'</small><div>'+bodyHtml(r.body)+'</div></div>';}).join('')+'</div>':'')
@@ -262,7 +265,7 @@ function wireNotes(root,rerender){
         badge();if(rerender)rerender();
       }catch(e){toast(msg(e),true);}
     };});
-    var es=card.querySelector('[data-esave]');if(es)es.onclick=async function(){var t=card.querySelector('.nt-edit').value;try{var r=await post({action:'update',id:id,body:t});Object.assign(note,r.note);S.editing=null;toast('✓ Saved');if(rerender)rerender();}catch(e){toast(msg(e),true);}};
+    var es=card.querySelector('[data-esave]');if(es)es.onclick=async function(){var t=card.querySelector('.nt-edit').value,ti=card.querySelector('.nt-edit-title'),patch={action:'update',id:id,body:t};if(ti)patch.title=ti.value.trim();try{var r=await post(patch);Object.assign(note,r.note);S.editing=null;toast('✓ Saved');if(rerender)rerender();}catch(e){toast(msg(e),true);}};
     var ec=card.querySelector('[data-ecancel]');if(ec)ec.onclick=function(){S.editing=null;if(rerender)rerender();};
     var rs=card.querySelector('[data-rsend]');if(rs)rs.onclick=async function(){var t=card.querySelector('[data-rtext]').value.trim();if(!t)return;try{var r=await post({action:'create',body:t,parent_id:id,visibility:note.visibility,links:[]});S.notes.push(r.note);S.replyOpen=null;if(rerender)rerender();}catch(e){toast(msg(e),true);}};
   });

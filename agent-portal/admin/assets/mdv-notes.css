@@ -115,3 +115,9 @@ html body .nt button,html body #nt-panel button{letter-spacing:0;text-transform:
   html body #nt-fab{display:none!important}
   html body .nt .nt-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
+
+/* note titles */
+.nt-tt,.nt-edit-title{width:100%;box-sizing:border-box;border:0!important;border-bottom:1px solid var(--l2)!important;background:transparent!important;color:var(--ink);font:600 16px/1.3 var(--fB,Inter,sans-serif);outline:0!important;padding:8px 8px 9px!important;box-shadow:none!important;border-radius:0!important}
+.nt-tt::placeholder,.nt-edit-title::placeholder{color:var(--mute,#8a8294);font-weight:500}
+.nt-tt:focus,.nt-edit-title:focus{border-bottom-color:var(--g,#a58bf5)!important}
+.nt-edit-title{border:1px solid var(--l2)!important;border-radius:12px!important;background:var(--field)!important;margin-bottom:8px}
