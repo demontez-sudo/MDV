@@ -775,16 +775,35 @@ async function moveTo(stepKey,opts){
   }catch(e){toast(msg(e),true);}
   R.busy=false;
 }
-async function decline(){
+var DECLINE_WHY=['Not the right look for us','Not interested','Too young or too old','Height does not fit','Could not reach them','Chose another agency'];
+function closeDecline(){var d=document.getElementById('sr-decline');if(d)d.remove();}
+function decline(){
   var p=byId(R.id);if(!p)return;
-  var why=window.prompt('Why are they not moving forward? (optional)','');
-  if(why===null)return;
-  try{
-    await post({action:'scout_save',prospect_id:p.id,scout:{step:'declined'},log_entry:{type:'step',text:'Declined'+(why?' · '+why:'')}});
-    var mv=await post({action:'move_stage',prospect_id:p.id,stage:'declined',reason:why||'Declined'});
-    if(!mv||mv.verified!==true)throw new Error('The stage change was not confirmed.');
-    await load();paintPage();R.sc=clone(scoutOf(byId(p.id)));paintRecord();toast('Marked as declined');
-  }catch(e){toast(msg(e),true);}
+  closeDecline();
+  var el=document.createElement('div');el.id='sr-decline';el.className='sr-back sr-top';document.body.appendChild(el);
+  el.innerHTML='<section class="sr-dlg sr-small" role="dialog" aria-modal="true" aria-label="Decline"><header><div><small>SCOUT RECORDS · '+esc(p.display_name)+'</small><h2>Not moving forward</h2></div><button type="button" data-x aria-label="Close">×</button></header>'
+    +'<div class="sr-body"><p class="sr-lead">They move to Declined and stay on file with their history, so you can come back to them later. Say why if you like. It only shows to the team.</p>'
+    +'<div class="sr-why" role="group" aria-label="Quick reasons">'+DECLINE_WHY.map(function(w){return '<button type="button" class="sr-pick" data-why="'+esc(w)+'">'+esc(w)+'</button>';}).join('')+'</div>'
+    +'<label><span>Reason (optional)</span><textarea id="dc_why" rows="3" placeholder="Anything worth remembering"></textarea></label>'
+    +'<p class="sr-err" id="dc_err"></p></div><footer><button type="button" class="sr-btn" data-x>Cancel</button><button type="button" class="sr-btn danger" id="dc_go">Mark as declined</button></footer></section>';
+  var ta=el.querySelector('#dc_why');
+  el.querySelectorAll('[data-x]').forEach(function(x){x.onclick=closeDecline;});
+  el.onclick=function(e){if(e.target===el)closeDecline();};
+  el.querySelectorAll('[data-why]').forEach(function(b){b.onclick=function(){
+    var on=b.classList.contains('on');el.querySelectorAll('[data-why]').forEach(function(x){x.classList.remove('on');});
+    if(on){ta.value='';}else{b.classList.add('on');ta.value=b.dataset.why;}ta.focus();};});
+  ta.oninput=function(){el.querySelectorAll('[data-why]').forEach(function(x){x.classList.toggle('on',x.dataset.why===ta.value.trim());});};
+  setTimeout(function(){ta.focus();},40);
+  el.querySelector('#dc_go').onclick=async function(){
+    var btn=this,err=el.querySelector('#dc_err'),why=String(ta.value||'').trim().slice(0,500);
+    err.textContent='';btn.disabled=true;btn.textContent='Saving…';
+    try{
+      await post({action:'scout_save',prospect_id:p.id,scout:{step:'declined'},log_entry:{type:'step',text:'Declined'+(why?' · '+why:'')}});
+      var mv=await post({action:'move_stage',prospect_id:p.id,stage:'declined',reason:why||'Declined'});
+      if(!mv||mv.verified!==true)throw new Error('The stage change was not confirmed.');
+      await load();paintPage();R.sc=clone(scoutOf(byId(p.id)));paintRecord();closeDecline();toast('Marked as declined');
+    }catch(e){err.textContent=msg(e);btn.disabled=false;btn.textContent='Mark as declined';}
+  };
 }
 function addLog(text,type){
   var p=byId(R.id);if(!p||!text)return Promise.resolve();
@@ -923,6 +942,7 @@ function wireRecord(m,p){
 }
 document.addEventListener('keydown',function(e){
   if(e.key!=='Escape')return;
+  var dc=document.getElementById('sr-decline');if(dc){e.stopPropagation();dc.remove();return;}
   var c=document.getElementById('sr-call');if(c){e.stopPropagation();flush();c.remove();paintRecord();return;}
   if(document.getElementById('sr-modal'))closeModal();
 },true);

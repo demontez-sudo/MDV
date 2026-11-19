@@ -149,3 +149,10 @@ html body .sr-main label.chk,html body .sr-main label.chk span{text-transform:no
 .sr-savebar{position:sticky;bottom:0;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:12px -4px 0;padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);background:linear-gradient(180deg,rgba(18,14,12,.82),rgba(18,14,12,.97));backdrop-filter:blur(8px);border-radius:0 0 18px 18px}
 .sr-savebar .sr-hint{margin:0;flex:1 1 260px}
 .sr-save.bad{color:#e9a07c!important;font-weight:600}
+
+/* decline dialog */
+.sr-why{display:flex;flex-wrap:wrap;gap:8px}
+.sr-pick{border:1px solid var(--l2);background:none;color:var(--ink);border-radius:999px;padding:7px 13px;font-size:12.5px;cursor:pointer}.sr-pick:hover{border-color:var(--g)}.sr-pick.on{background:var(--g);border-color:var(--g);color:#15110c}
+.sr-btn.danger{border-color:#8a4a3c;color:#e5a07a}.sr-btn.danger:hover{background:#8a3b2d;border-color:#8a3b2d;color:#fff}
+#sr-decline .sr-body{display:grid;gap:14px}#sr-decline label{display:grid;gap:6px}#sr-decline label span{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--mute)}
+#sr-decline>.sr-dlg>footer{display:flex;gap:10px;justify-content:flex-end;padding:12px 20px;border-top:1px solid var(--l2)}
