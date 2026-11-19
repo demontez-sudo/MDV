@@ -11,6 +11,8 @@
     "node": ">=22"
   },
   "scripts": {
+    "stamp:assets": "node scripts/stamp-assets.mjs",
+    "check:assets": "node scripts/stamp-assets.mjs --check",
     "check:v16": "node scripts/check-v16.mjs",
     "check:contracts": "node scripts/check-portal-contracts.mjs",
     "check:release": "npm run check:v16 && npm run check:contracts && npm run check:route && npm run check:sweep && npm run check:calendar && npm run check:mobility && npm run check:performance && npm run check:packages && npm run check:ai && npm run check:mobile && npm run check:1687 && npm run check:1690 && npm run check:1691 && npm run check:1692 && npm run check:1693 && npm run check:1694 && npm run check:1695 && npm run check:1696 && npm run check:1697 && npm run check:1698 && npm run check:1699 && npm run check:16910 && npm run check:16911 && npm run check:16912 && npm run check:16913 && npm run check:16914 && npm run check:16915 && npm run check:16917 && npm run check:16918 && npm run check:16920 && npm run check:16921 && npm run check:16922 && npm run check:16923 && npm run check:16924 && npm run check:16924:coordinated && npm run check:16925 && npm run check:16926 && npm run check:16927 && npm run check:16930 && npm run check:16932 && npm run check:16933 && npm run check:16934 && npm run check:16935 && npm run check:16936 && npm run check:16937 && npm run check:16938 && npm run check:16939 && npm run check:16940 && npm run check:16941 && npm run check:16942 && npm run check:16943 && npm run check:16944 && npm run check:16945 && npm run check:16946 && npm run check:16947 && npm run check:16948 && npm run check:16949 && npm run check:16950 && npm run check:16951 && npm run check:16952 && npm run check:16953",
