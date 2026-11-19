@@ -146,8 +146,10 @@ document.addEventListener('click',function(e){
 document.addEventListener('keydown',function(e){if(e.key==='Escape'){var s=document.getElementById('mdv-dsa-set');if(s)s.remove();}});
 
 /* ---- the hidden copy of DaySilk that feeds us ---- */
+/* the alerts run a whole second copy of DaySilk in a hidden frame; let the page you are looking at load first, then start it */
+var T0=Date.now(),START_AFTER=9000;
 function boot(){
-  if(booted)return;
+  if(booted||Date.now()-T0<START_AFTER)return;
   var E=window.MDV_DS_EMBED,c=window.VEUX_SUPABASE_CLIENT;if(!E||!E.prepare||!c||!c.auth)return;
   c.auth.getSession().then(function(r){
     if(!(r&&r.data&&r.data.session)||booted)return;

@@ -149,7 +149,7 @@ async function load(opts){
       S.notes=arr(d.notes);S.me=d.me||S.me;S.err=null;S.setup=null;S.loaded=true;S.at=Date.now();
       if(d.directory){S.dir=d.directory;S.dirAt=Date.now();}
     }catch(e){
-      if(e&&e.code==='SMART_NOTES_TABLE_MISSING'||/SMART_NOTES_TABLE_MISSING|needs its database table/i.test(msg(e)))S.setup=true;else S.err=msg(e);
+      if(e&&e.code==='SMART_NOTES_TABLE_MISSING'||/SMART_NOTES_TABLE_MISSING|needs its database table/i.test(msg(e)))S.setup=true;else{S.err=msg(e);S.failAt=Date.now();}
     }
     S.loading=false;badge();
   })();
@@ -425,7 +425,7 @@ function ready(){return window.VEUX_AGENT_V4&&VEUX_AGENT_V4.api&&document.getEle
 function tick(){
   if(!ready())return;ensureFab();
   var onNotes=String(window._currentPage||'')==='notes';
-  if(!S.loaded&&!S.loading&&!S.setup)load({dir:true});
+  if(!S.loaded&&!S.loading&&!S.setup&&Date.now()-(S.failAt||0)>60000)load({dir:true});   /* after a failed load, wait a minute instead of asking every 5 seconds */
   else if(!document.hidden&&!S.loading&&Date.now()-(S.at||0)>120000){S.at=Date.now();load().then(function(){if(onNotes)paintPage();});}
   if(onNotes&&S.loaded)markSeen();
 }
