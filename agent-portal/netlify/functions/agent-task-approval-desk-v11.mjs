@@ -66,6 +66,16 @@ export const handler=async(event)=>{
         }
         return json(200,{ok:true,verified:true,task,persisted_at:new Date().toISOString()});
       }
+      if(action==='edit_task'){
+        const admin=await requirePermission(user.id,organization.id,'tasks.write');
+        const taskId=String(body.task_id||'').trim();if(!taskId)return json(400,{error:'task_id is required'});
+        const patch={};
+        if(body.title!=null){const t=String(body.title).replace(/\s+/g,' ').trim().slice(0,200);if(!t)return json(400,{error:'A task needs a title'});patch.title=t;}
+        if(body.priority!=null){const pr=String(body.priority).toLowerCase();if(!['low','normal','high','urgent'].includes(pr))return json(400,{error:'Unsupported priority'});patch.priority=pr;}
+        if(!Object.keys(patch).length)return json(400,{error:'Nothing to change'});
+        const {data:task,error}=await admin.from('tasks').update(patch).eq('organization_id',organization.id).eq('id',taskId).select('*').single();if(error)throw error;
+        return json(200,{ok:true,verified:!!task,task,persisted_at:new Date().toISOString()});
+      }
       if(action==='move_task'){
         const admin=await requirePermission(user.id,organization.id,'tasks.write');
         const taskId=String(body.task_id||'').trim();if(!taskId)return json(400,{error:'task_id is required'});

@@ -4246,7 +4246,7 @@ document.addEventListener("submit",e=>{const f=e.target;
 });
 document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act,c=core();
  if(a==="delev"){c.events=(c.events||[]).filter(x=>x.id!==b.dataset.id);markDirty("core");render();return}
- if(a==="evdone"){const d=day(S.date);d.ev=d.ev||{};d.ev[b.dataset.id]=b.checked;markDirty("day");render();return}
+ if(a==="evdone"){const d=day(S.date);d.ev=d.ev||{};d.ev[b.dataset.id]=b.checked;markDirty("day");agTaskDone(evById(b.dataset.id),S.date,b.checked);render();return}
  if(a==="delstep"){const ms=mState(b.dataset.id),i=Number(b.dataset.i),base=(allModels().find(m=>m.id===b.dataset.id)||{tl:[]}).tl.length-(ms.x||[]).length;ms.x.splice(i,1);if(ms.s){const n={};Object.keys(ms.s).forEach(k=>{const j=Number(k);if(j<base+i)n[j]=ms.s[k];else if(j>base+i)n[j-1]=ms.s[k]});ms.s=n}markDirty("core");render();return}
  if(a==="delmove"){const ms=mState(b.dataset.id);ms.mvx.splice(Number(b.dataset.i),1);markDirty("core");render();return}
  if(a==="delmodel"){if(!confirm("Remove this model from the roster?"))return;c.cmodels=(c.cmodels||[]).filter(m=>m.id!==b.dataset.id);delete c.mdl[b.dataset.id];markDirty("core");render();return}
@@ -4449,6 +4449,14 @@ document.addEventListener("submit",e=>{if(e.target.id==="addEvent")S.addEv=false
 
 /* ---------- Reschedule ---------- */
 /* things that live on the Model Agenda (a task or a calendar event) are saved there, not in DaySilk's own list */
+/* the title without the model's first name that the calendar puts in front of it */
+const agBare=e=>{const f=String((e.models||[])[0]||"").split(" ")[0],t=String(e.title||"");return f&&t.startsWith(f+": ")?t.slice(f.length+2):t};
+const agTask=e=>!!e&&(e.src==="portal"||e.src==="model"||e.src==="agency")&&/^task-/.test(String(e.ref||""));
+function agTaskDone(e,s,done){
+ let api;try{api=parent.MDV_DS_EMBED}catch(_){}
+ if(!agTask(e)||!api||!api.setTaskState)return;
+ api.setTaskState(e.ref,done?"completed":"open").then(()=>toast(done?"Task completed":"Task reopened")).catch(x=>{const d=day(s);d.ev=d.ev||{};d.ev[e.id]=!done;markDirty("day",s);render();toast((x&&x.message)||"The task could not be updated. Try again.")});
+}
 const movableEv=e=>!!e&&(e.src==="portal"||e.src==="model"||e.src==="agency")&&/^(task|event)-/.test(String(e.ref||""));
 const reschedOK=r=>r.kind!=="e"||!r.ev||!r.ev.src||movableEv(r.ev);
 function rsMoveExternal(e,s,v){
@@ -4477,7 +4485,7 @@ function rsApply(kind,s,id,v){const c=core();
  else if(v.scope==="fwd"){if(v.d<=e.d&&s===e.d){Object.assign(e,{d:v.d,t:v.t,e:v.e});if(fol)S.item.s=v.d}else{const n={...e,id:uid(),d:v.d,t:v.t,e:v.e};delete n.skip;e.until=addDays(s,-1);c.events.push(n);if(fol)S.item={...S.item,id:n.id,s:v.d}}}
  else{e.skip=(e.skip||[]).concat(s);const n={...e,id:uid(),d:v.d,t:v.t,e:v.e,rep:"",from:e.id};delete n.skip;delete n.until;c.events.push(n);if(fol)S.item={...S.item,id:n.id,s:v.d}}
  markDirty("core");warnClash(v.d,v.t,v.e,null);toast(v.d!==s?"Moved to "+fmtMD(v.d):"New time saved");render()}
-document.addEventListener("submit",e=>{const f=e.target;if(!f.classList.contains("resched"))return;e.preventDefault();
+document.addEventListener("submit",e=>{const f=e.target;if(f.hasAttribute&&f.hasAttribute("data-agrename")){e.preventDefault();const it=S.item,ev=it&&evById(it.id);if(!agTask(ev))return;const t=String(f.elements.agn.value||"").replace(/\s+/g," ").trim();if(!t){toast("A task needs a name.");return}let api;try{api=parent.MDV_DS_EMBED}catch(_){}if(!api||!api.editTask){toast("The Model Agenda is not connected right now.");return}api.editTask(ev.ref,{title:t}).then(()=>{S.agRename=false;toast("Task renamed");closeItem();render()}).catch(x=>toast((x&&x.message)||"It could not be renamed."));return}if(!f.classList.contains("resched"))return;e.preventDefault();
  const g=n=>{const x=f.elements[n];return x?String(x.value||""):""},v={d:g("d")||f.dataset.s,t:g("t"),e:g("e"),scope:g("scope")||"one"};
  if(v.t&&v.e&&v.e<=v.t){toast("The end time needs to be after the start.");return}applyResched(f,v)});
 document.addEventListener("click",e=>{const b=e.target.closest("[data-act]");if(!b)return;const a=b.dataset.act;if(!["rsq","rsdel","rsskip","rsreset"].includes(a))return;
@@ -4533,7 +4541,7 @@ function warnClash(s,t,en,id){const c=clashes(s,t,en,id);if(c.length)setTimeout(
 
 /* ---------- Item sheet ---------- */
 function openItem(it){S.item=it;S.itemEdit=false;renderItem()}
-function closeItem(){S.item=null;const n=document.getElementById("itemsheet");if(n)n.remove();document.body.classList.remove("sheet-open")}
+function closeItem(){S.item=null;S.agRename=false;const n=document.getElementById("itemsheet");if(n)n.remove();document.body.classList.remove("sheet-open")}
 function renderItem(){
  if(!S.item){closeItem();return}
  let n=document.getElementById("itemsheet");
@@ -4555,10 +4563,12 @@ function itemHTML(it){
   h+=`<div class="sheet-body">`;
   if(S.itemEdit)return h+editHTML(e,s)+`</div>`;
   const px=e.src==="portal"||e.src==="model"||e.src==="agency",vn={zoom:"Zoom",meet:"Google Meet",teams:"Microsoft Teams"};
-  h+=`<div class="sheet-act">${e.video?`<a class="btn sm solid" href="${esc(e.video.url)}" target="_blank" rel="noopener noreferrer">Join ${esc(vn[e.video.provider]||"video meeting")}</a>`:""}<button class="btn sm ${done?"":"solid"}" data-act="itdone">${done?"Mark not done":"Mark done"}</button>${px?"":`<button class="btn sm" data-act="itedit">Edit</button><button class="btn sm" data-act="itdup">Duplicate</button>`}<button class="btn sm" data-act="itday">Open day</button>${e.web?`<a class="btn sm" href="${esc(e.web)}" target="_blank" rel="noopener">Open in Outlook ${xi("arrow","xi sm")}</a>`:""}</div>`;
+  h+=`<div class="sheet-act">${e.video?`<a class="btn sm solid" href="${esc(e.video.url)}" target="_blank" rel="noopener noreferrer">Join ${esc(vn[e.video.provider]||"video meeting")}</a>`:""}<button class="btn sm ${done?"":"solid"}" data-act="itdone">${done?"Mark not done":"Mark done"}</button>${px?(agTask(e)?`<button class="btn sm" data-act="agrename">Rename</button>`:""):`<button class="btn sm" data-act="itedit">Edit</button><button class="btn sm" data-act="itdup">Duplicate</button>`}<button class="btn sm" data-act="itday">Open day</button>${e.web?`<a class="btn sm" href="${esc(e.web)}" target="_blank" rel="noopener">Open in Outlook ${xi("arrow","xi sm")}</a>`:""}</div>`;
   if(cl.length)h+=`<div class="sheet-warn">${xi("alert","xi sm")}<span>Overlaps with ${cl.map(x=>`<b>${esc(x.title)}</b> (${rangeTxt({time:x.t,end:x.e})})`).join(", ")}</span></div>`;
   h+=`<div class="sheet-info">${row("cal",e.src==="agency"?"On the Model Agenda"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" · "+esc(e.kind||"event"):e.src==="model"?"On "+esc((e.models||[]).join(", "))+"'s calendar · "+esc(e.kind||"event"):e.src==="portal"?"From the Model Agenda"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):""):e.src==="ics"?"From "+esc(e.calName||"a linked calendar")+" (read-only)":e.src==="outlook"?"From your Outlook calendar"+(e.calName?" · "+esc(e.calName):"")+(e.org?" · organised by "+esc(e.org):""):esc(catName(e.cat))+(e.rep?" · "+esc(repTxt(e)):""))}${cxAgRow(e)}${payRow(e)}${editRow(e)}${row("pin",esc(e.where||""))}${e.notes?`<div class="sheet-notes">${esc(e.notes)}</div>`:""}${row("check",done?"Done for this day":s<todayIso()||(s===todayIso()&&e.t&&hm(e.e||e.t)<nowMin())?"<b class='late'>Not marked done</b>":"")}</div>`;
   if(!px||movableEv(e))h+=reschedForm(s,{kind:"e",ev:e,time:e.t,end:e.e});
+  if(agTask(e)&&S.agRename)h=h.replace(/(<div class="sheet-info">)/,`<form class="resched" data-agrename="1"><div class="rs-h"><b>Rename task</b></div><div class="rs-f"><label>Name<input class="txt" name="agn" maxlength="200" value="${esc(agBare(e))}" required></label></div><div class="rs-a"><button class="btn sm solid" type="submit">Save name</button><button type="button" class="btn sm" data-act="agrename">Cancel</button></div></form>$1`);
+  if(agTask(e))h+=`<div class="sheet-danger"><button class="linkbtn" data-act="agcancel">Cancel this task</button></div>`;
   if(!px)h+=`<div class="sheet-danger">${e.rep?`<button class="linkbtn" data-act="itskip">Remove just ${fmtMD(s)}</button><button class="linkbtn" data-act="itdel">Delete the whole series</button>`:`<button class="linkbtn" data-act="itdel">Delete event</button>`}</div>`;
   return h+`</div>`}
  if(it.kind==="b"){const r=timeline(s).rows.find(x=>x.k===it.id);if(!r)return"";const d=day(s),done=rowDone(s,r);
@@ -4606,7 +4616,9 @@ document.addEventListener("click",ev=>{const b=ev.target.closest("[data-act]");
  if(a==="closeitem"){closeItem();return}
  if(!it)return;
  if(a==="itedit"){S.itemEdit=!S.itemEdit;renderItem();return}
- if(a==="itdone"){const d=day(it.s);d.ev=d.ev||{};d.ev[it.id]=!d.ev[it.id];markDirty("day",it.s);render();return}
+ if(a==="itdone"){const d=day(it.s);d.ev=d.ev||{};d.ev[it.id]=!d.ev[it.id];markDirty("day",it.s);agTaskDone(evById(it.id),it.s,!!d.ev[it.id]);render();return}
+ if(a==="agrename"){const e=evById(it.id);if(!agTask(e))return;S.agRename=!S.agRename;renderItem();const f=document.querySelector("#itemsheet [name=agn]");if(f){f.focus();f.select()}return}
+ if(a==="agcancel"){const e=evById(it.id);if(!agTask(e))return;if(!confirm("Cancel this task? It disappears from every calendar."))return;let api;try{api=parent.MDV_DS_EMBED}catch(_){}if(!api||!api.setTaskState){toast("The Model Agenda is not connected right now.");return}api.setTaskState(e.ref,"cancelled").then(()=>{toast("Task cancelled");closeItem();render()}).catch(x=>toast((x&&x.message)||"It could not be cancelled."));return}
  if(a==="itdup"){const e=evById(it.id);if(!e)return;openItem({kind:"new",pre:{...e,d:it.s,rep:""}});return}
  if(a==="itday"){const s=it.s;closeItem();S.date=s;S.view="today";render();window.scrollTo(0,0);return}
  if(a==="itttasks"){closeItem();S.view="tasks";render();window.scrollTo(0,0);return}
