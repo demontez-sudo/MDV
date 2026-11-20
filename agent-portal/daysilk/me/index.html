@@ -4375,7 +4375,7 @@ function schedPanel(s){
  if(!rows.length)h+=`<p class="empty">Open day.</p>`;
  h+=`<div class="srows">${rows.map(r=>{const done=rowDone(s,r),isCur=cur&&cur.k===r.k,tk=tagKey(r.tag),nt=r.kind==="b"?(d.bnotes[r.k]||""):"";
   const cb=r.kind==="e"?`<input type="checkbox" data-act="evdone" data-id="${r.ev.id}" ${done?"checked":""} aria-label="Done: ${esc(r.title)}">`:`<input type="checkbox" data-scope="day" data-path="blocks.${r.k}" ${done?"checked":""} aria-label="Done: ${esc(r.title)}">`;
-  return`<div class="srow t-${tk} ${isCur?"cur":""} ${done?"done":""}"><details data-tid="row-${s}-${r.k}"><summary><time>${rangeTxt(r)}</time><span class="sbar"></span><span class="stt"><b>${esc(r.title)}</b>${r.moved?`<em class="movedtag">Moved</em>`:""}<small>${esc(r.desc)}</small></span><span class="pill p-${tk}">${esc(r.tag)}</span></summary><div class="sbody">${r.steps&&r.steps.length?`<ul class="steps">${r.steps.map((x,j)=>r.kind==="b"?`<li><label><input type="checkbox" data-scope="day" data-path="steps.${r.k}_${j}" ${d.steps[r.k+"_"+j]?"checked":""}><span>${esc(x)}</span></label></li>`:"").join("")}</ul>`:""}<p class="rowbtns"><button class="btn sm" data-act="item" data-kind="${r.kind}" data-id="${r.kind==="e"?r.ev.id:r.k}" data-s="${s}">Full details</button>${r.co?coLink(r.co,"Open in "+CO[r.co].tag,"btn sm solid golink"):""}</p>${r.kind==="b"?`<textarea class="txt" id="bn-${s}-${r.k}" data-scope="day" data-path="bnotes.${r.k}" placeholder="How it went, what to change">${esc(nt)}</textarea>`:`${reschedForm(s,r)}`}${r.kind==="b"?reschedForm(s,r):""}</div></details>${cb}</div>`}).join("")}</div></div>`;
+  return`<div class="srow t-${tk} ${isCur?"cur":""} ${done?"done":""}"><details data-tid="row-${s}-${r.k}"><summary><time>${rangeTxt(r)}</time><span class="sbar"></span><span class="stt"><b>${esc(r.title)}</b>${r.moved?`<em class="movedtag">Moved</em>`:""}<small>${esc(r.desc)}</small></span><span class="pill p-${tk}">${esc(r.tag)}</span></summary><div class="sbody">${r.steps&&r.steps.length?`<ul class="steps">${r.steps.map((x,j)=>r.kind==="b"?`<li><label><input type="checkbox" data-scope="day" data-path="steps.${r.k}_${j}" ${d.steps[r.k+"_"+j]?"checked":""}><span>${esc(x)}</span></label></li>`:"").join("")}</ul>`:""}<p class="rowbtns"><button class="btn sm" data-act="item" data-kind="${r.kind}" data-id="${r.kind==="e"?r.ev.id:r.k}" data-s="${s}">Full details</button>${r.co?coLink(r.co,"Open in "+CO[r.co].tag,"btn sm solid golink"):""}</p>${r.kind==="b"?`<textarea class="txt" id="bn-${s}-${r.k}" data-scope="day" data-path="bnotes.${r.k}" placeholder="How it went, what to change">${esc(nt)}</textarea>`:`${reschedOK(r)?reschedForm(s,r):""}`}${r.kind==="b"?reschedForm(s,r):""}</div></details>${cb}</div>`}).join("")}</div></div>`;
  return h;
 }
 function vToday(){
@@ -4448,6 +4448,18 @@ document.addEventListener("change",e=>{const el=e.target;if(el.dataset&&el.datas
 document.addEventListener("submit",e=>{if(e.target.id==="addEvent")S.addEv=false},true);
 
 /* ---------- Reschedule ---------- */
+/* things that live on the Model Agenda (a task or a calendar event) are saved there, not in DaySilk's own list */
+const movableEv=e=>!!e&&(e.src==="portal"||e.src==="model"||e.src==="agency")&&/^(task|event)-/.test(String(e.ref||""));
+const reschedOK=r=>r.kind!=="e"||!r.ev||!r.ev.src||movableEv(r.ev);
+function rsMoveExternal(e,s,v){
+ if(!movableEv(e)){toast("This one lives outside DaySilk and cannot be moved from here.");return}
+ let api;try{api=parent.MDV_DS_EMBED}catch(_){}
+ if(!api||!api.moveItem){toast("The Model Agenda is not connected right now.");return}
+ const st=new Date(v.d+"T"+(v.t||"00:00")+":00"),en=v.e?new Date(v.d+"T"+v.e+":00"):null;
+ if(isNaN(st)){toast("Pick a valid date and time.");return}
+ toast("Saving…");
+ api.moveItem(e.ref,st.toISOString(),en&&!isNaN(en)&&en>st?en.toISOString():null).then(()=>{toast(v.d!==s?"Moved to "+fmtMD(v.d):"New time saved");if(S.item)closeItem();render()}).catch(x=>toast((x&&x.message)||"It could not be moved. Try again."));
+}
 function reschedForm(s,r){
  const ev=r.kind==="e"?r.ev:null,rep=ev&&ev.rep,id=ev?ev.id:r.k;
  const quick=ev?[["30","+30 min"],["60","+1 hour"],["d1","Tomorrow"],["d7","Next week"]]:[["30","+30 min"],["60","+1 hour"],["-30","−30 min"]];
@@ -4460,7 +4472,7 @@ const hm=t=>t?+t.slice(0,2)*60+ +t.slice(3,5):null,mh=m=>{m=Math.max(0,Math.min(
 function applyResched(f,v){return rsApply(f.dataset.rs,f.dataset.s,f.dataset.id,v)}
 function rsApply(kind,s,id,v){const c=core();
  if(kind==="b"){const d=day(s);d.bmove=d.bmove||{};d.bmove[id]={t:v.t,e:v.e};markDirty("day",s);toast("Moved for "+fmtMD(s));render();return}
- const i=(c.events||[]).findIndex(x=>x.id===id);if(i<0)return;const e=c.events[i];
+ const i=(c.events||[]).findIndex(x=>x.id===id);if(i<0){const ex=evById(id);if(ex)rsMoveExternal(ex,s,v);else toast("That event could not be found.");return}const e=c.events[i];
  const fol=S.item&&S.item.kind==="e"&&S.item.id===id;if(!e.rep){Object.assign(e,{d:v.d,t:v.t,e:v.e});if(e.agId)cxAgSave(e);if(fol)S.item.s=v.d}
  else if(v.scope==="fwd"){if(v.d<=e.d&&s===e.d){Object.assign(e,{d:v.d,t:v.t,e:v.e});if(fol)S.item.s=v.d}else{const n={...e,id:uid(),d:v.d,t:v.t,e:v.e};delete n.skip;e.until=addDays(s,-1);c.events.push(n);if(fol)S.item={...S.item,id:n.id,s:v.d}}}
  else{e.skip=(e.skip||[]).concat(s);const n={...e,id:uid(),d:v.d,t:v.t,e:v.e,rep:"",from:e.id};delete n.skip;delete n.until;c.events.push(n);if(fol)S.item={...S.item,id:n.id,s:v.d}}
@@ -4546,7 +4558,7 @@ function itemHTML(it){
   h+=`<div class="sheet-act">${e.video?`<a class="btn sm solid" href="${esc(e.video.url)}" target="_blank" rel="noopener noreferrer">Join ${esc(vn[e.video.provider]||"video meeting")}</a>`:""}<button class="btn sm ${done?"":"solid"}" data-act="itdone">${done?"Mark not done":"Mark done"}</button>${px?"":`<button class="btn sm" data-act="itedit">Edit</button><button class="btn sm" data-act="itdup">Duplicate</button>`}<button class="btn sm" data-act="itday">Open day</button>${e.web?`<a class="btn sm" href="${esc(e.web)}" target="_blank" rel="noopener">Open in Outlook ${xi("arrow","xi sm")}</a>`:""}</div>`;
   if(cl.length)h+=`<div class="sheet-warn">${xi("alert","xi sm")}<span>Overlaps with ${cl.map(x=>`<b>${esc(x.title)}</b> (${rangeTxt({time:x.t,end:x.e})})`).join(", ")}</span></div>`;
   h+=`<div class="sheet-info">${row("cal",e.src==="agency"?"On the Model Agenda"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):"")+" · "+esc(e.kind||"event"):e.src==="model"?"On "+esc((e.models||[]).join(", "))+"'s calendar · "+esc(e.kind||"event"):e.src==="portal"?"From the Model Agenda"+(e.models&&e.models.length?" · "+esc(e.models.join(", ")):""):e.src==="ics"?"From "+esc(e.calName||"a linked calendar")+" (read-only)":e.src==="outlook"?"From your Outlook calendar"+(e.calName?" · "+esc(e.calName):"")+(e.org?" · organised by "+esc(e.org):""):esc(catName(e.cat))+(e.rep?" · "+esc(repTxt(e)):""))}${cxAgRow(e)}${payRow(e)}${editRow(e)}${row("pin",esc(e.where||""))}${e.notes?`<div class="sheet-notes">${esc(e.notes)}</div>`:""}${row("check",done?"Done for this day":s<todayIso()||(s===todayIso()&&e.t&&hm(e.e||e.t)<nowMin())?"<b class='late'>Not marked done</b>":"")}</div>`;
-  if(!px)h+=reschedForm(s,{kind:"e",ev:e,time:e.t,end:e.e});
+  if(!px||movableEv(e))h+=reschedForm(s,{kind:"e",ev:e,time:e.t,end:e.e});
   if(!px)h+=`<div class="sheet-danger">${e.rep?`<button class="linkbtn" data-act="itskip">Remove just ${fmtMD(s)}</button><button class="linkbtn" data-act="itdel">Delete the whole series</button>`:`<button class="linkbtn" data-act="itdel">Delete event</button>`}</div>`;
   return h+`</div>`}
  if(it.kind==="b"){const r=timeline(s).rows.find(x=>x.k===it.id);if(!r)return"";const d=day(s),done=rowDone(s,r);
