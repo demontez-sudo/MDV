@@ -147,7 +147,8 @@ export const handler=async(event)=>{
         if(!current){const e=new Error('Calendar event not found.');e.statusCode=404;e.code='CALENDAR_EVENT_NOT_FOUND';throw e;}
         const oldStart=current?.starts_at?new Date(current.starts_at):null,newStart=new Date(body.starts_at);if(!oldStart||isNaN(newStart))throw validationError('Invalid event date/time.','CALENDAR_DATETIME_INVALID');
         const delta=newStart-oldStart,patch={starts_at:newStart.toISOString(),updated_at:new Date().toISOString()};
-        if(current.ends_at)patch.ends_at=new Date(new Date(current.ends_at).getTime()+delta).toISOString();
+        if(body.ends_at&&validDateTime(body.ends_at)&&new Date(body.ends_at)>newStart)patch.ends_at=new Date(body.ends_at).toISOString();   /* a new end was chosen */
+        else if(current.ends_at)patch.ends_at=new Date(new Date(current.ends_at).getTime()+delta).toISOString();
         patch.metadata={...(current.metadata||{}),calendar_dragged_at:new Date().toISOString(),calendar_dragged_by:user.id};
         const eventRow=await one(admin.from('events').update(patch).eq('organization_id',organization.id).eq('id',body.event_id).select('*').single());
         if(!eventRow||Date.parse(eventRow.starts_at)!==newStart.getTime()){const e=new Error('Calendar move could not be verified.');e.statusCode=500;e.publicMessage='The event was not moved. Please try again.';throw e;}

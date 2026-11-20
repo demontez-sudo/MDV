@@ -66,6 +66,14 @@ export const handler=async(event)=>{
         }
         return json(200,{ok:true,verified:true,task,persisted_at:new Date().toISOString()});
       }
+      if(action==='move_task'){
+        const admin=await requirePermission(user.id,organization.id,'tasks.write');
+        const taskId=String(body.task_id||'').trim();if(!taskId)return json(400,{error:'task_id is required'});
+        const when=new Date(String(body.due_at||''));if(!body.due_at||isNaN(when))return json(400,{error:'A valid due_at is required'});
+        const {data:task,error}=await admin.from('tasks').update({due_at:when.toISOString()}).eq('organization_id',organization.id).eq('id',taskId).select('*').single();if(error)throw error;
+        if(!task||Date.parse(task.due_at)!==when.getTime())return json(500,{error:'The task was not moved. Please try again.'});
+        return json(200,{ok:true,verified:true,task,moved:true,persisted_at:new Date().toISOString()});
+      }
       if(action==='bulk_update'){
         const admin=await requirePermission(user.id,organization.id,'tasks.write');
         const ids=[...new Set((Array.isArray(body.task_ids)?body.task_ids:[]).map(String).filter(Boolean))].slice(0,500);
