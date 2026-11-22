@@ -1,0 +1,14 @@
+{
+  "name": "culture-lab-portal",
+  "private": true,
+  "type": "module",
+  "description": "Culture Lab Casting portal: static site, Supabase Edge Function source and tests.",
+  "scripts": {
+    "test": "node tests/api.test.mjs",
+    "build:function": "node server/build-function.mjs",
+    "dev": "node server/dev.mjs 4191"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.2.17"
+  }
+}
