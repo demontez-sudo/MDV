@@ -599,6 +599,9 @@ body[data-view="today"] main{padding-top:18px}
 .pill{font-size:11.5px;padding:3px 10px;border-radius:4px;background:var(--pc,#E8E1D8);color:var(--tc,#5E5249);white-space:nowrap;min-width:64px;text-align:center}
 .srow>input[type=checkbox]{position:absolute;right:8px;top:12px;width:16px;height:16px;accent-color:#14100D}
 .srow.cur{background:#EFE0CC}
+.srow .gcount{position:absolute;right:8px;top:11px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:#E9DFD2;color:#5E5249;font:600 11px var(--mono);display:grid;place-items:center;box-sizing:border-box}
+.glist{list-style:none;margin:0;padding:0 0 6px 130px;display:grid;gap:2px}.glist li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid rgba(0,0,0,.05);font-size:14px}.glist li:last-child{border-bottom:0}.glist .ck{display:inline-flex;align-items:center;gap:9px;cursor:pointer}
+@media (max-width:600px){.glist{padding-left:8px}}
 .srow.done .stt b,.srow.done .stt small{text-decoration:line-through;opacity:.55}
 .sbody{padding:4px 46px 14px 142px}.sbody .steps{margin:0 0 10px}.sbody textarea{min-height:56px;background:#FBF8F3}
 .golink{text-decoration:none;display:inline-flex;gap:6px;align-items:center}
@@ -4373,7 +4376,7 @@ function schedPanel(s){
  let h=`<div class="paper sched"><div class="sched-h"><h3>${isT?"Today's Schedule":"Schedule"}</h3><button class="ib" data-act="day" data-n="-1" aria-label="Previous day">${xi("left")}</button><span class="datepill">${DOW[parse(s).getDay()].slice(0,3)}, ${fmtMD(s)}, ${parse(s).getFullYear()}</span><button class="ib" data-act="day" data-n="1" aria-label="Next day">${xi("rightc")}</button>${isT?"":`<button class="btn sm" data-act="day" data-n="0">Today</button>`}${S.view==="schedule"?"":`<button class="btn sm ghost" data-act="view" data-v="schedule">Calendar</button>`}<button class="btn sm solid addev" data-act="addev">${xi("plus","xi sm")} Add Event</button></div>`;
  if(S.addEv)h+=`<div class="addevbox">${evForm(s)}</div>`;
  if(!rows.length)h+=`<p class="empty">Open day.</p>`;
- h+=`<div class="srows">${rows.map(r=>{const done=rowDone(s,r),isCur=cur&&cur.k===r.k,tk=tagKey(r.tag),nt=r.kind==="b"?(d.bnotes[r.k]||""):"";
+ h+=`<div class="srows">${groupRows(rows).map(r=>{if(r.kind==="g")return groupRowHTML(s,r,false);const done=rowDone(s,r),isCur=cur&&cur.k===r.k,tk=tagKey(r.tag),nt=r.kind==="b"?(d.bnotes[r.k]||""):"";
   const cb=r.kind==="e"?`<input type="checkbox" data-act="evdone" data-id="${r.ev.id}" ${done?"checked":""} aria-label="Done: ${esc(r.title)}">`:`<input type="checkbox" data-scope="day" data-path="blocks.${r.k}" ${done?"checked":""} aria-label="Done: ${esc(r.title)}">`;
   return`<div class="srow t-${tk} ${isCur?"cur":""} ${done?"done":""}"><details data-tid="row-${s}-${r.k}"><summary><time>${rangeTxt(r)}</time><span class="sbar"></span><span class="stt"><b>${esc(r.title)}</b>${r.moved?`<em class="movedtag">Moved</em>`:""}<small>${esc(r.desc)}</small></span><span class="pill p-${tk}">${esc(r.tag)}</span></summary><div class="sbody">${r.steps&&r.steps.length?`<ul class="steps">${r.steps.map((x,j)=>r.kind==="b"?`<li><label><input type="checkbox" data-scope="day" data-path="steps.${r.k}_${j}" ${d.steps[r.k+"_"+j]?"checked":""}><span>${esc(x)}</span></label></li>`:"").join("")}</ul>`:""}<p class="rowbtns"><button class="btn sm" data-act="item" data-kind="${r.kind}" data-id="${r.kind==="e"?r.ev.id:r.k}" data-s="${s}">Full details</button>${r.co?coLink(r.co,"Open in "+CO[r.co].tag,"btn sm solid golink"):""}</p>${r.kind==="b"?`<textarea class="txt" id="bn-${s}-${r.k}" data-scope="day" data-path="bnotes.${r.k}" placeholder="How it went, what to change">${esc(nt)}</textarea>`:`${reschedOK(r)?reschedForm(s,r):""}`}${r.kind==="b"?reschedForm(s,r):""}</div></details>${cb}</div>`}).join("")}</div></div>`;
  return h;
@@ -4457,6 +4460,22 @@ function agTaskDone(e,s,done){
  if(!agTask(e)||!api||!api.setTaskState)return;
  api.setTaskState(e.ref,done?"completed":"open").then(()=>toast(done?"Task completed":"Task reopened")).catch(x=>{const d=day(s);d.ev=d.ev||{};d.ev[e.id]=!done;markDirty("day",s);render();toast((x&&x.message)||"The task could not be updated. Try again.")});
 }
+/* several model-calendar tasks with the same name at the same time (like 16 "Health intake" tasks) show as one row you can open; nothing is merged in the data */
+const GROUP_MIN=3;
+const agWho=r=>String((r.ev.models||[])[0]||"").trim()||String(r.title||"").split(": ")[0];
+const grpKey=r=>agBare(r.ev)+"|"+(r.time||"")+"|"+(r.end||r.endGuess||"");
+function groupRows(rows){
+ const by=new Map();
+ rows.forEach(r=>{if(r.kind==="e"&&r.ev&&agTask(r.ev)){const k=grpKey(r);if(!by.has(k))by.set(k,[]);by.get(k).push(r)}});
+ const used=new Set(),out=[];
+ rows.forEach(r=>{
+  if(r.kind==="e"&&r.ev&&agTask(r.ev)){const k=grpKey(r),g=by.get(k);
+   if(g&&g.length>=GROUP_MIN){if(!used.has(k)){used.add(k);out.push({kind:"g",k:"g-"+k.replace(/[^a-z0-9]+/gi,"-"),rows:g,title:agBare(r.ev),time:r.time,end:r.end,endGuess:r.endGuess,tag:r.tag})}return}}
+  out.push(r)});
+ return out}
+function groupRowHTML(s,g,isCur){
+ const tk=tagKey(g.tag),n=g.rows.length,done=g.rows.filter(r=>rowDone(s,r)).length,all=done===n;
+ return`<div class="srow t-${tk} srow-g ${isCur?"cur":""} ${all?"done":""}"><details data-tid="row-${s}-${g.k}"><summary><time>${rangeTxt(g)}</time><span class="sbar"></span><span class="stt"><b>${esc(g.title)}</b><small>${n} models · ${done} of ${n} done</small></span><span class="pill p-${tk}">${esc(g.tag)}</span></summary><div class="sbody"><ul class="glist">${g.rows.map(r=>`<li><label class="ck"><input type="checkbox" data-act="evdone" data-id="${r.ev.id}" ${rowDone(s,r)?"checked":""} aria-label="Done: ${esc(r.title)}"><span>${esc(agWho(r))}</span></label><button type="button" class="linkbtn" data-act="item" data-kind="e" data-id="${r.ev.id}" data-s="${s}">Details</button></li>`).join("")}</ul></div></details><span class="gcount" aria-hidden="true">${n}</span></div>`}
 const movableEv=e=>!!e&&(e.src==="portal"||e.src==="model"||e.src==="agency")&&/^(task|event)-/.test(String(e.ref||""));
 const reschedOK=r=>r.kind!=="e"||!r.ev||!r.ev.src||movableEv(r.ev);
 function rsMoveExternal(e,s,v){
