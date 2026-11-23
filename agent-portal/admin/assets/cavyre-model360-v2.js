@@ -180,15 +180,19 @@ function attention(limit){
 /* ---------- contact: email, phone and social media ---------- */
 function privateProfile(){return M.p&&M.p.private_profile;}
 function socials(){var pp=privateProfile()||{},md=pp.metadata&&typeof pp.metadata==='object'?pp.metadata:{};return md.socials&&typeof md.socials==='object'?md.socials:{};}
+/* "https://www.instagram.com/name/", "@name" and "name" all show as just the handle */
+var HANDLE_HOST={instagram:'instagram\\.com',x:'(?:x|twitter)\\.com',tiktok:'tiktok\\.com'};
+function handleOf(v,k){var s=String(v==null?'':v).trim();if(!s)return '';s=s.replace(new RegExp('^(?:https?:\\/\\/)?(?:www\\.|m\\.|mobile\\.)?'+HANDLE_HOST[k]+'\\/','i'),'').replace(/^@/,'').replace(/[\/?#].*$/,'').replace(/^@/,'');return /^[A-Za-z0-9._]{1,40}$/.test(s)?s:String(v).trim();}
 function contactRows(){
   var pp=privateProfile()||{},so=socials(),digits=function(v){return String(v||'').replace(/[^\d+]/g,'');};
+  var ig=handleOf(pp.instagram,'instagram'),xh=handleOf(so.x,'x'),tt=handleOf(so.tiktok,'tiktok');
   return [
     {k:'email',icon:'ti-mail',label:'Email',val:pp.email,href:pp.email?'mailto:'+pp.email:'',text:pp.email},
     {k:'phone',icon:'ti-phone',label:'Phone',val:pp.phone,href:pp.phone?'tel:'+digits(pp.phone):'',text:pp.phone},
     {k:'whatsapp',icon:'ti-brand-whatsapp',label:'WhatsApp',val:pp.whatsapp,href:pp.whatsapp?'https://wa.me/'+digits(pp.whatsapp).replace(/^\+/,''):'',text:pp.whatsapp},
-    {k:'instagram',icon:'ti-brand-instagram',label:'Instagram',val:pp.instagram,href:pp.instagram?'https://instagram.com/'+encodeURIComponent(pp.instagram):'',text:pp.instagram?'@'+pp.instagram:''},
-    {k:'x',icon:'ti-brand-x',label:'X',val:so.x,href:so.x?'https://x.com/'+encodeURIComponent(so.x):'',text:so.x?'@'+so.x:''},
-    {k:'tiktok',icon:'ti-brand-tiktok',label:'TikTok',val:so.tiktok,href:so.tiktok?'https://tiktok.com/@'+encodeURIComponent(so.tiktok):'',text:so.tiktok?'@'+so.tiktok:''}
+    {k:'instagram',icon:'ti-brand-instagram',label:'Instagram',val:ig,href:ig?'https://instagram.com/'+encodeURIComponent(ig):'',text:ig?'@'+ig:''},
+    {k:'x',icon:'ti-brand-x',label:'X',val:xh,href:xh?'https://x.com/'+encodeURIComponent(xh):'',text:xh?'@'+xh:''},
+    {k:'tiktok',icon:'ti-brand-tiktok',label:'TikTok',val:tt,href:tt?'https://tiktok.com/@'+encodeURIComponent(tt):'',text:tt?'@'+tt:''}
   ];
 }
 function contactStrip(){
