@@ -4,6 +4,7 @@ import { loadModels } from './_lib/portal-bridge.mjs';
 import { websiteProfileStatus } from './_lib/website-profile.mjs';
 import { logModelActivity, actorFor } from './_lib/model-activity.mjs';
 import { sendModelWelcome } from './_lib/model-welcome.mjs';
+import { saveContact } from './_lib/model-contact.mjs';
 
 function isMissingColumn(err){const m=String(err?.message||'');return err?.code==='PGRST204'||err?.code==='42703'||/column .* (does not exist|of relation)|could not find the .* column/i.test(m);}
 
@@ -122,6 +123,11 @@ export const handler=async(event)=>{
         if(body.email&&pp!==null&&!pp?.email){await admin.from('model_private_profiles').update({email:to}).eq('organization_id',organization.id).eq('model_id',modelId);}
         const welcome=await sendModelWelcome(admin,{organization,model:m,email:to,user,resend:true});
         return json(200,{ok:true,verified:true,welcome});
+      }
+      if(action==='update_contact'){
+        const {row}=await saveContact(admin,organization.id,modelId,body.contact||{});
+        await logModelActivity(admin,{organization_id:organization.id,model_id:modelId,kind:'profile',title:'Contact details updated',detail:'Email, phone and social media',...(await actorFor(admin,user)),link_page:'overview'});
+        return json(200,{ok:true,verified:true,private_profile:row,persisted_at:new Date().toISOString()});
       }
       if(action==='archive_model'||action==='restore_model'){
         const active=action==='restore_model';

@@ -176,6 +176,56 @@ function attention(limit){
 }
 
 /* ---------- OVERVIEW ---------- */
+/* ---------- contact: email, phone and social media ---------- */
+function privateProfile(){return M.p&&M.p.private_profile;}
+function socials(){var pp=privateProfile()||{},md=pp.metadata&&typeof pp.metadata==='object'?pp.metadata:{};return md.socials&&typeof md.socials==='object'?md.socials:{};}
+function contactRows(){
+  var pp=privateProfile()||{},so=socials(),digits=function(v){return String(v||'').replace(/[^\d+]/g,'');};
+  return [
+    {k:'email',icon:'ti-mail',label:'Email',val:pp.email,href:pp.email?'mailto:'+pp.email:'',text:pp.email},
+    {k:'phone',icon:'ti-phone',label:'Phone',val:pp.phone,href:pp.phone?'tel:'+digits(pp.phone):'',text:pp.phone},
+    {k:'whatsapp',icon:'ti-brand-whatsapp',label:'WhatsApp',val:pp.whatsapp,href:pp.whatsapp?'https://wa.me/'+digits(pp.whatsapp).replace(/^\+/,''):'',text:pp.whatsapp},
+    {k:'instagram',icon:'ti-brand-instagram',label:'Instagram',val:pp.instagram,href:pp.instagram?'https://instagram.com/'+encodeURIComponent(pp.instagram):'',text:pp.instagram?'@'+pp.instagram:''},
+    {k:'x',icon:'ti-brand-x',label:'X',val:so.x,href:so.x?'https://x.com/'+encodeURIComponent(so.x):'',text:so.x?'@'+so.x:''},
+    {k:'tiktok',icon:'ti-brand-tiktok',label:'TikTok',val:so.tiktok,href:so.tiktok?'https://tiktok.com/@'+encodeURIComponent(so.tiktok):'',text:so.tiktok?'@'+so.tiktok:''}
+  ];
+}
+function contactCard(){
+  if(!privateProfile())return card('Contact','Email, phone and social media.','',empty('Contact details are private. Ask an admin for access.'),'m360-contact');
+  var rows=contactRows(),have=rows.filter(function(r){return r.val;});
+  var edit='<button type="button" class="m360-link" onclick="CAVYRE_M360.editContact()">'+(have.length?'Edit':'Add details')+' '+ic('ti-pencil')+'</button>';
+  var body=have.length?'<ul class="m360-contact-list">'+rows.filter(function(r){return r.val||r.k!=='whatsapp';}).map(function(r){
+    return '<li class="'+(r.val?'':'none')+'"><span class="m360-ci">'+ic(r.icon)+'</span><small>'+esc(r.label)+'</small>'
+      +(r.val?'<a href="'+esc(r.href)+'"'+(r.k==='email'||r.k==='phone'?'':' target="_blank" rel="noopener noreferrer"')+'>'+esc(r.text)+'</a><button type="button" class="m360-copy" aria-label="Copy '+esc(r.label)+'" onclick="CAVYRE_M360.copyContact(\''+r.k+'\')">'+ic('ti-copy')+'</button>':'<span></span><button type="button" class="m360-add" onclick="CAVYRE_M360.editContact()">Add</button>')+'</li>';}).join('')+'</ul>'
+    :'<div class="m360-empty">No contact details yet. <button type="button" class="m360-link" onclick="CAVYRE_M360.editContact()">Add email, phone and social media</button></div>';
+  return card('Contact','Email, phone and social media.',edit,body,'m360-contact');
+}
+function editContact(){
+  var D=window.MDV_DIALOG;if(!D||!D.form||!privateProfile())return;
+  var by={};contactRows().forEach(function(r){by[r.k]=r.val||'';});
+  var fields=[
+    {k:'email',label:'Email',type:'email',value:by.email,placeholder:'name@example.com',pattern:'^$|^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',patternMessage:'Enter a valid email address.'},
+    {k:'phone',label:'Phone number',type:'tel',value:by.phone,placeholder:'+1 617 555 0123'},
+    {k:'whatsapp',label:'WhatsApp (if different)',type:'tel',value:by.whatsapp,placeholder:'+1 617 555 0123'},
+    {k:'instagram',label:'Instagram',value:by.instagram,placeholder:'@name'},
+    {k:'x',label:'X',value:by.x,placeholder:'@name'},
+    {k:'tiktok',label:'TikTok',value:by.tiktok,placeholder:'@name'}
+  ];
+  return D.form({title:'Contact details for '+(model().display_name||'this model'),message:'Shown only to your team. Paste a profile link or just the handle.',fields:fields,confirm:'Save contact details'}).then(function(v){
+    if(!v)return;
+    return post('/api/agent/model-360',{action:'update_contact',model_id:modelId(),contact:v}).then(function(r){
+      if(!r||r.verified!==true)throw new Error('The contact details were not confirmed as saved.');
+      if(M.p)M.p.private_profile=r.private_profile||M.p.private_profile;
+      toast('Contact details saved');paint();
+    }).catch(function(e){D.alert({title:'The contact details could not be saved',message:(e&&e.message)||'Something went wrong. Nothing was changed. Try again.',tone:'danger',confirm:'Close'});});
+  });
+}
+function copyContact(k){
+  var r=contactRows().filter(function(x){return x.k===k;})[0];if(!r||!r.val)return;
+  var v=k==='email'||k==='phone'||k==='whatsapp'?String(r.val):r.text;
+  try{navigator.clipboard.writeText(v).then(function(){toast('Copied '+r.label);});}catch(e){toast(v);}
+}
+
 function tOverview(){
   var it=M.intel||{},nu=it.next_up,digs=media().filter(isDigital).slice(0,4);if(!digs.length)digs=media().slice(0,4);
   var today=nu?'<div class="m360-today"><div class="m360-today-top"><div><span class="m360-kicker">'+esc(String(nu.kind||'').toUpperCase())+'</span><h4>'+esc(nu.title)+'</h4></div>'+(nu.status?chip(nu.status,statusTone(nu.status)):'')+'</div><div class="m360-today-meta"><span>'+ic('ti-calendar')+esc(fmtDT(nu.starts_at))+'</span>'+(nu.location?'<span>'+ic('ti-map-pin')+esc(nu.location)+'</span>':'')+'</div><button type="button" class="m360-cta" onclick="CAVYRE_M360.tab(\'work\')">'+ic('ti-calendar')+' Review details and confirm availability '+ic('ti-arrow-right')+'</button></div>':empty('No upcoming casting, booking or event.');
@@ -190,8 +240,10 @@ function tOverview(){
    +card('Today','Key items and next steps for '+(model().display_name||'the model')+'.',ask('What is the most important thing coming up for '+(model().display_name||'this model')+' and how should we prepare?'),today)
    +card('Needs attention',signals().length+' item'+(signals().length===1?'':'s'),link('View all',"CAVYRE_M360.tab('record')"),attention(3))
    +card('Market plan','Upcoming focus markets and key periods.',link('View plan',"CAVYRE_M360.tab('development')"),mp)
-   +'</div><div class="m360-grid g3">'
+   +'</div><div class="m360-grid g2">'
+   +contactCard()
    +card('Selected digitals','Current digitals on file.',link('View all photos',"CAVYRE_M360.tab('materials')"),digs.length?'<div class="m360-thumbs">'+digs.map(function(x){return '<button type="button" class="m360-thumb" onclick="CAVYRE_M360.viewer(\''+esc(x.id)+'\')"><img loading="lazy" src="'+esc(x.url||'')+'" alt=""></button>';}).join('')+'</div>':empty('No photos yet.'))
+   +'</div><div class="m360-grid g2">'
    +card('Development','Key goals and progress.',link('View all',"CAVYRE_M360.tab('development')"),dev)
    +card('Recent activity','Latest updates across castings, bookings and materials.',link('View all',"CAVYRE_M360.tab('record')"),recent)
    +'</div>';
@@ -488,6 +540,7 @@ window.CAVYRE_M360={openDoc:openDoc,
   ask:function(i){var p=M.prompts[i];if(!p)return;try{if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open)return MDV_VEUXI_CHAT.open(p);}catch(e){}var inp=document.querySelector('.vx73-command input');if(inp){inp.value=p;inp.focus();toast('Press Enter to ask Veux');}},
   askAbout:function(){M.menu=false;var it=M.intel||{},n=model().display_name||'this model';var p='Review '+n+' and recommend next steps. Live signals: '+(signals().slice(0,5).map(function(s){return s.title+' ('+s.detail+')';}).join('; ')||'none')+'.';try{if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open)return MDV_VEUXI_CHAT.open(p);}catch(e){}var inp=document.querySelector('.vx73-command input');if(inp){inp.value=p;inp.focus();}},
   toggleMenu:function(ev){if(ev)ev.stopPropagation();M.menu=!M.menu;paint();if(M.menu){setTimeout(function(){document.addEventListener('click',function c(){M.menu=false;document.removeEventListener('click',c);paint();},{once:true});},0);}},
+  editContact:editContact,copyContact:copyContact,
   editProfile:function(){M.menu=false;paint();if(window.VEUX_V156&&VEUX_V156.editProfile)VEUX_V156.editProfile();},
   manageMedia:function(){M.menu=false;if(window.VEUX_V156&&VEUX_V156.mediaManager)VEUX_V156.mediaManager();},
   welcome:sendWelcome,
