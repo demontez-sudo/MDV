@@ -389,3 +389,16 @@ html body .m360 .m360-crumb b{font-weight:600!important;color:#ece8f7!important}
 .m360-wel-cred{display:grid;gap:10px;margin:0 0 14px;padding:14px;border-radius:12px;border:1px solid var(--line2);background:rgba(255,255,255,.04)}
 .m360-wel-cred small{display:block;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mu)}.m360-wel-cred b{font-weight:500;font-size:15px;word-break:break-all}.m360-wel-cred b.mono{font-family:ui-monospace,monospace;letter-spacing:.04em}
 .m360-wel-act{display:flex;justify-content:flex-end;margin-top:6px}
+
+/* contact, written out under the measurements */
+.m360-cstrip{margin-top:10px;display:flex;align-items:center;gap:12px 14px;flex-wrap:wrap;padding:8px 2px}
+.m360-ck{font:600 10px var(--fM,system-ui);letter-spacing:.16em;text-transform:uppercase;color:#a8977f}
+.m360-citems{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;flex:1 1 auto;min-width:0}
+.m360-citem{display:inline-flex;align-items:center;gap:7px;font-size:13px;min-width:0}
+.m360-citem>i{color:var(--acc);font-size:15px}
+.m360-citem small{font:600 9.5px var(--fM,system-ui);letter-spacing:.14em;text-transform:uppercase;color:#a8977f}
+.m360-citem a{color:inherit;text-decoration:none;overflow-wrap:anywhere}.m360-citem a:hover{color:var(--acc2,var(--acc));text-decoration:underline}
+.m360-citem.miss{background:none;border:0;color:var(--mu,#a8977f);cursor:pointer;font:inherit;font-size:12.5px;padding:0}.m360-citem.miss:hover{color:var(--acc)}
+.m360-copy{background:none;border:0;color:var(--mu,#a8977f);cursor:pointer;font-size:13px;padding:0 2px;opacity:.65}.m360-copy:hover{color:var(--acc);opacity:1}
+.m360-cedit{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid rgba(255,255,255,.14);border-radius:999px;color:inherit;cursor:pointer;font-size:12px;padding:5px 12px}.m360-cedit:hover{border-color:var(--acc);color:var(--acc)}
+@media(max-width:640px){.m360-cstrip{align-items:flex-start}.m360-citems{gap:8px 14px}}

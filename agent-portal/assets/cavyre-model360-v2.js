@@ -150,6 +150,7 @@ function header(){
    +'<div class="m360-actions"><button type="button" class="m360-btn" data-mdv-note="'+esc(JSON.stringify({type:'model',id:String(M.id||modelId()),label:m.display_name||'Model'}))+'">'+ic('ti-notes')+'Notes</button><button type="button" class="m360-btn primary" onclick="CAVYRE_M360.createAction()">'+ic('ti-circle-plus')+'Create action</button><button type="button" class="m360-btn" onclick="CAVYRE_M360.sharePackage()">'+ic('ti-upload')+'Share package</button>'
    +'<div class="m360-menuwrap"><button type="button" class="m360-btn icon" aria-label="More" onclick="CAVYRE_M360.toggleMenu(event)">'+ic('ti-dots')+'</button>'+(M.menu?menu():'')+'</div></div></div>'
    +measStrip()
+   +contactStrip()
    +'<nav class="m360-tabs" role="tablist">'+TABS.map(function(t){return '<button type="button" role="tab" class="m360-tab'+(M.tab===t[0]?' on':'')+'" aria-selected="'+(M.tab===t[0])+'" onclick="CAVYRE_M360.tab(\''+t[0]+'\')">'+ic(t[2])+'<span>'+t[1]+'</span></button>';}).join('')+'</nav></header>';
 }
 function menu(){
@@ -176,6 +177,55 @@ function attention(limit){
 }
 
 /* ---------- OVERVIEW ---------- */
+/* ---------- contact: email, phone and social media ---------- */
+function privateProfile(){return M.p&&M.p.private_profile;}
+function socials(){var pp=privateProfile()||{},md=pp.metadata&&typeof pp.metadata==='object'?pp.metadata:{};return md.socials&&typeof md.socials==='object'?md.socials:{};}
+function contactRows(){
+  var pp=privateProfile()||{},so=socials(),digits=function(v){return String(v||'').replace(/[^\d+]/g,'');};
+  return [
+    {k:'email',icon:'ti-mail',label:'Email',val:pp.email,href:pp.email?'mailto:'+pp.email:'',text:pp.email},
+    {k:'phone',icon:'ti-phone',label:'Phone',val:pp.phone,href:pp.phone?'tel:'+digits(pp.phone):'',text:pp.phone},
+    {k:'whatsapp',icon:'ti-brand-whatsapp',label:'WhatsApp',val:pp.whatsapp,href:pp.whatsapp?'https://wa.me/'+digits(pp.whatsapp).replace(/^\+/,''):'',text:pp.whatsapp},
+    {k:'instagram',icon:'ti-brand-instagram',label:'Instagram',val:pp.instagram,href:pp.instagram?'https://instagram.com/'+encodeURIComponent(pp.instagram):'',text:pp.instagram?'@'+pp.instagram:''},
+    {k:'x',icon:'ti-brand-x',label:'X',val:so.x,href:so.x?'https://x.com/'+encodeURIComponent(so.x):'',text:so.x?'@'+so.x:''},
+    {k:'tiktok',icon:'ti-brand-tiktok',label:'TikTok',val:so.tiktok,href:so.tiktok?'https://tiktok.com/@'+encodeURIComponent(so.tiktok):'',text:so.tiktok?'@'+so.tiktok:''}
+  ];
+}
+function contactStrip(){
+  if(!privateProfile())return '';
+  var rows=contactRows().filter(function(r){return r.val||r.k!=='whatsapp';});
+  var items=rows.map(function(r){
+    if(!r.val)return '<button type="button" class="m360-citem miss" onclick="CAVYRE_M360.editContact()" title="Add '+esc(r.label)+'">'+ic(r.icon)+'<span>+ '+esc(r.label)+'</span></button>';
+    return '<span class="m360-citem">'+ic(r.icon)+'<small>'+esc(r.label)+'</small><a href="'+esc(r.href)+'"'+(r.k==='email'||r.k==='phone'||r.k==='whatsapp'?'':' target="_blank" rel="noopener noreferrer"')+'>'+esc(r.text)+'</a><button type="button" class="m360-copy" aria-label="Copy '+esc(r.label)+'" onclick="CAVYRE_M360.copyContact(\''+r.k+'\')">'+ic('ti-copy')+'</button></span>';
+  }).join('');
+  return '<div class="m360-cstrip" aria-label="Contact"><span class="m360-ck">Contact</span><div class="m360-citems">'+items+'</div><button type="button" class="m360-cedit" onclick="CAVYRE_M360.editContact()" title="Edit contact details">'+ic('ti-pencil')+'Edit</button></div>';
+}
+function editContact(){
+  var D=window.MDV_DIALOG;if(!D||!D.form||!privateProfile())return;
+  var by={};contactRows().forEach(function(r){by[r.k]=r.val||'';});
+  var fields=[
+    {k:'email',label:'Email',type:'email',value:by.email,placeholder:'name@example.com',pattern:'^$|^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$',patternMessage:'Enter a valid email address.'},
+    {k:'phone',label:'Phone number',type:'tel',value:by.phone,placeholder:'+1 617 555 0123'},
+    {k:'whatsapp',label:'WhatsApp (if different)',type:'tel',value:by.whatsapp,placeholder:'+1 617 555 0123'},
+    {k:'instagram',label:'Instagram',value:by.instagram,placeholder:'@name'},
+    {k:'x',label:'X',value:by.x,placeholder:'@name'},
+    {k:'tiktok',label:'TikTok',value:by.tiktok,placeholder:'@name'}
+  ];
+  return D.form({title:'Contact details for '+(model().display_name||'this model'),message:'Shown only to your team. Paste a profile link or just the handle.',fields:fields,confirm:'Save contact details'}).then(function(v){
+    if(!v)return;
+    return post('/api/agent/model-360',{action:'update_contact',model_id:modelId(),contact:v}).then(function(r){
+      if(!r||r.verified!==true)throw new Error('The contact details were not confirmed as saved.');
+      if(M.p)M.p.private_profile=r.private_profile||M.p.private_profile;
+      toast('Contact details saved');paint();
+    }).catch(function(e){D.alert({title:'The contact details could not be saved',message:(e&&e.message)||'Something went wrong. Nothing was changed. Try again.',tone:'danger',confirm:'Close'});});
+  });
+}
+function copyContact(k){
+  var r=contactRows().filter(function(x){return x.k===k;})[0];if(!r||!r.val)return;
+  var v=k==='email'||k==='phone'||k==='whatsapp'?String(r.val):r.text;
+  try{navigator.clipboard.writeText(v).then(function(){toast('Copied '+r.label);});}catch(e){toast(v);}
+}
+
 function tOverview(){
   var it=M.intel||{},nu=it.next_up,digs=media().filter(isDigital).slice(0,4);if(!digs.length)digs=media().slice(0,4);
   var today=nu?'<div class="m360-today"><div class="m360-today-top"><div><span class="m360-kicker">'+esc(String(nu.kind||'').toUpperCase())+'</span><h4>'+esc(nu.title)+'</h4></div>'+(nu.status?chip(nu.status,statusTone(nu.status)):'')+'</div><div class="m360-today-meta"><span>'+ic('ti-calendar')+esc(fmtDT(nu.starts_at))+'</span>'+(nu.location?'<span>'+ic('ti-map-pin')+esc(nu.location)+'</span>':'')+'</div><button type="button" class="m360-cta" onclick="CAVYRE_M360.tab(\'work\')">'+ic('ti-calendar')+' Review details and confirm availability '+ic('ti-arrow-right')+'</button></div>':empty('No upcoming casting, booking or event.');
@@ -488,6 +538,7 @@ window.CAVYRE_M360={openDoc:openDoc,
   ask:function(i){var p=M.prompts[i];if(!p)return;try{if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open)return MDV_VEUXI_CHAT.open(p);}catch(e){}var inp=document.querySelector('.vx73-command input');if(inp){inp.value=p;inp.focus();toast('Press Enter to ask Veux');}},
   askAbout:function(){M.menu=false;var it=M.intel||{},n=model().display_name||'this model';var p='Review '+n+' and recommend next steps. Live signals: '+(signals().slice(0,5).map(function(s){return s.title+' ('+s.detail+')';}).join('; ')||'none')+'.';try{if(window.MDV_VEUXI_CHAT&&MDV_VEUXI_CHAT.open)return MDV_VEUXI_CHAT.open(p);}catch(e){}var inp=document.querySelector('.vx73-command input');if(inp){inp.value=p;inp.focus();}},
   toggleMenu:function(ev){if(ev)ev.stopPropagation();M.menu=!M.menu;paint();if(M.menu){setTimeout(function(){document.addEventListener('click',function c(){M.menu=false;document.removeEventListener('click',c);paint();},{once:true});},0);}},
+  editContact:editContact,copyContact:copyContact,
   editProfile:function(){M.menu=false;paint();if(window.VEUX_V156&&VEUX_V156.editProfile)VEUX_V156.editProfile();},
   manageMedia:function(){M.menu=false;if(window.VEUX_V156&&VEUX_V156.mediaManager)VEUX_V156.mediaManager();},
   welcome:sendWelcome,
