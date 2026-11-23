@@ -150,6 +150,7 @@ function header(){
    +'<div class="m360-actions"><button type="button" class="m360-btn" data-mdv-note="'+esc(JSON.stringify({type:'model',id:String(M.id||modelId()),label:m.display_name||'Model'}))+'">'+ic('ti-notes')+'Notes</button><button type="button" class="m360-btn primary" onclick="CAVYRE_M360.createAction()">'+ic('ti-circle-plus')+'Create action</button><button type="button" class="m360-btn" onclick="CAVYRE_M360.sharePackage()">'+ic('ti-upload')+'Share package</button>'
    +'<div class="m360-menuwrap"><button type="button" class="m360-btn icon" aria-label="More" onclick="CAVYRE_M360.toggleMenu(event)">'+ic('ti-dots')+'</button>'+(M.menu?menu():'')+'</div></div></div>'
    +measStrip()
+   +contactStrip()
    +'<nav class="m360-tabs" role="tablist">'+TABS.map(function(t){return '<button type="button" role="tab" class="m360-tab'+(M.tab===t[0]?' on':'')+'" aria-selected="'+(M.tab===t[0])+'" onclick="CAVYRE_M360.tab(\''+t[0]+'\')">'+ic(t[2])+'<span>'+t[1]+'</span></button>';}).join('')+'</nav></header>';
 }
 function menu(){
@@ -190,15 +191,14 @@ function contactRows(){
     {k:'tiktok',icon:'ti-brand-tiktok',label:'TikTok',val:so.tiktok,href:so.tiktok?'https://tiktok.com/@'+encodeURIComponent(so.tiktok):'',text:so.tiktok?'@'+so.tiktok:''}
   ];
 }
-function contactCard(){
-  if(!privateProfile())return card('Contact','Email, phone and social media.','',empty('Contact details are private. Ask an admin for access.'),'m360-contact');
-  var rows=contactRows(),have=rows.filter(function(r){return r.val;});
-  var edit='<button type="button" class="m360-link" onclick="CAVYRE_M360.editContact()">'+(have.length?'Edit':'Add details')+' '+ic('ti-pencil')+'</button>';
-  var body=have.length?'<ul class="m360-contact-list">'+rows.filter(function(r){return r.val||r.k!=='whatsapp';}).map(function(r){
-    return '<li class="'+(r.val?'':'none')+'"><span class="m360-ci">'+ic(r.icon)+'</span><small>'+esc(r.label)+'</small>'
-      +(r.val?'<a href="'+esc(r.href)+'"'+(r.k==='email'||r.k==='phone'?'':' target="_blank" rel="noopener noreferrer"')+'>'+esc(r.text)+'</a><button type="button" class="m360-copy" aria-label="Copy '+esc(r.label)+'" onclick="CAVYRE_M360.copyContact(\''+r.k+'\')">'+ic('ti-copy')+'</button>':'<span></span><button type="button" class="m360-add" onclick="CAVYRE_M360.editContact()">Add</button>')+'</li>';}).join('')+'</ul>'
-    :'<div class="m360-empty">No contact details yet. <button type="button" class="m360-link" onclick="CAVYRE_M360.editContact()">Add email, phone and social media</button></div>';
-  return card('Contact','Email, phone and social media.',edit,body,'m360-contact');
+function contactStrip(){
+  if(!privateProfile())return '';
+  var rows=contactRows().filter(function(r){return r.val||r.k!=='whatsapp';});
+  var items=rows.map(function(r){
+    if(!r.val)return '<button type="button" class="m360-citem miss" onclick="CAVYRE_M360.editContact()" title="Add '+esc(r.label)+'">'+ic(r.icon)+'<span>+ '+esc(r.label)+'</span></button>';
+    return '<span class="m360-citem">'+ic(r.icon)+'<small>'+esc(r.label)+'</small><a href="'+esc(r.href)+'"'+(r.k==='email'||r.k==='phone'||r.k==='whatsapp'?'':' target="_blank" rel="noopener noreferrer"')+'>'+esc(r.text)+'</a><button type="button" class="m360-copy" aria-label="Copy '+esc(r.label)+'" onclick="CAVYRE_M360.copyContact(\''+r.k+'\')">'+ic('ti-copy')+'</button></span>';
+  }).join('');
+  return '<div class="m360-cstrip" aria-label="Contact"><span class="m360-ck">Contact</span><div class="m360-citems">'+items+'</div><button type="button" class="m360-cedit" onclick="CAVYRE_M360.editContact()" title="Edit contact details">'+ic('ti-pencil')+'Edit</button></div>';
 }
 function editContact(){
   var D=window.MDV_DIALOG;if(!D||!D.form||!privateProfile())return;
@@ -240,10 +240,8 @@ function tOverview(){
    +card('Today','Key items and next steps for '+(model().display_name||'the model')+'.',ask('What is the most important thing coming up for '+(model().display_name||'this model')+' and how should we prepare?'),today)
    +card('Needs attention',signals().length+' item'+(signals().length===1?'':'s'),link('View all',"CAVYRE_M360.tab('record')"),attention(3))
    +card('Market plan','Upcoming focus markets and key periods.',link('View plan',"CAVYRE_M360.tab('development')"),mp)
-   +'</div><div class="m360-grid g2">'
-   +contactCard()
+   +'</div><div class="m360-grid g3">'
    +card('Selected digitals','Current digitals on file.',link('View all photos',"CAVYRE_M360.tab('materials')"),digs.length?'<div class="m360-thumbs">'+digs.map(function(x){return '<button type="button" class="m360-thumb" onclick="CAVYRE_M360.viewer(\''+esc(x.id)+'\')"><img loading="lazy" src="'+esc(x.url||'')+'" alt=""></button>';}).join('')+'</div>':empty('No photos yet.'))
-   +'</div><div class="m360-grid g2">'
    +card('Development','Key goals and progress.',link('View all',"CAVYRE_M360.tab('development')"),dev)
    +card('Recent activity','Latest updates across castings, bookings and materials.',link('View all',"CAVYRE_M360.tab('record')"),recent)
    +'</div>';
