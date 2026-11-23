@@ -727,6 +727,7 @@ body.sheet-open{overflow:hidden}
 .sheet{position:fixed;inset:0;z-index:80}
 .sheet-bg{position:absolute;inset:0;background:rgba(8,6,5,.6);backdrop-filter:blur(2px)}
 .sheet-card{position:absolute;top:0;right:0;bottom:0;width:min(480px,100%);display:flex;flex-direction:column;border-radius:12px 0 0 12px;box-shadow:-20px 0 60px rgba(0,0,0,.45);animation:sheetin .18s ease-out}
+.sheet-card.still{animation:none}
 @keyframes sheetin{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
 .sheet-h{position:relative;padding:22px 22px 16px;border-bottom:1px solid var(--line);border-left:4px solid var(--tc,#8F8378);border-radius:12px 0 0 0}
 .sheet-h .ib{position:absolute;top:16px;right:16px;font-size:20px}
@@ -4567,7 +4568,9 @@ function renderItem(){
  if(!n){n=document.createElement("div");n.id="itemsheet";n.className="sheet";document.body.appendChild(n)}
  const html=itemHTML(S.item);if(!html){closeItem();return}
  const sc=n.querySelector(".sheet-body")?n.querySelector(".sheet-body").scrollTop:0;
- n.innerHTML=`<div class="sheet-bg" data-act="closeitem"></div><div class="sheet-card paper" role="dialog" aria-modal="true" aria-label="Calendar item">${html}</div>`;
+ /* Background refreshes re-render this sheet: leave it alone when nothing changed (keeps typed values), and never replay the slide-in */
+ const had=!!n.querySelector(".sheet-card");if(had&&n._h===html)return;n._h=html;
+ n.innerHTML=`<div class="sheet-bg" data-act="closeitem"></div><div class="sheet-card paper${had?" still":""}" role="dialog" aria-modal="true" aria-label="Calendar item">${html}</div>`;
  document.body.classList.add("sheet-open");const b=n.querySelector(".sheet-body");if(b)b.scrollTop=sc;
 }
 const sheetHead=(tag,title,sub)=>`<div class="sheet-h t-${tagKey(tag)}"><span class="pill p-${tagKey(tag)}">${esc(tag)}</span><button class="ib" data-act="closeitem" aria-label="Close">×</button><h3>${esc(title)}</h3><p>${sub}</p></div>`;
