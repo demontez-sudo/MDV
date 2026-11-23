@@ -39,7 +39,7 @@
 .ct-group h2 .ct-link{font:inherit}
 /* profile */
 .ct-prof{display:grid;gap:18px}
-.ct-back{justify-self:start;border:0;background:none;color:var(--mute);font-size:12px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;padding:0}.ct-back:hover{color:var(--g)}
+.ct-backlink{justify-self:start;border:0;background:none;color:var(--mute);font-size:12px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;padding:0}.ct-backlink:hover{color:var(--g)}
 .ct-hero{display:flex;gap:22px;align-items:center;flex-wrap:wrap;border:1px solid var(--l2);background:linear-gradient(135deg,color-mix(in srgb,var(--g) 9%,var(--panel)),var(--panel) 60%);padding:26px}
 .ct-big{flex:none;width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:var(--field);border:1px solid var(--g);font:400 32px var(--fD,Georgia,serif);color:var(--g)}.ct-big.sq{border-radius:4px}
 .ct-hero-main{flex:1 1 260px;min-width:0}.ct-hero h1{margin:4px 0 4px;font:400 38px/1.05 var(--fD,Georgia,serif);overflow-wrap:anywhere}.ct-hero p{margin:0;font-size:14px;color:var(--mute)}

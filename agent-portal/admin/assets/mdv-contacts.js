@@ -78,7 +78,7 @@ function companyProfile(co){
   var target=ce||mails[0]||'';
   var specs=arr(co.specialties);
   return '<div class="ct-prof">'
-   +'<button type="button" class="ct-back" data-a="back">← Companies &amp; Clients</button>'
+   +'<button type="button" class="ct-backlink" data-a="back">← Companies &amp; Clients</button>'
    +'<header class="ct-hero"><span class="ct-big sq">'+esc(initials(co.name))+'</span><div class="ct-hero-main"><span class="ct-eye">COMPANY PROFILE</span><h1>'+esc(co.name)+'</h1><p>'+esc(label(co.company_type||'company'))+(placeText(co.address,m)?' · '+esc(placeText(co.address,m)):'')+'</p>'
    +'<div class="ct-tags"><em>'+esc(label(co.status||'active'))+'</em>'+(co.tier?'<em class="gold">Tier '+esc(co.tier)+'</em>':'')+(m.priority&&m.priority!=='Normal'?'<em>'+esc(m.priority)+' priority</em>':'')+'</div></div>'
    +'<div class="ct-hero-act">'+(target?'<button type="button" class="ct-btn gold" data-email-to="'+esc(target)+'">✉ Email'+(ce?'':' '+esc((people.filter(function(c){return email(c)===target;})[0]||{}).display_name||'')) +'</button>':'')
@@ -108,7 +108,7 @@ function contactProfile(c){
   var mine=arr(d.activity).filter(function(a){return a.contact_id===c.id;}),act=mine.length?mine:arr(d.activity);
   var role=arr(c.company_links).filter(function(l){return co&&l.company_id===co.id;})[0];
   return '<div class="ct-prof">'
-   +'<button type="button" class="ct-back" data-a="back">← Companies &amp; Clients</button>'
+   +'<button type="button" class="ct-backlink" data-a="back">← Companies &amp; Clients</button>'
    +'<header class="ct-hero"><span class="ct-big">'+esc(initials(c.display_name))+'</span><div class="ct-hero-main"><span class="ct-eye">CONTACT PROFILE</span><h1>'+esc(c.display_name||'Contact')+'</h1><p>'+esc(c.role||(role&&role.relationship_role)||'Contact')+(co?' · <button type="button" class="ct-link" data-profile="company:'+esc(co.id)+'">'+esc(co.name)+'</button>':'')+'</p>'
    +'<div class="ct-tags"><em>'+esc(label(c.status||'active'))+'</em>'+(mk?'<em>'+esc(mk)+'</em>':'')+'</div></div>'
    +'<div class="ct-hero-act">'+(e?'<button type="button" class="ct-btn gold" data-email-to="'+esc(e)+'">✉ Email '+esc(String(c.display_name||'').split(' ')[0])+'</button>':'<button type="button" class="ct-btn" disabled>No email on file</button>')
