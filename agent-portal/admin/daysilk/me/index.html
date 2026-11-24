@@ -3968,13 +3968,13 @@ const bkKind=t=>t==="Casting"?"casting":["Editorial","Campaign","Runway"].includ
 const bkMoney=v=>{const x=String(v||"").replace(/[^0-9.\-]/g,"");return x?Number(x):null};
 let BKS=null;
 function bkClose(){const n=document.getElementById("bksheet");if(n)n.remove();document.body.classList.remove("sheet-open");BKS=null}
-async function bkOpen(seed){
+async function bkOpen(seed,pre){
  if(!EMB)return;let n=document.getElementById("bksheet");if(n)n.remove();
  n=document.createElement("div");n.id="bksheet";n.className="sheet";document.body.appendChild(n);document.body.classList.add("sheet-open");
  n.innerHTML=`<div class="sheet-bg" data-bk-close></div><div class="sheet-card paper bk-card" role="dialog" aria-modal="true" aria-label="${seed?"Edit":"New"} calendar event"><div class="sheet-h"><button class="ib" data-bk-close aria-label="Close">×</button><h3>${seed?"Edit "+(seed.kind==="booking"?"booking":seed.kind==="casting"?"casting":"event"):"New calendar event"}</h3><p>${seed?"Change any detail and save. Models, rates and dates update everywhere.":"Everything for a booking, casting, travel or event in one place."}</p></div><div class="bk-body"><p class="bk-note">Loading your clients, models and team…</p></div></div>`;
  let lk,rec=null;try{[lk,rec]=await Promise.all([parent.MDV_DS_EMBED.bookingLookups(),seed?parent.MDV_DS_EMBED.recordFor(seed.kind,seed.id):null])}catch(err){const b=n.querySelector(".bk-body");if(b)b.innerHTML=`<div class="dd-warn" role="alert">Could not load ${seed?"this record":"the lists for the form"}: ${esc(String((err&&err.message)||err).slice(0,140))}</div><div class="dd-act"><button type="button" class="btn ghost" data-bk-retry${seed?` data-bk-edit="${esc(seed.kind+"|"+seed.id)}"`:""}>Try again</button></div>`;return}
- if(!document.getElementById("bksheet"))return;bkBuild(n,lk,rec,seed)}
-function bkBuild(root,LK,rec,seed){
+ if(!document.getElementById("bksheet"))return;bkBuild(n,lk,rec,seed,pre)}
+function bkBuild(root,LK,rec,seed,pre){
  const ok=l=>(Array.isArray(l)?l:[]).filter(x=>x&&x.id),models=ok(LK.models).slice().sort((a,b)=>String(a.name).localeCompare(String(b.name))),companies=ok(LK.companies),contacts=ok(LK.contacts),markets=ok(LK.markets),members=ok(LK.members);
  const st={rows:[],same:{unit:"day",qty:1,amount:"",cur:"USD",comm:20}};BKS=st;
  const unitOf=u=>BK_UNITS.find(x=>x[0]===u)||BK_UNITS[0],calc=r=>{const q=unitOf(r.unit)[2]?Number(r.qty)||1:1,g=q*(Number(r.amount)||0),f=g*(Number(r.comm)||0)/100;return{gross:g,fee:f,net:g-f}};
@@ -4145,6 +4145,15 @@ function bkBuild(root,LK,rec,seed){
    if(!armed){armed=true;dl.textContent="Click again to delete for good";dl.classList.add("armed");setTimeout(()=>{armed=false;dl.textContent="Delete";dl.classList.remove("armed")},5000);return}
    dl.disabled=true;dl.textContent="Deleting…";
    try{await parent.MDV_DS_EMBED.deleteRecord(seed.kind,seed.id);bkClose();toast("Deleted");try{S.item=null;render()}catch(_){}}catch(err){msg.textContent=(err&&err.message)||String(err);msg.style.color="var(--warn)";dl.disabled=false;dl.textContent="Delete";armed=false}};
+ }
+ /* ---- adding: start from the day, time and details the person clicked or copied ---- */
+ if(!seed&&pre){
+  const sv=(id,v)=>{const el=$(id);if(el&&v!=null&&v!=="")el.value=v};
+  const hit=BK_TYPES.find(t=>t===pre.type)||(pre.cat==="travel"?"Travel":"Meeting");sv("#bk-type",hit);
+  sv("#bk-title",pre.title);if(pre.d)sv("#bk-date",pre.d);
+  if(pre.t){sv("#bk-start",pre.t);sv("#bk-end",pre.e&&pre.e>pre.t?pre.e:"")}
+  sv("#bk-loc",pre.where);sv("#bk-notes",pre.notes);
+  (pre.agModels||[]).forEach(id=>{const m=models.find(x=>String(x.id)===String(id));if(m)addModel(m)});
  }
  applyKind();preview();const f=$("#bk-title");if(f)f.focus()}
 document.addEventListener("click",e=>{const t=e.target.closest&&e.target.closest("[data-bk-open],[data-bk-close],[data-bk-retry],[data-bk-edit]");if(!t)return;e.preventDefault();if(t.hasAttribute("data-bk-close")){bkClose();return}const ed=t.getAttribute("data-bk-edit");if(ed){const i=ed.indexOf("|");bkOpen({kind:ed.slice(0,i),id:ed.slice(i+1)});return}bkOpen()});
@@ -4560,7 +4569,10 @@ function clashes(s,t,en,skipId){if(!t)return[];const a=hm(t),b=en?hm(en):a+60;
 function warnClash(s,t,en,id){const c=clashes(s,t,en,id);if(c.length)setTimeout(()=>toast("Heads up: overlaps with "+c.map(x=>x.title).join(", ")),900)}
 
 /* ---------- Item sheet ---------- */
-function openItem(it){S.item=it;S.itemEdit=false;renderItem()}
+function openItem(it){
+ /* on the Models calendar, a new event is the full Model Agenda form (models, client, booking details); the short form stays for the stand-alone page */
+ if(it&&it.kind==="new"&&EMB&&!EMB_ALERTS&&typeof bkOpen==="function"&&modeModels()){bkOpen(null,it.pre||{});return}
+ S.item=it;S.itemEdit=false;renderItem()}
 function closeItem(){S.item=null;S.agRename=false;const n=document.getElementById("itemsheet");if(n)n.remove();document.body.classList.remove("sheet-open")}
 function renderItem(){
  if(!S.item){closeItem();return}
