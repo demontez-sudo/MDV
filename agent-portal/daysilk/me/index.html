@@ -4570,8 +4570,8 @@ function warnClash(s,t,en,id){const c=clashes(s,t,en,id);if(c.length)setTimeout(
 
 /* ---------- Item sheet ---------- */
 function openItem(it){
- /* on the Models calendar, a new event is the full Model Agenda form (models, client, booking details); the short form stays for the stand-alone page */
- if(it&&it.kind==="new"&&EMB&&!EMB_ALERTS&&typeof bkOpen==="function"&&modeModels()){bkOpen(null,it.pre||{});return}
+ /* inside the portal, a new event is the full Model Agenda form (models, client, booking details); the short form stays for the stand-alone page */
+ if(it&&it.kind==="new"&&EMB&&!EMB_ALERTS&&typeof bkOpen==="function"){bkOpen(null,it.pre||{});return}
  S.item=it;S.itemEdit=false;renderItem()}
 function closeItem(){S.item=null;S.agRename=false;const n=document.getElementById("itemsheet");if(n)n.remove();document.body.classList.remove("sheet-open")}
 function renderItem(){
