@@ -14,9 +14,9 @@ function providerTimeoutMs() {
   const raw = Number(process.env.VEUX_AI_TIMEOUT_MS || 12000);
   return Number.isFinite(raw) ? Math.min(25000, Math.max(3000, raw)) : 12000;
 }
-async function timedFetch(url, options, label) {
+async function timedFetch(url, options, label, timeoutMs) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), providerTimeoutMs());
+  const timer = setTimeout(() => controller.abort(), timeoutMs || providerTimeoutMs());
   try {
     return await fetch(url, { ...options, signal: controller.signal });
   } catch (error) {
@@ -126,7 +126,7 @@ async function discoverAnthropicModel(apiKey, excluded = []) {
   }
 }
 
-async function anthropicMessageRequest(apiKey, chosenModel, instructions, input) {
+async function anthropicMessageRequest(apiKey, chosenModel, instructions, input, images, timeoutMs, maxTokens) {
   const res = await timedFetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -136,23 +136,26 @@ async function anthropicMessageRequest(apiKey, chosenModel, instructions, input)
     },
     body: JSON.stringify({
       model: chosenModel,
-      max_tokens: Number(process.env.VEUX_AI_MAX_TOKENS || 1800),
+      max_tokens: maxTokens || Number(process.env.VEUX_AI_MAX_TOKENS || 1800),
       system: instructions,
-      messages: [{ role: 'user', content: input }]
+      /* with pictures (handwriting), the message is the pictures followed by the text */
+      messages: [{ role: 'user', content: Array.isArray(images) && images.length
+        ? [...images.map(im => ({ type: 'image', source: { type: 'base64', media_type: im.media_type, data: im.data } })), { type: 'text', text: String(input || '') }]
+        : input }]
     })
-  }, 'Anthropic');
+  }, 'Anthropic', timeoutMs);
   const body = await res.json().catch(() => ({}));
   return { res, body };
 }
 
-export async function callAnthropic({ instructions, input, model }) {
+export async function callAnthropic({ instructions, input, model, images, timeoutMs, maxTokens }) {
   const apiKey = key('ANTHROPIC_API_KEY');
   if (!apiKey) throw providerError('Anthropic is not configured for Veux.');
   const requestedModel = anthropicConfiguredModel(model);
   const attempts = [];
   let chosenModel = requestedModel;
   for (let attempt = 0; attempt < 3 && chosenModel; attempt++) {
-    const { res, body } = await anthropicMessageRequest(apiKey, chosenModel, instructions, input);
+    const { res, body } = await anthropicMessageRequest(apiKey, chosenModel, instructions, input, images, timeoutMs, maxTokens);
     if (res.ok) {
       const text = extractAnthropicText(body);
       if (!text) throw providerError('Anthropic returned an empty response.');
