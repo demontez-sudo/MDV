@@ -3959,12 +3959,13 @@ document.addEventListener("submit",ev=>{const f=ev.target;if(!f.hasAttribute||!f
 
 /* ---- New calendar event / Full booking: the Model Agenda's event form, with every detail (type, recurrence, contacts, talent, commercial, handoff, notes, live preview) ---- */
 const BK_UNITS=[["day","Day rate","Days"],["half","Half day","Half days"],["hour","Hourly","Hours"],["flat","Flat fee",""],["usage","Usage fee",""]];
-const BK_TYPES=["Casting","Go & See","Fitting","Editorial","Campaign","Runway","Evaluation","Training","Test","Digitals","Travel","Meeting","Task","Option 1","Option 2","Option 3"];
+const BK_PERSONAL="Personal (only me)";
+const BK_TYPES=[BK_PERSONAL,"Casting","Go & See","Fitting","Editorial","Campaign","Runway","Evaluation","Training","Test","Digitals","Travel","Meeting","Task","Option 1","Option 2","Option 3"];
 const BK_STATUS=["Tentative","Inquiry","Option","Hold","Confirmed","Fitting","Job","Completed"];
 const BK_PAYMENT=["Not Invoiced","Invoiced","Client Paid","Model Payable","Model Paid"];
 const BK_HANDOFF=[["onsite_contact","On-site contact","Producer, coordinator or client contact","input"],["onsite_phone","On-site phone","Phone or WhatsApp","input"],["arrival","Arrival / check-in","Entrance, check-in desk, arrival lead time","area"],["wardrobe","Wardrobe","What to bring, fittings, wardrobe notes","area"],["hair_makeup","Hair & makeup","Prep, clean face and hair, direction","area"],["deliverables","Deliverables / requirements","Shots, video, self-tape, ID, documents","area"],["transport","Travel / parking / transport","Driver, train, parking, terminal, pickup","area"],["model_instructions","Model instructions","Booker notes to the model","area"]];
 const bkKey=v=>String(v||"Meeting").toLowerCase().replace(/&/g,"and").replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");
-const bkKind=t=>t==="Casting"?"casting":["Editorial","Campaign","Runway"].includes(t)?"booking":t==="Travel"?"travel":"event";
+const bkKind=t=>t===BK_PERSONAL?"personal":t==="Casting"?"casting":["Editorial","Campaign","Runway"].includes(t)?"booking":t==="Travel"?"travel":"event";
 const bkMoney=v=>{const x=String(v||"").replace(/[^0-9.\-]/g,"");return x?Number(x):null};
 let BKS=null;
 function bkClose(){const n=document.getElementById("bksheet");if(n)n.remove();document.body.classList.remove("sheet-open");BKS=null}
@@ -3988,6 +3989,7 @@ function bkBuild(root,LK,rec,seed,pre){
   sec("Event details","",`<div class="bk-grid">`
    +field("Event type *",`<select class="txt" id="bk-type">${BK_TYPES.map(t=>`<option${t==="Campaign"?" selected":""}>${esc(t)}</option>`).join("")}</select>`)
    +field("Event title *",`<input class="txt" id="bk-title" placeholder="SS27 editorial casting">`)
+   +(msState==="on"?field("Save to",`<select class="txt" id="bk-dest"><option value="outlook">Outlook calendar</option><option value="rebuild">DaySilk only</option></select>`,"","personal"):"")
    +field("Date *",`<input class="txt" id="bk-date" type="date" value="${esc(d0)}">`)
    +field("Until (multi-day)",`<input class="txt" id="bk-date2" type="date">`)
    +field("Start time *",`<input class="txt" id="bk-start" type="time" value="09:00">`)+field("End time *",`<input class="txt" id="bk-end" type="time" value="17:00">`)
@@ -4018,7 +4020,7 @@ function bkBuild(root,LK,rec,seed,pre){
  root.querySelector(".bk-body").innerHTML=`<div class="bk-layout"><main class="bk-main">${form}</main>${aside}</div><div class="bk-foot">${seed?`<button type="button" class="btn ghost bk-del" id="bk-del">Delete</button>`:""}<span class="bk-msg" id="bk-msg"></span><button type="button" class="btn ghost" data-bk-close>Cancel</button><button type="button" class="btn solid" id="bk-go">Save event</button></div>`;
  const $=q=>root.querySelector(q);
  const kind=()=>seed?seed.kind:bkKind($("#bk-type").value);
- function applyKind(){const k=kind();root.querySelectorAll("[data-k]").forEach(el=>{el.hidden=!el.getAttribute("data-k").split(",").includes(k)});$("#bk-go").textContent=seed?"Save changes":k==="booking"?"Create booking":k==="casting"?"Create casting":k==="travel"?"Save travel":"Save event";root.querySelector(".bk-tbl")&&root.querySelector(".bk-tbl").classList.toggle("bk-norates",k!=="booking");drawRows()}
+ function applyKind(){const k=kind();root.querySelectorAll("[data-k]").forEach(el=>{el.hidden=!el.getAttribute("data-k").split(",").includes(k)});const pe=k==="personal";root.querySelectorAll(".bk-sec").forEach(sc=>{const h=(sc.querySelector("h4")||{}).textContent||"";if(/^(Contacts|Talent|Commercial and booking details|Booker handoff)$/.test(h))sc.hidden=pe});["#bkp-models","#bkp-client","#bkp-agent"].forEach(q=>{const el=$(q);if(el&&el.parentElement)el.parentElement.hidden=pe});$("#bk-go").textContent=seed?"Save changes":pe?"Save to my calendar":k==="booking"?"Create booking":k==="casting"?"Create casting":k==="travel"?"Save travel":"Save event";root.querySelector(".bk-tbl")&&root.querySelector(".bk-tbl").classList.toggle("bk-norates",k!=="booking");drawRows()}
  function preview(){const t=$("#bk-title").value.trim(),d=$("#bk-date").value,s=$("#bk-start").value,e=$("#bk-end").value,co=$("#bk-company"),me=$("#bk-member");
   $("#bkp-type").textContent=String($("#bk-type").value).toUpperCase();$("#bkp-title").textContent=t||"Untitled calendar event";
   $("#bkp-date").textContent=d?longDate(d):"No date";$("#bkp-time").textContent=$("#bk-allday").checked?"All day":(s&&e?fmtT(s)+" to "+fmtT(e):"Time not set");
@@ -4063,6 +4065,14 @@ function bkBuild(root,LK,rec,seed,pre){
    const d1=$("#bk-date").value;if(!d1)throw new Error("Date is required.");const allDay=$("#bk-allday").checked;
    let s0=$("#bk-start").value,e0=$("#bk-end").value;if(allDay){s0="00:00";e0="23:59"}else if(!s0||!e0)throw new Error("Start and end times are required.");
    const d2=$("#bk-date2").value||d1,starts=iso(d1,s0),ends=iso(d2,e0);if(new Date(ends)<new Date(starts))throw new Error("The end cannot be before the start.");
+   if(k==="personal"){
+    /* a private event: it goes on your own calendar (and Outlook when connected), never on the Model Agenda */
+    if(d2!==d1)throw new Error("A personal event is a single day. Use one date.");
+    const rp=$("#bk-repeat").value;if(rp==="monthly"||rp==="custom")throw new Error("A personal event can repeat daily or weekly.");
+    const v={title,d:d1,t:allDay?"":s0,e:allDay?"":e0,cat:"close",rep:rp==="daily"?"d":rp==="weekly"?"w":"",until:"",where:$("#bk-loc").value.trim(),notes:$("#bk-notes").value.trim()};
+    const dest=$("#bk-dest");go.disabled=true;go.textContent="Saving…";
+    if(dest&&dest.value==="outlook"){await msCreate(v);bkClose();render();return}
+    const c=core();c.events=c.events||[];const e={id:uid(),...v};if(!e.until)delete e.until;c.events.push(e);markDirty("core");warnClash(v.d,v.t,v.e,e.id);bkClose();toast("Added to "+fmtMD(v.d));S.item={kind:"e",id:e.id,s:v.d};S.itemEdit=false;render();return}
    if((k==="booking"||k==="casting")&&!st.rows.length)throw new Error("Select at least one model for this "+k+".");
    const company=$("#bk-company").value,paidFlag=$("#bk-paid").checked,statusTxt=$("#bk-status").value.trim()||"Tentative";
    if(k==="booking"&&(paidFlag||$("#bk-payment").value==="Client Paid")&&!company)throw new Error("A paid booking needs a client or brand so the invoice can be created.");
@@ -4149,7 +4159,7 @@ function bkBuild(root,LK,rec,seed,pre){
  /* ---- adding: start from the day, time and details the person clicked or copied ---- */
  if(!seed&&pre){
   const sv=(id,v)=>{const el=$(id);if(el&&v!=null&&v!=="")el.value=v};
-  const hit=BK_TYPES.find(t=>t===pre.type)||(pre.cat==="travel"?"Travel":"Meeting");sv("#bk-type",hit);
+  const hit=BK_TYPES.find(t=>t===pre.type)||(pre.cat==="travel"?"Travel":modeModels()?"Meeting":BK_PERSONAL);sv("#bk-type",hit);
   sv("#bk-title",pre.title);if(pre.d)sv("#bk-date",pre.d);
   if(pre.t){sv("#bk-start",pre.t);sv("#bk-end",pre.e&&pre.e>pre.t?pre.e:"")}
   sv("#bk-loc",pre.where);sv("#bk-notes",pre.notes);
