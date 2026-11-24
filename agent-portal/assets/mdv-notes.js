@@ -165,10 +165,160 @@ try{S.seen=Number(localStorage.getItem('mdv-nt-seen'))||0;}catch(e){}
 function markSeen(){S.seen=Date.now();try{localStorage.setItem('mdv-nt-seen',String(S.seen));}catch(e){}badge();}
 
 /* ---------- the composer (used on the page and in the slide-over) ---------- */
-function newCompose(ctx){return {text:'',title:'',links:ctx?[Object.assign({},ctx)]:[],dismissed:{},vis:'team',kind:'auto',follow:null,followSet:false,taskOff:{},taskDue:{},cal:true,ctx:ctx||null,busy:false};}
+/* ---------- handwriting (Apple Pencil) ----------
+   A page of ink is a list of strokes on a fixed 1000-wide page, so it looks the same on every screen.
+   The Pencil draws (with pressure); a finger scrolls the page unless "Finger draws" is on; the palm is ignored while the Pencil is down.
+   "Read my writing" sends a picture of the page to Veux, which returns the text; the normal Smart Notes reading then connects names,
+   dates and tasks. The ink is kept with the note, and the text is what gets searched. */
+var INK_COLORS=['#1b1a18','#1f4fbf','#c0392b','#1e7b4f'],INK_HI='#f2c94c',INK_PLACEHOLDER='✎ Handwritten note',PEN_SEEN=false;
+try{PEN_SEEN=localStorage.getItem('mdv-nt-pen')==='1';}catch(e){}
+document.addEventListener('pointerdown',function(e){if(e.pointerType==='pen'&&!PEN_SEEN){PEN_SEEN=true;try{localStorage.setItem('mdv-nt-pen','1');}catch(x){}}},true);
+function startMode(){var m='';try{m=localStorage.getItem('mdv-nt-mode')||'';}catch(e){}return m==='write'||m==='type'?m:(PEN_SEEN?'write':'type');}
+function inkHas(d){return !!(d&&d.strokes&&d.strokes.length);}
+function inkSeg(ctx,st,sc,j){
+  var p=st.p,a=p[j-1],b=p[j],s=j>1?p[j-2]:a,m0=j>1?[(s[0]+a[0])/2,(s[1]+a[1])/2]:[a[0],a[1]],m1=[(a[0]+b[0])/2,(a[1]+b[1])/2];
+  ctx.lineWidth=Math.max(.4,st.w*sc*(.45+1.1*((a[2]+b[2])/2)));
+  ctx.beginPath();ctx.moveTo(m0[0]*sc,m0[1]*sc);ctx.quadraticCurveTo(a[0]*sc,a[1]*sc,m1[0]*sc,m1[1]*sc);ctx.stroke();
+}
+function inkTail(ctx,st,sc){var p=st.p,n=p.length;if(n<2)return;var a=p[n-2],b=p[n-1];ctx.lineWidth=Math.max(.4,st.w*sc*(.45+1.1*b[2]));ctx.beginPath();ctx.moveTo((a[0]+b[0])/2*sc,(a[1]+b[1])/2*sc);ctx.lineTo(b[0]*sc,b[1]*sc);ctx.stroke();}
+function inkStroke(ctx,st,sc){
+  var p=st.p;if(!p||!p.length)return;
+  ctx.save();ctx.strokeStyle=st.c;ctx.fillStyle=st.c;ctx.lineCap='round';ctx.lineJoin='round';
+  if(st.h){ctx.globalAlpha=.34;ctx.lineCap='butt';ctx.lineWidth=st.w*7*sc;ctx.beginPath();ctx.moveTo(p[0][0]*sc,p[0][1]*sc);for(var i=1;i<p.length;i++)ctx.quadraticCurveTo(p[i-1][0]*sc,p[i-1][1]*sc,(p[i-1][0]+p[i][0])/2*sc,(p[i-1][1]+p[i][1])/2*sc);ctx.lineTo(p[p.length-1][0]*sc,p[p.length-1][1]*sc);ctx.stroke();ctx.restore();return;}
+  if(p.length===1){ctx.beginPath();ctx.arc(p[0][0]*sc,p[0][1]*sc,Math.max(.6,st.w*sc*(.45+1.1*p[0][2])/2),0,6.2832);ctx.fill();ctx.restore();return;}
+  for(var j=1;j<p.length;j++)inkSeg(ctx,st,sc,j);
+  inkTail(ctx,st,sc);ctx.restore();
+}
+function inkPaper(ctx,w,h,paper,sc){
+  ctx.fillStyle='#f7f2e8';ctx.fillRect(0,0,w,h);
+  if(paper==='blank')return;
+  ctx.strokeStyle='rgba(110,95,70,.2)';ctx.lineWidth=1;var gap=44*sc,y;ctx.beginPath();
+  for(y=gap;y<h;y+=gap){ctx.moveTo(0,Math.round(y)+.5);ctx.lineTo(w,Math.round(y)+.5);}
+  if(paper==='grid')for(var x=gap;x<w;x+=gap){ctx.moveTo(Math.round(x)+.5,0);ctx.lineTo(Math.round(x)+.5,h);}
+  ctx.stroke();
+}
+function inkBottom(d){var m=0;arr(d&&d.strokes).forEach(function(s){arr(s.p).forEach(function(q){if(q[1]>m)m=q[1];});});return m;}
+/* the page drawn on any canvas, cropped to what is written (used for note cards and the viewer) */
+function inkDraw(canvas,d,cssW,crop){
+  var dpr=Math.min(2,window.devicePixelRatio||1),sc=cssW/1000,lh=crop?Math.min(d.h||700,Math.max(160,inkBottom(d)+40)):(d.h||700),cssH=lh*sc;
+  canvas.width=Math.round(cssW*dpr);canvas.height=Math.round(cssH*dpr);canvas.style.width=cssW+'px';canvas.style.height=cssH+'px';
+  var ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);inkPaper(ctx,cssW,cssH,d.paper,sc);arr(d.strokes).forEach(function(s){inkStroke(ctx,s,sc);});
+}
+/* a clean white picture of the writing for the reader: no ruled lines, cropped to the content */
+function inkImage(d){
+  var W=1400,sc=W/1000,lh=Math.min(d.h||700,inkBottom(d)+60),c=document.createElement('canvas');c.width=W;c.height=Math.max(200,Math.round(lh*sc));
+  var ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);arr(d.strokes).forEach(function(s){inkStroke(ctx,s,sc);});
+  return c.toDataURL('image/jpeg',.9);
+}
+function segDist(px,py,a,b){var dx=b[0]-a[0],dy=b[1]-a[1],l=dx*dx+dy*dy,t=l?Math.max(0,Math.min(1,((px-a[0])*dx+(py-a[1])*dy)/l)):0,x=a[0]+t*dx-px,y=a[1]+t*dy-py;return Math.sqrt(x*x+y*y);}
+function inkNear(st,x,y,r){var p=st.p;if(p.length===1)return Math.hypot(p[0][0]-x,p[0][1]-y)<=r;for(var i=1;i<p.length;i++)if(segDist(x,y,p[i-1],p[i])<=r)return true;return false;}
+
+function inkPad(host,data,hooks){
+  hooks=hooks||{};
+  var P={strokes:arr(data&&data.strokes).slice(),h:(data&&data.h)||700,paper:(data&&data.paper)||'ruled',tool:'pen',color:INK_COLORS[0],width:3,finger:false,undo:[],redo:[],cur:null,lastPen:0,alive:true,base:null,pan:null};
+  var swatches=INK_COLORS.map(function(c,i){return '<button type="button" class="ink-sw'+(i?'':' on')+'" data-c="'+c+'" style="--c:'+c+'" aria-label="Ink colour"></button>';}).join('');
+  host.innerHTML='<div class="ink'+(hooks.full?' is-full':'')+'"><div class="ink-bar">'
+   +'<button type="button" class="on" data-t="pen" title="Pen"><i class="ti ti-pencil"></i></button><button type="button" data-t="hi" title="Highlighter"><i class="ti ti-highlight"></i></button><button type="button" data-t="erase" title="Eraser: touch a stroke to remove it"><i class="ti ti-eraser"></i></button>'
+   +'<span class="ink-sws">'+swatches+'</span><input type="range" min="1" max="8" step=".5" value="3" data-w aria-label="Pen size" title="Pen size">'
+   +'<span class="ink-gap"></span><button type="button" data-undo title="Undo"><i class="ti ti-arrow-back-up"></i></button><button type="button" data-redo title="Redo"><i class="ti ti-arrow-forward-up"></i></button><button type="button" data-clear title="Clear the page"><i class="ti ti-trash"></i></button>'
+   +'<select data-paper aria-label="Paper"><option value="ruled">Ruled</option><option value="grid">Grid</option><option value="blank">Blank</option></select>'
+   +'<label class="ink-fg" title="Let a finger draw too. Off: a finger scrolls the page and only the Pencil writes."><input type="checkbox" data-finger> Finger</label>'
+   +'<button type="button" data-more title="Add more room at the bottom"><i class="ti ti-plus"></i> Room</button>'
+   +(hooks.full?'<button type="button" class="ink-done" data-done>Done</button>':'<button type="button" data-full title="Full screen"><i class="ti ti-arrows-maximize"></i></button>')
+   +'</div><div class="ink-wrap"><canvas class="ink-cv"></canvas></div></div>';
+  var $=function(q){return host.querySelector(q);},wrap=$('.ink-wrap'),cv=$('.ink-cv'),ctx=cv.getContext('2d',{desynchronized:true})||cv.getContext('2d'),W=0;
+  $('[data-paper]').value=P.paper;
+  function scale(){return W/1000;}
+  function size(){var w=Math.max(260,wrap.clientWidth||host.clientWidth||600);W=w;var dpr=Math.min(2,window.devicePixelRatio||1);cv.width=Math.round(w*dpr);cv.height=Math.round(P.h*scale()*dpr);cv.style.width=w+'px';cv.style.height=(P.h*scale())+'px';ctx=cv.getContext('2d',{desynchronized:true})||cv.getContext('2d');}
+  function paint(){if(!W)return;var dpr=Math.min(2,window.devicePixelRatio||1),sc=scale();ctx.setTransform(dpr,0,0,dpr,0,0);inkPaper(ctx,W,P.h*sc,P.paper,sc);P.strokes.forEach(function(s){inkStroke(ctx,s,sc);});}
+  function changed(){if(hooks.onChange)hooks.onChange(api.getData());syncBtns();}
+  function syncBtns(){var u=$('[data-undo]'),r=$('[data-redo]');if(u)u.disabled=!P.undo.length;if(r)r.disabled=!P.redo.length;}
+  function pt(e){var r=cv.getBoundingClientRect(),sc=scale(),pr=e.pointerType==='pen'?(e.pressure>0?e.pressure:.5):.5;return [Math.round((e.clientX-r.left)/sc*10)/10,Math.round((e.clientY-r.top)/sc*10)/10,Math.round(pr*100)/100];}
+  function erase(x,y){var r=16,gone=[];P.strokes=P.strokes.filter(function(s,i){if(inkNear(s,x,y,r)){gone.push({s:s,i:i});return false;}return true;});if(gone.length){P.undo.push({t:'del',list:gone});P.redo=[];paint();changed();}}
+  function allowed(e){if(e.pointerType==='pen')return true;if(e.pointerType==='mouse')return e.button===0;return P.finger&&Date.now()-P.lastPen>700;}
+  cv.addEventListener('contextmenu',function(e){e.preventDefault();});
+  cv.addEventListener('pointerdown',function(e){
+    if(e.pointerType==='pen')P.lastPen=Date.now();
+    if(!allowed(e)){
+      /* a finger scrolls the page (the canvas keeps the Pencil, so the page itself cannot) */
+      if(e.pointerType==='touch'){P.pan={id:e.pointerId,y:e.clientY};try{cv.setPointerCapture(e.pointerId);}catch(x){}}
+      return;
+    }
+    e.preventDefault();try{cv.setPointerCapture(e.pointerId);}catch(x){}
+    var q=pt(e),tool=(e.pointerType==='pen'&&(e.buttons&32))?'erase':P.tool;
+    if(tool==='erase'){P.cur={id:e.pointerId,erase:true,last:q};erase(q[0],q[1]);return;}
+    var st={c:tool==='hi'?INK_HI:P.color,w:P.width,p:[q]};if(tool==='hi'){st.h=1;st.w=Math.max(2,P.width);}
+    P.cur={id:e.pointerId,st:st};
+    if(st.h){var b=document.createElement('canvas');b.width=cv.width;b.height=cv.height;b.getContext('2d').drawImage(cv,0,0);P.cur.base=b;}
+    else{ctx.save();var dpr=Math.min(2,window.devicePixelRatio||1);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle=st.c;ctx.beginPath();ctx.arc(q[0]*scale(),q[1]*scale(),Math.max(.6,st.w*scale()*(.45+1.1*q[2])/2),0,6.2832);ctx.fill();ctx.restore();}
+  });
+  cv.addEventListener('pointermove',function(e){
+    if(P.pan&&P.pan.id===e.pointerId){wrap.scrollTop-=e.clientY-P.pan.y;P.pan.y=e.clientY;return;}
+    var c=P.cur;if(!c||c.id!==e.pointerId)return;e.preventDefault();
+    var evs=e.getCoalescedEvents?e.getCoalescedEvents():null;if(!evs||!evs.length)evs=[e];
+    evs.forEach(function(ev){
+      var q=pt(ev);
+      if(c.erase){/* test along the whole path, so a fast swipe cannot skip over a stroke */var l0=c.last||q,n=Math.max(1,Math.ceil(Math.hypot(q[0]-l0[0],q[1]-l0[1])/8));for(var k=1;k<=n;k++)erase(l0[0]+(q[0]-l0[0])*k/n,l0[1]+(q[1]-l0[1])*k/n);c.last=q;return;}
+      var p=c.st.p,l=p[p.length-1];if(Math.hypot(q[0]-l[0],q[1]-l[1])<.7)return;
+      p.push(q);
+      if(c.st.h){var dpr=Math.min(2,window.devicePixelRatio||1);ctx.setTransform(1,0,0,1,0,0);ctx.drawImage(c.base,0,0);ctx.setTransform(dpr,0,0,dpr,0,0);inkStroke(ctx,c.st,scale());}
+      else{var dpr2=Math.min(2,window.devicePixelRatio||1);ctx.save();ctx.setTransform(dpr2,0,0,dpr2,0,0);ctx.strokeStyle=c.st.c;ctx.lineCap='round';ctx.lineJoin='round';if(p.length>1)inkSeg(ctx,c.st,scale(),p.length-1);ctx.restore();}
+    });
+  });
+  function up(e){
+    if(P.pan&&P.pan.id===e.pointerId){P.pan=null;return;}
+    var c=P.cur;if(!c||c.id!==e.pointerId)return;P.cur=null;
+    if(c.erase)return;
+    P.strokes.push(c.st);P.undo.push({t:'add',s:c.st});P.redo=[];
+    if(!c.st.h){var dpr=Math.min(2,window.devicePixelRatio||1);ctx.save();ctx.setTransform(dpr,0,0,dpr,0,0);ctx.strokeStyle=c.st.c;ctx.lineCap='round';inkTail(ctx,c.st,scale());ctx.restore();}
+    changed();
+  }
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+  function undo(){var o=P.undo.pop();if(!o)return;if(o.t==='add')P.strokes=P.strokes.filter(function(s){return s!==o.s;});else if(o.t==='del'){o.list.slice().sort(function(a,b){return a.i-b.i;}).forEach(function(x){P.strokes.splice(Math.min(x.i,P.strokes.length),0,x.s);});}else if(o.t==='clear')P.strokes=o.list.slice();P.redo.push(o);paint();changed();}
+  function redo(){var o=P.redo.pop();if(!o)return;if(o.t==='add')P.strokes.push(o.s);else if(o.t==='del'){var g=o.list.map(function(x){return x.s;});P.strokes=P.strokes.filter(function(s){return g.indexOf(s)<0;});}else if(o.t==='clear')P.strokes=[];P.undo.push(o);paint();changed();}
+  host.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('button');if(!b||!host.contains(b))return;
+    if(b.dataset.t){P.tool=b.dataset.t;host.querySelectorAll('[data-t]').forEach(function(x){x.classList.toggle('on',x===b);});cv.classList.toggle('erasing',P.tool==='erase');return;}
+    if(b.dataset.c){P.color=b.dataset.c;P.tool=P.tool==='erase'?'pen':P.tool;host.querySelectorAll('[data-c]').forEach(function(x){x.classList.toggle('on',x===b);});host.querySelectorAll('[data-t]').forEach(function(x){x.classList.toggle('on',x.dataset.t===P.tool);});return;}
+    if(b.hasAttribute('data-undo'))undo();else if(b.hasAttribute('data-redo'))redo();
+    else if(b.hasAttribute('data-clear')){if(!P.strokes.length)return;if(!window.confirm('Clear this page of handwriting?'))return;P.undo.push({t:'clear',list:P.strokes.slice()});P.redo=[];P.strokes=[];paint();changed();}
+    else if(b.hasAttribute('data-more')){P.h=Math.min(8000,P.h+400);size();paint();changed();wrap.scrollTop=wrap.scrollHeight;}
+    else if(b.hasAttribute('data-full')){if(hooks.onFull)hooks.onFull();}
+    else if(b.hasAttribute('data-done')){if(hooks.onDone)hooks.onDone();}
+  });
+  $('[data-w]').oninput=function(){P.width=+this.value;};
+  $('[data-paper]').onchange=function(){P.paper=this.value;paint();changed();};
+  $('[data-finger]').onchange=function(){P.finger=this.checked;};
+  var ro=window.ResizeObserver?new ResizeObserver(function(){if(!host.isConnected){return;}var w=wrap.clientWidth;if(w&&Math.abs(w-W)>1){size();paint();}}):null;if(ro)ro.observe(wrap);
+  size();paint();syncBtns();
+  var api={
+    getData:function(){return {v:1,w:1000,h:P.h,paper:P.paper,n:P.strokes.length,strokes:P.strokes};},
+    setData:function(d){P.strokes=arr(d&&d.strokes).slice();P.h=(d&&d.h)||P.h;P.paper=(d&&d.paper)||P.paper;P.undo=[];P.redo=[];$('[data-paper]').value=P.paper;size();paint();syncBtns();},
+    alive:function(){return host.isConnected;},
+    destroy:function(){if(ro)ro.disconnect();P.alive=false;}
+  };
+  return api;
+}
+/* the pad on a whole screen: the same strokes, with room to write. Done hands them back. */
+function inkFull(C,inline,onDone){
+  var o=document.createElement('div');o.className='ink-fs';o.innerHTML='<div class="ink-fs-in"></div>';document.documentElement.appendChild(o);document.documentElement.classList.add('ink-fs-open');
+  var fp;
+  function close(){var d=fp.getData();fp.destroy();o.remove();document.documentElement.classList.remove('ink-fs-open');document.removeEventListener('keydown',key,true);C.ink=inkHas(d)?d:null;if(inline&&inline.alive())inline.setData(d);if(onDone)onDone();}
+  function key(e){if(e.key==='Escape'){e.stopPropagation();e.preventDefault();close();}}
+  document.addEventListener('keydown',key,true);
+  fp=inkPad(o.firstChild,C.ink,{full:true,onChange:function(d){C.ink=inkHas(d)?d:null;if(C._inkChanged)C._inkChanged();},onDone:close});
+}
+function readNames(){var d=dirList(),out=[];['models','companies','contacts'].forEach(function(k){arr(d[k]).forEach(function(x){if(x&&x.name)out.push(x.name);});});arr(d.members).forEach(function(m){if(m&&m.name)out.push(m.name);});return out.slice(0,700);}
+async function readInkData(d){
+  if(!inkHas(d))throw new Error('Write something first.');
+  var r=await post({action:'read_ink',image:inkImage(d),names:readNames()});
+  return {text:String(r&&r.text||'').trim(),title:String(r&&r.title||'').trim()};
+}
+
+function newCompose(ctx){return {mode:startMode(),ink:null,inkRead:'',inkText:'',reading:false,inkFull:false,text:'',title:'',links:ctx?[Object.assign({},ctx)]:[],dismissed:{},vis:'team',kind:'auto',follow:null,followSet:false,taskOff:{},taskDue:{},cal:true,ctx:ctx||null,busy:false};}
 function chip(l,rm){var m=LINKS[l.type]||LINKS.page;return '<span class="nt-chip lk" style="--c:'+m[2]+'"><i class="ti '+m[1]+'"></i>'+esc(l.label||m[0])+(rm?'<button type="button" data-rm="'+esc(l.type+':'+l.id)+'" aria-label="Remove">×</button>':'')+'</span>';}
 function composerHtml(C,id){
-  return '<section class="nt-comp" data-c="'+id+'"><input class="nt-tt" type="text" maxlength="160" placeholder="Title (optional)" aria-label="Note title" autocomplete="off"><textarea class="nt-ta" rows="3" placeholder="Write a note. Name a model, contact or company to connect it, @ a teammate, add #tags. Start a line with “todo” to make it a task.">'+esc(C.text)+'</textarea><div class="nt-live"></div>'
+  return '<section class="nt-comp" data-c="'+id+'"><div class="nt-mode" role="tablist" aria-label="How to write"><button type="button" role="tab" data-mode="type"><i class="ti ti-keyboard"></i> Type</button><button type="button" role="tab" data-mode="write"><i class="ti ti-pencil"></i> Write</button></div><input class="nt-tt" type="text" maxlength="160" placeholder="Title (optional)" aria-label="Note title" autocomplete="off"><div class="nt-inkhost" hidden></div><div class="nt-inkbar" hidden><button type="button" class="nt-btn sm gold" data-readink><i class="ti ti-sparkles"></i> Read my writing</button><span class="nt-inkst"></span></div><textarea class="nt-ta" rows="3" placeholder="Write a note. Name a model, contact or company to connect it, @ a teammate, add #tags. Start a line with “todo” to make it a task.">'+esc(C.text)+'</textarea><div class="nt-live"></div>'
    +'<div class="nt-bar"><label class="nt-sel"><i class="ti ti-eye"></i><select data-vis><option value="team">Team can see</option><option value="private">Only me</option><option value="model">Shareable with the model</option></select></label>'
    +'<label class="nt-sel"><i class="ti ti-tag"></i><select data-kind><option value="auto">Type: auto</option>'+Object.keys(KINDS).map(function(k){return '<option value="'+k+'">'+KINDS[k][0]+'</option>';}).join('')+'</select></label><span class="nt-sp"></span><button type="button" class="nt-btn gold" data-save>Save note</button></div></section>';
 }
@@ -194,6 +344,35 @@ function wireComposer(root,C,onSaved){
   var ta=root.querySelector('.nt-ta'),live=root.querySelector('.nt-live'),t;
   var vs=root.querySelector('[data-vis]'),ks=root.querySelector('[data-kind]');vs.value=C.vis;ks.value=C.kind;
   var tt=root.querySelector('.nt-tt');tt.value=C.title||'';tt.oninput=function(){C.title=tt.value;};tt.onkeydown=function(e){if(e.key==='Enter'){e.preventDefault();ta.focus();}};
+  /* ----- handwriting: the Write tab shows the ink page; Read my writing turns it into text the rest of Smart Notes can use ----- */
+  var inkHost=root.querySelector('.nt-inkhost'),inkBar=root.querySelector('.nt-inkbar'),inkSt=root.querySelector('.nt-inkst'),rdBtn=root.querySelector('[data-readink]');
+  function inkSig(){var d=C.ink;return d&&d.strokes?d.strokes.length+':'+(d.strokes.length?d.strokes[d.strokes.length-1].p.length:0):'';}
+  function inkState(){
+    if(!rdBtn)return;var has=inkHas(C.ink);rdBtn.disabled=!has||C.reading;
+    inkSt.textContent=C.reading?'Reading your writing…':!has?'Write with the Pencil. Then read it into text, or just save the page.':C.inkRead===inkSig()?'Read. Fix anything below, then save.':C.inkRead?'You added more since it was read. Read again to update.':'Ready to read.';
+  }
+  C._inkChanged=inkState;
+  function applyMode(){
+    var w=C.mode==='write';inkHost.hidden=!w;inkBar.hidden=!w;
+    root.querySelectorAll('[data-mode]').forEach(function(b){b.classList.toggle('on',b.dataset.mode===C.mode);b.setAttribute('aria-selected',b.dataset.mode===C.mode?'true':'false');});
+    ta.placeholder=w?'The text of your writing appears here after “Read my writing”. You can also type or fix it.':'Write a note. Name a model, contact or company to connect it, @ a teammate, add #tags. Start a line with “todo” to make it a task.';
+    if(w&&!inkHost.firstChild){C._pad=inkPad(inkHost,C.ink,{onChange:function(d){C.ink=inkHas(d)?d:null;inkState();},onFull:function(){C.inkFull=true;inkFull(C,C._pad,function(){C.inkFull=false;inkState();});}});}
+    var pn=root.closest&&root.closest('#nt-panel');if(pn)pn.classList.toggle('wide',w);   /* writing needs room: the slide-over widens */
+    inkState();
+  }
+  root.querySelectorAll('[data-mode]').forEach(function(b){b.onclick=function(){C.mode=b.dataset.mode;try{localStorage.setItem('mdv-nt-mode',C.mode);}catch(e){}applyMode();if(C.mode==='type')ta.focus();};});
+  async function readWriting(quiet){
+    if(C.reading||!inkHas(C.ink))return false;C.reading=true;inkState();
+    try{
+      var r=await readInkData(C.ink);
+      if(!r.text){if(!quiet)toast('Nothing could be read on this page. Try writing larger or darker.',true);return false;}
+      var cur=ta.value.trim();ta.value=(!cur||cur===C.inkText)?r.text:cur+'\n\n'+r.text;C.inkText=ta.value.trim();
+      if(r.title&&!String(tt.value).trim()){tt.value=r.title;C.title=r.title;}
+      C.inkRead=inkSig();refresh();if(!quiet)toast('✓ Read your writing. Check it, fix anything, then save.');return true;
+    }catch(e){if(!quiet)toast(msg(e)+' Your writing is kept: try again.',true);return false;}
+    finally{C.reading=false;inkState();}
+  }
+  if(rdBtn)rdBtn.onclick=function(){readWriting(false);};
   function refresh(){
     C.text=ta.value;var dis=Object.keys(C.dismissed).map(function(k){var p=k.split(':');return {type:p[0],id:p.slice(1).join(':')};});var A=C._A=analyze(C.text,C.links.concat(dis));
     /* exact name matches are attached for you, unless you removed them */
@@ -211,7 +390,10 @@ function wireComposer(root,C,onSaved){
   vs.onchange=function(){C.vis=vs.value;};ks.onchange=function(){C.kind=ks.value;};
   ta.addEventListener('keydown',function(e){if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();save();}});
   async function save(){
-    if(C.busy)return;C.text=ta.value;var text=C.text.trim();if(!text){toast('Write something first.',true);return;}
+    if(C.busy)return;C.text=ta.value;var text=C.text.trim(),hasInk=inkHas(C.ink),unread=false;
+    /* handwriting with no text yet: read it first, so the note is connected, searched and turned into tasks */
+    if(!text&&hasInk){var sb=root.querySelector('[data-save]');sb.disabled=true;sb.textContent='Reading your writing…';await readWriting(true);sb.disabled=false;sb.textContent='Save note';C.text=ta.value;text=C.text.trim();if(!text){text=INK_PLACEHOLDER;unread=true;}}
+    if(!text){toast('Write something first.',true);return;}
     var dis2=Object.keys(C.dismissed).map(function(k){var p=k.split(':');return {type:p[0],id:p.slice(1).join(':')};});var A=analyze(text,C.links.concat(dis2)),btn=root.querySelector('[data-save]');
     var links=C.links.concat(A.links);
     var fu=effFollow(C,A);
@@ -237,7 +419,8 @@ function wireComposer(root,C,onSaved){
         }catch(e){toast('The follow-up could not be added to your calendar: '+msg(e),true);}
       }
       if(fuTask)made.push(fuTask);
-      var r2=await post({action:'create',body:text,title:(String(C.title||'').trim().slice(0,160))||A.title,kind:C.kind==='auto'?A.kind:C.kind,visibility:C.vis,links:links,mentions:A.mentions,tags:A.tags,follow_up_at:fu,smart:{priority:A.priority||null,tasks:made,suggested_tasks:A.tasks.length}});
+      var r2=await post({action:'create',body:text,title:(String(C.title||'').trim().slice(0,160))||A.title,kind:C.kind==='auto'?A.kind:C.kind,visibility:C.vis,links:links,mentions:A.mentions,tags:A.tags,follow_up_at:fu,smart:Object.assign({priority:A.priority||null,tasks:made,suggested_tasks:A.tasks.length},unread?{ink_unread:true}:{}),ink:hasInk?C.ink:undefined});
+      if(r2&&r2.ink_saved===false)toast('The note saved, but its handwriting could not be kept yet: the notes database needs a one-time update ('+(r2.ink_setup_file||'docs/sql/2026-11-24-note-ink.sql')+').',true);
       if(!r2||r2.verified!==true)throw new Error('The note was not confirmed as saved.');
       S.notes.unshift(r2.note);badge();
       toast('✓ Note saved'+(links.length?' · connected to '+links.length:'')+(made.length?' · '+made.length+(made.length===1?' item':' items')+' added to tasks and your calendar':''));
@@ -246,7 +429,7 @@ function wireComposer(root,C,onSaved){
     }catch(e){toast(msg(e),true);C.busy=false;btn.disabled=false;btn.textContent='Save note';}
   }
   root.querySelector('[data-save]').onclick=save;
-  refresh();
+  refresh();applyMode();if(C.inkFull&&C.mode==='write'){inkFull(C,C._pad,function(){C.inkFull=false;inkState();});}
 }
 
 /* ---------- a note ---------- */
@@ -265,13 +448,52 @@ function noteHtml(n,replies,compact){
   var editing=S.editing===n.id;
   return '<article class="nt-note'+(n.pinned?' pin':'')+(n.resolved?' done':'')+(hl?' hl':'')+'" data-id="'+esc(n.id)+'"><header><span class="nt-av">'+esc(initials(n.author_name))+'</span><div class="nt-by"><b>'+esc(n.author_name||'Team')+'</b><small><i class="ti '+k[1]+'"></i>'+esc(k[0])+' · '+esc(ago(n.created_at))+'</small></div>'+(n.pinned?'<i class="ti ti-pin-filled nt-pn" title="Pinned"></i>':'')+'</header>'
    +(n.title?'<h4>'+esc(n.title)+'</h4>':'')
+   +(n.has_ink?'<div class="nt-inkv" data-ink="'+esc(n.id)+'" role="button" tabindex="0" aria-label="Open the handwriting"><canvas></canvas><span class="nt-inkl"><i class="ti ti-pencil"></i> Handwritten · tap to open</span></div>':'')
    +(editing?'<input class="nt-edit-title" type="text" maxlength="160" placeholder="Title (optional)" aria-label="Note title" value="'+esc(n.title||'')+'"><textarea class="nt-edit" rows="5">'+esc(n.body)+'</textarea><div class="nt-acts"><button type="button" class="nt-btn sm gold" data-esave>Save</button><button type="button" class="nt-btn sm" data-ecancel>Cancel</button></div>':'<div class="nt-body">'+bodyHtml(firstLineIs(n))+'</div>')
    +((chips||tags||fu||tk||vis)?'<div class="nt-chips">'+chips+fu+tk+tags+vis+'</div>':'')
    +(compact?'':'<footer class="nt-acts"><button type="button" data-a="pin">'+(n.pinned?'Unpin':'Pin')+'</button><button type="button" data-a="resolve">'+(n.resolved?'Reopen':'Mark done')+'</button><button type="button" data-a="reply">Reply</button><button type="button" data-a="veuxi"><i class="ti ti-sparkles"></i> Ask Veux</button>'+(mine?'<button type="button" data-a="edit">Edit</button><button type="button" data-a="del" class="danger">Delete</button>':'')+'</footer>')
    +(arr(replies).length?'<div class="nt-replies">'+replies.map(function(r){return '<div class="nt-rep"><b>'+esc(r.author_name||'Team')+'</b> <small>'+esc(ago(r.created_at))+'</small><div>'+bodyHtml(r.body)+'</div></div>';}).join('')+'</div>':'')
    +(S.replyOpen===n.id?'<div class="nt-replybox"><textarea rows="2" placeholder="Reply…" data-rtext></textarea><button type="button" class="nt-btn sm gold" data-rsend>Send</button></div>':'')+'</article>';
 }
+/* ---------- handwriting on a saved note: a small page on the card, the whole page when opened ---------- */
+var INKC={};
+function inkData(id){if(INKC[id]!==undefined)return Promise.resolve(INKC[id]);return get('ink='+encodeURIComponent(id)).then(function(r){INKC[id]=(r&&r.ink)||false;return INKC[id];});}
+function openInkView(id,rerender){
+  var note=S.notes.filter(function(x){return x.id===id;})[0];if(!note)return;
+  var mine=S.me&&note.author_id===S.me.id,unread=mine&&((note.smart&&note.smart.ink_unread)||String(note.body||'').trim()===INK_PLACEHOLDER);
+  var o=document.createElement('div');o.className='nt-inkview';o.setAttribute('role','dialog');o.setAttribute('aria-label','Handwritten note');
+  o.innerHTML='<div class="nt-iv-in"><header><b>'+esc(note.title||'Handwritten note')+'</b><span class="nt-sp"></span>'+(unread?'<button type="button" class="nt-btn sm gold" data-read><i class="ti ti-sparkles"></i> Read my writing</button>':'')+'<button type="button" class="nt-x" data-x aria-label="Close">×</button></header><div class="nt-iv-body"><p class="nt-empty">Opening…</p></div></div>';
+  document.documentElement.appendChild(o);document.documentElement.classList.add('ink-fs-open');
+  function close(){o.remove();document.documentElement.classList.remove('ink-fs-open');document.removeEventListener('keydown',key,true);}
+  function key(e){if(e.key==='Escape'){e.stopPropagation();e.preventDefault();close();}}
+  document.addEventListener('keydown',key,true);
+  o.querySelector('[data-x]').onclick=close;o.addEventListener('click',function(e){if(e.target===o)close();});
+  var body=o.querySelector('.nt-iv-body'),data=null;
+  inkData(id).then(function(d){
+    if(!d){body.innerHTML='<p class="nt-empty">The handwriting for this note could not be loaded.</p>';return;}
+    data=d;body.innerHTML='<canvas></canvas>';inkDraw(body.firstChild,d,Math.max(280,Math.min(1000,body.clientWidth-28)),false);
+  }).catch(function(e){body.innerHTML='<p class="nt-empty">'+esc(msg(e))+'</p>';});
+  var rb=o.querySelector('[data-read]');
+  if(rb)rb.onclick=async function(){
+    if(!data)return;rb.disabled=true;rb.textContent='Reading…';
+    try{
+      var r=await readInkData(data);if(!r.text)throw new Error('Nothing could be read on this page.');
+      var sm=Object.assign({},note.smart||{});delete sm.ink_unread;
+      var res=await post({action:'update',id:id,body:r.text,title:note.title||r.title||undefined,smart:sm});
+      Object.assign(note,res.note);toast('✓ Read your writing and saved the text');close();if(rerender)rerender();
+    }catch(e){toast(msg(e),true);rb.disabled=false;rb.innerHTML='<i class="ti ti-sparkles"></i> Read my writing';}
+  };
+}
+function wireInk(root,rerender){
+  root.querySelectorAll('.nt-inkv').forEach(function(el){
+    function paint(){inkData(el.dataset.ink).then(function(d){if(!d||!el.isConnected)return;inkDraw(el.querySelector('canvas'),d,Math.max(200,el.clientWidth||320),true);el.classList.add('ready');}).catch(function(){});}
+    if(window.IntersectionObserver){var io=new IntersectionObserver(function(en){if(en[0]&&en[0].isIntersecting){io.disconnect();paint();}});io.observe(el);}else paint();
+    el.onclick=function(){openInkView(el.dataset.ink,rerender);};
+    el.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();openInkView(el.dataset.ink,rerender);}};
+  });
+}
 function wireNotes(root,rerender){
+  wireInk(root,rerender);
   root.querySelectorAll('.nt-lkf').forEach(function(b){b.onclick=function(){var p=b.dataset.f.split(':');S.link={type:p[0],id:p.slice(1).join(':'),label:b.dataset.l};S.scope='all';if(rerender)rerender();};});
   root.querySelectorAll('.nt-lko').forEach(function(b){b.onclick=function(){var p=b.dataset.o.split(':');var n=b.closest('.nt-note');var note=S.notes.filter(function(x){return x.id===(n&&n.dataset.id);})[0];var l=note&&arr(note.links).filter(function(x){return x.type===p[0]&&String(x.id)===p.slice(1).join(':');})[0];openLink(l||{type:p[0],id:p.slice(1).join(':')});};});
   root.querySelectorAll('.nt-note').forEach(function(card){
@@ -380,8 +602,8 @@ var PNC=null,panelCtx=null;
 function ensureFab(){
   if(document.getElementById('nt-fab')||document.documentElement.classList.contains('is-login'))return;
   try{if(window.matchMedia&&window.matchMedia('(max-width:820px)').matches)return;}catch(_e){}   /* phones reach Notes from the menu; a floating pill covers the page */
-  var b=document.createElement('button');b.id='nt-fab';b.type='button';b.setAttribute('aria-label','Notes for this page');b.title='Notes (Ctrl/Cmd+Shift+N)';b.innerHTML='<i class="ti ti-notes"></i><span>Notes</span><em hidden></em>';
-  b.onclick=function(){togglePanel();};document.documentElement.appendChild(b);
+  var b=document.createElement('button');b.id='nt-fab';b.type='button';b.setAttribute('aria-label','Notes for this page');b.title='Notes (Ctrl/Cmd+Shift+N)';b.innerHTML='<i class="ti ti-notes"></i><span>Notes</span><em hidden></em><i class="ti ti-pencil nt-fabw" data-w title="Write a note with the Pencil" role="button" aria-label="Write a note with the Pencil"></i>';
+  b.onclick=function(e){if(e&&e.target&&e.target.closest&&e.target.closest('[data-w]')){e.stopPropagation();openPanel(context(),{write:true});return;}togglePanel();};document.documentElement.appendChild(b);
 }
 function panelNotes(ctx){return S.notes.filter(function(n){return !n.parent_id&&(ctx.type==='page'?arr(n.links).some(function(l){return l.type==='page'&&l.id===ctx.id;}):arr(n.links).some(function(l){return l.type===ctx.type&&String(l.id)===String(ctx.id);}));});}
 function paintPanel(){
@@ -396,10 +618,10 @@ function paintPanel(){
   var comp=p.querySelector('.nt-comp');if(comp){wireComposer(comp,PNC,function(){paintPanel();});}
   wireNotes(p.querySelector('.nt-feed')||p,paintPanel);
 }
-function openPanel(ctx){
+function openPanel(ctx,opt){
   ctx=ctx||context();
   if(!panelCtx||!sameLink(panelCtx,ctx)||!PNC){PNC=newCompose(ctx.type==='page'?{type:'page',id:ctx.id,label:ctx.label}:ctx);}
-  panelCtx=ctx;
+  panelCtx=ctx;if(opt&&opt.write){PNC.mode='write';try{localStorage.setItem('mdv-nt-mode','write');}catch(e){}}
   var p=document.getElementById('nt-panel');
   if(!p){p=document.createElement('aside');p.id='nt-panel';p.setAttribute('role','dialog');p.setAttribute('aria-label','Notes');document.documentElement.appendChild(p);}
   p.classList.add('open');document.documentElement.classList.add('nt-open');
@@ -411,7 +633,7 @@ function closePanel(){var p=document.getElementById('nt-panel');if(p)p.classList
 function togglePanel(){var p=document.getElementById('nt-panel');if(p&&p.classList.contains('open'))closePanel();else openPanel(context());}
 document.addEventListener('keydown',function(e){
   if((e.metaKey||e.ctrlKey)&&e.shiftKey&&(e.key==='N'||e.key==='n')){e.preventDefault();togglePanel();return;}
-  if(e.key==='Escape'){var p=document.getElementById('nt-panel');if(p&&p.classList.contains('open')&&!document.querySelector('[data-mdv-dlg],.sr-back,.ct-back')){closePanel();}}
+  if(e.key==='Escape'){var p=document.getElementById('nt-panel');if(p&&p.classList.contains('open')&&!document.querySelector('[data-mdv-dlg],.sr-back,.ct-back,.ink-fs,.nt-inkview')){closePanel();}}
 });
 /* any element can open notes for a record: <button data-mdv-note='{"type":"model","id":"…","label":"…"}'> */
 document.addEventListener('click',function(e){

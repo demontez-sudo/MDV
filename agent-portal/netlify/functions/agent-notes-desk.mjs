@@ -1,6 +1,7 @@
 import { requireUser, parseBody, json, errorResponse, adminClient } from './_lib/auth.mjs';
 import { requireStaffOrganization } from './_lib/agent-bridge.mjs';
 import { notify } from './_lib/push.mjs';
+import { callAnthropic, parseJsonLoose } from './_lib/ai-providers.mjs';
 
 /* Smart Notes. One table, attached to anything through `links`: [{type,id,label}].
    Read: every active staff member sees team notes; private notes only their author. */
@@ -9,6 +10,10 @@ const KINDS = ['note', 'call', 'meeting', 'decision', 'idea', 'update'];
 const VIS = ['team', 'private', 'model'];
 const LINK_TYPES = ['model', 'contact', 'company', 'booking', 'casting', 'package', 'task', 'scout', 'page'];
 const SETUP_SQL_FILE = 'docs/sql/2026-10-18-smart-notes.sql';
+const INK_SQL_FILE = 'docs/sql/2026-11-24-note-ink.sql';
+/* the list never carries the ink itself (it is large): only whether a note has any, read from a small field inside it */
+const LIST_COLS = 'id,organization_id,parent_id,kind,title,body,visibility,pinned,resolved,archived,author_id,author_name,links,mentions,tags,follow_up_at,smart,created_at,updated_at';
+const isInkMissing = e => /42703|column .*ink|ink.*does not exist|schema cache/i.test(String(e?.code || '') + ' ' + String(e?.message || ''));
 
 const clean = (v, n = 200) => String(v == null ? '' : v).trim().slice(0, n);
 const bad = (m, code = 'NOTES_VALIDATION_ERROR') => { const e = new Error(m); e.statusCode = 400; e.code = code; return e; };
@@ -35,6 +40,45 @@ function cleanSmart(v) {
   if (s.length > 8000) return {};
   return JSON.parse(s);
 }
+/* handwriting: strokes in a fixed 1000-wide page, kept compact and checked so only well-formed ink is stored */
+const INK_MAX_BYTES = 900000;
+const num = (v, lo, hi, d = 0) => { const x = Number(v); return Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : d; };
+function cleanInk(v) {
+  if (!v || typeof v !== 'object' || Array.isArray(v) || !Array.isArray(v.strokes)) return null;
+  const strokes = [];
+  for (const st of v.strokes.slice(0, 5000)) {
+    const pts = (Array.isArray(st?.p) ? st.p : []).slice(0, 4000).map(q => Array.isArray(q) ? [Math.round(num(q[0], -50, 1100) * 10) / 10, Math.round(num(q[1], -50, 8000) * 10) / 10, Math.round(num(q[2], 0, 1, 0.5) * 100) / 100] : null).filter(Boolean);
+    if (!pts.length) continue;
+    strokes.push({ c: /^#[0-9a-fA-F]{3,8}$/.test(String(st?.c || '')) ? st.c : '#1b1a18', w: num(st?.w, 0.5, 40, 3), ...(st?.e ? { e: 1 } : {}), ...(st?.h ? { h: 1 } : {}), p: pts });
+  }
+  if (!strokes.length) return null;
+  const out = { v: 1, w: 1000, h: num(v.h, 300, 8000, 700), paper: ['ruled', 'grid', 'blank'].includes(v.paper) ? v.paper : 'ruled', n: strokes.length, strokes };
+  if (JSON.stringify(out).length > INK_MAX_BYTES) { const e = new Error('That page of handwriting is too large to save. Split it into two notes.'); e.statusCode = 413; e.code = 'INK_TOO_LARGE'; throw e; }
+  return out;
+}
+const INK_PROMPT = `You read handwriting for the booking team of a fashion model agency. The picture is one page of notes written with an Apple Pencil on an iPad (call notes, travel details, model and client updates, to-do lists).
+Transcribe what is written, faithfully and in reading order. Keep the line breaks. Never add, guess or tidy up content that is not on the page. A word you cannot read is written [?].
+A line that has a tick box, circle or square in front of it, or is plainly a task, is written as "[ ] the task". Keep dates and times exactly as written ("Fri 3pm", "11/24").
+When a name on the page is clearly one of the names in the list you are given, spell it exactly as in the list; otherwise spell it as written.
+Give a short title (at most 8 words) only when the page has a heading or one clear subject; otherwise leave it empty. If the page is blank, return an empty text.
+Reply with JSON only: {"title":"","text":""}`;
+async function readInk(body) {
+  const img = String(body.image || '');
+  const m = img.match(/^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+\/=]+)$/);
+  if (!m) throw bad('The page could not be read as a picture.');
+  if (m[2].length > 5400000) throw bad('That page is too large to read. Write less on it or split it.');
+  const names = [...new Set((Array.isArray(body.names) ? body.names : []).map(x => clean(x, 60)).filter(Boolean))].slice(0, 700);
+  const r = await callAnthropic({
+    instructions: INK_PROMPT,
+    input: names.length ? 'Names that may appear (models, companies, contacts, teammates): ' + names.join('; ') : 'No name list is available.',
+    images: [{ media_type: m[1], data: m[2] }],
+    model: clean(process.env.VEUX_INK_MODEL) || 'claude-haiku-5-5',
+    timeoutMs: 9000, maxTokens: 1500
+  });
+  const j = parseJsonLoose(r.text);
+  const text = String(typeof j.text === 'string' ? j.text : '').replace(/\r/g, '').trim().slice(0, 12000);
+  return { text, title: clean(typeof j.title === 'string' ? j.title : '', 100) };
+}
 async function whoAmI(admin, orgId, user) {
   let name = String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim(), memberId = null;
   try {
@@ -45,7 +89,7 @@ async function whoAmI(admin, orgId, user) {
   return { id: user.id, member_id: memberId, name: name || String(user.email || 'Team') };
 }
 const visible = (n, me) => n.visibility !== 'private' || n.author_id === me.id;
-const shape = n => ({ id: n.id, parent_id: n.parent_id || null, kind: n.kind || 'note', title: n.title || '', body: n.body || '', visibility: n.visibility || 'team', pinned: !!n.pinned, resolved: !!n.resolved, author_id: n.author_id || null, author_name: n.author_name || '', links: Array.isArray(n.links) ? n.links : [], mentions: Array.isArray(n.mentions) ? n.mentions : [], tags: Array.isArray(n.tags) ? n.tags : [], follow_up_at: n.follow_up_at || null, smart: n.smart || {}, created_at: n.created_at, updated_at: n.updated_at });
+const shape = n => ({ id: n.id, parent_id: n.parent_id || null, kind: n.kind || 'note', title: n.title || '', body: n.body || '', visibility: n.visibility || 'team', pinned: !!n.pinned, resolved: !!n.resolved, author_id: n.author_id || null, author_name: n.author_name || '', links: Array.isArray(n.links) ? n.links : [], mentions: Array.isArray(n.mentions) ? n.mentions : [], tags: Array.isArray(n.tags) ? n.tags : [], follow_up_at: n.follow_up_at || null, smart: n.smart || {}, has_ink: !!(n.ink_n || (n.ink && n.ink.n)), created_at: n.created_at, updated_at: n.updated_at });
 
 export const handler = async event => {
   if (!['GET', 'POST'].includes(event.httpMethod)) return json(405, { error: 'Method not allowed' });
@@ -61,6 +105,7 @@ export const handler = async event => {
 
       if (action === 'create') {
         const text = String(body.body == null ? '' : body.body).trim();
+        const ink = body.ink ? cleanInk(body.ink) : null;
         if (!text) throw bad('Write something first.');
         if (text.length > 20000) throw bad('That note is too long.');
         const row = {
@@ -68,13 +113,18 @@ export const handler = async event => {
           visibility: VIS.includes(body.visibility) ? body.visibility : 'team', links: cleanLinks(body.links), mentions: cleanMentions(body.mentions), tags: cleanTags(body.tags),
           follow_up_at: cleanDate(body.follow_up_at), smart: cleanSmart(body.smart), author_id: user.id, author_name: me.name
         };
-        const { data, error } = await admin.from('smart_notes').insert(row).select('*').single();
+        let ins = await admin.from('smart_notes').insert(ink ? { ...row, ink } : row).select('*').single(), inkSaved = !!ink;
+        /* the ink column is added by docs/sql/2026-11-24-note-ink.sql: until it is run, the note still saves with its text */
+        if (ink && ins.error && isInkMissing(ins.error)) { inkSaved = false; ins = await admin.from('smart_notes').insert(row).select('*').single(); }
+        const { data, error } = ins;
         if (error) throw error;
         /* a teammate who is @mentioned gets an alert on their devices */
         const men = row.mentions.map(m => m.user_id).filter(id => id && id !== user.id);
         if (men.length && row.visibility !== 'private') await notify(admin, { orgId, userIds: men, title: me.name + ' mentioned you', body: (row.title || row.body).replace(/\s+/g, ' ').slice(0, 140), url: '?page=notes', category: 'mentions', tag: 'note-' + data.id });
-        return json(200, { ok: true, verified: true, note: shape(data) });
+        return json(200, { ok: true, verified: true, note: shape(data), ...(ink && !inkSaved ? { ink_saved: false, ink_setup_file: INK_SQL_FILE } : {}) });
       }
+
+      if (action === 'read_ink') return json(200, { ok: true, ...(await readInk(body)) });
 
       if (['update', 'pin', 'resolve', 'archive', 'follow_up'].includes(action)) {
         const id = clean(body.id, 80); if (!id) throw bad('id is required.');
@@ -109,11 +159,20 @@ export const handler = async event => {
     }
 
     /* ---- read ---- */
+    if (p.ink) {
+      const one = await admin.from('smart_notes').select('id,author_id,visibility,ink').eq('organization_id', orgId).eq('id', clean(p.ink, 80)).maybeSingle();
+      if (one.error) { if (isInkMissing(one.error)) return json(200, { ok: true, ink: null }); throw one.error; }
+      if (!one.data || !visible(one.data, me)) { const e = new Error('Note not found.'); e.statusCode = 404; throw e; }
+      return json(200, { ok: true, ink: one.data.ink || null });
+    }
     const entityType = clean(p.entity_type, 20).toLowerCase(), entityId = clean(p.entity_id, 80);
-    let q = admin.from('smart_notes').select('*').eq('organization_id', orgId).eq('archived', false).order('pinned', { ascending: false }).order('created_at', { ascending: false }).limit(Math.min(Number(p.limit) || 400, 800));
-    if (entityType && entityId && LINK_TYPES.includes(entityType)) q = q.contains('links', [{ type: entityType, id: entityId }]);
+    const listQuery = cols => admin.from('smart_notes').select(cols).eq('organization_id', orgId).eq('archived', false).order('pinned', { ascending: false }).order('created_at', { ascending: false }).limit(Math.min(Number(p.limit) || 400, 800));
+    const scoped = cols => { let q = listQuery(cols); if (entityType && entityId && LINK_TYPES.includes(entityType)) q = q.contains('links', [{ type: entityType, id: entityId }]); return q; };
     let data;
-    try { data = await rows(q); } catch (e) { if (isMissing(e)) return json(503, { error: 'Smart Notes needs its database table before it can be used.', code: 'SMART_NOTES_TABLE_MISSING', setup_file: SETUP_SQL_FILE }); throw e; }
+    try {
+      /* `ink_n` is the stroke count kept inside the ink; until the ink column exists the list is read without it */
+      try { data = await rows(scoped(LIST_COLS + ',ink_n:ink->>n')); } catch (e) { if (!isInkMissing(e)) throw e; data = await rows(scoped(LIST_COLS)); }
+    } catch (e) { if (isMissing(e)) return json(503, { error: 'Smart Notes needs its database table before it can be used.', code: 'SMART_NOTES_TABLE_MISSING', setup_file: SETUP_SQL_FILE }); throw e; }
     const notes = data.filter(n => visible(n, me)).map(shape);
     const out = { ok: true, me, notes };
 
