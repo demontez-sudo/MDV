@@ -60,19 +60,22 @@ async function findOpenRequest(contractId){
   var reqs=arr(d.signature_requests).filter(function(x){return String(x.contract_id)===String(contractId);});
   return {open:reqs.filter(function(x){return !closed(x.status);})[0]||null,all:reqs,legal:d};
 }
+/* say which part of sending failed, so a refusal is never just "values are invalid" */
+function stepErr(label,e){var n=new Error(label+' failed: '+msg(e)+(e&&e.data&&e.data.code?' (code '+e.data.code+')':''));n.cause=e;return n;}
+async function step(label,p){try{return await p;}catch(e){throw stepErr(label,e);}}
 async function sendRequest(contractId,signers,opts){
   opts=opts||{};
-  var existing=await findOpenRequest(contractId),req=existing.open,resend=false;
+  var existing=await step('Reading the contract',findOpenRequest(contractId)),req=existing.open,resend=false;
   if(req)resend=true;
   else{
-    var created=await legal({action:'create_signature_request',contract_id:contractId,provider:'veux_sign',expires_at:opts.expires_at||null});
+    var created=await step('Creating the signature request',legal({action:'create_signature_request',contract_id:contractId,provider:'veux_sign',expires_at:opts.expires_at||null}));
     req=created&&created.signature_request;
     if(!req||!req.id)throw new Error('The signature request could not be created.');
   }
   var list=arr(signers).filter(function(s){return s&&String(s.email||'').trim();});
-  if(list.length)await legal({action:'add_signers',signature_request_id:req.id,signers:list});
+  if(list.length)await step('Adding the signer',legal({action:'add_signers',signature_request_id:req.id,signers:list}));
   var oid=orgId();
-  var out=await post('/api/agent/signature/send',{organization_id:oid,signature_request_id:req.id,resend:resend||undefined,expires_at:opts.expires_at||undefined});
+  var out=await step('Sending the signing email',post('/api/agent/signature/send',{organization_id:oid,signature_request_id:req.id,resend:resend||undefined,expires_at:opts.expires_at||undefined}));
   if(!out||out.verified!==true)throw new Error('The signing email was not confirmed as sent.');
   return {request:req,sent:arr(out.signers)};
 }
