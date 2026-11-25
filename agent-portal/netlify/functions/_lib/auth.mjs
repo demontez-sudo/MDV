@@ -143,6 +143,8 @@ export function errorResponse(error) {
   const safeDatabaseError = SAFE_DATABASE_ERRORS[code] || null;
   const statusCode = error?.statusCode || safeDatabaseError?.statusCode || 500;
   const publicMessage = String(error?.publicMessage || '').trim();
+  /* the real reason stays in the private function log, so a generic message to the user can still be traced */
+  if (safeDatabaseError || statusCode >= 500) console.error('[api error]', code || '-', String(error?.message || '').slice(0, 300), error?.details ? '| ' + String(error.details).slice(0, 200) : '', error?.hint ? '| hint: ' + String(error.hint).slice(0, 200) : '');
   return json(statusCode, {
     error: publicMessage || safeDatabaseError?.message || (statusCode >= 500 ? 'Server error' : error.message),
     ...(code && statusCode < 500 ? { code } : {}),
