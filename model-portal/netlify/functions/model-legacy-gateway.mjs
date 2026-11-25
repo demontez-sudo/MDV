@@ -121,8 +121,8 @@ export default async (req)=>{
   }
   if(path==='/api/model/media'&&method==='POST'){
     const raw=await req.json().catch(()=>({}));
-    if(raw.action==='prepare_upload')return fromLegacyResponse(await invoke(uploadHandler,req,{...raw,purpose:'model_media'}));
-    return jsonResponse(409,{error:'Media finalization is handled by the unified storage finalizer.'});
+    if(raw.action==='prepare_upload'||raw.action==='finalize_upload')return fromLegacyResponse(await invoke(uploadHandler,req,{...raw,purpose:'model_media'}));
+    return jsonResponse(400,{error:'Unsupported media action'});
   }
   if(path==='/api/model/account-action'&&method==='POST'){
     const raw=await req.json().catch(()=>({}));
