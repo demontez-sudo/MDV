@@ -23,6 +23,40 @@ function cacheTtl(path){
   return 30000;
 }
 function clearApiCache(){try{state.responseCache.clear();state.inflight.clear();}catch(_e){}}
+/* Keeping the sign-in fresh. A laptop or iPad that slept pauses the browser's own refresh timer, so the first click after waking used
+   to go out with an expired token and fail ("Invalid or expired session") on every step. Now the token is checked before each request,
+   renewed when it is about to end, and a request refused for it is renewed and sent once more. If the sign-in cannot be renewed
+   (signed out elsewhere, or too long away) a banner says so, instead of every save failing on its own. */
+var refreshing=null;
+function freshToken(force){
+  var c=state.client;if(!c||!c.auth||!state.session)return Promise.resolve(false);
+  var exp=(state.session.expires_at||0)*1000;
+  if(!force&&exp&&exp-Date.now()>60000)return Promise.resolve(true);
+  if(refreshing)return refreshing;
+  refreshing=(async function(){
+    try{
+      var r=force?await c.auth.refreshSession():await c.auth.getSession(),s=r&&r.data&&r.data.session;
+      if(s){state.session=s;return true;}
+      return false;
+    }catch(_e){return false;}finally{refreshing=null;}
+  })();
+  return refreshing;
+}
+var lostShown=0;
+function sessionLost(){
+  try{
+  if(Date.now()-lostShown<60000||document.getElementById('veux-session-lost'))return;lostShown=Date.now();
+  var d=document.createElement('div');d.id='veux-session-lost';d.setAttribute('role','alert');
+  d.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:2147483000;max-width:min(560px,94vw);display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:12px 16px;border-radius:14px;background:#1a1712;color:#f3efe8;border:1px solid #d4b077;font:14px/1.4 Inter,system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.5)';
+  d.innerHTML='<span>Your sign-in ended, so changes are not saving. Keep this page open and sign in again; what you typed stays on screen until then.</span>';
+  var b=document.createElement('button');b.type='button';b.textContent='Sign in again';b.style.cssText='height:36px;padding:0 16px;border-radius:999px;border:0;background:#d4b077;color:#12100c;font-weight:600;cursor:pointer';
+  b.onclick=function(){d.remove();signOut();};d.appendChild(b);
+  var x=document.createElement('button');x.type='button';x.textContent='×';x.setAttribute('aria-label','Dismiss');x.style.cssText='border:0;background:none;color:#f3efe8;font-size:20px;cursor:pointer';x.onclick=function(){d.remove();};d.appendChild(x);
+  document.documentElement.appendChild(d);
+  }catch(_e){}   /* the banner is a courtesy: it must never hide the real error */
+}
+document.addEventListener('visibilitychange',function(){if(!document.hidden)freshToken(false);});
+window.addEventListener('online',function(){freshToken(false);});
 function invalidateApiCache(scope){try{var parts=Array.isArray(scope)?scope:[scope],tests=parts.filter(Boolean).map(function(x){return x instanceof RegExp?x:String(x);});if(!tests.length)return clearApiCache();[state.responseCache,state.inflight].forEach(function(map){Array.from(map.keys()).forEach(function(key){if(tests.some(function(t){return t instanceof RegExp?t.test(key):String(key).indexOf(t)>-1;}))map.delete(key);});});}catch(_e){clearApiCache();}}
 function invalidateForWrite(path){path=String(path||'');if(/\/api\/agent\/packages/.test(path))return invalidateApiCache(['agent/packages']);if(/\/api\/agent\/crm/.test(path))return invalidateApiCache(['agent/crm','builder=1']);if(/roster|model-media|model-file|portfolio|model\//.test(path))return invalidateApiCache(['agent/roster','agent/models','builder=1']);if(/calendar|events|bookings/.test(path))return invalidateApiCache(['agent/calendar','agent/events','agent/bookings']);if(/mobility|visa|travel/.test(path))return invalidateApiCache(['agent/mobility','agent/visa','agent/travel']);return clearApiCache();}
 async function api(path,options){
@@ -36,8 +70,19 @@ async function api(path,options){
   var requestOptions=Object.assign({},options);delete requestOptions.__fresh;
   var headers=Object.assign({'Content-Type':'application/json'},requestOptions.headers||{});if(token())headers.Authorization='Bearer '+token();
   var work=(async function(){
+    if(token())await freshToken(false);
+    if(token())headers.Authorization='Bearer '+token();
     var r=await nativeFetch(portalPath(path),Object.assign({},requestOptions,{headers:headers}));
     var body=await r.json().catch(function(){return{};});
+    /* refused because the sign-in ended: renew it and send the same request once more (a refused request was never processed, so this cannot double-save) */
+    if(r.status===401&&token()&&/session|token|jwt|expired/i.test(String(body&&body.error||''))){
+      if(await freshToken(true)){
+        headers.Authorization='Bearer '+token();
+        r=await nativeFetch(portalPath(path),Object.assign({},requestOptions,{headers:headers}));
+        body=await r.json().catch(function(){return{};});
+      }
+      if(r.status===401)sessionLost();
+    }
     if(!r.ok){var e=new Error(body.error||('VEUX API '+r.status));e.status=r.status;e.data=body;throw e;}
     if(method==='GET')state.responseCache.set(key,{data:body,expires:Date.now()+cacheTtl(path)});
     else invalidateForWrite(path);
