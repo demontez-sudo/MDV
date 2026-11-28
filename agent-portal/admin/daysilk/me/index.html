@@ -1634,6 +1634,21 @@ html.emb .sheet-card.bk-card,.sheet-card.bk-card{top:14px;bottom:var(--bk-dock,9
 .pk-foot{display:flex;justify-content:space-between;gap:8px;margin-top:6px;padding:6px 2px 0;border-top:1px solid rgba(167,139,250,.2)}
 .pk-foot button{border:0;background:none;color:#b9a2ff;font:600 12px var(--sans,system-ui);letter-spacing:.05em;padding:9px 12px;border-radius:9px;cursor:pointer}.pk-foot button:hover{background:rgba(167,139,250,.18)}
 @media(pointer:coarse){.pk-it{min-height:46px}.pk-foot button{padding:12px 14px}}
+.pk-datepop{padding:10px 10px 6px}
+.pk-ch{display:flex;align-items:center;justify-content:space-between;padding:2px 4px 8px}
+.pk-mt{font:500 17px var(--serif,Georgia,serif);letter-spacing:.01em;color:#efeaf8}
+.pk-nv{width:34px;height:34px;border-radius:50%;border:1px solid rgba(167,139,250,.28);background:rgba(255,255,255,.04);color:#efeaf8;font-size:20px;line-height:1;display:grid;place-items:center;cursor:pointer;padding:0 0 2px}
+.pk-nv:hover{background:rgba(167,139,250,.2);border-color:rgba(167,139,250,.55)}
+.pk-dow{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font:600 10.5px var(--sans,system-ui);letter-spacing:.12em;color:#a69dbd;padding:2px 0 6px}
+.pk-days{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.pk-d{height:38px;border:1px solid transparent;border-radius:50%;background:none;color:#efeaf8;font:14px var(--sans,system-ui);cursor:pointer;padding:0;display:grid;place-items:center}
+.pk-d.out{color:rgba(166,157,189,.45)}
+.pk-d:hover,.pk-d.on{background:rgba(167,139,250,.22)}
+.pk-d.today{border-color:rgba(167,139,250,.65)}
+.pk-d.sel{background:#a78bfa;color:#14102a;font-weight:700;border-color:#a78bfa;box-shadow:0 6px 18px rgba(167,139,250,.35)}
+.pk-d.past{opacity:.35}
+@media(pointer:coarse){.pk-d{height:42px}.pk-nv{width:40px;height:40px}}
+
 @media(max-width:900px){.sheet-card.bk-card{top:8px;width:calc(100% - 16px)}.bk-card .sheet-h,.bk-card .bk-body{padding-left:18px;padding-right:18px}.bk-card .bk-foot{margin-left:-18px;margin-right:-18px;padding-left:18px;padding-right:18px}}
 
 @media(max-width:700px){.ma-nav,.ma-tabs{width:100%}.ma-tabs button{flex:1;padding:0 8px}}
@@ -4094,9 +4109,9 @@ function pkPop(anchor,cls){
   pop.className="pk-pop"+(cls?" "+cls:"");pop.setAttribute("role","listbox");sheet.appendChild(pop);PK.pop=pop;PK.owner=anchor;anchor.classList.add("open");
   pop.addEventListener("mousedown",e=>{if(!e.target.closest("input"))e.preventDefault()});   /* choosing an item must not pull focus out of the field */
   const place=()=>{
-    const sr=sheet.getBoundingClientRect(),ar=anchor.getBoundingClientRect(),w=Math.max(ar.width,cls==="pk-timepop"?170:220);
-    const below=sr.bottom-ar.bottom-112,above=ar.top-sr.top-18,up=below<230&&above>below;
-    pop.style.width=w+"px";pop.style.maxHeight=Math.max(170,Math.min(340,up?above:below))+"px";
+    const sr=sheet.getBoundingClientRect(),ar=anchor.getBoundingClientRect(),w=cls==="pk-datepop"?Math.max(ar.width,308):Math.max(ar.width,cls==="pk-timepop"?170:220);
+    const below=sr.bottom-ar.bottom-112,above=ar.top-sr.top-18,up=below<(cls==="pk-datepop"?380:230)&&above>below;
+    pop.style.width=w+"px";pop.style.maxHeight=Math.max(170,Math.min(cls==="pk-datepop"?430:340,up?above:below))+"px";
     pop.style.left=Math.max(8,Math.min(ar.left-sr.left,sr.width-w-12))+"px";
     if(up){pop.style.top="auto";pop.style.bottom=(sr.bottom-ar.top+6)+"px"}else{pop.style.bottom="auto";pop.style.top=(ar.bottom-sr.top+6)+"px"}
   };
@@ -4194,11 +4209,104 @@ function pkTime(inp){
   });
   tx.addEventListener("blur",()=>{setTimeout(()=>{if(document.activeElement===tx)return;if(tx._typing)commit();if(PK.owner===wrap)pkClose()},100)});
 }
-/* every dropdown and time field in the form, including rows the form draws later */
+/* ---- the date: a month grid you can also type into ---- */
+const PK_MON=["January","February","March","April","May","June","July","August","September","October","November","December"];
+const PK_MS=["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"],PK_WD=["sun","mon","tue","wed","thu","fri","sat"];
+const pkIso=(y,m,d)=>y+"-"+pkPad(m+1)+"-"+pkPad(d);
+const pkDt=s=>{const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||""));return m?new Date(+m[1],+m[2]-1,+m[3]):null};
+const pkIsoD=d=>pkIso(d.getFullYear(),d.getMonth(),d.getDate());
+const pkAdd=(iso,n)=>{const d=pkDt(iso);if(!d)return iso;d.setDate(d.getDate()+n);return pkIsoD(d)};
+const pkAddM=(iso,n)=>{const d=pkDt(iso);if(!d)return iso;const day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+n);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return pkIsoD(d)};
+const pkDays=(a,b)=>Math.round((pkDt(a)-pkDt(b))/864e5);
+const pkFmtD=iso=>{const d=pkDt(iso);return d?d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"}):""};
+const pkToday=()=>pkIsoD(new Date());
+const pkMake=(y,m,d)=>{const x=new Date(y,m,d);return x.getFullYear()===y&&x.getMonth()===m&&x.getDate()===d?pkIsoD(x):null};
+/* "nov 27", "11/27", "27", "tomorrow", "fri", "2026-11-27": the way people actually type a date. base = the date already in the field. */
+function pkParseD(s,base,today){
+  s=String(s||"").trim().toLowerCase().replace(/,/g," ").replace(/\s+/g," ");if(!s)return null;
+  today=today||pkToday();const t=pkDt(today),b=pkDt(base)||t;
+  /* with no year typed, the next upcoming date is meant, unless the field already holds a past date (editing an old event) */
+  const fwd=iso=>{if(!iso)return null;return(!pkDt(base)||base>=today)&&iso<today?pkAddM(iso,12):iso};
+  if(s==="today"||s==="now"||s==="tod")return today;
+  if(s==="tomorrow"||s==="tmrw"||s==="tom")return pkAdd(today,1);
+  if(s==="yesterday")return pkAdd(today,-1);
+  let m=/^(?:next |this )?(sun|mon|tue|wed|thu|fri|sat)[a-z]*$/.exec(s);
+  if(m){const w=PK_WD.indexOf(m[1]);let n=(w-t.getDay()+7)%7;if(n===0)n=7;return pkAdd(today,n)}
+  if(m=/^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(s))return pkMake(+m[1],+m[2]-1,+m[3]);
+  if(m=/^(\d{1,2})[\/.\-](\d{1,2})(?:[\/.\-](\d{2}|\d{4}))?$/.exec(s)){const y=m[3]?(m[3].length===2?2000+ +m[3]:+m[3]):b.getFullYear(),r=pkMake(y,+m[1]-1,+m[2]);return m[3]?r:fwd(r)}
+  if(m=/^([a-z]{3,9})\.? ?(\d{1,2})(?: (\d{4}))?$/.exec(s)){const k=PK_MS.indexOf(m[1].slice(0,3));if(k>=0){const r=pkMake(m[3]?+m[3]:b.getFullYear(),k,+m[2]);return m[3]?r:fwd(r)}}
+  if(m=/^(\d{1,2}) ?([a-z]{3,9})\.?(?: (\d{4}))?$/.exec(s)){const k=PK_MS.indexOf(m[2].slice(0,3));if(k>=0){const r=pkMake(m[3]?+m[3]:b.getFullYear(),k,+m[1]);return m[3]?r:fwd(r)}}
+  if(m=/^(\d{1,2})$/.exec(s))return pkMake(b.getFullYear(),b.getMonth(),+m[1]);
+  return null;
+}
+function pkDate(inp){
+  if(inp._pk)return;inp._pk=1;
+  const wrap=document.createElement("span");wrap.className="pk-time pk-date";
+  const tx=document.createElement("input");tx.type="text";tx.className=inp.className+" pk-tin";tx.autocomplete="off";tx.spellcheck=false;
+  tx.placeholder=inp.id==="bk-date"?"Pick a date":inp.id==="bk-date2"?"Same day":"Pick a date";
+  tx.setAttribute("inputmode",window.matchMedia&&matchMedia("(pointer:coarse)").matches?"none":"text");
+  tx.setAttribute("aria-label",(inp.closest("label")&&inp.closest("label").textContent.trim().replace(/\s*\*$/,"").replace(/\s*\(.*\)$/,""))||"Date");
+  const ic=document.createElement("button");ic.type="button";ic.className="pk-clk";ic.tabIndex=-1;ic.setAttribute("aria-label","Pick a date");
+  ic.innerHTML='<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><rect x="2" y="3.2" width="12" height="10.6" rx="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M2 6.6h12M5.4 1.8v2.8M10.6 1.8v2.8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
+  inp.classList.add("pk-native");inp.after(wrap);wrap.append(tx,ic);
+  const paint=()=>{if(document.activeElement!==tx||!tx._typing)tx.value=pkFmtD(inp.value)};
+  const d=pkHook(inp,()=>{tx._typing=false;paint()});paint();
+  new MutationObserver(()=>{tx.disabled=inp.disabled}).observe(inp,{attributes:true,attributeFilter:["disabled"]});
+  const floor=()=>inp.id==="bk-date2"?((document.getElementById("bk-date")||{}).value||""):"";   /* an end date cannot come before the start */
+  function setDate(v){
+    const was=inp.value;d.set.call(inp,v||"");tx._typing=false;tx.value=pkFmtD(inp.value);
+    /* moving the start keeps the length of a multi-day event: the end date moves with it */
+    if(inp.id==="bk-date"&&was&&v){const e=document.getElementById("bk-date2");if(e&&e.value&&pkDt(was)&&pkDt(v))e.value=pkAdd(e.value,pkDays(v,was))}
+    if(inp.value!==was)pkFire(inp);
+  }
+  let cal=null;
+  function open(){
+    if(PK.owner===wrap)return;
+    const pop=pkPop(wrap,"pk-datepop"),today=pkToday(),lo=floor();
+    cal={act:inp.value||(lo&&lo>today?lo:today),view:null};cal.view=cal.act.slice(0,7);
+    pop.innerHTML='<div class="pk-ch"><button type="button" class="pk-nv" data-n="-1" aria-label="Previous month">&#8249;</button><b class="pk-mt"></b><button type="button" class="pk-nv" data-n="1" aria-label="Next month">&#8250;</button></div><div class="pk-dow">'+["Su","Mo","Tu","We","Th","Fr","Sa"].map(x=>"<span>"+x+"</span>").join("")+'</div><div class="pk-days" role="grid"></div><div class="pk-foot"><button type="button" class="pk-clear">Clear</button><button type="button" class="pk-now">Today</button></div>';
+    const grid=pop.querySelector(".pk-days"),mt=pop.querySelector(".pk-mt");
+    function draw(){
+      const y=+cal.view.slice(0,4),m=+cal.view.slice(5,7)-1,first=new Date(y,m,1),start=new Date(y,m,1-first.getDay());mt.textContent=PK_MON[m]+" "+y;
+      let h="";for(let i=0;i<42;i++){const c=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i),iso=pkIsoD(c);
+        h+='<button type="button" class="pk-d'+(c.getMonth()!==m?" out":"")+(iso===today?" today":"")+(iso===inp.value?" sel":"")+(iso===cal.act?" on":"")+(lo&&iso<lo?" past":"")+'" data-d="'+iso+'" tabindex="-1" aria-label="'+pkFmtD(iso)+'">'+c.getDate()+'</button>';}
+      grid.innerHTML=h;
+    }
+    function go(iso){cal.act=iso;cal.view=iso.slice(0,7);draw()}
+    draw();
+    pop.addEventListener("click",e=>{
+      const b=e.target.closest("button");if(!b)return;
+      if(b.dataset.d){pkClose();setDate(b.dataset.d);tx.blur();return}
+      if(b.dataset.n){const nv=pkAddM(cal.view+"-01",+b.dataset.n).slice(0,7);cal.view=nv;draw();return}
+      if(b.classList.contains("pk-now")){pkClose();setDate(today);tx.blur();return}
+      if(b.classList.contains("pk-clear")){pkClose();setDate("");tx.blur()}
+    });
+    cal.go=go;cal.typed=()=>{const p=pkParseD(tx.value,inp.value||(lo||today),today);if(p)go(p)};
+  }
+  function commit(){const raw=tx.value.trim();if(!raw){if(inp.id==="bk-date"){tx._typing=false;tx.value=pkFmtD(inp.value)}else setDate("");return}const p=pkParseD(raw,inp.value||floor()||pkToday());if(p)setDate(p);else{tx._typing=false;tx.value=pkFmtD(inp.value);tx.classList.add("bad");setTimeout(()=>tx.classList.remove("bad"),900)}}
+  let fresh=false;
+  tx.addEventListener("mousedown",()=>{fresh=document.activeElement!==tx});
+  tx.addEventListener("mouseup",e=>{if(fresh){e.preventDefault();tx.select()}fresh=false});
+  tx.addEventListener("focus",()=>{tx.select();if(PK.owner!==wrap)open()});
+  tx.addEventListener("click",()=>{if(PK.owner!==wrap)open()});
+  ic.addEventListener("click",()=>{if(PK.owner===wrap)pkClose();else tx.focus()});
+  tx.addEventListener("input",()=>{tx._typing=true;if(PK.owner===wrap&&cal&&cal.typed)cal.typed()});
+  tx.addEventListener("keydown",e=>{
+    const live=PK.owner===wrap&&cal;
+    if(e.key==="Escape"){if(live){e.preventDefault();e.stopPropagation();pkClose();tx._typing=false;tx.value=pkFmtD(inp.value)}return}
+    if(e.key==="Enter"){e.preventDefault();e.stopPropagation();if(tx._typing&&tx.value.trim()){const p=pkParseD(tx.value,inp.value||floor()||pkToday());if(p){pkClose();setDate(p);return}}if(live&&!tx._typing){pkClose();setDate(cal.act);return}commit();pkClose();return}
+    if(!live||tx._typing)return;
+    const mv={ArrowLeft:()=>pkAdd(cal.act,-1),ArrowRight:()=>pkAdd(cal.act,1),ArrowUp:()=>pkAdd(cal.act,-7),ArrowDown:()=>pkAdd(cal.act,7),PageUp:()=>pkAddM(cal.act,-1),PageDown:()=>pkAddM(cal.act,1)}[e.key];
+    if(mv){e.preventDefault();cal.go(mv())}
+  });
+  tx.addEventListener("blur",()=>{setTimeout(()=>{if(document.activeElement===tx)return;if(tx._typing)commit();if(PK.owner===wrap)pkClose()},100)});
+}
+
+/* every dropdown, time and date field in the form, including rows the form draws later */
 function pkAttach(root){
-  const run=r=>{r.querySelectorAll("select.txt").forEach(pkSelect);r.querySelectorAll("input[type=time].txt").forEach(pkTime)};
+  const run=r=>{r.querySelectorAll("select.txt").forEach(pkSelect);r.querySelectorAll("input[type=time].txt").forEach(pkTime);r.querySelectorAll("input[type=date].txt").forEach(pkDate)};
   run(root);
-  new MutationObserver(ms=>{ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType!==1)return;if(n.matches("select.txt"))pkSelect(n);else if(n.matches("input[type=time].txt"))pkTime(n);else run(n)}));if(PK.owner&&!PK.owner.isConnected)pkClose()}).observe(root,{childList:true,subtree:true});
+  new MutationObserver(ms=>{ms.forEach(m=>m.addedNodes.forEach(n=>{if(n.nodeType!==1)return;if(n.matches("select.txt"))pkSelect(n);else if(n.matches("input[type=time].txt"))pkTime(n);else if(n.matches("input[type=date].txt"))pkDate(n);else run(n)}));if(PK.owner&&!PK.owner.isConnected)pkClose()}).observe(root,{childList:true,subtree:true});
 }
 
 async function bkOpen(seed,pre){
