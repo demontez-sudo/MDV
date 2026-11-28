@@ -1,5 +1,6 @@
 import { requireUser, parseBody, json, errorResponse } from './_lib/auth.mjs';
 import { requireStaffOrganization, requirePermission } from './_lib/agent-bridge.mjs';
+import { handbooksFor, publicHandbook } from './_lib/handbooks.mjs';
 
 async function rows(q){const {data,error}=await q;if(error)throw error;return data||[];}
 async function one(q){const {data,error}=await q;if(error)throw error;return data||null;}
@@ -107,6 +108,14 @@ export const handler=async(event)=>{
 
     const admin=await requirePermission(user.id,organization.id,'development.read');
     const modelId=p.model_id;if(!modelId)return json(400,{error:'model_id is required'});
+    /* private handbooks written for this model. Staff can preview exactly what the model sees (same files as the Model Portal: keep _lib/handbooks.mjs and handbook-*.mjs identical in both) */
+    const modelRow=await one(admin.from('models').select('display_name').eq('organization_id',organization.id).eq('id',modelId).maybeSingle()).catch(()=>null);
+    const handbooks=handbooksFor(modelRow&&modelRow.display_name);
+    if(p.handbook){
+      const h=handbooks.find(x=>x.id===String(p.handbook));
+      if(!h)return json(404,{error:'No such handbook for this model.'});
+      return json(200,{ok:true,id:h.id,title:h.title,model_name:modelRow&&modelRow.display_name||'',html:await h.load()},{'Cache-Control':'private, no-store'});
+    }
     const gameplan=await one(admin.from('model_gameplans').select('*').eq('organization_id',organization.id).eq('model_id',modelId).maybeSingle());
     const [tasks,travelRaw,visa,plan]=await Promise.all([
       gameplan?loadGameplanTasks(admin,organization.id,gameplan.id):Promise.resolve([]),
@@ -122,6 +131,6 @@ export const handler=async(event)=>{
     const segByTravel=new Map();for(const s of segRows){const k=String(s.travel_record_id);if(!segByTravel.has(k))segByTravel.set(k,[]);segByTravel.get(k).push(s);}
     const houseByTravel=new Map();for(const h of houseRows){const k=String(h.travel_record_id);if(!houseByTravel.has(k))houseByTravel.set(k,[]);houseByTravel.get(k).push(h);}
     const travel=travelRaw.map(t=>({...t,travel_segments:segByTravel.get(String(t.id))||[],housing_bookings:houseByTravel.get(String(t.id))||[]}));
-    return json(200,{environment:'veux-saas-gameplan-v1',organization,model_id:modelId,gameplan,tasks,travel,visa,development_plan:plan});
+    return json(200,{environment:'veux-saas-gameplan-v1',organization,model_id:modelId,gameplan,tasks,travel,visa,development_plan:plan,handbooks:handbooks.map(publicHandbook)});
   }catch(error){return errorResponse(error);}
 };

@@ -345,7 +345,10 @@ function tDevelopment(){
   var rec=it.recommendation||{};
   var veuxiC=card('Veux recommendation','Based on current materials, market trends and development goals.','<span class="m360-beta">Beta</span>','<p class="m360-lede sm">'+esc(rec.text||'Veux is gathering signals…')+'</p>'+(arr(rec.evidence).length?'<ul class="m360-ev">'+arr(rec.evidence).map(function(e){return '<li>'+esc(e)+'</li>';}).join('')+'</ul>':'')+'<div class="m360-vbtns"><button type="button" class="m360-btn primary" onclick="CAVYRE_M360.askAbout()">'+ic('ti-message-circle')+'Review and discuss with Veux</button><button type="button" class="m360-btn" onclick="CAVYRE_M360.tab(\'materials\')">'+ic('ti-folder')+'View supporting materials</button></div>','veuxi');
   var gpBody=!gp?'<div class="m360-empty">Loading Smart Gameplan…</div>':(window.CAVYRE_SMART_GAMEPLAN&&window.CAVYRE_SMART_GAMEPLAN.render?window.CAVYRE_SMART_GAMEPLAN.render(model(),gp):empty('Smart Gameplan is not available.'));
-  return direction+goalCards+'<div class="m360-grid g3 dev">'+timeline+evalCard+veuxiC+'</div><section class="m360-gpwrap"><div class="m360-eyebrow">'+ic('ti-target')+' Smart Gameplan</div><div class="cvygp-host" id="m360-gp">'+gpBody+'</div></section>';
+  /* private handbooks written for this model: staff can preview exactly what the model sees */
+  var hbs=arr(gp&&gp.handbooks),first=String(model().display_name||'the model').split(' ')[0];
+  var hbCard=hbs.length?card('Handbooks','Private coaching '+first+' opens from their Gameplan. Only '+first+' and the agency can see it.','',hbs.map(function(h){return '<div class="m360-hb"><div><b>'+esc(h.title||'Handbook')+'</b><p>'+esc(h.blurb||'')+'</p></div><button type="button" class="m360-pill" onclick="(window.MDV_HANDBOOK?Promise.resolve():(window.MDV_LAZY?MDV_LAZY.load():Promise.resolve())).then(function(){MDV_HANDBOOK.open(\''+esc(M.id)+'\',\''+esc(h.id)+'\')})">'+ic('ti-eye')+' Preview as '+esc(first)+' sees it</button></div>';}).join('')):'';
+  return direction+goalCards+hbCard+'<div class="m360-grid g3 dev">'+timeline+evalCard+veuxiC+'</div><section class="m360-gpwrap"><div class="m360-eyebrow">'+ic('ti-target')+' Smart Gameplan</div><div class="cvygp-host" id="m360-gp">'+gpBody+'</div></section>';
 }
 
 /* ---------- LOGISTICS ---------- */
