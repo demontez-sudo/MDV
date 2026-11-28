@@ -1,5 +1,6 @@
 import { requireUser, json, errorResponse } from './_lib/auth.mjs';
 import { requireModelPortal } from './_lib/portal-bridge.mjs';
+import { handbooksFor, publicHandbook } from './_lib/handbooks.mjs';
 
 async function safe(label,q,warnings){
   try{const {data,error}=await q;if(error)throw error;return data||[];}
@@ -27,12 +28,16 @@ export const handler=async event=>{
 
     const tasks=gameplan?allTasks.filter(t=>t?.metadata&&t.metadata.gameplan_id===gameplan.id).map(t=>({id:t.id,title:t.title,description:t.description,due_at:t.due_at,status:t.status,priority:t.priority,completed_at:t.completed_at,task_type:t.metadata?.task_type||'agent',is_hard_stop:!!t.metadata?.is_hard_stop,reschedule_status:t.metadata?.reschedule_status||null,reschedule_requested_date:t.metadata?.reschedule_requested_date||null})):[];
 
+    /* private handbooks that belong to this model (the page opens them through /api/model/handbook) */
+    let resources=[];
+    try{const {data:me}=await admin.from('models').select('display_name').eq('organization_id',organization.id).eq('id',modelId).maybeSingle();resources=handbooksFor(me&&me.display_name).map(publicHandbook);}catch(_e){resources=[];}
+
     const agentContact=publicProfile&&publicProfile.show_agent_contact===false?null:{
       name:publicProfile?.contact_name||orgSettings?.sender_name||organization.name||'Maison de Veux',
       email:publicProfile?.contact_email||orgSettings?.sender_email||null,
       phone:publicProfile?.contact_phone||orgSettings?.settings?.agency_phone||null
     };
 
-    return json(200,{ok:true,verified:true,organization:{id:organization.id,name:organization.name,slug:organization.slug},gameplan,tasks,mobility:{travel,visa_cases:visa},agent_contact:agentContact,warnings});
+    return json(200,{ok:true,verified:true,organization:{id:organization.id,name:organization.name,slug:organization.slug},gameplan,tasks,mobility:{travel,visa_cases:visa},agent_contact:agentContact,resources,warnings});
   }catch(error){return errorResponse(error);}
 };

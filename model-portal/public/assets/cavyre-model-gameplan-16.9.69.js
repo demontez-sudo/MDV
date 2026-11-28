@@ -73,6 +73,26 @@ function rulesRow(text){
    '<div class="cvymg-ready">'+vmark()+'<span>Stay ready</span></div>','has-ready');
 }
 
+/* private handbooks written for this model: a card that opens the handbook in a reading view (the page is fetched signed in, so only the model it belongs to can open it) */
+function resourcesRow(list){
+  list=arr(list);if(!list.length)return '';
+  return row('star','<h2>'+(list.length===1?esc(list[0].title):'Your handbooks')+'</h2>'+list.map(function(r){return '<div class="cvymg-res"><p class="cvymg-prose">'+esc(r.blurb||'')+'</p><button type="button" class="cvymg-btn primary" onclick="CAVYRE_MODEL_GAMEPLAN.openResource(\''+esc(r.id)+'\')">Open '+esc(list.length===1?'the handbook':r.title)+'</button></div>';}).join(''),'', 'has-res');
+}
+function openResource(id){
+  var o=document.createElement('div');o.className='cvymg-hbv';o.setAttribute('role','dialog');o.setAttribute('aria-modal','true');o.setAttribute('aria-label','Handbook');
+  o.innerHTML='<div class="cvymg-hbv-bar"><b>Opening…</b><button type="button" class="cvymg-hbv-x" aria-label="Close">×</button></div><div class="cvymg-hbv-body"><p class="cvymg-empty">Opening your handbook…</p></div>';
+  document.documentElement.appendChild(o);document.documentElement.classList.add('cvymg-hbv-open');
+  function close(){o.remove();document.documentElement.classList.remove('cvymg-hbv-open');document.removeEventListener('keydown',key,true);}
+  function key(e){if(e.key==='Escape'){e.preventDefault();close();}}
+  document.addEventListener('keydown',key,true);o.querySelector('.cvymg-hbv-x').onclick=close;
+  window.VEUX_MODEL.api('/api/model/handbook?id='+encodeURIComponent(id),{method:'GET',headers:{}}).then(function(r){
+    if(!r||!r.html)throw new Error('The handbook could not be opened.');
+    o.querySelector('.cvymg-hbv-bar b').textContent=r.title||'Handbook';
+    var body=o.querySelector('.cvymg-hbv-body');body.innerHTML='<iframe class="cvymg-hbv-f" title="'+esc(r.title||'Handbook')+'" sandbox="allow-scripts"></iframe>';
+    body.firstChild.srcdoc=r.html;
+  }).catch(function(e){o.querySelector('.cvymg-hbv-body').innerHTML='<p class="cvymg-empty">'+esc(e&&e.message||e)+'</p>';});
+}
+
 function rescheduleForm(id){
   return '<div class="cvymg-reschedule-form"><label>New date<input type="date" id="cvymg-rs-date"></label><label class="grow">Note (optional)<input type="text" id="cvymg-rs-note" placeholder="Why you need a new time"></label><div class="cvymg-actions"><button type="button" class="cvymg-btn" onclick="CAVYRE_MODEL_GAMEPLAN.cancelReschedule()">Cancel</button><button type="button" class="cvymg-btn primary" onclick="CAVYRE_MODEL_GAMEPLAN.submitReschedule(\''+id+'\')">Send request</button></div></div>';
 }
@@ -149,6 +169,7 @@ function render(){
     +(gp.welcome_message?row('star','<h2>A note from your agency</h2><div class="cvymg-prose">'+nl2p(gp.welcome_message)+'</div>',agentAside(d.agent_contact),'has-sign'):'')
     +lookRow(boot.measurements)
     +rulesRow(gp.image_rules)
+    +resourcesRow(d.resources)
     +todoRow(tasks)
     +visaRow(d.mobility)
     +checkinRow(gp.checkin_cadence)
@@ -158,6 +179,7 @@ function render(){
 
 window.CAVYRE_MODEL_GAMEPLAN={
   version:'16.9.69',
+  openResource:openResource,
   render:function(el){load(el);return '';},
   complete:async function(taskId){
     try{await window.VEUX_MODEL.api('/api/portal/task-status',{method:'POST',body:JSON.stringify({portal:'model',organization_slug:'maison-de-veux',task_id:taskId,status:'completed'})});toast('✓ Marked complete');var c=document.querySelector('.cvymg-wrap');if(c)await load(c.parentElement||c);}catch(e){toast('Could not update: '+(e.message||e));}

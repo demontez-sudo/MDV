@@ -114,6 +114,12 @@
   force = true
 
 [[redirects]]
+  from = "/api/model/handbook"
+  to = "/.netlify/functions/model-handbook"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/model/daysilk"
   to = "/.netlify/functions/model-daysilk"
   status = 200
