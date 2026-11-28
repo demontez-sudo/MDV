@@ -402,3 +402,8 @@ html body .m360 .m360-crumb b{font-weight:600!important;color:#ece8f7!important}
 .m360-copy{background:none;border:0;color:var(--mu,#a8977f);cursor:pointer;font-size:13px;padding:0 2px;opacity:.65}.m360-copy:hover{color:var(--acc);opacity:1}
 .m360-cedit{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid rgba(255,255,255,.14);border-radius:999px;color:inherit;cursor:pointer;font-size:12px;padding:5px 12px}.m360-cedit:hover{border-color:var(--acc);color:var(--acc)}
 @media(max-width:640px){.m360-cstrip{align-items:flex-start}.m360-citems{gap:8px 14px}}
+
+/* handbooks card (Development tab) */
+.m360-hb{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.m360-hb b{font-size:15px}.m360-hb p{margin:4px 0 0;max-width:62ch;font-size:13px;line-height:1.5;color:var(--m360-mute,#a89f92)}
+.m360-hb+.m360-hb{margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)}

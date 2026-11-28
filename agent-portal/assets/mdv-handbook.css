@@ -1,0 +1,12 @@
+/* Staff preview of a model's private handbook */
+.hbp{position:fixed;inset:0;z-index:10080;display:flex;flex-direction:column;background:#0e0d0c;color:#ebe5da}
+.hbp-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 18px;border-bottom:1px solid #2c2925;background:#161513}
+.hbp-bar b{display:block;font:500 20px "Cormorant Garamond",Georgia,serif;letter-spacing:.02em}
+.hbp-bar small{display:block;font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:#b8995a;margin-top:2px}
+.hbp-x{width:42px;height:42px;border-radius:50%;border:1px solid #3a352f;background:transparent;color:#ebe5da;font-size:24px;line-height:1;cursor:pointer}
+.hbp-x:hover{border-color:#b8995a;color:#b8995a}
+.hbp-body{flex:1;min-height:0;display:flex;flex-direction:column}
+.hbp-note{margin:0;padding:9px 18px;font-size:12.5px;color:#a39b8f;border-bottom:1px solid #2c2925;background:#12100e}
+.hbp-msg{margin:auto;color:#a39b8f;font-size:14px}
+.hbp-f{flex:1;width:100%;min-height:0;border:0;background:#0e0d0c}
+html.hbp-open,html.hbp-open body{overflow:hidden!important}
